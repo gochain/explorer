@@ -1,4 +1,4 @@
-require( '../db.js' );
+require('../db.js');
 var etherUnits = require("../lib/etherUnits.js");
 var BigNumber = require('bignumber.js');
 
@@ -6,29 +6,29 @@ var fs = require('fs');
 
 var Web3 = require('web3');
 
-var mongoose = require( 'mongoose' );
-var Block     = mongoose.model( 'Block' );
-var Transaction     = mongoose.model( 'Transaction' );
+var mongoose = require('mongoose');
+var Block = mongoose.model('Block');
+var Transaction = mongoose.model('Transaction');
 
-var grabBlocks = function(config) {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:' + 
-        config.gethPort.toString()));
+var grabBlocks = function (config) {
+    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+        process.env.RPC_PORT.toString()));
 
 
-    if('listenOnly' in config && config.listenOnly === true) 
+    if (process.env.LISTEN && process.env.LISTEN === true)
         listenBlocks(config, web3);
     else
-        setTimeout(function() {
+        setTimeout(function () {
             grabBlock(config, web3, config.blocks.pop());
         }, 2000);
 
 }
 
-var listenBlocks = function(config, web3) {
+var listenBlocks = function (config, web3) {
     var newBlocks = web3.eth.filter("latest");
     newBlocks.watch(function (error, log) {
 
-        if(error) {
+        if (error) {
             console.log('Error: ' + error);
         } else if (log == null) {
             console.log('Warning: null block hash');
@@ -39,16 +39,16 @@ var listenBlocks = function(config, web3) {
     });
 }
 
-var grabBlock = function(config, web3, blockHashOrNumber) {
+var grabBlock = function (config, web3, blockHashOrNumber) {
     var desiredBlockHashOrNumber;
 
     // check if done
-    if(blockHashOrNumber == undefined) {
-        return; 
+    if (blockHashOrNumber == undefined) {
+        return;
     }
 
     if (typeof blockHashOrNumber === 'object') {
-        if('start' in blockHashOrNumber && 'end' in blockHashOrNumber) {
+        if ('start' in blockHashOrNumber && 'end' in blockHashOrNumber) {
             desiredBlockHashOrNumber = blockHashOrNumber.end;
         }
         else {
@@ -61,36 +61,36 @@ var grabBlock = function(config, web3, blockHashOrNumber) {
         desiredBlockHashOrNumber = blockHashOrNumber;
     }
 
-    if(web3.isConnected()) {
+    if (web3.isConnected()) {
 
-        web3.eth.getBlock(desiredBlockHashOrNumber, true, function(error, blockData) {
-            if(error) {
+        web3.eth.getBlock(desiredBlockHashOrNumber, true, function (error, blockData) {
+            if (error) {
                 console.log('Warning: error on getting block with hash/number: ' +
                     desiredBlockHashOrNumber + ': ' + error);
             }
-            else if(blockData == null) {
+            else if (blockData == null) {
                 console.log('Warning: null block data received from the block with hash/number: ' +
                     desiredBlockHashOrNumber);
             }
             else {
-                if('terminateAtExistingDB' in config && config.terminateAtExistingDB === true) {
+                if (process.env.TERMINATE_DB && process.env.TERMINATE_DB === true) {
                     checkBlockDBExistsThenWrite(config, blockData);
                 }
                 else {
                     writeBlockToDB(config, blockData);
                 }
-                if (!('skipTransactions' in config && config.skipTransactions === true))
+                if (!(process.env.SKIP_TRANSACTIONS && process.env.SKIP_TRANSACTIONS === true))
                     writeTransactionsToDB(config, blockData);
-                if('listenOnly' in config && config.listenOnly === true) 
+                if ('listenOnly' in config && config.listenOnly === true)
                     return;
 
-                if('hash' in blockData && 'number' in blockData) {
-                    // If currently working on an interval (typeof blockHashOrNumber === 'object') and 
-                    // the block number or block hash just grabbed isn't equal to the start yet: 
-                    // then grab the parent block number (<this block's number> - 1). Otherwise done 
-                    // with this interval object (or not currently working on an interval) 
+                if ('hash' in blockData && 'number' in blockData) {
+                    // If currently working on an interval (typeof blockHashOrNumber === 'object') and
+                    // the block number or block hash just grabbed isn't equal to the start yet:
+                    // then grab the parent block number (<this block's number> - 1). Otherwise done
+                    // with this interval object (or not currently working on an interval)
                     // -> so move onto the next thing in the blocks array.
-                    if(typeof blockHashOrNumber === 'object' &&
+                    if (typeof blockHashOrNumber === 'object' &&
                         (
                             (typeof blockHashOrNumber['start'] === 'string' && blockData['hash'] !== blockHashOrNumber['start']) ||
                             (typeof blockHashOrNumber['start'] === 'number' && blockData['number'] > blockHashOrNumber['start'])
@@ -118,26 +118,25 @@ var grabBlock = function(config, web3, blockHashOrNumber) {
 }
 
 
-var writeBlockToDB = function(config, blockData) {
-    return new Block(blockData).save( function( err, block, count ){
-        if ( typeof err !== 'undefined' && err ) {
+var writeBlockToDB = function (config, blockData) {
+    return new Block(blockData).save(function (err, block, count) {
+        if (typeof err !== 'undefined' && err) {
             if (err.code == 11000) {
-                console.log('Skip: Duplicate key ' + 
-                blockData.number.toString() + ': ' + 
-                err);
-            } else {
-               console.log('Error: Aborted due to error on ' + 
-                    'block number ' + blockData.number.toString() + ': ' + 
+                console.log('Skip: Duplicate key ' +
+                    blockData.number.toString() + ': ' +
                     err);
-               process.exit(9);
-           }
+            } else {
+                console.log('Error: Aborted due to error on ' +
+                    'block number ' + blockData.number.toString() + ': ' +
+                    err);
+                process.exit(9);
+            }
         } else {
-            if(!('quiet' in config && config.quiet === true)) {
-                console.log('DB successfully written for block number ' +
-                    blockData.number.toString() );
-            }            
+
+            console.log('DB successfully written for block number ' +
+                blockData.number.toString());
         }
-      });
+    });
 }
 
 /**
@@ -145,12 +144,12 @@ var writeBlockToDB = function(config, blockData) {
   *     if record exists: abort
   *     if record DNE: write a file for the block
   */
-var checkBlockDBExistsThenWrite = function(config, blockData) {
-    Block.find({number: blockData.number}, function (err, b) {
+var checkBlockDBExistsThenWrite = function (config, blockData) {
+    Block.find({ number: blockData.number }, function (err, b) {
         if (!b.length)
             writeBlockToDB(config, blockData);
         else {
-            console.log('Aborting because block number: ' + blockData.number.toString() + 
+            console.log('Aborting because block number: ' + blockData.number.toString() +
                 ' already exists in DB.');
             process.exit(9);
         }
@@ -162,7 +161,7 @@ var checkBlockDBExistsThenWrite = function(config, blockData) {
     Break transactions out of blocks and write to DB
 **/
 
-var writeTransactionsToDB = function(config, blockData) {
+var writeTransactionsToDB = function (config, blockData) {
     var bulkOps = [];
     if (blockData.transactions.length > 0) {
         for (d in blockData.transactions) {
@@ -171,21 +170,19 @@ var writeTransactionsToDB = function(config, blockData) {
             txData.value = etherUnits.toEther(new BigNumber(txData.value), 'wei');
             bulkOps.push(txData);
         }
-        Transaction.collection.insert(bulkOps, function( err, tx ){
-            if ( typeof err !== 'undefined' && err ) {
+        Transaction.collection.insert(bulkOps, function (err, tx) {
+            if (typeof err !== 'undefined' && err) {
                 if (err.code == 11000) {
-                    console.log('Skip: Duplicate key ' + 
-                    err);
-                } else {
-                   console.log('Error: Aborted due to error: ' + 
+                    console.log('Skip: Duplicate key ' +
                         err);
-                   process.exit(9);
-               }
-            } else if(!('quiet' in config && config.quiet === true)) {
+                } else {
+                    console.log('Error: Aborted due to error: ' +
+                        err);
+                    process.exit(9);
+                }
+            } else
                 console.log('DB successfully written for block ' +
-                    blockData.transactions.length.toString() );
-                
-            }
+                    blockData.transactions.length.toString());
         });
     }
 }
@@ -193,9 +190,9 @@ var writeTransactionsToDB = function(config, blockData) {
 /*
   Patch Missing Blocks
 */
-var patchBlocks = function(config) {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:' + 
-        config.gethPort.toString()));
+var patchBlocks = function (config) {
+    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+        process.env.RPC_PORT.toString()));
 
     // number of blocks should equal difference in block numbers
     var firstBlock = 0;
@@ -203,35 +200,35 @@ var patchBlocks = function(config) {
     blockIter(web3, firstBlock, lastBlock, config);
 }
 
-var blockIter = function(web3, firstBlock, lastBlock, config) {
+var blockIter = function (web3, firstBlock, lastBlock, config) {
     // if consecutive, deal with it
     if (lastBlock < firstBlock)
         return;
     if (lastBlock - firstBlock === 1) {
-        [lastBlock, firstBlock].forEach(function(blockNumber) {
-            Block.find({number: blockNumber}, function (err, b) {
+        [lastBlock, firstBlock].forEach(function (blockNumber) {
+            Block.find({ number: blockNumber }, function (err, b) {
                 if (!b.length)
                     grabBlock(config, web3, firstBlock);
             });
         });
     } else if (lastBlock === firstBlock) {
-        Block.find({number: firstBlock}, function (err, b) {
+        Block.find({ number: firstBlock }, function (err, b) {
             if (!b.length)
                 grabBlock(config, web3, firstBlock);
         });
     } else {
 
-        Block.count({number: {$gte: firstBlock, $lte: lastBlock}}, function(err, c) {
-          var expectedBlocks = lastBlock - firstBlock + 1;
-          if (c === 0) {
-            grabBlock(config, web3, {'start': firstBlock, 'end': lastBlock});
-          } else if (expectedBlocks > c) {
-            console.log("Missing: " + JSON.stringify(expectedBlocks - c));  
-            var midBlock = firstBlock + parseInt((lastBlock - firstBlock)/2); 
-            blockIter(web3, firstBlock, midBlock, config);
-            blockIter(web3, midBlock + 1, lastBlock, config);
-          } else 
-            return;
+        Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
+            var expectedBlocks = lastBlock - firstBlock + 1;
+            if (c === 0) {
+                grabBlock(config, web3, { 'start': firstBlock, 'end': lastBlock });
+            } else if (expectedBlocks > c) {
+                console.log("Missing: " + JSON.stringify(expectedBlocks - c));
+                var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
+                blockIter(web3, firstBlock, midBlock, config);
+                blockIter(web3, midBlock + 1, lastBlock, config);
+            } else
+                return;
         })
     }
 }
@@ -242,36 +239,17 @@ var blockIter = function(web3, firstBlock, lastBlock, config) {
 
 var config = {};
 
-try {
-    var configContents = fs.readFileSync('config.json');
-    config = JSON.parse(configContents);
-}
-catch (error) {
-    if (error.code === 'ENOENT') {
-        console.log('No config file found. Using default configuration (will ' + 
-            'download all blocks starting from latest)');
-    }
-    else {
-        throw error;
-        process.exit(1);
-    }
-}
-
 // set the default geth port if it's not provided
-if (!('gethPort' in config) || (typeof config.gethPort) !== 'number') {
-    config.gethPort = 8545; // default
+if (!('gethPort' in config) || (typeof process.env.RPC_PORT) !== 'number') {
+    process.env.RPC_PORT = 8545; // default
 }
 
 // set the default output directory if it's not provided
-if (!('output' in config) || (typeof config.output) !== 'string') {
-    config.output = '.'; // default this directory
-}
+config.output = '.'; // default this directory
 
 // set the default blocks if it's not provided
-if (!('blocks' in config) || !(Array.isArray(config.blocks))) {
-    config.blocks = [];
-    config.blocks.push({'start': 0, 'end': 'latest'});
-}
+config.blocks = [];
+config.blocks.push({ 'start': 0, 'end': 'latest' });
 
 console.log('Using configuration:');
 console.log(config);

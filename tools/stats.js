@@ -4,11 +4,13 @@
 
 var Web3 = require('web3');
 
-var mongoose = require( 'mongoose' );
-var BlockStat = require( '../db-stats.js' ).BlockStat;
+var mongoose = require('mongoose');
+var BlockStat = require('../db-stats.js').BlockStat;
 
-var updateStats = function() {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); 
+var updateStats = function () {
+    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+        process.env.RPC_PORT.toString()));
+
 
     mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/blockDB');
     mongoose.set('debug', true);
@@ -18,18 +20,18 @@ var updateStats = function() {
 }
 
 
-var getStats = function(web3, blockNumber, nextBlock, endBlock) {
+var getStats = function (web3, blockNumber, nextBlock, endBlock) {
     if (blockNumber <= endBlock)
         process.exit(9);
 
-    if(web3.isConnected()) {
+    if (web3.isConnected()) {
 
-        web3.eth.getBlock(blockNumber, true, function(error, blockData) {
-            if(error) {
+        web3.eth.getBlock(blockNumber, true, function (error, blockData) {
+            if (error) {
                 console.log('Warning: error on getting block with hash/number: ' +
                     blockNumber + ': ' + error);
             }
-            else if(blockData == null) {
+            else if (blockData == null) {
                 console.log('Warning: null block data received from the block with hash/number: ' +
                     blockNumber);
             }
@@ -37,7 +39,7 @@ var getStats = function(web3, blockNumber, nextBlock, endBlock) {
                 if (nextBlock)
                     checkBlockDBExistsThenWrite(web3, blockData, nextBlock.timestamp);
                 else
-                    checkBlockDBExistsThenWrite(web3, blockData, parseInt(Date.now()/1000));
+                    checkBlockDBExistsThenWrite(web3, blockData, parseInt(Date.now() / 1000));
             }
         });
     } else {
@@ -48,12 +50,12 @@ var getStats = function(web3, blockNumber, nextBlock, endBlock) {
 }
 
 /**
-  * Checks if the a record exists for the block number 
+  * Checks if the a record exists for the block number
   *     if record exists: abort
   *     if record DNE: write a file for the block
   */
-var checkBlockDBExistsThenWrite = function(web3, blockData, nextTime) {
-    BlockStat.find({number: blockData.number}, function (err, b) {
+var checkBlockDBExistsThenWrite = function (web3, blockData, nextTime) {
+    BlockStat.find({ number: blockData.number }, function (err, b) {
         if (!b.length) {
             // calc hashrate, txCount, blocktime, uncleCount
             var stat = {
@@ -67,21 +69,21 @@ var checkBlockDBExistsThenWrite = function(web3, blockData, nextTime) {
                 "blockTime": nextTime - blockData.timestamp,
                 "uncleCount": blockData.uncles.length
             }
-            new BlockStat(stat).save( function( err, s, count ){
+            new BlockStat(stat).save(function (err, s, count) {
                 console.log(s)
-                if ( typeof err !== 'undefined' && err ) {
-                   console.log('Error: Aborted due to error on ' + 
-                        'block number ' + blockData.number.toString() + ': ' + 
+                if (typeof err !== 'undefined' && err) {
+                    console.log('Error: Aborted due to error on ' +
+                        'block number ' + blockData.number.toString() + ': ' +
                         err);
-                   process.exit(9);
+                    process.exit(9);
                 } else {
                     console.log('DB successfully written for block number ' +
-                        blockData.number.toString() );    
-                    getStats(web3, blockData.number - 1, blockData);     
+                        blockData.number.toString());
+                    getStats(web3, blockData.number - 1, blockData);
                 }
             });
         } else {
-            console.log('Aborting because block number: ' + blockData.number.toString() + 
+            console.log('Aborting because block number: ' + blockData.number.toString() +
                 ' already exists in DB.');
             return;
         }
@@ -95,6 +97,6 @@ var checkBlockDBExistsThenWrite = function(web3, blockData, nextTime) {
 var minutes = 1;
 statInterval = minutes * 60 * 1000;
 
-setInterval(function() {
-  updateStats();
+setInterval(function () {
+    updateStats();
 }, statInterval);

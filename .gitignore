@@ -42,3 +42,4 @@ data/
 .node-xmlhttprequest-sync-32644
 package-lock.json
 public/js/stats/The_bomb_chart.js
+config.json

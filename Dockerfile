@@ -1,9 +1,11 @@
-FROM node:latest
+FROM node:alpine
 
-COPY . /
+WORKDIR /explorer
 
-RUN npm i
+RUN npm install -g grunt-cli
+ADD package.* /explorer
+RUN cd /explorer && npm install
 
-EXPOSE 3000
+ADD . /explorer
 
-ENTRYPOINT ["node"]
+CMD ["npm", "start"]
