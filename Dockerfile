@@ -1,10 +1,9 @@
-FROM node
+FROM node:latest
 
-WORKDIR /explorer
+COPY . /
 
-ADD . /explorer
-RUN npm install
+RUN npm i
 
-CMD ["/bin/sh", "/explorer/start.sh"]
+EXPOSE 3000
 
-EXPOSE 8000
+ENTRYPOINT ["node"]

@@ -1,65 +1,64 @@
-# ETHExplorer V2 based off github.com/etherparty/explorer
+# ETCExplorer 
 
-![ETHExplorer V2 Screenshot](http://i.imgur.com/wgROAS9.png)
+<b>Live Version: [etherhub.io](http://etherhub.io)</b>
 
-## License
+Follow the project progress at: [ETC Block Explorer Development](https://trello.com/b/W3ftl57z/etc-block-explorer-development) 
 
-The code in this branch is licensed under GPLv3 (see LICENSE file)
+## Local installation
 
-Feel free to modify or reuse the code here.
+Clone the repo
 
-## Reddit
+`git clone https://github.com/ethereumproject/explorer`
 
-Discuss this project at: [Reddit Page on /r/ethreum](https://www.reddit.com/r/ethereum/comments/511j5a/new_ethereum_block_explorer_heavily_updated/)
+Download [Nodejs and npm](https://docs.npmjs.com/getting-started/installing-node "Nodejs install") if you don't have them
 
-## Donations
-
-ETH Address: 0xee298ae561bD7BE6e1040AFf281202E0b0646BA6
-
-BTC Address: 1AGxSzTPkthdNKfY5usVLwKDLk9i6sPTQj
-
-## Installation
-
-`git clone https://github.com/carsenk/explorer`
+Install dependencies:
 
 `npm install`
 
-`bower install`
+Install mongodb:
 
-`npm start`
+MacOS: `brew install mongodb`
 
-Make sure to install geth as well for the ETH explorer to be able to function. Then run:
+Ubuntu: `sudo apt-get install -y mongodb-org`
 
-`geth --rpc --rpcaddr localhost --rpcport 8545 --rpcapi "web3,eth" --rpccorsdomain "http://localhost:8000"`
+## Populate the DB
 
-Then visit http://localhost:8000 in your browser of choice after you npm start the explorer
+This will fetch and parse the entire blockchain.
 
-## Updates since original etherpaty/explorer base:
+Configuration file: `/tools/config.json`
 
-- Regular Expressions completed for Addresses, Block #s, and Transacions IDs (aka Search works great)
+Basic settings:
+```json
+{
+    "gethPort": 8545, 
+    "blocks": [ {"start": 2000000, "end": "latest"}],
+    "quiet": false,
+    "terminateAtExistingDB": true,
+    "listenOnly": false
+}
+```
 
-- The theme is based off Bootstrap V3 for responsive design.
+```blocks``` is a list of blocks to grab. It can be specified as a list of block numbers or an interval of block numbers. When specified as an interval, it will start at the ```end``` block and keep recording decreasing block numbers. 
 
-- You can easily change from a dark or light theme utilizing https://bootswatch.com
+```terminateAtExistingDB``` will terminate the block grabber once it gets to a block it has already stored in the DB.
 
-- There is a basic API implemented now as well as well as a Ethereum Blockchain Information page
+```quiet``` prints out the log of what it is doing.
 
-- Realtime ETH/USD Price Ticker
+```listenOnly``` When true, the grabber will create a filter to receive the latest blocks from geth as they arrive. It will <b>not</b> continue to populate older block numbers. 
 
-- Realtime Ethereum Hashrate
+<b>Note: When ```listenOnly``` is set to ```true```, the ```blocks``` option is ignored. </b>
 
-- Address Pages are integrated with Shapeshift to easily send a payment to an address.
+<b>Note 2: ```terminateAtExistingDB``` and ```listenOnly``` are mutually exclusive. Do not use ```terminateAtExistingDB``` when in ```listenOnly``` mode.</b>
 
-- Responsive design
+### Run:
 
-- Fontawesome Icons
+`node ./tools/grabber.js`
 
-- Block Time Averages
+Leave this running in the background to continuously fetch new blocks.
 
-- Gas Prices/Limits
+### Stats
 
-- Total/Current Difficulty
+Tools for updating network stats are under development, but can be found in:
 
-- Realtime latest blocks and recent transactions
-
-- Other random blockchain info stats were added
+`./tools/stats.js` 

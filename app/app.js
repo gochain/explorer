@@ -1,113 +1,73 @@
-// begin AltSheets changes
-///////////////////////////////
-// TODO: Put go into a config.js
-// But how to include a file from local?
+#!/usr/bin/env node
 
-var GETH_HOSTNAME	= "localhost";	// put your IP address!
-var APP_HOSTNAME 	= "See package.json --> scripts --> start: Change 'localhost'!!!";
+require( './db' );
 
-var GETH_RPCPORT  	= 8545; 		// for geth --rpcport GETH_RPCPORT
-var APP_PORT 		= "See package.json --> scripts --> start: Perhaps change '8000'";
+var express = require('express');
+var path = require('path');
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var bodyParser = require('body-parser');
 
-// this is creating the corrected geth command
-var WL=window.location;
-var geth_command	= "geth --rpc --rpcaddr "+ GETH_HOSTNAME + " --rpcport " + GETH_RPCPORT +'\
- --rpcapi "web3,eth" ' + ' --rpccorsdomain "' + WL.protocol +"//" + WL.host + '"';
+var app = express();
+app.set('port', process.env.PORT || 3000);
 
-////////////////////////////////////////////////////
-//end AltSheets changes
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+app.use(favicon(__dirname + '/public/favicon.ico'));
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// app libraries
+global.__lib = __dirname + '/lib/';
 
 
-'use strict';
+// client
 
-angular.module('ethExplorer', ['ngRoute','ui.bootstrap','filters','ngSanitize'])
+app.get('/', function(req, res) {
+  res.render('index');
+});
 
-.config(['$routeProvider',
-    function($routeProvider) {
-        $routeProvider.
-            when('/', {
-                templateUrl: 'views/main.html',
-                controller: 'mainCtrl'
-            }).
-            when('/block/:blockId', {
-                templateUrl: 'views/blockInfos.html',
-                controller: 'blockInfosCtrl'
-            }).
-            when('/tx/:transactionId', {
-                templateUrl: 'views/transactionInfos.html',
-                controller: 'transactionInfosCtrl'
-            }).
-            when('/address/:addressId', {
-                templateUrl: 'views/addressInfos.html',
-                controller: 'addressInfosCtrl'
-            }).
+require('./routes')(app);
 
-            // info page with links:
-            when('/chain/api', {
-                templateUrl: 'views/api/api.html',
-                controller: 'chainInfosCtrl'
-            }).
+// let angular catch them
+app.use(function(req, res) {
+  res.render('index');
+});
 
-            // getBlock (current) & getBlock (last)
-            when('/chain/', {
-                templateUrl: 'views/chainInfos.html',
-                controller: 'chainInfosCtrl'
-            }).
-            when('/chain/gaslimit', {
-                templateUrl: 'views/api/gaslimit.html',
-                controller: 'chainInfosCtrl'
-            }).
-            when('/chain/difficulty', {
-                templateUrl: 'views/api/difficulty.html',
-                controller: 'chainInfosCtrl'
-            }).
-/*
-            // fast = doesn't need to getBlock any block
-            when('/chain/blocknumber', {
-                templateUrl: 'views/api/blocknumber.html',
-                controller: 'fastInfosCtrl'
-            }).
-            when('/chain/supply', {
-                templateUrl: 'views/api/supply.html',
-                controller: 'fastInfosCtrl'
-            }).
-            when('/chain/mined', {
-                templateUrl: 'views/api/mined.html',
-                controller: 'fastInfosCtrl'
-            }).
+// error handlers
 
-            // begin of: not yet, see README.md
-            when('/chain/supply/public', {
-                templateUrl: 'views/api/supplypublic.html',
-                controller: 'fastInfosCtrl'
-            }).*/
-            // end of: not yet, see README.md
-
-            otherwise({
-                redirectTo: '/'
-            });
-
-            //$locationProvider.html5Mode(true);
-    }])
-    .run(function($rootScope) {
-        var web3 = require('web3');
-
-        // begin AltSheets changes
-        web3.setProvider(new web3.providers.HttpProvider("http://"+GETH_HOSTNAME+":"+GETH_RPCPORT));
-        // end AltSheets changes
-
-        $rootScope.web3=web3;
-        // MetaMask injects its own web3 instance in all pages, override it
-        // as it might be not compatible with the one used here
-        if (window.web3)
-            window.web3 = web3;
-        function sleepFor( sleepDuration ){
-            var now = new Date().getTime();
-            while(new Date().getTime() < now + sleepDuration){ /* do nothing */ }
-        }
-        var connected = false;
-        if(!web3.isConnected()) {
-            $('#connectwarning').modal({keyboard:false,backdrop:'static'})
-            $('#connectwarning').modal('show')
-        }
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+    app.use(function(err, req, res, next) {
+        res.status(err.status || 500);
+        res.render('error', {
+            message: err.message,
+            error: err
+        });
     });
+}
+
+
+// production error handler
+// no stacktraces leaked to user
+app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: {}
+    });
+});
+
+var http = require('http').Server(app);
+//var io = require('socket.io')(http);
+
+// web3socket(io);
+
+http.listen(app.get('port'), '0.0.0.0', function() {
+    console.log('Express server listening on port ' + app.get('port'));
+});

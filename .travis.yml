@@ -1,14 +1,17 @@
 language: node_js
-node_js:
-  - "0.10"
-
-before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - npm start > /dev/null &
-  - npm run update-webdriver
-  - sleep 1 # give server time to start
-
+sudo: required
+dist: trusty
+node_js: '7'
+env: CXX=g++-4.8
+services:
+  - docker
+before_install:
+  - docker pull trufflesuite/ganache-cli
+  - docker run -d -p 8545:8545 -p 3000:3000 -p 27017:27017 trufflesuite/ganache-cli
+  - varA=`docker ps --no-trunc -q | cut -c 1-12`
+  - docker pull mongo
+  - docker run -d --network="container:$varA" mongo
+  - docker build -t ethereumclassic/explorer .
+  - docker run -d --network="container:$varA" ethereumclassic/explorer app.js
 script:
-  - node_modules/.bin/karma start karma.conf.js --no-auto-watch --single-run --reporters=dots --browsers=Firefox
-  - node_modules/.bin/protractor e2e-tests/protractor.conf.js --browser=firefox
+- npm run test
