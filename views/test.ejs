@@ -7,10 +7,10 @@
     <!-- BASICS -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Ethereum Classic Explorer</title>
+    <title>Gochain Explorer</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="/css/isotope.css" media="screen" />  
+    <link rel="stylesheet" type="text/css" href="/css/isotope.css" media="screen" />
     <link rel="stylesheet" href="/js/fancybox/jquery.fancybox.css" type="text/css" media="screen" />
     <link rel="stylesheet" href="/css/bootstrap.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.css">
@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/css/default.css">
     <link rel="icon" type="image/png" href="/favicon.ico">
   </head>
-   
+
   <body>
     <section id="header" class="appear"></section>
     <div class="navbar navbar-fixed-top" role="navigation" data-0="line-height:100px; height:100px; background-color:rgba(0,0,0,0.3);" data-300="line-height:60px; height:60px; background-color:rgba(0,0,0,1);">
@@ -35,10 +35,10 @@
     </div>
 
     <section class="featured">
-      <div class="container"> 
+      <div class="container">
         <div class="row mar-bot40">
           <div class="col-md-6 col-md-offset-3">
-            
+
             <div class="align-center">
               <h3 class="white">Search the Blockchain</h3>
             <br>
@@ -60,12 +60,12 @@
         </div>
       </div>
     </section>
-    
+
 
     <a name="services"></a>
     <section id="section-works" class="section appear clearfix">
       <div class="container">
-        
+
         <div class="row mar-bot40">
           <div class="col-md-12">
             <div class="section-header">
@@ -76,12 +76,12 @@
             <table id="transactions" class="table-striped table"></table>
           </div>
         </div>
-        
+
       </div>
     </section>
 
 
-    
+
   <section id="footer" class="section footer">
     <div class="container">
       <div class="row animated opacity mar-bot20" data-andown="fadeIn" data-animation="animation">
@@ -89,12 +89,11 @@
           <ul class="social-network social-circle">
             <li><a href="https://www.ethereumclassic.com" class="icoRss" title="Rss"><i class="fa fa-rss"></i></a></li>
             <li><a href="https://twitter.com/eiaine" class="icoTwitter" title="Twitter"><i class="fa fa-twitter"></i></a></li>
-          </ul>         
+          </ul>
         </div>
       </div>
 
       <div class="row align-center copyright">
-          <div class="col-sm-12"><p>Copyright &copy; 2016 EthereumClassic</p></div>
       </div>
     </div>
 
@@ -125,7 +124,7 @@ $(document).ready(function () {
         console.log(res);
 
         $('#addr_btn').removeAttr('disabled');
-        $('#addr_btn').removeClass('wait');   
+        $('#addr_btn').removeClass('wait');
         window.location.hash = "services";
         if (res.status == "error") {
           alert("Oops! Search error. Sorry.");
@@ -133,7 +132,7 @@ $(document).ready(function () {
         }
         $("#transactions").html("");
         $("#results").html("<h5><b>Address</b>: " + text+"</h5>");
-          
+
         $("#transactions").append("<tr><th>TxHash</th><th>from</th><th>to</th><th>Value</th></tr>");
 
           json = res;
@@ -143,7 +142,7 @@ $(document).ready(function () {
               "<td>" + json[i].to,
               '<td align="right">' + json[i].value)
           };
-          
+
         },
       error: function (request, status, error) {
         alert(error);
@@ -171,7 +170,7 @@ $("#block_btn").click(function getresponse(e){
         console.log(res);
 
         $('#block_btn').removeAttr('disabled');
-        $('#block_btn').removeClass('wait');   
+        $('#block_btn').removeClass('wait');
         window.location.hash = "services";
         if (res.status == "error") {
           alert("Oops! Search error. Sorry.");
@@ -179,7 +178,7 @@ $("#block_btn").click(function getresponse(e){
         }
         $("#transactions").html("");
         $("#results").html("<h5><b>Block Number</b>: " + text+"</h5>");
-          
+
         $("#transactions").append("<tr><th>TxHash</th><th></th><th></th><th>Value</th></tr>");
 
           json = res;
@@ -189,7 +188,7 @@ $("#block_btn").click(function getresponse(e){
               "<td>" + json[i].to,
               '<td align="right">' + json[i].value)
           };
-          
+
         },
       error: function (request, status, error) {
         alert(error);
@@ -217,7 +216,7 @@ $("#tx_btn").click(function getresponse(e){
         console.log(res);
 
         $('#tx_btn').removeAttr('disabled');
-        $('#tx_btn').removeClass('wait');   
+        $('#tx_btn').removeClass('wait');
         window.location.hash = "services";
         if (res.status == "error") {
           alert("Oops! Search error. Sorry.");
@@ -225,7 +224,7 @@ $("#tx_btn").click(function getresponse(e){
         }
         $("#transactions").html("");
         $("#results").html("<h5><b>TxHash</b>: " + text+"</h5>");
-          
+
         $("#transactions").append("<tr><th>TxHash</th><th></th><th></th><th>Value</th></tr>");
 
           json = res;
@@ -235,7 +234,7 @@ $("#tx_btn").click(function getresponse(e){
               "<td>" + json[i].to,
               '<td align="right">' + json[i].value)
           };
-          
+
         },
       error: function (request, status, error) {
         alert(error);
@@ -247,7 +246,7 @@ $("#tx_btn").click(function getresponse(e){
 
 </script>
 
-  <a href="#header" class="scrollup"><i class="fa fa-chevron-up"></i></a> 
+  <a href="#header" class="scrollup"><i class="fa fa-chevron-up"></i></a>
 
   <script src="/js/modernizr-2.6.2-respond-1.1.0.min.js"></script>
   <script src="/js/jquery.js"></script>
@@ -256,7 +255,7 @@ $("#tx_btn").click(function getresponse(e){
   <script src="/js/jquery.isotope.min.js"></script>
   <script src="/js/jquery.nicescroll.min.js"></script>
   <script src="/js/fancybox/jquery.fancybox.pack.js"></script>
-  <script src="/js/skrollr.min.js"></script>    
+  <script src="/js/skrollr.min.js"></script>
   <script src="/js/jquery.scrollTo-1.4.3.1-min.js"></script>
   <script src="/js/jquery.localscroll-1.2.7-min.js"></script>
   <script src="/js/stellar.js"></script>
