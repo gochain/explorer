@@ -1,14 +1,12 @@
-# ETCExplorer
+# GoChain Block Explorer
 
-<b>Live Version: [etherhub.io](http://etherhub.io)</b>
-
-Follow the project progress at: [ETC Block Explorer Development](https://trello.com/b/W3ftl57z/etc-block-explorer-development)
+Simple interface for exploring the GoChain blockchain.
 
 ## Local installation
 
 Clone the repo
 
-`git clone https://github.com/ethereumproject/explorer`
+`git clone https://github.com/gochain-io/explorer`
 
 Download [Nodejs and npm](https://docs.npmjs.com/getting-started/installing-node "Nodejs install") if you don't have them
 
@@ -25,7 +23,6 @@ Ubuntu: `sudo apt-get install -y mongodb-org`
 ## Populate the DB
 
 This will fetch and parse the entire blockchain.
-
 
 Basic settings(environment variables):
 
