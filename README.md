@@ -33,7 +33,7 @@ TERMINATE_DB - will terminate the block grabber once it gets to a block it has a
 ### Run:
 
 
-`npm start`
+`export RPC_HOST=IP && npm start`
 
 Leave this running in the background to continuously fetch new blocks.
 
