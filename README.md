@@ -1,4 +1,6 @@
-# GochainExplorer
+# GoChain Block Explorer
+
+Simple block explorer
 
 ## Local installation
 
