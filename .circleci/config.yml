@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    environment: # apparently expansion doesn't work here yet: https://discuss.circleci.com/t/environment-variable-expansion-in-working-directory/11322
+      - OS=linux
+      - ARCH=amd64
+    steps:
+      - checkout
+      - run:
+          name: update Docker
+          command: |
+            docker version
+            sudo service docker stop
+            curl -fsSL https://get.docker.com/ | sudo sh
+      - run: docker version
+      - run: make test
