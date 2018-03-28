@@ -1,8 +1,8 @@
 {
-  "name": "GochainExplorer",
+  "name": "GoChainExplorer",
   "private": false,
   "version": "0.2.0",
-  "description": "A lightweight gochain block explorer",
+  "description": "A lightweight GoChain block explorer",
   "repository": "https://github.com/gochain-io/explorer",
   "license": "MIT",
   "scripts": {

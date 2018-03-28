@@ -1,6 +1,6 @@
 # GoChain Block Explorer
 
-Simple block explorer
+Simple interface for exploring the GoChain blockchain.
 
 ## Local installation
 
