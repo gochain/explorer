@@ -3,7 +3,7 @@ var request = require("request");
 
 //tests for the express server
 
-describe("Classic Explorer Server Tests", function() {
+describe("GoChain Explorer Server Tests", function() {
 
   //ping the index page
   describe("Test index page", function() {
@@ -14,7 +14,7 @@ describe("Classic Explorer Server Tests", function() {
         done();
       });
     });
-    var badurl = "http://localhost:3000/ethereum_classic_is_best_classic";
+    var badurl = "http://localhost:3000/gochain_is_best_explorer";
     it("bad pages go to index", function(done) {
       request(badurl, function(error, response, body) {
         expect(response.statusCode).to.equal(200);
