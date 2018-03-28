@@ -30,12 +30,12 @@ PORT - server port where UI is running
 MONGO_URI - url to mongo DB ('mongodb://localhost/blockDB')
 RPC_HOST - host of the gochain
 RPC_PORT - port of the gochain
-LISTEN - do not refill DB, just listen for new blocks
 TERMINATE_DB - will terminate the block grabber once it gets to a block it has already stored in the DB
 
 ### Run:
 
-`npm start`
+
+`export RPC_HOST=IP && npm start`
 
 Leave this running in the background to continuously fetch new blocks.
 

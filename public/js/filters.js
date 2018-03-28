@@ -3,7 +3,7 @@ var getDifficulty = function(hashes) {
     borrowed from https://github.com/cubedro/eth-netstats :D
   */
 
-  var result = 0;
+  var result = 0.0;
   var unit = '';
 
   if(hashes !== 0 && hashes < 1000) {

@@ -1,4 +1,4 @@
-## Ethereum Classic Explorer License 
+## Ethereum Classic Explorer License
 
 Copyright (c) 2016 Ethereum Classic, and contributors to this project
 

@@ -13,33 +13,27 @@ var Transaction = mongoose.model('Transaction');
 var grabBlocks = function (config) {
     var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
         process.env.RPC_PORT.toString()));
-
-
-    if (process.env.LISTEN && process.env.LISTEN === true)
-        listenBlocks(config, web3);
-    else
-        setTimeout(function () {
-            grabBlock(config, web3, config.blocks.pop());
-        }, 2000);
-
+    listenBlocks(config, web3);
+    grabBlock(config, web3, config.blocks.pop());
 }
 
 var listenBlocks = function (config, web3) {
+    console.log("Started listening for a new blocks")
     var newBlocks = web3.eth.filter("latest");
     newBlocks.watch(function (error, log) {
-
         if (error) {
             console.log('Error: ' + error);
         } else if (log == null) {
             console.log('Warning: null block hash');
         } else {
-            grabBlock(config, web3, log);
+            console.log("Got new hash:", log);
+            grabBlock(config, web3, log, true);
         }
 
     });
 }
 
-var grabBlock = function (config, web3, blockHashOrNumber) {
+var grabBlock = function (config, web3, blockHashOrNumber, listening) {
     var desiredBlockHashOrNumber;
 
     // check if done
@@ -73,17 +67,10 @@ var grabBlock = function (config, web3, blockHashOrNumber) {
                     desiredBlockHashOrNumber);
             }
             else {
-                if (process.env.TERMINATE_DB && process.env.TERMINATE_DB === true) {
-                    checkBlockDBExistsThenWrite(config, blockData);
-                }
-                else {
-                    writeBlockToDB(config, blockData);
-                }
-                if (!(process.env.SKIP_TRANSACTIONS && process.env.SKIP_TRANSACTIONS === true))
-                    writeTransactionsToDB(config, blockData);
-                if ('listenOnly' in config && config.listenOnly === true)
+                // console.log("got the block:", blockData['number']);
+                checkBlockDBExistsThenWrite(config, blockData);
+                if (listening == true)
                     return;
-
                 if ('hash' in blockData && 'number' in blockData) {
                     // If currently working on an interval (typeof blockHashOrNumber === 'object') and
                     // the block number or block hash just grabbed isn't equal to the start yet:
@@ -97,10 +84,10 @@ var grabBlock = function (config, web3, blockHashOrNumber) {
                         )
                     ) {
                         blockHashOrNumber['end'] = blockData['number'] - 1;
-                        grabBlock(config, web3, blockHashOrNumber);
+                        checkBlockDBExistsThenGrab(config, web3, blockHashOrNumber);
                     }
                     else {
-                        grabBlock(config, web3, config.blocks.pop());
+                        grabBlock(config, web3, config.blocks.pop(), false);
                     }
                 }
                 else {
@@ -108,7 +95,7 @@ var grabBlock = function (config, web3, blockHashOrNumber) {
                     process.exit(9);
                 }
             }
-        });
+        }.bind({ listening: listening }));
     }
     else {
         console.log('Error: Aborted due to web3 is not connected when trying to ' +
@@ -133,10 +120,22 @@ var writeBlockToDB = function (config, blockData) {
             }
         } else {
 
-            console.log('DB successfully written for block number ' +
-                blockData.number.toString());
+            // console.log('DB successfully written block number ' +
+            //     blockData.number.toString());
         }
     });
+}
+
+var checkBlockDBExistsThenGrab = function (config, web3, blockHashOrNumber) {
+    Block.find({ number: blockHashOrNumber['end'] }, function (err, b) {
+        if (!b.length) {
+            grabBlock(config, web3, blockHashOrNumber, false);
+        } else {
+            blockHashOrNumber['end'] = blockHashOrNumber['end'] - 1;
+            checkBlockDBExistsThenGrab(config, web3, blockHashOrNumber);
+        }
+
+    })
 }
 
 /**
@@ -146,14 +145,10 @@ var writeBlockToDB = function (config, blockData) {
   */
 var checkBlockDBExistsThenWrite = function (config, blockData) {
     Block.find({ number: blockData.number }, function (err, b) {
-        if (!b.length)
+        if (!b.length) {
             writeBlockToDB(config, blockData);
-        else {
-            console.log('Aborting because block number: ' + blockData.number.toString() +
-                ' already exists in DB.');
-            process.exit(9);
+            writeTransactionsToDB(config, blockData);
         }
-
     })
 }
 
@@ -181,7 +176,7 @@ var writeTransactionsToDB = function (config, blockData) {
                     process.exit(9);
                 }
             } else
-                console.log('DB successfully written for block ' +
+                console.log('DB successfully written block: ' + blockData.number.toString() + ', transactions: ' +
                     blockData.transactions.length.toString());
         });
     }
