@@ -1,3 +1,4 @@
+set -e
 docker run --name test_web3 -d -p 8545:8545 -p 3000:3000 -p 27017:27017 trufflesuite/ganache-cli
 varA=`docker ps --no-trunc -q | cut -c 1-12`
 docker run --name test_mongo -d --network="container:$varA" mongo
