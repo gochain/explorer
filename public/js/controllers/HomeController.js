@@ -12,8 +12,8 @@ angular.module('BlocksApp').controller('HomeController', function ($rootScope, $
   $scope.reloadStats = function () {
     $http.post("/stats", { "action": "dbstats" })
       .then(function (res) {
-        $scope.stats.transactionsDb = res.data.transactionsDb;
-        $scope.stats.blocksDb = res.data.blocksDb;
+        $scope.stats.transactionsDb = Number(res.data.transactionsDb).toLocaleString();
+        $scope.stats.blocksDb = Number(res.data.blocksDb).toLocaleString() ;
       });
   }
 
