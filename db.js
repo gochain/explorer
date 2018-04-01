@@ -20,6 +20,7 @@ var Block = new Schema(
         "gasLimit": Number,
         "gasUsed": Number,
         "timestamp": Number,
+        "transactionsCount": Number,
         "uncles": [String]
     });
 

@@ -103,6 +103,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
 
 
 var writeBlockToDB = function (blockData) {
+    blockData.transactionsCount = blockData.transactions.length
     return new Block(blockData).save(function (err, block, count) {
         if (typeof err !== 'undefined' && err) {
             if (err.code == 11000) {
