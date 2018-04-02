@@ -1,5 +1,5 @@
 angular.module('BlocksApp').controller('AddressController', function($stateParams, $rootScope, $scope, $http, $location) {
-    $scope.$on('$viewContentLoaded', function() {   
+    $scope.$on('$viewContentLoaded', function() {
         // initialize core components
         App.initAjax();
     });
@@ -25,15 +25,6 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
       }
     });
 
-    // fetch ethf balance 
-    $http({
-      method: 'POST',
-      url: '/fiat',
-      data: {"addr": $scope.addrHash}
-    }).success(function(data) {
-      $scope.addr.ethfiat = data.balance;
-    });
-
     //fetch transactions
     var fetchTxs = function(count) {
       $("#table_txs").DataTable({
@@ -49,7 +40,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
                     [10, 20, 50, 100, 150, -1],
                     [10, 20, 50, 100, 150, "All"] // change per page values here
                 ],
-        "pageLength": 20, 
+        "pageLength": 20,
         "order": [
             [6, "desc"]
         ],
@@ -59,7 +50,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
           "infoEmpty": ":(",
           "infoFiltered": "(filtered from _MAX_ total txs)"
         },
-        "columnDefs": [ 
+        "columnDefs": [
           { "targets": [ 5 ], "visible": false, "searchable": false },
           {"type": "date", "targets": 6},
           {"orderable": false, "targets": [0,2,3]},
@@ -89,9 +80,9 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         data: {"addr_trace": $scope.addrHash}
       }).success(function(data) {
         $scope.internal_transactions = data;
-      });      
+      });
     }
-    
+
 })
 .directive('contractSource', function($http) {
   return {

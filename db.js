@@ -20,6 +20,7 @@ var Block = new Schema(
         "gasLimit": Number,
         "gasUsed": Number,
         "timestamp": Number,
+        "transactionsCount": Number,
         "uncles": [String]
     });
 
@@ -42,8 +43,8 @@ var Transaction = new Schema(
         "blockHash": String,
         "blockNumber": { type: Number, index: true },
         "transactionIndex": Number,
-        "from": String,
-        "to": String,
+        "from": { type: String, index: true },
+        "to": { type: String, index: true },
         "value": String,
         "gas": Number,
         "gasPrice": String,
