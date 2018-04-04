@@ -1,4 +1,5 @@
 # GoChain Block Explorer
+[![CircleCI](https://circleci.com/gh/gochain-io/explorer.svg?style=svg)](https://circleci.com/gh/gochain-io/explorer)
 
 Simple interface for exploring the GoChain blockchain.
 
