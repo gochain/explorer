@@ -1,16 +1,16 @@
 angular.module('BlocksApp').controller('StatsController', function($stateParams, $rootScope, $scope) {
 
     $rootScope.isHome = false;
-  
+
     /*
-      Chart types: 
-        etc_hashrate: ETC Hashrate Growth
+      Chart types:
+        etc_hashrate: GOC Hashrate Growth
         miner_hashrate: Miner Hashrate Distribution
     */
 
     const CHART_TYPES = {
         "etc_hashrate": {
-            "title": "ETC Hashrate Growth"
+            "title": "GOC Hashrate Growth"
         },
         "miner_hashrate": {
             "title": "Miner Hashrate Distribution"
