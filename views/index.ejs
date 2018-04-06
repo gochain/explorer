@@ -3,38 +3,50 @@
 <!--[if IE 9]> <html lang="en" class="ie9 no-js" data-ng-app="MetronicApp"> <![endif]-->
 <!--[if !IE]><!-->
 <html lang="en" data-ng-app="BlocksApp">
-    <!--<![endif]-->
-    <!-- BEGIN HEAD -->
-    <head>
-        <title data-ng-bind="'GoChain | ' + $state.current.data.pageTitle"></title>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta content="width=device-width, initial-scale=1" name="viewport" />
-        <meta content="GoChain Block Explorer" name="description"/>
-        <meta content="Elaine" name="author" />
-        <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico"/>
+<!--<![endif]-->
+<!-- BEGIN HEAD -->
 
-        <base href="/">
-        <!-- BEGIN GLOBAL MANDATORY STYLES -->
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css" />
-        <link href="/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-        <link href="/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
-        <link href="/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
-        <link href="/plugins/uniform/css/uniform.default.css" rel="stylesheet" type="text/css" />
-        <link href="/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css" />
-        <!-- END GLOBAL MANDATORY STYLES -->
-        <!-- BEGIN DYNAMICALLY LOADED CSS FILES(all plugin and page related styles must be loaded between GLOBAL and THEME css files ) -->
-        <link id="ng_load_plugins_before" />
-        <!-- END DYNAMICALLY LOADED CSS FILES -->
-        <!-- BEGIN THEME STYLES -->
-        <link href="/css/components.min.css" id="style_components" rel="stylesheet" type="text/css" />
-        <link href="/css/plugins.min.css" rel="stylesheet" type="text/css" />
-        <link href="/css/layout.css" rel="stylesheet" type="text/css" />
-        <link href="/css/custom.css" rel="stylesheet" type="text/css" />
-        <link href="/css/green-haze.min.css" rel="stylesheet" type="text/css" />
-        <!-- END THEME STYLES -->
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115867674-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-115867674-3');
+    </script>
+    <title data-ng-bind="'GoChain | ' + $state.current.data.pageTitle"></title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content="GoChain Block Explorer" name="description" />
+    <meta content="Elaine" name="author" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+
+    <base href="/">
+    <!-- BEGIN GLOBAL MANDATORY STYLES -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700&subset=all" rel="stylesheet" type="text/css"
+    />
+    <link href="/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="/plugins/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="/plugins/uniform/css/uniform.default.css" rel="stylesheet" type="text/css" />
+    <link href="/plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet" type="text/css" />
+    <!-- END GLOBAL MANDATORY STYLES -->
+    <!-- BEGIN DYNAMICALLY LOADED CSS FILES(all plugin and page related styles must be loaded between GLOBAL and THEME css files ) -->
+    <link id="ng_load_plugins_before" />
+    <!-- END DYNAMICALLY LOADED CSS FILES -->
+    <!-- BEGIN THEME STYLES -->
+    <link href="/css/components.min.css" id="style_components" rel="stylesheet" type="text/css" />
+    <link href="/css/plugins.min.css" rel="stylesheet" type="text/css" />
+    <link href="/css/layout.css" rel="stylesheet" type="text/css" />
+    <link href="/css/custom.css" rel="stylesheet" type="text/css" />
+    <link href="/css/green-haze.min.css" rel="stylesheet" type="text/css" />
+    <!-- END THEME STYLES -->
     <!-- END HEAD -->
     <!-- BEGIN BODY -->
+
     <body ng-controller="MainController" class="page-header-fixed page-on-load" ng-class="{'page-content-white': settings.layout.pageContentWhite,'page-container-bg-solid': settings.layout.pageBodySolid}">
         <!-- BEGIN PAGE SPINNER -->
         <div ng-spinner-bar class="page-spinner-bar">
@@ -55,7 +67,8 @@
                     <!-- BEGIN CONTAINER -->
                     <div class="page-container">
                         <!-- BEGIN PAGE HEAD -->
-                        <div ng-show="!isHome" data-ng-include="'tpl/page-head.html'" data-ng-controller="PageHeadController" class="page-head"> </div>
+                        <div ng-show="!isHome" data-ng-include="'tpl/page-head.html'" data-ng-controller="PageHeadController" class="page-head">
+                        </div>
                         <!-- END PAGE HEAD -->
                         <!-- BEGIN PAGE CONTENT -->
                         <div class="page-content">

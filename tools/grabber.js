@@ -10,9 +10,7 @@ var mongoose = require('mongoose');
 var Block = mongoose.model('Block');
 var Transaction = mongoose.model('Transaction');
 
-var grabBlocks = function () {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-        process.env.RPC_PORT.toString()));
+var grabBlocks = function (web3) {
     listenBlocks(web3);
     grabBlock(web3, { 'start': 0, 'end': 'latest' }, false);
 }
@@ -68,7 +66,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
                     desiredBlockHashOrNumber);
             }
             else {
-                checkBlockDBExistsThenWrite(blockData);
+                checkBlockDBExistsThenWrite(web3, blockData);
                 if (listening == true)
                     return;
                 if ('hash' in blockData && 'number' in blockData) {
@@ -102,7 +100,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
 }
 
 
-var writeBlockToDB = function (blockData) {
+var writeBlockToDB = function (web3, blockData) {
     blockData.transactionsCount = blockData.transactions.length
     return new Block(blockData).save(function (err, block, count) {
         if (typeof err !== 'undefined' && err) {
@@ -110,6 +108,7 @@ var writeBlockToDB = function (blockData) {
                 console.log('Skip: Duplicate key ' +
                     blockData.number.toString() + ': ' +
                     err);
+                cleanupBlockAndTransactionsThenGrab(web3, blockData)
             } else {
                 console.log('Error: Aborted due to error on ' +
                     'block number ' + blockData.number.toString() + ': ' +
@@ -119,7 +118,7 @@ var writeBlockToDB = function (blockData) {
         } else {
 
             console.log('DB successfully written block number ' +
-                blockData.number.toString());
+                blockData.number.toString(), " block hash :" + blockData.hash);
         }
     });
 }
@@ -138,17 +137,40 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
 }
 
 /**
+  *     cleanup records for specific block and transactions
+  */
+var cleanupBlockAndTransactionsThenGrab = function (web3, blockData) {
+    Block.remove({ number: blockData.number }, function (err) {
+        if (typeof err !== 'undefined' && err) {
+            console.log("Cannot remove block :", blockData.number, " Err:", err);
+        } else {
+            Transaction.remove({ blockNumber: blockData.number }, function (err) {
+                if (typeof err !== 'undefined' && err) {
+                    console.log("Cannot remove transactions for block :", blockData.number, " Err:", err);
+                } else {
+                    console.log("Transactions and block has been removed calling grab again:", blockData.number);
+                    setTimeout(function () {
+                        grabBlock(web3, blockData.number, false);
+                    }, 3000);
+                }
+            });
+        }
+    });
+}
+
+
+/**
   * Checks if the a record exists for the block number then ->
   *     if record exists: abort
   *     if record DNE: write a file for the block
   */
-var checkBlockDBExistsThenWrite = function (blockData) {
+var checkBlockDBExistsThenWrite = function (web3, blockData) {
     Block.find({ number: blockData.number }, function (err, b) {
         if (!b.length) {
-            writeBlockToDB(blockData);
+            writeBlockToDB(web3, blockData);
             writeTransactionsToDB(blockData);
         } else {
-            console.log("Block found in db: ", blockData.number.toString());
+            console.log("Block found in db: ", blockData.number.toString(), " block hash :" + blockData.hash);
         }
     })
 }
@@ -158,28 +180,32 @@ var checkBlockDBExistsThenWrite = function (blockData) {
 **/
 
 var writeTransactionsToDB = function (blockData) {
-    var bulkOps = [];
+
     if (blockData.transactions.length > 0) {
-        for (d in blockData.transactions) {
-            var txData = blockData.transactions[d];
-            txData.timestamp = blockData.timestamp;
-            txData.value = etherUnits.toEther(new BigNumber(txData.value), 'wei');
-            bulkOps.push(txData);
-        }
-        Transaction.collection.insert(bulkOps, function (err, tx) {
-            if (typeof err !== 'undefined' && err) {
-                if (err.code == 11000) {
-                    console.log('Skip: Duplicate key ' +
-                        err);
-                } else {
-                    console.log('Error: Aborted due to error: ' +
-                        err);
-                    // process.exit(9);
+        console.log("Block: ", blockData.number.toString(), " trying to add transactions to db:", blockData.transactions.length, " block hash :" + blockData.hash);
+        var chunkSize = 1000 //1000 transactions per block
+        for (var i = 0; i < blockData.transactions.length; i += chunkSize) {
+            chunk = blockData.transactions.slice(i, i + chunkSize);
+            var bulkOps = [];
+            for (d in chunk) {
+                var txData = chunk[d];
+                txData.timestamp = blockData.timestamp;
+                txData.value = etherUnits.toEther(new BigNumber(txData.value), 'wei');
+                bulkOps.push(txData);
+            }
+            Transaction.collection.insert(bulkOps, function (err, tx) {
+                if (typeof err !== 'undefined' && err) {
+                    if (err.code == 11000) {
+                        console.log('Skip: Duplicate key ' +
+                            err);
+                    } else {
+                        console.log('Error: Aborted due to error: ' +
+                            err);
+                        // process.exit(9);
+                    }
                 }
-            } else
-                console.log('DB successfully written block: ' + blockData.number.toString() + ', transactions: ' +
-                    blockData.transactions.length.toString());
-        });
+            });
+        }
     }
 }
 
@@ -230,16 +256,14 @@ var blockIter = function (web3, firstBlock, lastBlock, config) {
 }
 
 
-/** On Startup **/
-// geth --rpc --rpcaddr "localhost" --rpcport "8545"  --rpcapi "eth,net,web3"
-
-var config = {};
-
 // set the default geth port if it's not provided
-if (!('gethPort' in config) || (typeof process.env.RPC_PORT) !== 'number') {
+if ((typeof process.env.RPC_PORT) !== 'number') {
     process.env.RPC_PORT = 8545; // default
 }
 
+var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+    process.env.RPC_PORT.toString()));
 
-grabBlocks();
+
+grabBlocks(web3);
 // patchBlocks(config);
