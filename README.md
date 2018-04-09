@@ -29,9 +29,9 @@ Basic settings(environment variables):
 
 PORT - server port where UI is running
 MONGO_URI - url to mongo DB ('mongodb://localhost/blockDB')
-RPC_HOST - host of the gochain
-RPC_PORT - port of the gochain
-TERMINATE_DB - will terminate the block grabber once it gets to a block it has already stored in the DB
+RPC_HOST - host of the gochain (default it localhost)
+RPC_PORT - port of the gochain (default it 8545)
+RPC_SCHEME - scheme (http/https) used to connect to gochain (default is http)
 
 ### Run:
 

@@ -209,61 +209,62 @@ var writeTransactionsToDB = function (blockData) {
     }
 }
 
-/*
-  Patch Missing Blocks
-*/
-var patchBlocks = function (config) {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-        process.env.RPC_PORT.toString()));
+// /*
+//   Patch Missing Blocks
+// */
+// var patchBlocks = function (config) {
+//     var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+//         process.env.RPC_PORT.toString()));
 
-    // number of blocks should equal difference in block numbers
-    var firstBlock = 0;
-    var lastBlock = web3.eth.blockNumber;
-    blockIter(web3, firstBlock, lastBlock, config);
-}
+//     // number of blocks should equal difference in block numbers
+//     var firstBlock = 0;
+//     var lastBlock = web3.eth.blockNumber;
+//     blockIter(web3, firstBlock, lastBlock, config);
+// }
 
-var blockIter = function (web3, firstBlock, lastBlock, config) {
-    // if consecutive, deal with it
-    if (lastBlock < firstBlock)
-        return;
-    if (lastBlock - firstBlock === 1) {
-        [lastBlock, firstBlock].forEach(function (blockNumber) {
-            Block.find({ number: blockNumber }, function (err, b) {
-                if (!b.length)
-                    grabBlock(web3, firstBlock);
-            });
-        });
-    } else if (lastBlock === firstBlock) {
-        Block.find({ number: firstBlock }, function (err, b) {
-            if (!b.length)
-                grabBlock(web3, firstBlock);
-        });
-    } else {
+// var blockIter = function (web3, firstBlock, lastBlock, config) {
+//     // if consecutive, deal with it
+//     if (lastBlock < firstBlock)
+//         return;
+//     if (lastBlock - firstBlock === 1) {
+//         [lastBlock, firstBlock].forEach(function (blockNumber) {
+//             Block.find({ number: blockNumber }, function (err, b) {
+//                 if (!b.length)
+//                     grabBlock(web3, firstBlock);
+//             });
+//         });
+//     } else if (lastBlock === firstBlock) {
+//         Block.find({ number: firstBlock }, function (err, b) {
+//             if (!b.length)
+//                 grabBlock(web3, firstBlock);
+//         });
+//     } else {
 
-        Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
-            var expectedBlocks = lastBlock - firstBlock + 1;
-            if (c === 0) {
-                grabBlock(web3, { 'start': firstBlock, 'end': lastBlock });
-            } else if (expectedBlocks > c) {
-                console.log("Missing: " + JSON.stringify(expectedBlocks - c));
-                var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
-                blockIter(web3, firstBlock, midBlock, config);
-                blockIter(web3, midBlock + 1, lastBlock, config);
-            } else
-                return;
-        })
-    }
-}
+//         Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
+//             var expectedBlocks = lastBlock - firstBlock + 1;
+//             if (c === 0) {
+//                 grabBlock(web3, { 'start': firstBlock, 'end': lastBlock });
+//             } else if (expectedBlocks > c) {
+//                 console.log("Missing: " + JSON.stringify(expectedBlocks - c));
+//                 var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
+//                 blockIter(web3, firstBlock, midBlock, config);
+//                 blockIter(web3, midBlock + 1, lastBlock, config);
+//             } else
+//                 return;
+//         })
+//     }
+// }
 
 
 // set the default geth port if it's not provided
-if ((typeof process.env.RPC_PORT) !== 'number') {
+if ((typeof process.env.RPC_PORT) !== 'string') {
     process.env.RPC_PORT = 8545; // default
 }
 
-var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-    process.env.RPC_PORT.toString()));
-
+var host = process.env.RPC_HOST || 'localhost'
+var port = process.env.RPC_PORT || '8545'
+var scheme = process.env.RPC_SCHEME || 'http'
+console.log("CONNECTING TO:", scheme, "://", host, ":", port);
+web3 = new Web3(new Web3.providers.HttpProvider(scheme + "://" + host + ":" + port));
 
 grabBlocks(web3);
-// patchBlocks(config);
