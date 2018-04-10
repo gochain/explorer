@@ -257,14 +257,8 @@ var writeTransactionsToDB = function (blockData) {
 
 
 // set the default geth port if it's not provided
-if ((typeof process.env.RPC_PORT) !== 'string') {
-    process.env.RPC_PORT = 8545; // default
-}
-
-var host = process.env.RPC_HOST || 'localhost'
-var port = process.env.RPC_PORT || '8545'
-var scheme = process.env.RPC_SCHEME || 'http'
-console.log("CONNECTING TO:", scheme, "://", host, ":", port);
-web3 = new Web3(new Web3.providers.HttpProvider(scheme + "://" + host + ":" + port));
+var url = process.env.RPC_URL || 'http://localhost:8545'
+console.log("CONNECTING TO:", url);
+web3 = new Web3(new Web3.providers.HttpProvider(url));
 
 grabBlocks(web3);

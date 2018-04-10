@@ -18,10 +18,8 @@ var filterTrace = require('./filters').filterTrace;
 if (typeof web3 !== "undefined") {
   web3 = new Web3(web3.currentProvider);
 } else {
-  var host = process.env.RPC_HOST || 'localhost'
-  var port = process.env.RPC_PORT || '8545'
-  var scheme = process.env.RPC_SCHEME || 'http'
-  web3 = new Web3(new Web3.providers.HttpProvider(scheme + "://" + host + ":" + port));
+  var url = process.env.RPC_URL || 'http://localhost:8545'
+  web3 = new Web3(new Web3.providers.HttpProvider(url));
 }
 
 if (web3.isConnected())
