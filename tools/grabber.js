@@ -17,12 +17,22 @@ var grabBlocks = function (web3) {
 
 var listenBlocks = function (web3) {
     console.log("Started listening for a new blocks")
-    var newBlocks = web3.eth.filter("latest");
+    var newBlocks
+    try {
+        newBlocks = web3.eth.filter("latest");
+    } catch (e) {
+        if (e instanceof TypeError) {
+            grabBlocks(web3);
+        } else {
+            console.log("Exception:", e)
+            throw (e);
+        }
+    }
     newBlocks.watch(function (error, log) {
         if (error) {
             console.log('Error: ' + error);
             newBlocks.stopWatching();
-            grabBlocks();
+            grabBlocks(web3);
             console.log('Stopped watching, restarting filter');
         } else if (log == null) {
             console.log('Warning: null block hash');
