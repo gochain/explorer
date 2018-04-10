@@ -17,12 +17,22 @@ var grabBlocks = function (web3) {
 
 var listenBlocks = function (web3) {
     console.log("Started listening for a new blocks")
-    var newBlocks = web3.eth.filter("latest");
+    var newBlocks
+    try {
+        newBlocks = web3.eth.filter("latest");
+    } catch (e) {
+        if (e instanceof TypeError) {
+            grabBlocks(web3);
+        } else {
+            console.log("Exception:", e)
+            throw (e);
+        }
+    }
     newBlocks.watch(function (error, log) {
         if (error) {
             console.log('Error: ' + error);
             newBlocks.stopWatching();
-            grabBlocks();
+            grabBlocks(web3);
             console.log('Stopped watching, restarting filter');
         } else if (log == null) {
             console.log('Warning: null block hash');
@@ -209,61 +219,56 @@ var writeTransactionsToDB = function (blockData) {
     }
 }
 
-/*
-  Patch Missing Blocks
-*/
-var patchBlocks = function (config) {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-        process.env.RPC_PORT.toString()));
+// /*
+//   Patch Missing Blocks
+// */
+// var patchBlocks = function (config) {
+//     var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
+//         process.env.RPC_PORT.toString()));
 
-    // number of blocks should equal difference in block numbers
-    var firstBlock = 0;
-    var lastBlock = web3.eth.blockNumber;
-    blockIter(web3, firstBlock, lastBlock, config);
-}
+//     // number of blocks should equal difference in block numbers
+//     var firstBlock = 0;
+//     var lastBlock = web3.eth.blockNumber;
+//     blockIter(web3, firstBlock, lastBlock, config);
+// }
 
-var blockIter = function (web3, firstBlock, lastBlock, config) {
-    // if consecutive, deal with it
-    if (lastBlock < firstBlock)
-        return;
-    if (lastBlock - firstBlock === 1) {
-        [lastBlock, firstBlock].forEach(function (blockNumber) {
-            Block.find({ number: blockNumber }, function (err, b) {
-                if (!b.length)
-                    grabBlock(web3, firstBlock);
-            });
-        });
-    } else if (lastBlock === firstBlock) {
-        Block.find({ number: firstBlock }, function (err, b) {
-            if (!b.length)
-                grabBlock(web3, firstBlock);
-        });
-    } else {
+// var blockIter = function (web3, firstBlock, lastBlock, config) {
+//     // if consecutive, deal with it
+//     if (lastBlock < firstBlock)
+//         return;
+//     if (lastBlock - firstBlock === 1) {
+//         [lastBlock, firstBlock].forEach(function (blockNumber) {
+//             Block.find({ number: blockNumber }, function (err, b) {
+//                 if (!b.length)
+//                     grabBlock(web3, firstBlock);
+//             });
+//         });
+//     } else if (lastBlock === firstBlock) {
+//         Block.find({ number: firstBlock }, function (err, b) {
+//             if (!b.length)
+//                 grabBlock(web3, firstBlock);
+//         });
+//     } else {
 
-        Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
-            var expectedBlocks = lastBlock - firstBlock + 1;
-            if (c === 0) {
-                grabBlock(web3, { 'start': firstBlock, 'end': lastBlock });
-            } else if (expectedBlocks > c) {
-                console.log("Missing: " + JSON.stringify(expectedBlocks - c));
-                var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
-                blockIter(web3, firstBlock, midBlock, config);
-                blockIter(web3, midBlock + 1, lastBlock, config);
-            } else
-                return;
-        })
-    }
-}
+//         Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
+//             var expectedBlocks = lastBlock - firstBlock + 1;
+//             if (c === 0) {
+//                 grabBlock(web3, { 'start': firstBlock, 'end': lastBlock });
+//             } else if (expectedBlocks > c) {
+//                 console.log("Missing: " + JSON.stringify(expectedBlocks - c));
+//                 var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
+//                 blockIter(web3, firstBlock, midBlock, config);
+//                 blockIter(web3, midBlock + 1, lastBlock, config);
+//             } else
+//                 return;
+//         })
+//     }
+// }
 
 
 // set the default geth port if it's not provided
-if ((typeof process.env.RPC_PORT) !== 'number') {
-    process.env.RPC_PORT = 8545; // default
-}
-
-var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-    process.env.RPC_PORT.toString()));
-
+var url = process.env.RPC_URL || 'http://localhost:8545'
+console.log("CONNECTING TO:", url);
+web3 = new Web3(new Web3.providers.HttpProvider(url));
 
 grabBlocks(web3);
-// patchBlocks(config);
