@@ -1,0 +1,60 @@
+version: "3"
+services:
+  web:
+    container_name: web
+    image: gochain/explorer:latest
+    command: "node app.js"
+    links:
+        - "mongodb"
+    ports:
+        - "80:80"
+    depends_on:
+      - mongodb
+    environment:
+          - RPC_URL=https://testnet-rpc.gochain.io:443
+          - PORT=80
+          - MONGO_URI=mongodb://mongodb/blockDB
+  grabber:
+    container_name: grabber
+    image: gochain/explorer:latest
+    depends_on:
+      - web
+    links:
+        - "mongodb"
+    command: "node tools/grabber.js"
+    restart: "always"
+    environment:
+          - RPC_URL=https://testnet-rpc.gochain.io:443
+          - MONGO_URI=mongodb://mongodb/blockDB
+  mongodb:
+        image: mongo:latest
+        container_name: "mongodb"
+        environment:
+          - MONGO_DATA_DIR=/data/db
+          - MONGO_LOG_DIR=/dev/null
+        volumes:
+          - ./data/db:/data/db
+        command: mongod --smallfiles --logpath=/dev/null # --quiet
+  dd-agent:
+    container_name: dd-agent
+    image: datadog/agent:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /root/dd-agent-conf.d:/conf.d:ro
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+      - /etc/passwd:/etc/passwd:ro
+    depends_on:
+      - node
+    network_mode: "service:node"
+    environment:
+      DD_LOGS_ENABLED: 'true'
+      DD_PROCESS_AGENT_ENABLED: 'true'
+      DD_API_KEY: 526d7665034cb24c3bf25e8e17192c00
+      SD_BACKEND: docker
+  watchtower:
+    container_name: watchtower
+    image: v2tec/watchtower:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
