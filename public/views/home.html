@@ -1,18 +1,20 @@
 <div class="row">
     <div class="col-md-12 offset-md-1">
         <div class="col-sm-5">
-                <span class="caption-subject font-red bold">Transactions in database:</span> {{stats.transactionsDb}} </p>
+            <span class="caption-subject">Transactions in database:</span> {{stats.transactionsDb}} </p>
         </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <!-- BEGIN PORTLET-->
-        <div class="portlet light">
+        <div class="portlet">
             <div class="portlet-title">
-                <div class="caption caption-md">
-                    <i class="fa fa-cubes font-red"></i>
-                    <span class="caption-subject font-red bold uppercase">Blocks</span>
+                <div class="caption caption-md col-sm-4">
+                    <span class="bold">Block</span>
+                </div>
+                <div class="caption caption-md col-sm-4">
+                    <span class="bold">Signer Address</span>
                 </div>
                 <div class="actions">
                     <div class="btn-group">
@@ -24,21 +26,16 @@
             </div>
             <div class="portlet-body">
                 <div class="todo-tasklist scrollable">
-                    <div ng-repeat="t in latest_blocks track by $index" class="todo-tasklist-item item-border-green row" ng-class="(t.extraData.indexOf('Parity') > -1) ? 'item-border-red': '';(t.extraData.indexOf('Pool') > -1) ? 'item-border-blue': ''">
+                    <div ng-repeat="t in latest_blocks track by $index" class="block-row row" ng-class="(t.extraData.indexOf('Parity') > -1) ? 'item-border-red': '';(t.extraData.indexOf('Pool') > -1) ? 'item-border-blue': ''">
                         <!--TODO: color by known miners -->
                         <div class="col-sm-4">
-                            <span class="todo-tasklist-item-title">
+                            <span>
                                 <i class="fa fa-cube"></i>
                                 <a href="/block/{{t.number}}">{{t.number}}</a>
                             </span>
                             <br>
                             <span class="todo-tasklist-date">
                                 <i class="fa fa-hourglass-o"></i>{{t.timestamp | timeDuration }} ago</span>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="todo-tasklist-item-text">
-                                <a href="/addr/{{t.miner}}">{{t.extraData}}</a>
-                            </div>
                         </div>
                         <div class="col-sm-4">
                             <div class="todo-tasklist-item-text">

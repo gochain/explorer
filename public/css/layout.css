@@ -47,10 +47,57 @@
     width: 100%;
     margin: 0;
     border: 0;
-    padding: 0;
-    height: 126px;
+    padding: 2rem;
     background-image: none;
 }
+
+.page-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 5rem;
+    height: 100vh;
+    background-color: #3E454A;
+    transition: width .2s ease-in-out;
+    z-index: 2;
+    display: flex;
+    justify-content: flex-start;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+.page-navbar span {
+    visibility: hidden;
+    width: 0;
+    padding-left: 1rem;
+}
+
+.page-navbar a {
+    color: #98B8BA;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.page-navbar:hover {
+    width: 15rem;
+}
+
+.page-navbar:hover span {
+    width: auto;
+    visibility: visible;
+}
+
+.page-navbar ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.page-navbar li {
+    margin-bottom: 1rem;
+}
+
 
 .page-header:after,.page-header:before {
     content: " ";
@@ -80,8 +127,7 @@
 .page-header .page-header-top .page-logo {
     float: left;
     display: block;
-    width: 255px;
-    height: 75px;
+    width: 25rem;
     position: absolute;
 }
 
@@ -1077,6 +1123,7 @@ body,html {
     display: table;
     width: 100%;
     table-layout: fixed;
+    margin-left: 5rem;
 }
 
 .page-wrapper .page-wrapper-row {
@@ -1099,8 +1146,21 @@ body,html {
     clear: both;
 }
 
-.page-head {
-    background: #fff;
+tr td {
+    padding: 1rem !important;
+    border-top: 1px solid #647982 !important;
+}
+
+tr th {
+    border-bottom: none !important;
+}
+
+tr:last-child td {
+    border-bottom: 1px solid #647982 !important;
+}
+
+tr:hover, .table-hover>tbody>tr:hover {
+    background: #3c3f3f !important;
 }
 
 .page-head .page-title {
@@ -1175,6 +1235,19 @@ body,html {
     }
 }
 
+.portlet-title {
+    border-bottom-color: #647982 !important;
+}
+
+.block-row {
+    padding: 1rem;
+    border-bottom: 1px solid #647982;
+}
+
+.block-row:last-child {
+    border-bottom: none;
+}
+
 .portlet .portlet-input .form-control {
     background: #F1F3F8;
     border-radius: 0 !important;
@@ -1188,6 +1261,7 @@ body,html {
 .page-prefooter {
     padding: 30px 0;
     clear: both;
+    background: #2a2d2f !important;
 }
 
 .page-prefooter h2 {
@@ -1236,6 +1310,7 @@ body,html {
     font-size: 13px;
     font-weight: 300;
     padding: 17px 0;
+    background: #2a2d2f !important;
 }
 
 .page-footer a {
