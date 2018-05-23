@@ -5,16 +5,46 @@
 /* ==== overwrite bootstrap standard ==== */
 @import url('overwrite.css');
 @import url('animate.css');
+@import url('forms.css');
 /*==========================================================================
   General
   ========================================================================== */
+html {
+	font-size: 62.5%;
+}
+
 body {
-	color:#777;
-	background: #f7f7f7;
-	font-size: 16px;
+	color: #98B8BA;
+	background: #2a2d2f;
+	font-size: 1.6rem;
 	line-height: 1.6em;
 	font-weight: 300;
 	text-shadow: none;
+}
+
+.page-header {
+	display: inline-block;
+	background: #2a2d2f;
+}
+
+.sugar svg, .hamburger svg {
+	display: inline-block;
+	width: 3rem;
+}
+
+
+.page-logo svg .cls-1,
+.page-logo svg .cls-2,
+.page-logo svg .cls-3 {
+	fill:#fff;
+	stroke:#fff;
+	stroke-miterlimit:10;
+}
+.page-logo svg .cls-1{
+	 stroke-width:4px;
+}
+.page-logo svg .cls-3{
+	stroke-width:18px;
 }
 
 button.wait {
@@ -84,7 +114,12 @@ small {
 	font-weight: 100;
 }
 
+a {
+	color: #36C6D3;
+}
+
 a:hover {
+	color: #49D9E6;
 	text-decoration: none;
 }
 

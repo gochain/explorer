@@ -1,4 +1,3 @@
-div.page-logo {overflow: visible;}
 img.logo-default {
     max-height: 150px;
     height: 100px;
@@ -35,9 +34,7 @@ img.logo-default {
     text-align: center;
 }
 .eth-stat-text {
-    color: #5b9bd1;
-    font-size: 13px;
-    font-weight: 800;
+    font-weight: 700;
     text-align: center;
 }
 .fade {opacity: 0.6}
@@ -129,4 +126,42 @@ li.ng-scope {
 }
 ::-webkit-scrollbar-track {
     background-color: transparent;
+}
+
+.nav-tabs li.active a {
+    color: inherit !important;
+    text-transform: capitalize;
+}
+
+.tabbable-line .tab-content {
+    border-top: 1px solid #647982 !important;
+}
+
+.table-scrollable {
+    border: none !important;
+}
+
+table.dataTable.no-footer {
+    border: none !important;
+}
+
+.table-scrollable .table, table.dataTable tr.heading > th, .table-striped>tbody>tr, table.dataTable tbody tr, table.dataTable td.sorting_1, table.dataTable td.sorting_2, table.dataTable td.sorting_3, table.dataTable th.sorting_1, table.dataTable th.sorting_2, table.dataTable th.sorting_3 {
+    background-color: #2a2d2f !important;
+}
+
+.pagination>.disabled>a, .pagination>.disabled>a:focus, .pagination>.disabled>a:hover, .pagination>.disabled>span, .pagination>.disabled>span:focus, .pagination>.disabled>span:hover, .pagination>li>a, .pagination>li>span {
+    background-color: #2a2d2f !important;
+    border-color: #647982 !important;
+    color: #36C6D3 !important;
+}
+
+.pagination>.active>a, .pagination>.active>a:focus, .pagination>.active>a:hover, .pagination>.active>span, .pagination>.active>span:focus, .pagination>.active>span:hover {
+    background-color: #2a2d2f !important;
+    color: #36C6D3 !important;
+    border-color: #36c6d3 !important;
+}
+
+.pagination>li>a:hover {
+    border-color: #36c6d3 !important;
+    color: #49D9E6 !important;
 }

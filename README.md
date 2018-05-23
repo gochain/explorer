@@ -33,8 +33,14 @@ RPC_URL - URL of the gochain (default it http://localhost:8545)
 
 ### Run:
 
+Modify `.env.sh` to include proper environment variables:
 
-`export RPC_HOST=IP && npm start`
+    export PORT=8000
+    export MONGO_URI=mongodb://localhost:27017/blockDB
+    export RPC_URL=https://testnet-rpc.gochain.io:443
+    export RPC_IP=testnet-rpc.gochain.io
+
+Then run `npm start`
 
 Leave this running in the background to continuously fetch new blocks.
 
