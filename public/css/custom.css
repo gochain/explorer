@@ -33,6 +33,11 @@ img.logo-default {
     font-size: 25px;
     text-align: center;
 }
+.eth-stat-title-small {
+    font-size: 15px;
+    text-align: center;
+}
+
 .eth-stat-text {
     font-weight: 700;
     text-align: center;

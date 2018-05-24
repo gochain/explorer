@@ -8,8 +8,8 @@
         <div class="row">
             <div class="col-md-6 center">
               <div >
-                <span class="eth-stat-title">
-                  {{ addr.balance}} </span><br>
+                <span class="{{(addr.balance.toString().length < 10) && 'eth-stat-title' || 'eth-stat-title-small'}}">
+                  {{ addr.balance}} -- {{addr.balance.toString().length}} </span><br>
                 <span class="eth-stat-text">
                   GOC Balance <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" title="Note: Balance may not reflect transaction data if you have transactions resulting from Contract Internal Transactions. We are working on adding that functionality."></i>
                   </span><br>
