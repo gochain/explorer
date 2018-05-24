@@ -9,7 +9,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
 
     $rootScope.$state.current.data["pageSubTitle"] = $stateParams.hash;
     $scope.addrHash = $stateParams.hash;
-    $scope.addr = {"balance": 0, "count": 0};
+    $scope.addr = {"balance": 0, "count": 0, "signed": 0};
 
     //fetch web3 stuff
     $http({
@@ -23,6 +23,15 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         $rootScope.$state.current.data["pageTitle"] = "Contract Address";
         fetchInternalTxs();
       }
+    });
+
+    //fetch signed blocks
+    $http({
+      method: 'POST',
+      url: '/signed',
+      data: {"addr": $scope.addrHash}
+    }).success(function(data) {
+      $scope.addr.signed = data.signed;      
     });
 
     //fetch transactions

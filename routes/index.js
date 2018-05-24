@@ -34,6 +34,8 @@ module.exports = function(app){
 
   app.post('/stats', stats);
 
+  app.post('/signed', blocksSignedByAddr);
+
 
 }
 
@@ -134,6 +136,23 @@ var getData = function(req, res){
 /*
   temporary blockstats here
 */
+var blocksSignedByAddr = function(req, res) {
+  var addr = req.body.addr.toLowerCase();
+  Block.count({miner:addr}, function (err, blockResult) {
+    if (err) {
+      console.error(err);
+      res.status(500).send();
+    } else {
+      console.log("Number of blocks mined by specific address in DB:",blockResult);
+      res.write(JSON.stringify(
+        {
+          signed: blockResult
+        }
+      ));
+      res.end();
+    }});
+}
+
 var latestBlock = function(req, res) {
   var block = Block.findOne({}, "totalDifficulty")
                       .lean(true).sort('-number');
