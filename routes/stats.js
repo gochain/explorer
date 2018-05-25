@@ -99,7 +99,7 @@ var getHashrate = function (res) {
 }
 
 /**
-  Swipe GOC ETH data
+  Swipe GO ETH data
 **/
 var getEtcEth = function (res) {
   var options = [{
