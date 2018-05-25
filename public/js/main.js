@@ -308,6 +308,13 @@ BlocksApp.filter('timeDuration', function() {
     return getDifficulty(hashes);
   };
 }) 
+.filter('balance', function() {
+    return function(val) {        
+        var parts = val.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+    };
+  }) 
 .filter('teraHashes', function() {
     return function(hashes) {
         var result = hashes / Math.pow(1000, 4);
