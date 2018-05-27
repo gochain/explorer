@@ -39,8 +39,13 @@ var listenBlocks = function (web3) {
         } else {
             console.log("Got new hash:", hash);
             web3.eth.getBlock(hash, false, function (error, block) {
-                console.log("hash ", hash, " converted into block:", block.number);
-                grabBlock(web3, block.number, true);
+                if (error) {
+                    console.log('Warning: error on getting block with hash/number: ' +
+                    hash + ': ' + error);
+                } else {
+                    console.log("hash ", hash, " converted into block:", block.number);
+                    grabBlock(web3, block.number, true);
+                }
             });
 
         }
