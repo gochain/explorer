@@ -247,4 +247,16 @@ a.btn,.btn:focus {
    color:#fff;
 }
 
+.top-menu, .page-header .search-form .input-group, .page-head {
+    background-color: inherit !important;
+}
 
+.dataTables_wrapper .dataTables_filter {
+    color: inherit;
+}
+
+@media (max-width: 991px) {
+    .page-header .search-form {
+        background-color: inherit !important;
+    }
+}
