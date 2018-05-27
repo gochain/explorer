@@ -28,17 +28,21 @@ var listenBlocks = function (web3) {
             throw (e);
         }
     }
-    newBlocks.watch(function (error, log) {
+    newBlocks.watch(function (error, hash) {
         if (error) {
             console.log('Error: ' + error);
             newBlocks.stopWatching();
             grabBlocks(web3);
             console.log('Stopped watching, restarting filter');
-        } else if (log == null) {
+        } else if (hash == null) {
             console.log('Warning: null block hash');
         } else {
-            console.log("Got new hash:", log);
-            grabBlock(web3, log, true);
+            console.log("Got new hash:", hash);
+            web3.eth.getBlock(hash, false, function (error, block) {
+                console.log("hash ", hash, " converted into block:", block.number);
+                grabBlock(web3, block.number, true);
+            });
+
         }
 
     });
@@ -192,7 +196,7 @@ var checkBlockDBExistsThenWrite = function (web3, blockData) {
 var writeTransactionsToDB = function (blockData) {
 
     if (blockData.transactions.length > 0) {
-        console.log("Block: ", blockData.number.toString(), " trying to add transactions to db:", blockData.transactions.length, " block hash :" + blockData.hash);
+        console.log("Block: ", blockData.number.toString(), " trying to add transactions to db:", blockData.transactions.length, " block hash :" + blockData.hash, "Miner: " + blockData.miner.toString());
         var chunkSize = 1000 //1000 transactions per block
         for (var i = 0; i < blockData.transactions.length; i += chunkSize) {
             chunk = blockData.transactions.slice(i, i + chunkSize);
