@@ -9,7 +9,7 @@
             <div class="col-md-6 center">
               <div >
                 <span class="{{(addr.balance.toString().length < 10) && 'eth-stat-title' || 'eth-stat-title-small'}}">
-                  {{ addr.balance | balance}} </span><br>
+                  {{ addr.balance | bigNumber}} </span><br>
                 <span class="eth-stat-text">
                   GOC Balance <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" title="Note: Balance may not reflect transaction data if you have transactions resulting from Contract Internal Transactions. We are working on adding that functionality."></i>
                   </span><br>
@@ -17,7 +17,7 @@
                     {{ addr.signed}} <span class="eth-stat-text">Signed</span>
                   </div>
                   <div class="margin-top-20">
-                  {{ addr.count }} <span class="eth-stat-text">Transactions</span>
+                  {{ addr.count | bigNumber}} <span class="eth-stat-text">Transactions</span>
                   </div>
               </div>
             </div>
@@ -75,11 +75,11 @@
                 <tbody>
                     <tr ng-repeat="t in internal_transactions track by $index">
                         <td class="truncate-txhash"> <a href="/tx/{{t.transactionHash}}">{{t.transactionHash}}</a> </td>
-                        <td style="text-align:right"><a href="/block/{{t.blockNumber}}">{{t.blockNumber}}</a>
+                        <td style="text-align:right"><a href="/block/{{t.blockNumber}}">{{t.blockNumber | bigNumber}}</a>
                         <td class="truncate-addrhash"> <a href="/addr/{{t.from}}">{{t.from}}</a> </td>
                         <td class="truncate-addrhash"> <a href="/addr/{{t.to}}">{{t.to}}</a> </td>
-                        <td style="text-align:right"> {{t.value}} </td>
-                        <td style="text-align:right"> {{t.gas}} </td>
+                        <td style="text-align:right"> {{t.value | bigNumber}} </td>
+                        <td style="text-align:right"> {{t.gas | bigNumber}} </td>
                         <td style="text-align:center"><span class="label label-sm label-info {{t.type}}"> {{t.type}}</span><span class="label label-sm label-danger" ng-show="t.error"> {{t.error}}</span></td>
                     </tr>
                 </tbody>
