@@ -1,11 +1,11 @@
-angular.module('BlocksApp').controller('BlockController', function($stateParams, $rootScope, $scope, $http, $location) {
+angular.module('BlocksApp').controller('BlockController', function($stateParams, $rootScope, $scope, $filter, $http, $location) {
     $scope.$on('$viewContentLoaded', function() {   
         // initialize core components
         App.initAjax();
         //TableAjax.init();
     });
 
-    $rootScope.$state.current.data["pageSubTitle"] = $stateParams.number;
+    $rootScope.$state.current.data["pageSubTitle"] = $filter('bigNumber')($stateParams.number);
     $scope.blockNum = $stateParams.number;
 
     //fetch transactions
