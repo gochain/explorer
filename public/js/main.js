@@ -322,19 +322,11 @@ BlocksApp.filter('timeDuration', function() {
         var result = 0.0;
         var unit = '';
 
-        if (val !== 0 && val < 1000) {
+        if (val !== 0 && val < 1000000) {
             result = val;
             unit = 'wei';
         }
-        if (val >= 1000 && val < Math.pow(1000, 2)) {
-            result = val / 1000;
-            unit = 'kwei';
-        }
-        if (val >= Math.pow(1000, 2) && val < Math.pow(1000, 3)) {
-            result = val / Math.pow(1000, 2);
-            unit = 'mwei';
-        }
-        if (val >= Math.pow(1000, 3)) {
+        if (val >= 1000000) {
             result = val / Math.pow(1000, 3);
             unit = 'gwei';
         }

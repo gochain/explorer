@@ -19,8 +19,8 @@
           <tr ng-show="tx.creates"><td width="25%">creates</td>
                 <td><a href="/addr/{{tx.creates}}">{{tx.creates}}</a></td></tr>
           <tr ><td width="25%">value</td><td>{{tx.value | bigNumber}} GO ({{tx.weiValue | autoUnits}}) </td></tr>
-          <tr ><td width="25%">gas Provided</td><td>{{tx.gas| autoUnits}}</td></tr>
-          <tr ><td width="25%">gasPrice</td><td>{{tx.gasPrice| autoUnits}}</td></tr>
+          <tr ><td width="25%">gas Provided</td><td>{{tx.gas| bigNumber}}</td></tr>
+          <tr ><td width="25%">gas Price</td><td>{{tx.gasPrice| autoUnits}}</td></tr>
           <tr ><td width="25%">nonce</td><td>{{tx.nonce}}</td></tr>
           <tr ><td width="25%">Input Data</td><td><pre class="code">{{tx.input}}</pre></td></tr>
         </table>
