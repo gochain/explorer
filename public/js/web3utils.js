@@ -42,3 +42,19 @@ var isTransaction = function (tx) {
         return false;
     }
 };
+
+var divideByPowerOfTen = function(val,power){
+    moveTo = power.toString().length - 1;
+    parts = val.toString().split(".");
+    if (parts[0].length > moveTo) {
+        parts[0] = parts[0].slice(0, parts[0].length - moveTo) + "." + parts[0].slice(parts[0].length - moveTo, parts[0].length)
+    }
+    else {
+        parts[0] = "0." + "0".repeat(moveTo - parts[0].length) + parts[0]
+    }
+    return parts.join("").toString().replace(/\.?0+$/, '');
+}
+
+var weiToGwei = function(val){
+    return divideByPowerOfTen(val,Math.pow(1000, 3));
+};

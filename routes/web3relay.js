@@ -44,7 +44,6 @@ exports.data = function (req, res) {
         res.end();
       } else {
         var ttx = tx;
-        ttx.weiValue = ttx.value
         ttx.value = etherUnits.toEther(new BigNumber(tx.value), "wei");
         //get timestamp from block
         var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
