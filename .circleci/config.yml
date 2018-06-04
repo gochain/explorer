@@ -11,7 +11,7 @@ jobs:
             sudo service docker stop
             curl -fsSL https://get.docker.com/ | sudo sh
       - run: docker version
-      - run: make test
+      - run: npm install && ./run_tests.sh
   build:
     docker:
       - image: google/cloud-sdk      
@@ -30,7 +30,7 @@ jobs:
                   git config --global user.email "ci@gochain.io"
                   git config --global user.name "CI"
                   git branch --set-upstream-to=origin/${CIRCLE_BRANCH} ${CIRCLE_BRANCH}
-                  make release
+                  ./release.sh
                 # fi
 workflows:
   version: 2
