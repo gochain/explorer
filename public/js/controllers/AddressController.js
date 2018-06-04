@@ -1,4 +1,4 @@
-angular.module('BlocksApp').controller('AddressController', function($stateParams, $rootScope, $scope, $http, $location) {
+angular.module('BlocksApp').controller('AddressController', function($stateParams, $rootScope, $scope, $http, $location, web3) {
     $scope.$on('$viewContentLoaded', function() {
         // initialize core components
         App.initAjax();
@@ -15,7 +15,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
     $http({
       method: 'POST',
       url: '/web3relay',
-      data: {"addr": $scope.addrHash, "options": ["balance", "count", "bytecode"]}
+      data: {"addr": $scope.addrHash, "options": ["balance", "count", "bytecode", "checksummedAddr"]}
     }).success(function(data) {
       $scope.addr = data;
       fetchTxs($scope.addr.count);

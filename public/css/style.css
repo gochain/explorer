@@ -27,11 +27,14 @@ body {
 	background: #2a2d2f;
 }
 
-.sugar svg, .hamburger svg {
+.sugar svg, .hamburger svg, .wallet svg {
 	display: inline-block;
 	width: 3rem;
 }
 
+.wallet svg path, .wallet svg circle {
+	fill: #9AD7DA;
+}
 
 .page-logo svg .cls-1,
 .page-logo svg .cls-2,
