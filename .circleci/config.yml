@@ -31,13 +31,15 @@ jobs:
                 fi
 workflows:
   version: 2
-  commit:
+  test:
     jobs:
-      - test      
-      - release-master:
-          # filters:
-          #   branches:
-          #     only: master
+      - test
+  test-and-release:
+    jobs:
+      - test
+      - build:
           requires:
             - test
-            - build
+        # filters:
+        #   branches:
+        #     only: master
