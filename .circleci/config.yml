@@ -16,6 +16,7 @@ jobs:
     docker:
       - image: google/cloud-sdk      
     steps:
+      - checkout
       - run:       
           name: Store Service Account
           command: echo $ACCT_AUTH > ${HOME}/gcloud-service-key.json
