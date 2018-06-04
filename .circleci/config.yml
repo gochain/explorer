@@ -1,16 +1,11 @@
 version: 2
 jobs:
-  test:
-    machine: true        
+  test:    
+    docker:
+      - image: circleci/node:latest
     steps:
-      - checkout
-      - run:
-          name: update Docker
-          command: |
-            docker version
-            sudo service docker stop
-            curl -fsSL https://get.docker.com/ | sudo sh
-      - run: docker version
+      - setup_remote_docker
+      - checkout      
       - run: npm install && ./run_tests.sh
   build:
     docker:
