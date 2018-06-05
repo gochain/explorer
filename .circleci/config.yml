@@ -6,7 +6,7 @@ jobs:
     steps:
       - setup_remote_docker
       - checkout      
-      - run: npm install && ./run_tests.sh
+      - run: ./run_tests.sh
   build:
     docker:
       - image: google/cloud-sdk      
