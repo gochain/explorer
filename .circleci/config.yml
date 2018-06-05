@@ -6,7 +6,7 @@ jobs:
     steps:
       - setup_remote_docker
       - checkout      
-      - run: ./run_tests.sh
+      - run: npm install && ./run_tests.sh
   build:
     docker:
       - image: google/cloud-sdk      
@@ -28,10 +28,7 @@ jobs:
                   ./release.sh
                 fi
 workflows:
-  version: 2
-  test:
-    jobs:
-      - test
+  version: 2  
   test-and-release:
     jobs:
       - test
