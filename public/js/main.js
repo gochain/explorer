@@ -326,8 +326,9 @@ BlocksApp.filter('timeDuration', function() {
             result = val;
             unit = 'wei';
         }
+
         if (val >= 1000000) {
-            result = val / Math.pow(1000, 3);
+            result = weiToGwei(val);
             unit = 'gwei';
         }
         return bigNumberFilter(result) + ' ' + unit;
