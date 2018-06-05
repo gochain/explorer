@@ -4,7 +4,7 @@ set -exuo pipefail
 user="gochain"
 image="explorer"
 gcr_project="gochain-core"
-ensure working dir is clean
+# ensure working dir is clean
 git status
 if [[ -z $(git status -s) ]]
 then
