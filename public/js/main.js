@@ -3,7 +3,6 @@ var BlocksApp = angular.module("BlocksApp", [
     "ui.bootstrap", 
     "oc.lazyLoad",  
     "ngSanitize",
-    'Web3Service',
     'ConfigService',
 ]);
 
