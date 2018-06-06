@@ -1,8 +1,8 @@
 var BlocksApp = angular.module("BlocksApp", [
-    "ui.router",
-    "ui.bootstrap",
-    "oc.lazyLoad",
-    "ngSanitize"
+    "ui.router", 
+    "ui.bootstrap", 
+    "oc.lazyLoad",  
+    "ngSanitize",
 ]);
 
 BlocksApp.config(['$ocLazyLoadProvider',  '$locationProvider',

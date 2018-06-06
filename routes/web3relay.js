@@ -90,6 +90,9 @@ exports.data = function (req, res) {
 
     var addrData = {};
 
+    if (options.indexOf('checksummedAddr') > -1) {
+      addrData['checksummedAddr'] = web3.toChecksumAddress(addr);
+    }
     if (options.indexOf("balance") > -1) {
       try {
         addrData["balance"] = web3.eth.getBalance(addr);

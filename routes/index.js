@@ -36,8 +36,15 @@ module.exports = function(app){
 
   app.post('/signed', blocksSignedByAddr);
 
-
+  app.get('/config', getConfig);
 }
+
+function getConfig(req, res){
+  const cfg = require('../config');
+
+  res.send(cfg);
+}
+
 
 var getAddr = function(req, res){
   // TODO: validate addr and tx
