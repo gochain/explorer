@@ -1,4 +1,4 @@
-angular.module('BlocksApp').controller('AddressController', function($stateParams, $rootScope, $scope, $http, $location, web3) {
+angular.module('BlocksApp').controller('AddressController', function($stateParams, $rootScope, $scope, $http, $location) {
     $scope.$on('$viewContentLoaded', function() {
         // initialize core components
         App.initAjax();
