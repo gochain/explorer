@@ -44,11 +44,11 @@ exports.data = function (req, res) {
         res.end();
       } else {
         var ttx = tx;
-        const value = new BigNumber(tx.value);
+        const gasPrice = new BigNumber(tx.gasPrice);
         const gas = new BigNumber(tx.gas);
 
-        ttx.value = etherUnits.toEther(value, "wei");
-        ttx.actualGasCost = etherUnits.toEther(value.times(gas), "wei");
+        ttx.value = etherUnits.toEther(tx.value, "wei");
+        ttx.actualGasCost = etherUnits.toEther(gas.multipliedBy(gasPrice), "wei");
         //get timestamp from block
         var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
           if (!err && block)
