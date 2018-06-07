@@ -24,6 +24,7 @@
           <tr ><td width="25%">Value</td><td>{{tx.value | bigNumber}} GO </td></tr>
           <tr ><td width="25%">Gas Provided</td><td>{{tx.gas| bigNumber}}</td></tr>
           <tr ><td width="25%">Gas Price</td><td>{{tx.gasPrice| autoUnits}}</td></tr>
+          <tr ><td width="25%">Actual Gas Cost</td><td>{{tx.actualGasCost | bigNumber}} GO</td></tr>
           <tr ><td width="25%">Nonce</td><td>{{tx.nonce}}</td></tr>
           <tr ><td width="25%">Input Data</td><td><pre class="code">{{tx.input}}</pre></td></tr>
         </table>
