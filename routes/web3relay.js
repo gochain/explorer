@@ -48,7 +48,7 @@ exports.data = function (req, res) {
         const gas = new BigNumber(tx.gas);
 
         ttx.value = etherUnits.toEther(value, "wei");
-        ttx.actualGasCost = etherUnits.toEther(value.times(gas), "wei");
+        ttx.actualGasCost = etherUnits.toEther(value.multipliedBy(gas), "wei");
         //get timestamp from block
         var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
           if (!err && block)
