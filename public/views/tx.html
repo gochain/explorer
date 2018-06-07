@@ -7,7 +7,10 @@
 
           <tr ><td width="25%">Hash</td><td>{{tx.hash}}</td></tr>
           <tr ><td width="25%">Block Number</td>
-                <td><a href="/block/{{tx.blockNumber}}">{{tx.blockNumber | bigNumber}}</a></td>
+                <td>
+                    <a href="/block/{{tx.blockNumber}}" ng-if="tx.blockNumber">{{tx.blockNumber | bigNumber}}</a>
+                    <span ng-if="!tx.blockNumber">Pending</span>
+                </td>
           </tr>
           <tr ><td width="25%">Time</td>
                 <td>{{tx.datetime | date:'yyyy-MM-dd HH:mm:ss Z' }} ({{tx.timestamp | timeDuration}} ago)</td>
