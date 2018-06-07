@@ -45,6 +45,7 @@ exports.data = function (req, res) {
       } else {
         var ttx = tx;
         ttx.value = etherUnits.toEther(new BigNumber(tx.value), "wei");
+        ttx.actualGasCost = web3.fromWei(tx.gasPrice * tx.gas , 'ether');
         //get timestamp from block
         var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
           if (!err && block)
