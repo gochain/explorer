@@ -18,6 +18,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
       data: {"addr": $scope.addrHash, "options": ["balance", "count", "bytecode", "checksummedAddr"]}
     }).success(function(data) {
       $scope.addr = data;
+      $rootScope.$state.current.data["pageSubTitle"] = $scope.addr.checksummedAddr;
       fetchTxs($scope.addr.count);
       if (data.isContract) {
         $rootScope.$state.current.data["pageTitle"] = "Contract Address";
