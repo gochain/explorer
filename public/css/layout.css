@@ -1145,6 +1145,7 @@ body,html {
 
 .page-container {
     clear: both;
+    padding: 0 1rem;
 }
 
 tr td {
