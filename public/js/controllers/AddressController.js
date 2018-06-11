@@ -10,6 +10,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
     $rootScope.$state.current.data["pageSubTitle"] = $stateParams.hash;
     $scope.addrHash = $stateParams.hash;
     $scope.addr = {"balance": 0, "count": 0, "signed": 0};
+    $rootScope.isHome = false;
 
     //fetch web3 stuff
     $http({
@@ -18,6 +19,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
       data: {"addr": $scope.addrHash, "options": ["balance", "count", "bytecode", "checksummedAddr"]}
     }).success(function(data) {
       $scope.addr = data;
+      $rootScope.$state.current.data["pageSubTitle"] = $scope.addr.checksummedAddr;
       fetchTxs($scope.addr.count);
       if (data.isContract) {
         $rootScope.$state.current.data["pageTitle"] = "Contract Address";
