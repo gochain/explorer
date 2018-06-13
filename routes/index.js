@@ -48,7 +48,7 @@ function getConfig(req, res){
 
 function getTotals(req, res){  
 
-  res.send(JSON.stringify({"total": 1000000000}));
+  res.send("1000000000");
 }
 
 
