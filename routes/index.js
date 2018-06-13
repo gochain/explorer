@@ -37,7 +37,7 @@ module.exports = function(app){
   app.post('/signed', blocksSignedByAddr);
 
   app.get('/config', getConfig);
-  app.get('/total', getTotals);
+  app.get('/totalSupply', getTotals);
 }
 
 function getConfig(req, res){
