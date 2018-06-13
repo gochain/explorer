@@ -37,12 +37,18 @@ module.exports = function(app){
   app.post('/signed', blocksSignedByAddr);
 
   app.get('/config', getConfig);
+  app.get('/total', getTotals);
 }
 
 function getConfig(req, res){
   const cfg = require('../config');
 
   res.send(cfg);
+}
+
+function getTotals(req, res){  
+
+  res.send(JSON.stringify({"total": 1000000000}));
 }
 
 
