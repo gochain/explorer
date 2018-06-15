@@ -38,6 +38,7 @@ module.exports = function(app){
 
   app.get('/config', getConfig);
   app.get('/totalSupply', getTotals);
+  app.get('/circulatingSupply', getCirculating);
 }
 
 function getConfig(req, res){
@@ -49,6 +50,11 @@ function getConfig(req, res){
 function getTotals(req, res){  
 
   res.send("1000000000");
+}
+
+function getCirculating(req, res){  
+
+  res.send("500000000");
 }
 
 
