@@ -149,7 +149,7 @@ var checkParentBlock = function (web3, blockData, recursively) {
 
                     }
                 } else {
-                    grabBlock(web3, parentBlockNumber, true);
+                    grabBlock(web3, blockData.parentHash, true);
                 }
             }
         });
