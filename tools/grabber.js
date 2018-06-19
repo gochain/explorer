@@ -127,7 +127,8 @@ var checkParentBlock = function (web3, blockData, recursively) {
         var parentBlockNumber = blockData.number - 1;
         Block.findOne({ number: parentBlockNumber }, function (err, b) {
             if (err) {
-                console.log("Cannot find block in db:", err)
+                console.log("Cannot find block in db:", err);
+                grabBlock(web3, parentBlockNumber, true);
             } else {
                 if (b) {
                     if (b && blockData.parentHash != b.hash) {
@@ -147,6 +148,8 @@ var checkParentBlock = function (web3, blockData, recursively) {
                         }
 
                     }
+                } else {
+                    grabBlock(web3, parentBlockNumber, true);
                 }
             }
         });
