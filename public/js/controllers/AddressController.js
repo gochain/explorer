@@ -58,7 +58,7 @@ angular.module('BlocksApp').controller('AddressController', function($stateParam
         "language": {
           "lengthMenu": "_MENU_ transactions",
           "zeroRecords": "No transactions found",
-          "infoEmpty": ":(",
+          "infoEmpty": "No results",
           "infoFiltered": "(filtered from _MAX_ total txs)"
         },
         "columnDefs": [
