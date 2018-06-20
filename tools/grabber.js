@@ -41,10 +41,11 @@ var listenBlocks = function (web3) {
             web3.eth.getBlock(hash, false, function (error, block) {
                 if (error) {
                     console.log('Warning: error on getting block with hash/number: ' +
-                    hash + ': ' + error);
+                        hash + ': ' + error);
                 } else {
-                    console.log("hash ", hash, " converted into block:", block.number);
-                    grabBlock(web3, block.number, true);
+                    setTimeout(function () {
+                        grabBlock(web3, block.number, true);
+                    }, 5000);
                 }
             });
 
@@ -67,7 +68,6 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
         else {
             console.log('Error: Aborted becasue found a interval in blocks ' +
                 'array that doesn\'t have both a start and end.');
-            // process.exit(9);
         }
     }
     else {
@@ -77,15 +77,20 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
     if (web3.isConnected()) {
         web3.eth.getBlock(desiredBlockHashOrNumber, true, function (error, blockData) {
             if (error) {
-                console.log('Warning: error on getting block with hash/number: ' +
-                    desiredBlockHashOrNumber + ': ' + error);
+                console.log("Waiting X seconds and trying to grab again block id:", desiredBlockHashOrNumber, " error:", error);
+                setTimeout(function () {
+                    console.log("Grabbing after sleep block:", desiredBlockHashOrNumber, " error:", error);
+                    grabBlock(web3, desiredBlockHashOrNumber, listening);
+                }, Math.ceil(Math.random() * (60000 - 10000) + 10000));
             }
             else if (blockData == null) {
                 console.log('Warning: null block data received from the block with hash/number: ' +
                     desiredBlockHashOrNumber);
+                // process.exit(9);
             }
             else {
                 checkBlockDBExistsThenWrite(web3, blockData);
+                checkParentBlock(web3, blockData, true);
                 if (listening == true)
                     return;
                 if ('hash' in blockData && 'number' in blockData) {
@@ -93,7 +98,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
                     // the block number or block hash just grabbed isn't equal to the start yet:
                     // then grab the parent block number (<this block's number> - 1). Otherwise done
                     // with this interval object (or not currently working on an interval)
-                    // -> so move onto the next thing in the blocks array.
+                    // -> so move onto the next thing in the blocks array.                    
                     if (typeof blockHashOrNumber === 'object' &&
                         (
                             (typeof blockHashOrNumber['start'] === 'string' && blockData['hash'] !== blockHashOrNumber['start']) ||
@@ -103,8 +108,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
                         blockHashOrNumber['end'] = blockData['number'] - 1;
                         checkBlockDBExistsThenGrab(web3, blockHashOrNumber);
                     }
-                }
-                else {
+                } else {
                     console.log('Error: No hash or number was found for block: ' + blockHashOrNumber);
                     // process.exit(9);
                 }
@@ -118,21 +122,52 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
     }
 }
 
+var checkParentBlock = function (web3, blockData, recursively) {
+    if (blockData.number) {
+        var parentBlockNumber = blockData.number - 1;
+        Block.findOne({ number: parentBlockNumber }, function (err, b) {
+            if (err) {
+                console.log("Cannot find block in db:", err);
+                grabBlock(web3, parentBlockNumber, true);
+            } else {
+                if (b) {
+                    if (b && blockData.parentHash != b.hash) {
+                        console.log("BLOCK IS BAD, GRABBING IT", parentBlockNumber);
+                        cleanupBlockAndTransactionsThenGrab(web3, parentBlockNumber);
+                        if (recursively) {
+                            console.log("Checking recursively for:", parentBlockNumber);
+                            Block.findOne({ number: parentBlockNumber - 1 }, function (err, b) {
+                                if (err) {
+                                    console.log("Cannot find the block in the db while checking recursively:", err)
+                                } else {
+                                    if (b) {
+                                        checkParentBlock(web3, blockData, true);
+                                    }
+                                }
+                            });
+                        }
 
+                    }
+                } else {
+                    grabBlock(web3, blockData.parentHash, true);
+                }
+            }
+        });
+
+    }
+}
 var writeBlockToDB = function (web3, blockData) {
     blockData.transactionsCount = blockData.transactions.length
     return new Block(blockData).save(function (err, block, count) {
         if (typeof err !== 'undefined' && err) {
             if (err.code == 11000) {
                 console.log('Skip: Duplicate key ' +
-                    blockData.number.toString() + ': ' +
-                    err);
-                cleanupBlockAndTransactionsThenGrab(web3, blockData)
+                    blockData.number.toString());
+                cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
             } else {
                 console.log('Error: Aborted due to error on ' +
                     'block number ' + blockData.number.toString() + ': ' +
                     err);
-                // process.exit(9);
             }
         } else {
 
@@ -143,13 +178,19 @@ var writeBlockToDB = function (web3, blockData) {
 }
 
 var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
-    Block.find({ number: blockHashOrNumber['end'] }, function (err, b) {
-        if (!b.length) {
+    Block.findOne({ number: blockHashOrNumber['end'] }, function (err, b) {
+        if (!b) {
             grabBlock(web3, blockHashOrNumber, false);
         } else {
-            console.log("Block exist, trying next", blockHashOrNumber['end']);
+            checkParentBlock(web3, b, false);
+            if (b.number % 10000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
             blockHashOrNumber['end'] = blockHashOrNumber['end'] - 1;
-            checkBlockDBExistsThenGrab(web3, blockHashOrNumber);
+            if (blockHashOrNumber['end'] > blockHashOrNumber['start']) {
+                checkBlockDBExistsThenGrab(web3, { 'start': blockHashOrNumber['start'], 'end': blockHashOrNumber['end'] });
+            } else {
+                console.log("Reached end, starting from the beginning")
+                grabBlock(web3, { 'start': blockHashOrNumber['start'], 'end': 'latest' }, false);
+            }
         }
 
     })
@@ -158,19 +199,17 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
 /**
   *     cleanup records for specific block and transactions
   */
-var cleanupBlockAndTransactionsThenGrab = function (web3, blockData) {
-    Block.remove({ number: blockData.number }, function (err) {
+var cleanupBlockAndTransactionsThenGrab = function (web3, blockNumber) {
+    Block.remove({ number: blockNumber }, function (err) {
         if (typeof err !== 'undefined' && err) {
-            console.log("Cannot remove block :", blockData.number, " Err:", err);
+            console.log("Cannot remove block :", blockNumber, " Err:", err);
         } else {
-            Transaction.remove({ blockNumber: blockData.number }, function (err) {
+            Transaction.remove({ blockNumber: blockNumber }, function (err) {
                 if (typeof err !== 'undefined' && err) {
-                    console.log("Cannot remove transactions for block :", blockData.number, " Err:", err);
+                    console.log("Cannot remove transactions for block :", blockNumber, " Err:", err);
                 } else {
-                    console.log("Transactions and block has been removed calling grab again:", blockData.number);
-                    setTimeout(function () {
-                        grabBlock(web3, blockData.number, false);
-                    }, 3000);
+                    console.log("Transactions and block have been removed calling grab again:", blockNumber);
+                    grabBlock(web3, blockNumber, true);
                 }
             });
         }
@@ -228,51 +267,6 @@ var writeTransactionsToDB = function (blockData) {
     }
 }
 
-// /*
-//   Patch Missing Blocks
-// */
-// var patchBlocks = function (config) {
-//     var web3 = new Web3(new Web3.providers.HttpProvider('http://' + process.env.RPC_HOST.toString() + ':' +
-//         process.env.RPC_PORT.toString()));
-
-//     // number of blocks should equal difference in block numbers
-//     var firstBlock = 0;
-//     var lastBlock = web3.eth.blockNumber;
-//     blockIter(web3, firstBlock, lastBlock, config);
-// }
-
-// var blockIter = function (web3, firstBlock, lastBlock, config) {
-//     // if consecutive, deal with it
-//     if (lastBlock < firstBlock)
-//         return;
-//     if (lastBlock - firstBlock === 1) {
-//         [lastBlock, firstBlock].forEach(function (blockNumber) {
-//             Block.find({ number: blockNumber }, function (err, b) {
-//                 if (!b.length)
-//                     grabBlock(web3, firstBlock);
-//             });
-//         });
-//     } else if (lastBlock === firstBlock) {
-//         Block.find({ number: firstBlock }, function (err, b) {
-//             if (!b.length)
-//                 grabBlock(web3, firstBlock);
-//         });
-//     } else {
-
-//         Block.count({ number: { $gte: firstBlock, $lte: lastBlock } }, function (err, c) {
-//             var expectedBlocks = lastBlock - firstBlock + 1;
-//             if (c === 0) {
-//                 grabBlock(web3, { 'start': firstBlock, 'end': lastBlock });
-//             } else if (expectedBlocks > c) {
-//                 console.log("Missing: " + JSON.stringify(expectedBlocks - c));
-//                 var midBlock = firstBlock + parseInt((lastBlock - firstBlock) / 2);
-//                 blockIter(web3, firstBlock, midBlock, config);
-//                 blockIter(web3, midBlock + 1, lastBlock, config);
-//             } else
-//                 return;
-//         })
-//     }
-// }
 
 
 // set the default geth port if it's not provided
