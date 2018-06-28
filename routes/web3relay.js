@@ -31,6 +31,23 @@ else
 var newBlocks = web3.eth.filter("latest");
 var newTxs = web3.eth.filter("pending");
 
+exports.totalSupply = function (req, res) {
+  web3.currentProvider.sendAsync({
+    jsonrpc: "2.0",
+    method: "eth_totalSupply",
+    params: ['0x0'],
+    id: new Date().getTime()
+  }, function (error, result) {
+    if (!error && result && result["result"]) {
+      r = new BigNumber(parseInt(result["result"], 16));
+      res.send(r.toString(10));
+    } else {
+      console.log("Got error from API:" + error);
+      res.send("1000000000");
+    }
+  });
+}
+
 exports.data = function (req, res) {
   console.log(req.body)
 

@@ -37,7 +37,7 @@ module.exports = function(app){
   app.post('/signed', blocksSignedByAddr);
 
   app.get('/config', getConfig);
-  app.get('/totalSupply', getTotals);
+  app.get('/totalSupply', web3relay.totalSupply);
   app.get('/circulatingSupply', getCirculating);
 }
 
@@ -45,11 +45,6 @@ function getConfig(req, res){
   const cfg = require('../config');
 
   res.send(cfg);
-}
-
-function getTotals(req, res){  
-
-  res.send("1000000000");
 }
 
 function getCirculating(req, res){  
