@@ -9,10 +9,60 @@ var Web3 = require('web3');
 var mongoose = require('mongoose');
 var Block = mongoose.model('Block');
 var Transaction = mongoose.model('Transaction');
+var Address = mongoose.model('Address');
 
 var grabBlocks = function (web3) {
+    console.log("in grab blocks");
     listenBlocks(web3);
     grabBlock(web3, { 'start': 0, 'end': 'latest' }, false);
+    updateAddressesBalance(web3);
+}
+
+var updateAddressesBalance = function (web3, latestUpdate) {
+    if (!latestUpdate) { latestUpdate = 0 }
+    // console.log("updateStartedAt", latestUpdate);
+    var updateStartedAt = Date.now()
+    Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {
+        if (!err) {
+            Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {
+                if (!err) {
+                    Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {
+                        if (!err) {
+                            var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners);
+                            uniqueArray = adressesToUpdate.filter(function (elem, pos) {
+                                return adressesToUpdate.indexOf(elem) == pos;
+                            });
+                            console.log("Got list of addresses to update:", uniqueArray.length);
+                            uniqueArray.forEach(function (address) {
+                                updateAddressBalance(address, web3, updateStartedAt);
+
+                            });
+                        } else {
+                            console.log("Cannot make distinct for blocks:", err)
+                        }
+                    })
+                } else {
+                    console.log("Cannot make distinct for the from field of transactions:", err)
+                }
+            })
+        } else {
+            console.log("Cannot make distinct for the to field of transactions:", err)
+        }
+    })
+    setTimeout(function () {
+        updateAddressesBalance(web3, updateStartedAt);
+    }, 300000);
+}
+
+var updateAddressBalance = function (address, web3, updateStartedAt) {
+    var balance = web3.fromWei(web3.eth.getBalance(address));
+    console.log("Got balance for address:", address, " balance:", balance.toNumber());
+    Address.findOneAndUpdate({ address: address }, { $set: { balance: balance.toString(), balanceDecimal: balance.toNumber(), lastUpdated: updateStartedAt } }, { upsert: true }, function (err, doc) {
+        if (err) {
+            console.log("Something wrong when updating address:", address, err);
+        }
+        // console.log("Balance for address updated:", address);
+    });
 }
 
 var listenBlocks = function (web3) {

@@ -48,16 +48,29 @@ var Transaction = new Schema(
         "value": String,
         "gas": Number,
         "gasPrice": String,
-        "timestamp": Number,
+        "timestamp": { type: Number, index: true },
         "input": String
     });
+
+var Address = new Schema(
+    {
+        "address": { type: String, index: { unique: true } },
+        "owner": String,
+        "balance": String,
+        "lastUpdated": { type: Number, index: true },
+        "balanceDecimal": { type: Number, index: true },
+        "transactionsCount": Number
+    });
+
 Transaction.index({ hash: 1, blockNumber: 1 }, { unique: true });
 mongoose.model('Block', Block);
 mongoose.model('Contract', Contract);
 mongoose.model('Transaction', Transaction);
+mongoose.model('Address', Address);
 module.exports.Block = mongoose.model('Block');
 module.exports.Contract = mongoose.model('Contract');
 module.exports.Transaction = mongoose.model('Transaction');
+module.exports.Address = mongoose.model('Address');
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/blockDB');
 mongoose.set('debug', false);
