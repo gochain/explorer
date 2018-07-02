@@ -22,21 +22,39 @@ var updateAddressesBalance = function (web3, latestUpdate) {
     if (!latestUpdate) { latestUpdate = 0 }
     // console.log("updateStartedAt", latestUpdate);
     var updateStartedAt = Date.now()
+    var genesisAllocAddress = []
+    try {
+        res = web3.currentProvider.send({ jsonrpc: "2.0", method: "eth_genesisAlloc", id: new Date().getTime() })        
+        genesisAllocAddress = Object.keys(res["result"])
+    } catch (e) {
+        console.log("Cannot get genesis:", e);
+    }
     Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {
         if (!err) {
             Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {
                 if (!err) {
                     Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {
                         if (!err) {
-                            var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners);
+                            var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners).concat(genesisAllocAddress);
                             uniqueArray = adressesToUpdate.filter(function (elem, pos) {
-                                return adressesToUpdate.indexOf(elem) == pos;
+                                return adressesToUpdate.indexOf(elem) == pos && elem;
                             });
                             console.log("Got list of addresses to update:", uniqueArray.length);
-                            uniqueArray.forEach(function (address) {
-                                updateAddressBalance(address, web3, updateStartedAt);
-
-                            });
+                            var i = 0;
+                            var len = uniqueArray.length;
+                            function iter() {
+                                if (i < len) {
+                                    // console.log("Checking i:", i, " address:", uniqueArray[i]);
+                                    updateAddressBalance(uniqueArray[i], web3, updateStartedAt);
+                                    i++;
+                                    setImmediate(iter);
+                                } else {
+                                    setTimeout(function () {
+                                        updateAddressesBalance(web3, updateStartedAt);
+                                    }, 300000);//fire after 5 minutes of run
+                                }
+                            }
+                            iter();
                         } else {
                             console.log("Cannot make distinct for blocks:", err)
                         }
@@ -48,21 +66,26 @@ var updateAddressesBalance = function (web3, latestUpdate) {
         } else {
             console.log("Cannot make distinct for the to field of transactions:", err)
         }
-    })
-    setTimeout(function () {
-        updateAddressesBalance(web3, updateStartedAt);
-    }, 300000);
+    })    
 }
 
 var updateAddressBalance = function (address, web3, updateStartedAt) {
-    var balance = web3.fromWei(web3.eth.getBalance(address));
-    console.log("Got balance for address:", address, " balance:", balance.toNumber());
-    Address.findOneAndUpdate({ address: address }, { $set: { balance: balance.toString(), balanceDecimal: balance.toNumber(), lastUpdated: updateStartedAt } }, { upsert: true }, function (err, doc) {
-        if (err) {
-            console.log("Something wrong when updating address:", address, err);
-        }
-        // console.log("Balance for address updated:", address);
-    });
+    try {
+        var balance = web3.fromWei(web3.eth.getBalance(address));
+        console.log("Got balance for address:", address, " balance:", balance.toNumber());
+        Address.findOneAndUpdate({ address: address }, { $set: { balance: balance.toString(), balanceDecimal: balance.toNumber(), lastUpdated: updateStartedAt } }, { upsert: true }, function (err, doc) {
+            if (err) {
+                console.log("Something wrong when updating address:", address, err);
+            }
+            // console.log("Balance for address updated:", address);
+        });
+    } catch (error) {
+        console.log("Exception while checking the address, retrying in 10 seconds:", address, " exception:", error);
+        setTimeout(function () {
+            console.log("Grabbing address balance after sleep :", address);
+            updateAddressBalance(address, web3, updateStartedAt);
+        }, Math.ceil(Math.random() * (60000 - 10000) + 10000));
+    }
 }
 
 var listenBlocks = function (web3) {
