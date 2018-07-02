@@ -171,6 +171,24 @@ BlocksApp.config(['$stateProvider', '$urlRouterProvider', function($stateProvide
             }
         })
 
+        .state('richlist', {
+            url: "/richlist",
+            templateUrl: "views/richlist.html",
+            data: {pageTitle: 'Rich List'},
+            controller: "RichlistController",
+            resolve: {
+                deps: ['$ocLazyLoad', function($ocLazyLoad) {
+                    return $ocLazyLoad.load({
+                        name: 'BlocksApp',
+                        insertBefore: '#ng_load_plugins_before', // load the above css files before '#ng_load_plugins_before'
+                        files: [
+                            '/js/controllers/RichlistController.js'
+                        ]
+                    });
+                }]
+            }
+        })
+
         .state('contract', {
             url: "/contract/{addr}",
             templateUrl: "views/contract.html",
