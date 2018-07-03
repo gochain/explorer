@@ -27,12 +27,16 @@ body {
 	background: #2a2d2f;
 }
 
-.sugar svg, .hamburger svg, .wallet svg {
+.sugar svg, .hamburger svg, .wallet svg, .bag svg {
 	display: inline-block;
 	width: 3rem;
 }
 
-.wallet svg path, .wallet svg circle {
+.bag svg {
+	height: 3rem;
+}
+
+.wallet svg path, .wallet svg circle, .bag svg path {
 	fill: #9AD7DA;
 }
 
