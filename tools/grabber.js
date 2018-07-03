@@ -24,10 +24,10 @@ var updateAddressesBalance = function (web3, latestUpdate) {
     var updateStartedAt = Date.now()
     var genesisAllocAddress = []
     try {
-        res = web3.currentProvider.send({ jsonrpc: "2.0", method: "eth_genesisAlloc", id: new Date().getTime() })        
+        res = web3.currentProvider.send({ jsonrpc: "2.0", method: "eth_genesisAlloc", id: new Date().getTime() })
         genesisAllocAddress = Object.keys(res["result"])
     } catch (e) {
-        console.log("Cannot get genesis:", e);
+        console.log("Cannot get genesis");
     }
     Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {
         if (!err) {
@@ -37,7 +37,7 @@ var updateAddressesBalance = function (web3, latestUpdate) {
                         if (!err) {
                             var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners).concat(genesisAllocAddress);
                             uniqueArray = adressesToUpdate.filter(function (elem, pos) {
-                                return adressesToUpdate.indexOf(elem) == pos && elem;
+                                return adressesToUpdate.indexOf(elem) == pos && elem && genesisAllocAddress.indexOf(elem) == -1;
                             });
                             console.log("Got list of addresses to update:", uniqueArray.length);
                             var i = 0;
@@ -66,7 +66,7 @@ var updateAddressesBalance = function (web3, latestUpdate) {
         } else {
             console.log("Cannot make distinct for the to field of transactions:", err)
         }
-    })    
+    })
 }
 
 var updateAddressBalance = function (address, web3, updateStartedAt) {
@@ -236,7 +236,8 @@ var writeBlockToDB = function (web3, blockData) {
             if (err.code == 11000) {
                 console.log('Skip: Duplicate key ' +
                     blockData.number.toString());
-                cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
+                    checkParentBlock(web3, blockData, false);
+                // cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
             } else {
                 console.log('Error: Aborted due to error on ' +
                     'block number ' + blockData.number.toString() + ': ' +
