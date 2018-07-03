@@ -11,10 +11,9 @@ function filterTX(txs, value) {
   })
 }
 
-function filterAddresses(adresses, start, circulatingSupply) {
+function filterAddresses(adresses, start) {
   return adresses.map(function (addr, index) {
-    var supplyOwned = (BigNumber(addr.balance) / circulatingSupply * 100).toFixed(2)
-    return { rank: index + start + 1, address: addr.address, balance: addr.balance, supplyOwned: supplyOwned }
+    return { rank: index + start + 1, address: addr.address, balance: addr.balance }
   })
 }
 

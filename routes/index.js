@@ -68,16 +68,20 @@ var getRichList = function (req, res) {
   console.log("limit:", limit);
   console.log("start:", start);
   var data = {};
-  web3relay.circulatingSupply(function (supply) {
-    Address.find({ "balanceDecimal": { "$gt": 0 } }).lean(true).sort('-balanceDecimal').skip(start).limit(limit)
-      .exec("find", function (err, docs) {
-        if (docs)
-          data.data = filters.filterAddresses(docs, start, supply);
-        else
-          data.data = [];
-        res.write(JSON.stringify(data));
-        res.end();
-      });
+  web3relay.totalSupply(function (totalSupply) {
+    web3relay.circulatingSupply(function (circulatingSupply) {
+      Address.find({ "balanceDecimal": { "$gt": 0 } }).lean(true).sort('-balanceDecimal').skip(start).limit(limit)
+        .exec("find", function (err, docs) {
+          data.circulatingSupply = circulatingSupply.toString(10);
+          data.totalSupply = totalSupply.toString(10);
+          if (docs)
+            data.rankings = filters.filterAddresses(docs, start);
+          else
+            data.rankings = [];
+          res.write(JSON.stringify(data));
+          res.end();
+        });
+    });
   });
 }
 
