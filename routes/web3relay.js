@@ -31,7 +31,7 @@ else
 var newBlocks = web3.eth.filter("latest");
 var newTxs = web3.eth.filter("pending");
 
-exports.totalSupply = function (req, res) {  
+exports.totalSupply = function (callback) {  
   web3.currentProvider.sendAsync({
     jsonrpc: "2.0",
     method: "eth_totalSupply",
@@ -41,13 +41,33 @@ exports.totalSupply = function (req, res) {
     if (!error && result && result["result"]) {
       wei = new BigNumber(parseInt(result["result"], 16));      
       go = etherUnits.toEther(wei, "wei");      
-      res.send(go.toString(10));
+      callback(go);
     } else {
-      console.log("Got error from API:" + error);
-      res.send("1000000000");
+      console.log("Got error from API in totalSupply:" + error);
+      callback(1000000000);
     }
   });
 }
+
+exports.circulatingSupply = function (callback) {  
+  this.totalSupply(function(total){
+        web3.currentProvider.sendAsync({
+          jsonrpc: "2.0",
+          method: "eth_genesisAlloc",          
+          id: new Date().getTime()
+        }, function (error, result) {
+          if (!error && result && result["result"]) {            
+            allocWei = new BigNumber(Object.values(result["result"]).map(function(v) { return  new BigNumber(parseInt(v['balance'],16)); }).reduce((a,b)=>a+b, 0));            
+            allocGo = etherUnits.toEther(allocWei, "wei");                  
+            callback(total-allocGo);
+          } else {
+            console.log("Got error from API in circulatingSupply:" + error);
+            callback(500000000);
+          }
+        });    
+  });  
+}
+
 
 exports.data = function (req, res) {
   console.log(req.body)

@@ -3,12 +3,12 @@ var mongoose = require( 'mongoose' );
 var Block     = mongoose.model( 'Block' );
 var Transaction = mongoose.model( 'Transaction' );
 var filters = require('./filters')
+var web3relay = require('./web3relay');
 
 
 var async = require('async');
 
-module.exports = function(app){
-  var web3relay = require('./web3relay');
+module.exports = function(app){  
 
   var DAO = require('./dao');
   var Token = require('./token');
@@ -37,7 +37,7 @@ module.exports = function(app){
   app.post('/signed', blocksSignedByAddr);
 
   app.get('/config', getConfig);
-  app.get('/totalSupply', web3relay.totalSupply);
+  app.get('/totalSupply', getTotalSupply);
   app.get('/circulatingSupply', getCirculating);
 }
 
@@ -47,9 +47,16 @@ function getConfig(req, res){
   res.send(cfg);
 }
 
-function getCirculating(req, res){  
+function getTotalSupply(req, res){  
+  web3relay.totalSupply(function(supply){
+    res.send(supply.toString(10));
+  });  
+}
 
-  res.send("500000000");
+function getCirculating(req, res){  
+  web3relay.circulatingSupply(function(supply){
+    res.send(supply.toString(10));
+  });  
 }
 
 
