@@ -61,8 +61,9 @@ exports.circulatingSupply = function (callback) {
       id: new Date().getTime()
     }, function (error, result) {
       if (!error && result && result["result"]) {
-        allocWei = new BigNumber(Object.values(result["result"]).map(function (v) { return new BigNumber(parseInt(v['balance'], 16)); }).reduce((a, b) => a + b, 0));
-        allocGo = etherUnits.toEther(allocWei, "wei");
+        allocGo = new BigNumber(Object.keys(result["result"]).map(function (v) {          
+          return web3.fromWei(web3.eth.getBalance(v));
+        }).reduce((a, b) => a + b, 0));        
         circulatingSupplyCached = total - allocGo;
         callback(total - allocGo);
       } else {
