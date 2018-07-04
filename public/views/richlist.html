@@ -11,7 +11,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="account in richlist track by $index">
+                    <tr ng-repeat="account in richlist.rankings track by $index">
                         <td>{{account.rank}}</td>
                         <td class="truncate-addrhash"> <a href="/addr/{{account.addr}}">{{account.addr}}</a></td>
                         <td style="text-align:right">{{account.balance | bigNumber}}</td>

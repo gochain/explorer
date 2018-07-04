@@ -7,7 +7,7 @@ angular.module('BlocksApp').controller('RichlistController', function(
     $rootScope.$state.current.data["pageSubTitle"] = $stateParams.hash;
     $scope.accounts = [];
 
-    $http.get('/api/richlist')
+    $http.get('/api/richlist?start=0&limit=100')
         .then(res => {
             $scope.accounts = res.data;
         });
