@@ -15,3 +15,13 @@ input[type=text] {
 :-moz-placeholder { /* Firefox 18- */
     color: #6F9193;
 }
+
+button {
+    background-color: #36C6D3;
+    color: #fff;
+    border: 1px solid #36C6D3;
+}
+
+button:hover {
+    background-color: #49D9E6;
+}

@@ -14,6 +14,9 @@ var getLatestBlocks = require('./index').getLatestBlocks;
 var filterBlocks = require('./filters').filterBlocks;
 var filterTrace = require('./filters').filterTrace;
 
+var totalSupplyCached = 1000000000;
+var circulatingSupplyCached = 500000000;
+
 
 if (typeof web3 !== "undefined") {
   web3 = new Web3(web3.currentProvider);
@@ -31,7 +34,7 @@ else
 var newBlocks = web3.eth.filter("latest");
 var newTxs = web3.eth.filter("pending");
 
-exports.totalSupply = function (req, res) {  
+exports.totalSupply = function (callback) {
   web3.currentProvider.sendAsync({
     jsonrpc: "2.0",
     method: "eth_totalSupply",
@@ -39,15 +42,38 @@ exports.totalSupply = function (req, res) {
     id: new Date().getTime()
   }, function (error, result) {
     if (!error && result && result["result"]) {
-      wei = new BigNumber(parseInt(result["result"], 16));      
-      go = etherUnits.toEther(wei, "wei");      
-      res.send(go.toString(10));
+      wei = new BigNumber(parseInt(result["result"], 16));
+      go = etherUnits.toEther(wei, "wei");
+      totalSupplyCached = go;
+      callback(go);
     } else {
-      console.log("Got error from API:" + error);
-      res.send("1000000000");
+      console.log("Got error from API in totalSupply:" + error);
+      callback(totalSupplyCached);
     }
   });
 }
+
+exports.circulatingSupply = function (callback) {
+  this.totalSupply(function (total) {
+    web3.currentProvider.sendAsync({
+      jsonrpc: "2.0",
+      method: "eth_genesisAlloc",
+      id: new Date().getTime()
+    }, function (error, result) {
+      if (!error && result && result["result"]) {
+        allocGo = new BigNumber(Object.keys(result["result"]).map(function (v) {          
+          return web3.fromWei(web3.eth.getBalance(v));
+        }).reduce((a, b) => a + b, 0));        
+        circulatingSupplyCached = total - allocGo;
+        callback(total - allocGo);
+      } else {
+        console.log("Got error from API in circulatingSupply:" + error);
+        callback(totalSupplyCached);
+      }
+    });
+  });
+}
+
 
 exports.data = function (req, res) {
   console.log(req.body)
