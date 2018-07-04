@@ -8,7 +8,7 @@ angular.module('BlocksApp').controller('RichlistController', function(
     $scope.richlist = {
         rankings: []
     };
-    $scope.limit = 10;
+    $scope.limit = 100;
     $scope.start = 0;
     $scope.isMoreDisabled = false;
 
