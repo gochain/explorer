@@ -18,7 +18,7 @@ angular.module('BlocksApp').controller('RichlistController', function(
                 $scope.richlist.rankings = $scope.richlist.rankings.concat(res.data.rankings);
                 $scope.richlist.circulatingSupply = res.data.circulatingSupply;
                 $scope.richlist.totalSupply = res.data.totalSupply;
-                $scope.start += 10;
+                $scope.start += 100;
 
                 if (res.data.rankings.length < $scope.limit) {
                     $scope.isMoreDisabled = true;
