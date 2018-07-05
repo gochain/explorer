@@ -20,8 +20,8 @@ var grabBlocks = function (web3) {
 
 var updateAddressesBalance = function (web3, latestUpdate) {
     if (!latestUpdate) { latestUpdate = 0 }
-    // console.log("updateStartedAt", latestUpdate);
-    var updateStartedAt = Date.now()
+    console.log("updateStartedAt", latestUpdate);
+    var updateStartedAt = Date.now() / 1000 //need to divide by 1000 because transactions and blocks are using this format
     var genesisAllocAddress = []
     try {
         res = web3.currentProvider.send({ jsonrpc: "2.0", method: "eth_genesisAlloc", id: new Date().getTime() })
@@ -236,7 +236,7 @@ var writeBlockToDB = function (web3, blockData) {
             if (err.code == 11000) {
                 console.log('Skip: Duplicate key ' +
                     blockData.number.toString());
-                    checkParentBlock(web3, blockData, false);
+                checkParentBlock(web3, blockData, false);
                 // cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
             } else {
                 console.log('Error: Aborted due to error on ' +
