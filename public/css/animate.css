@@ -3272,3 +3272,26 @@ body { /* Addresses a small issue in webkit: http://bit.ly/NEdoDq */
     animation-duration: 0.75s;
 }
 
+svg.spinner {
+	width: 5rem;
+	animation: spin 1s linear;
+	animation-iteration-count: infinite;
+}
+
+svg.spinner g {
+	stroke: none;
+	fill-rule: evenodd;
+}
+
+svg.spinner g path {
+	fill: #36C6D3;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
