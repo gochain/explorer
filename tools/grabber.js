@@ -11,11 +11,25 @@ var Block = mongoose.model('Block');
 var Transaction = mongoose.model('Transaction');
 var Address = mongoose.model('Address');
 
+var parseArgs = function () {
+    return process.argv.slice(2).reduce((acc, arg) => {
+        let [k, v = true] = arg.split('=')
+        acc[k] = v
+        return acc
+    }, {})
+}
 var grabBlocks = function (web3) {
+    args = parseArgs();
+    var argsNotSet = Object.keys(args).length == 0
     console.log("in grab blocks");
-    listenBlocks(web3);
-    grabBlock(web3, { 'start': 0, 'end': 'latest' }, false);
-    updateAddressesBalance(web3);
+    console.log("argsNotSet:", argsNotSet, " args:", args);
+
+    if (args["listen"] || argsNotSet)
+        listenBlocks(web3);
+    if (args["refill"] || argsNotSet)
+        grabBlock(web3, { 'start': 0, 'end': 'latest' }, false);
+    if (args["richlist"] || argsNotSet)
+        updateAddressesBalance(web3);
 }
 
 var updateAddressesBalance = function (web3, latestUpdate) {
@@ -29,11 +43,11 @@ var updateAddressesBalance = function (web3, latestUpdate) {
     } catch (e) {
         console.log("Cannot get genesis");
     }
-    Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {
+    Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {        
         if (!err) {
-            Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {
+            Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {                
                 if (!err) {
-                    Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {
+                    Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {                        
                         if (!err) {
                             var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners).concat(genesisAllocAddress);
                             uniqueArray = adressesToUpdate.filter(function (elem, pos) {
@@ -163,7 +177,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
             }
             else {
                 checkBlockDBExistsThenWrite(web3, blockData);
-                checkParentBlock(web3, blockData, true);
+                checkParentBlock(web3, blockData, listening);
                 if (listening == true)
                     return;
                 if ('hash' in blockData && 'number' in blockData) {
@@ -214,7 +228,7 @@ var checkParentBlock = function (web3, blockData, recursively) {
                                     console.log("Cannot find the block in the db while checking recursively:", err)
                                 } else {
                                     if (b) {
-                                        checkParentBlock(web3, blockData, true);
+                                        checkParentBlock(web3, blockData, recursively);
                                     }
                                 }
                             });
@@ -222,7 +236,8 @@ var checkParentBlock = function (web3, blockData, recursively) {
 
                     }
                 } else {
-                    grabBlock(web3, blockData.parentHash, true);
+                    // console.log("Cannot find parent block in db:", parentBlockNumber);
+                    grabBlock(web3, blockData.parentHash, recursively);
                 }
             }
         });
@@ -234,8 +249,14 @@ var writeBlockToDB = function (web3, blockData) {
     return new Block(blockData).save(function (err, block, count) {
         if (typeof err !== 'undefined' && err) {
             if (err.code == 11000) {
-                console.log('Skip: Duplicate key ' +
+                console.log('Skip: Duplicate key in block ' +
                     blockData.number.toString());
+                Block.findOne({ number: blockData.number.toString() }, function (err, b) {
+                    if (b && blockData.hash.toString() != b.hash.toString()) {
+                        console.log("HASH FROM API:", blockData.hash.toString(), " HASH IN DB:", b.hash.toString());
+                        cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
+                    }
+                })
                 checkParentBlock(web3, blockData, false);
                 // cleanupBlockAndTransactionsThenGrab(web3, blockData.number)
             } else {
@@ -257,7 +278,7 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
             grabBlock(web3, blockHashOrNumber, false);
         } else {
             checkParentBlock(web3, b, false);
-            if (b.number % 10000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
+            if (b.number % 1000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
             blockHashOrNumber['end'] = blockHashOrNumber['end'] - 1;
             if (blockHashOrNumber['end'] > blockHashOrNumber['start']) {
                 checkBlockDBExistsThenGrab(web3, { 'start': blockHashOrNumber['start'], 'end': blockHashOrNumber['end'] });
@@ -328,7 +349,7 @@ var writeTransactionsToDB = function (blockData) {
             Transaction.collection.insert(bulkOps, function (err, tx) {
                 if (typeof err !== 'undefined' && err) {
                     if (err.code == 11000) {
-                        console.log('Skip: Duplicate key ' +
+                        console.log('Skip: Duplicate key in transactions ' +
                             err);
                     } else {
                         console.log('Error: Aborted due to error: ' +
