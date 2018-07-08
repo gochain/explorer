@@ -17,7 +17,12 @@ Install dependencies:
 
 Install mongodb:
 
-MacOS: `brew install mongodb`
+MacOS: 
+
+```
+brew install mongodb
+mongod --config /usr/local/etc/mongod.conf
+```
 
 Ubuntu: `sudo apt-get install -y mongodb-org`
 
