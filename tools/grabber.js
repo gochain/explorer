@@ -43,11 +43,11 @@ var updateAddressesBalance = function (web3, latestUpdate) {
     } catch (e) {
         console.log("Cannot get genesis");
     }
-    Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {        
+    Transaction.distinct("to", { timestamp: { $gte: latestUpdate } }, function (err, toAdresses) {
         if (!err) {
-            Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {                
+            Transaction.distinct("from", { timestamp: { $gte: latestUpdate } }, function (err, fromAdresses) {
                 if (!err) {
-                    Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {                        
+                    Block.distinct("miner", { timestamp: { $gte: latestUpdate } }, function (err, miners) {
                         if (!err) {
                             var adressesToUpdate = toAdresses.concat(fromAdresses).concat(miners).concat(genesisAllocAddress);
                             uniqueArray = adressesToUpdate.filter(function (elem, pos) {
@@ -214,8 +214,8 @@ var checkParentBlock = function (web3, blockData, recursively) {
         var parentBlockNumber = blockData.number - 1;
         Block.findOne({ number: parentBlockNumber }, function (err, b) {
             if (err) {
-                console.log("Cannot find block in db:", err);
-                grabBlock(web3, parentBlockNumber, true);
+                console.log("Cannot find block in db in checkParentBlock:", err);
+                grabBlock(web3, parentBlockNumber, recursively);
             } else {
                 if (b) {
                     if (b && blockData.parentHash != b.hash) {
@@ -237,7 +237,8 @@ var checkParentBlock = function (web3, blockData, recursively) {
                     }
                 } else {
                     // console.log("Cannot find parent block in db:", parentBlockNumber);
-                    grabBlock(web3, blockData.parentHash, recursively);
+                    if (recursively)
+                        grabBlock(web3, blockData.parentHash, recursively);
                 }
             }
         });
