@@ -278,7 +278,7 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
             grabBlock(web3, blockHashOrNumber, false);
         } else {
             checkParentBlock(web3, b, false);
-            if (b.number % 1000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
+            if (b.number % 10000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
             blockHashOrNumber['end'] = blockHashOrNumber['end'] - 1;
             if (blockHashOrNumber['end'] > blockHashOrNumber['start']) {
                 checkBlockDBExistsThenGrab(web3, { 'start': blockHashOrNumber['start'], 'end': blockHashOrNumber['end'] });
@@ -351,6 +351,7 @@ var writeTransactionsToDB = function (blockData) {
                     if (err.code == 11000) {
                         console.log('Skip: Duplicate key in transactions ' +
                             err);
+                        cleanupBlockAndTransactionsThenGrab(web3, blockData.number);
                     } else {
                         console.log('Error: Aborted due to error: ' +
                             err);
