@@ -72,5 +72,16 @@ module.exports.Contract = mongoose.model('Contract');
 module.exports.Transaction = mongoose.model('Transaction');
 module.exports.Address = mongoose.model('Address');
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/blockDB');
+const serverOptions = {
+    poolsize: 100,
+    socketOptions: {
+        keepAlive: 1,
+        auto_reconnect: true,
+        connectTimeoutMS: 6000000,
+        socketTimeoutMS: 6000000
+    }
+};
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/blockDB', {
+    server: serverOptions
+});
 mongoose.set('debug', false);
