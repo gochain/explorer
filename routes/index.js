@@ -93,20 +93,20 @@ var getAddr = function (req, res) {
   var limit = parseInt(req.body.length);
   var start = parseInt(req.body.start);
 
-  var data = { draw: parseInt(req.body.draw), recordsFiltered: count, recordsTotal: count };
 
   var addrFind = Transaction.find({ $or: [{ "to": addr }, { "from": addr }] })
-
-  addrFind.lean(true).sort('-blockNumber').skip(start).limit(limit)
-    .exec("find", function (err, docs) {
-      if (docs)
-        data.data = filters.filterTX(docs, addr);
-      else
-        data.data = [];
-      res.write(JSON.stringify(data));
-      res.end();
-    });
-
+  addrFind.exec("count", function (err, count) {
+    var data = { draw: parseInt(req.body.draw), recordsFiltered: count, recordsTotal: count };    
+    addrFind.lean(true).sort('-blockNumber').skip(start).limit(limit)
+      .exec("find", function (err, docs) {
+        if (docs)
+          data.data = filters.filterTX(docs, addr);
+        else
+          data.data = [];
+        res.write(JSON.stringify(data));
+        res.end();
+      });
+  });
 };
 
 
