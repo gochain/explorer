@@ -1,5 +1,27 @@
-Logo and nav bar
+<mat-toolbar  color="primary">
+  <mat-toolbar-row>
+    <span>
+      <a routerLink="/" class="page-logo">
+        <img src="/assets/images/logo-full.svg" style="height:30px;"/>
+      </a>
+      <a routerLink="/" class="page-logo icon-logo">
+        <img src="/assets/images/icon.svg" style="height:30px;"/>
+      </a>
+    </span>
+  
+    <!-- This fills the remaining space of the current row -->
+    <span class="fill-remaining-space"></span>
 
-Search field in nav bar
+    <mat-form-field style="font-size: 65%; max-width: 200px; ">
+        <input matInput placeholder="Search by address/tx hash" value="">
+    </mat-form-field>
+  
+  </mat-toolbar-row>
 
+</mat-toolbar>
+
+<div class="content-wrapper">
+    
 <router-outlet></router-outlet>
+
+</div>
