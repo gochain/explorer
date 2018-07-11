@@ -1,6 +1,8 @@
 Transactions in database: {{ txCount }}
 
-<h2>Recent Blocks</h2>
-<div class="text" *ngFor="let b of recentBlocks | async">
-  {{b.name}}
+<div *ngIf="recentBlocks">
+  <h2>Recent Blocks</h2>
+  <div class="text" *ngFor="let b of recentBlocks.blocks">
+    {{b.num}} - {{b.hash}}
+  </div>
 </div>

@@ -1,21 +1,21 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore, AngularFirestoreDocument } from 'angularfire2/firestore';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from '../../node_modules/rxjs';
+import { BlockList } from "./block_list";
 
 @Injectable({
   providedIn: 'root'
 })
-export class FirestoreService {
-
-  // private afs: AngularFirestore;
-
-  constructor(private afs: AngularFirestore) { 
-    // this.afs = afs;
+export class ApiService {
+ 
+  constructor(private afs: AngularFirestore,  private http: HttpClient) { 
   }
 
-  getRecentBlocks(): Observable<any[]> {
+  getRecentBlocks(): Observable<BlockList> {
     // return this.afs.collection('items', ref => ref.where('bnum', '>=', 2)).valueChanges();
     // return this.afs.collection('items', ref => ref.where('type', '==', 'foo'));
-    return this.afs.collection('items', ref => ref.orderBy('bnum', 'desc').limit(2)).valueChanges();
+    // return this.afs.collection('items', ref => ref.orderBy('bnum', 'desc').limit(2)).valueChanges();
+    return this.http.get<BlockList>("http://localhost:8080/blocks");
   }
 }

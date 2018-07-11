@@ -1,15 +1,15 @@
 import { TestBed, inject } from '@angular/core/testing';
 
-import { FirestoreService } from './firestore.service';
+import { ApiService } from './firestore.service';
 
-describe('FirestoreService', () => {
+describe('ApiService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FirestoreService]
+      providers: [ApiService]
     });
   });
 
-  it('should be created', inject([FirestoreService], (service: FirestoreService) => {
+  it('should be created', inject([ApiService], (service: ApiService) => {
     expect(service).toBeTruthy();
   }));
 });
