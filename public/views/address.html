@@ -14,10 +14,7 @@
                         </span>
                         <span class="{{(addr.balance.toString().length < 10) && 'eth-stat-title' || 'eth-stat-title-small'}}">
                           &nbsp; {{ addr.balance | bigNumber}}
-                        </span>
-                        <div class="margin-top-20">
-                            <span class="eth-stat-text">Signed:</span> {{ addr.signed}}
-                        </div>
+                        </span>                        
                         <div class="margin-top-20">
                             <span class="eth-stat-text">Transactions:</span> {{ addr.count | bigNumber}}
                         </div>
