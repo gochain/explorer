@@ -102,7 +102,7 @@ func listBlocks(w http.ResponseWriter, r *http.Request) {
 			log.Error().Err(err).Msg("Error fetching next block")
 			break
 		}
-		fmt.Printf("Block %v, Hash %v\n", block.Number, block.Hash)
+		fmt.Printf("Block %v, Hash %v\n", block.Number, block.BlockHash)
 		bl.Blocks = append(bl.Blocks, &block)
 	}
 	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
