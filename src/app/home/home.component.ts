@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {Observable} from 'rxjs';
-import { ApiService } from '../firestore.service';
+import { ApiService } from '../api.service';
 import { BlockList } from "../block_list";
 import { of } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';

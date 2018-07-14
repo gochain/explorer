@@ -1,3 +1,14 @@
-<p>
-  block works!
-</p>
+<h1>Block</h1>
+
+
+
+<table *ngIf="(block | async) as b">
+  <tr>
+    <td>Block Number</td>
+    <td><a routerLink="/block/{{b.num}}">{{b.num}}</a></td>
+  </tr>
+  <tr>
+    <td>Created At</td>   
+    <td>{{b.created_at }}</td>
+  </tr>
+</table>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gochain-io/explorer/api/models"
@@ -76,7 +77,7 @@ func main() {
 	})
 	r.Route("/blocks", func(r chi.Router) {
 		r.Get("/", listBlocks)
-		// r.Get("/{num}", getBlock)
+		r.Get("/{num}", getBlock)
 	})
 	http.ListenAndServe(":8080", r)
 }
@@ -100,25 +101,47 @@ func listBlocks(w http.ResponseWriter, r *http.Request) {
 		}
 		if err != nil {
 			log.Error().Err(err).Msg("Error fetching next block")
+			// todo: sendError()
 			break
 		}
 		fmt.Printf("Block %v, Hash %v\n", block.Number, block.BlockHash)
 		bl.Blocks = append(bl.Blocks, &block)
 	}
-	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
 	writeJSON(w, http.StatusOK, bl)
 }
 
-// func getArticle(w http.ResponseWriter, r *http.Request) {
-// 	ctx := r.Context()
-// articleID := chi.URLParam(r, "articleID")
-// 	article, ok := ctx.Value("article").(*Article)
-// 	if !ok {
-// 	  http.Error(w, http.StatusText(422), 422)
-// 	  return
-// 	}
-// 	w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
-//   }
+func getBlock(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	bnumS := chi.URLParam(r, "num")
+	bnum, err := strconv.Atoi(bnumS)
+	if err != nil {
+		log.Error().Err(err).Str("bnumS", bnumS).Msg("Error converting bnumS to num")
+		// todo: sendError()
+		return
+	}
+	log.Info().Int("bnum", bnum).Msg("looking up block")
+	var block models.Block
+	query := datastore.NewQuery("Blocks").
+		Filter("num =", bnum)
+	// Filter("Priority >=", 4).
+	// Order("-Priority")
+
+	it := ds.Run(ctx, query)
+	for {
+		log.Info().Msg("iter")
+		_, err := it.Next(&block)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Error().Err(err).Msg("Error fetching block")
+			// todo: sendError()
+			break
+		}
+		fmt.Printf("Block %v, Hash %v\n", block.Number, block.BlockHash)
+	}
+	writeJSON(w, http.StatusOK, block)
+}
 
 type Item struct {
 	Name string
