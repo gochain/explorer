@@ -11,7 +11,8 @@ export const environment = {
     projectId: "gochain-explorer",
     storageBucket: "",
     messagingSenderId: "881132861207"
-  }
+  },
+  apiURL: "http://localhost:8080"
 };
 
 /*

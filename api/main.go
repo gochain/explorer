@@ -86,7 +86,7 @@ func listBlocks(w http.ResponseWriter, r *http.Request) {
 	bl := &models.BlockList{
 		Blocks: []*models.Block{},
 	}
-	query := datastore.NewQuery("blocks")
+	query := datastore.NewQuery("Blocks")
 	// Filter("type =", "foo")
 	// Filter("Priority >=", 4).
 	// Order("-Priority")

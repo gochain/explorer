@@ -10,8 +10,8 @@ import { AngularFireAuthModule } from 'angularfire2/auth';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
-        MatSelectModule} from '@angular/material';
-
+        MatSelectModule, MatListModule, MatIconModule} from '@angular/material';
+import {TimeAgoPipe} from 'time-ago-pipe';
 
 import { AppComponent } from './app.component';
 
@@ -48,7 +48,8 @@ const appRoutes: Routes = [
     TransactionComponent,
     AddressComponent,
     HomeComponent,
-    PageNotFoundComponent
+    PageNotFoundComponent,
+    TimeAgoPipe
   ],
   imports: [
     RouterModule.forRoot(
@@ -62,7 +63,7 @@ const appRoutes: Routes = [
     BrowserAnimationsModule,
     FlexLayoutModule,
     MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
-    MatSelectModule,
+    MatSelectModule, MatListModule, MatIconModule,
     HttpClientModule
   ],
   providers: [],
