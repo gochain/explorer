@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/api/iterator"
 
 	"cloud.google.com/go/datastore"
 	"github.com/ethereum/go-ethereum/cmd/utils"
@@ -53,14 +55,14 @@ func NewImporter() *ImportMaster {
 	return importer
 }
 
-func (self *ImportMaster) importBlock(block *types.Block) {
-	blockHash := block.Header().Hash().Hex()
+func (self *ImportMaster) importBlockIfNotExists(block *types.Block) {
+	blockNumber := int(block.Header().Number.Int64())
 	txAmount := uint64(len(block.Transactions()))
-	log.Info().Msg("Importing block " + blockHash + "Hash with " + string(txAmount) + "transactions")
+	log.Info().Msg("Importing block " + strconv.Itoa(blockNumber) + "Hash with " + string(txAmount) + "transactions")
 	// Number,	GasLimit,	BlockHash,	CreatedAt,	ParentHash,	TxHash,	GasUsed,	Nonce,	Miner,
-	b := &models.Block{int(block.Header().Number.Int64()),
-		int(block.Header().GasLimit),
-		blockHash, time.Unix(block.Time().Int64(), 0), block.ParentHash().Hex(), block.Header().TxHash.Hex(),
+	b := &models.Block{blockNumber,
+		int(block.Header().GasLimit), block.Header().Hash().Hex(),
+		time.Unix(block.Time().Int64(), 0), block.ParentHash().Hex(), block.Header().TxHash.Hex(),
 		strconv.Itoa(int(block.Header().GasUsed)), string(block.Nonce()),
 		block.Coinbase().Hex(), int(txAmount)}
 
@@ -68,7 +70,7 @@ func (self *ImportMaster) importBlock(block *types.Block) {
 		self.importTx(tx, block)
 	}
 	log.Info().Interface("Block", b)
-	blockKey := datastore.NameKey("Blocks", blockHash, nil)
+	blockKey := datastore.NameKey("Blocks", strconv.Itoa(blockNumber), nil)
 	if _, err := self.ds.Put(self.ctx, blockKey, b); err != nil {
 		log.Fatal().Err(err).Msg("oops")
 	}
@@ -80,4 +82,26 @@ func (self *ImportMaster) importTx(tx *types.Transaction, block *types.Block) {
 	if _, err := self.ds.Put(self.ctx, txKey, self.parseTx(tx, block)); err != nil {
 		log.Fatal().Err(err).Msg("oops")
 	}
+}
+
+func (self *ImportMaster) GetBlockByNumber(blockNumber string) *[]models.Block {
+	var blocks []models.Block
+	blocks = nil
+	key := datastore.NameKey("Blocks", blockNumber, nil)
+	query := datastore.NewQuery("Blocks").Filter("__key__ =", key)
+	ctx := context.Background()
+	it := self.ds.Run(ctx, query)
+	for {
+		var block models.Block
+		_, err := it.Next(&block)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatal().Err(err).Msg("oops")
+		}
+		blocks = append(blocks, block)
+		fmt.Printf("BlockNumber %d, Hash %d\n", block.Number, block.BlockHash)
+	}
+	return &blocks
 }
