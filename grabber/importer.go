@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -19,6 +19,15 @@ import (
 type ImportMaster struct {
 	ds  *datastore.Client
 	ctx context.Context
+}
+
+func appendIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
 }
 
 func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
@@ -84,9 +93,8 @@ func (self *ImportMaster) importTx(tx *types.Transaction, block *types.Block) {
 	}
 }
 
-func (self *ImportMaster) GetBlockByNumber(blockNumber string) *[]models.Block {
+func (self *ImportMaster) GetBlocksByNumber(blockNumber string) *[]models.Block {
 	var blocks []models.Block
-	blocks = nil
 	key := datastore.NameKey("Blocks", blockNumber, nil)
 	query := datastore.NewQuery("Blocks").Filter("__key__ =", key)
 	ctx := context.Background()
@@ -101,7 +109,69 @@ func (self *ImportMaster) GetBlockByNumber(blockNumber string) *[]models.Block {
 			log.Fatal().Err(err).Msg("oops")
 		}
 		blocks = append(blocks, block)
-		fmt.Printf("BlockNumber %d, Hash %d\n", block.Number, block.BlockHash)
+		log.Info().Str("blockNumber", blockNumber).Msg("Got block")
 	}
 	return &blocks
+}
+
+func (self *ImportMaster) importAddress(address string, balance *big.Int) {
+	log.Info().Str("address", address).Str("balance", balance.String()).Msg("Updating address")
+	adKey := datastore.NameKey("Addresses", address, nil)
+	if _, err := self.ds.Put(self.ctx, adKey, &models.Address{address, "", balance.String(), time.Now()}); err != nil {
+		log.Fatal().Err(err).Msg("oops")
+	}
+}
+
+func (self *ImportMaster) GetActiveAdresses(fromDate time.Time) *[]string {
+	var addresses []string
+	query := datastore.NewQuery("Blocks").
+		// Filter("num >", 0)
+		DistinctOn("miner")
+	it := self.ds.Run(self.ctx, query)
+	for {
+		var block models.Block
+		_, err := it.Next(&block)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatal().Err(err).Msg("distinct on blocks")
+		}
+		addresses = appendIfMissing(addresses, block.Miner)
+		log.Info().Str("miner", block.Miner).Msg("Got miner")
+	}
+
+	query = datastore.NewQuery("Transactions").
+		// Filter("created_at >", fromDate)
+		DistinctOn("from")
+	it = self.ds.Run(self.ctx, query)
+	for {
+		var tx models.Transaction
+		_, err := it.Next(&tx)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatal().Err(err).Msg("oops")
+		}
+		addresses = appendIfMissing(addresses, tx.From)
+		log.Info().Str("tx_from", tx.From).Msg("Got from tx")
+	}
+	query = datastore.NewQuery("Transactions").
+		// Filter("created_at >", fromDate)
+		DistinctOn("to")
+	it = self.ds.Run(self.ctx, query)
+	for {
+		var tx models.Transaction
+		_, err := it.Next(&tx)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatal().Err(err).Msg("oops")
+		}
+		addresses = appendIfMissing(addresses, tx.To)
+		log.Info().Str("tx_to", tx.To).Msg("Got to tx")
+	}
+	return &addresses
 }
