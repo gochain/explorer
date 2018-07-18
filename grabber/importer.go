@@ -92,13 +92,22 @@ func (self *ImportMaster) importTx(tx *types.Transaction, block *types.Block) {
 		log.Fatal().Err(err).Msg("oops")
 	}
 }
+func (self *ImportMaster) needReloadBlock(block *types.Block) bool {
+	parentBlockNumber := strconv.Itoa(int(block.Header().Number.Int64()) - 1)
+	parentBlock := *self.GetBlocksByNumber(parentBlockNumber)
+	log.Info().Int("Number of blocks", len(parentBlock)).Msg("Checking parent")
+	if len(parentBlock) == 1 {
+		log.Info().Str("ParentHash", block.ParentHash().Hex()).Str("Hash from parent", parentBlock[0].BlockHash).Msg("Checking parent")
+		log.Info().Str("BlockNumber", block.Header().Number.String()).Int("ParentNumber", parentBlock[0].Number).Msg("Checking parent")
+	}
+	return len(parentBlock) < 1 || (len(parentBlock) == 1 && block.ParentHash().Hex() != parentBlock[0].BlockHash)
 
+}
 func (self *ImportMaster) GetBlocksByNumber(blockNumber string) *[]models.Block {
 	var blocks []models.Block
 	key := datastore.NameKey("Blocks", blockNumber, nil)
 	query := datastore.NewQuery("Blocks").Filter("__key__ =", key)
-	ctx := context.Background()
-	it := self.ds.Run(ctx, query)
+	it := self.ds.Run(self.ctx, query)
 	for {
 		var block models.Block
 		_, err := it.Next(&block)

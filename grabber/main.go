@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -65,6 +66,7 @@ func backfill(client *ethclient.Client, importer *ImportMaster) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			checkParentForBlock(client, importer, block)
 		}
 		blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
 	}
@@ -84,5 +86,20 @@ func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
 			importer.importAddress(address, balance)
 		}
 		lastUpdatedAt = time.Now()
+	}
+}
+
+func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block *types.Block) {
+	blockNumber := block.Header().Number
+	fmt.Println("Checking the block for it's parent:", blockNumber.String())
+	if importer.needReloadBlock(block) {
+		blockNumber.Sub(blockNumber, big.NewInt(1))
+		fmt.Println("Redownloading the block because it's corrupted:", blockNumber.String())
+		block, err := client.BlockByNumber(context.Background(), blockNumber)
+		importer.importBlockIfNotExists(block)
+		if err != nil {
+			log.Fatal(err)
+		}
+		checkParentForBlock(client, importer, block)
 	}
 }
