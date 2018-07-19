@@ -7,9 +7,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gochain-io/gochain/core/types"
+	"github.com/gochain-io/gochain/ethclient"
 )
 
 func main() {
@@ -20,9 +19,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go backfill(client, importer)
 	go listener(client, importer)
-	updateAddresses(client, importer)
+	backfill(client, importer)
+	// updateAddresses(client, importer)
 
 }
 
@@ -40,10 +39,11 @@ func listener(client *ethclient.Client, importer *ImportMaster) {
 			if prevHeader != header.Number.String() {
 				fmt.Println("Listener is downloading the block:", header.Number.String())
 				block, err := client.BlockByNumber(context.Background(), header.Number)
-				importer.importBlockIfNotExists(block)
+				importer.importBlock(block)
 				if err != nil {
 					log.Fatal(err)
 				}
+				checkParentForBlock(client, importer, block, 5)
 				prevHeader = header.Number.String()
 			}
 		}
@@ -59,47 +59,50 @@ func backfill(client *ethclient.Client, importer *ImportMaster) {
 	blockNumber := header.Number
 	for {
 		blocksFromDB := importer.GetBlocksByNumber(blockNumber.String())
-		if len(*blocksFromDB) < 1 {
+		if blocksFromDB == nil {
 			fmt.Println("Backfilling the block:", blockNumber.String())
 			block, err := client.BlockByNumber(context.Background(), blockNumber)
-			importer.importBlockIfNotExists(block)
+			importer.importBlock(block)
 			if err != nil {
 				log.Fatal(err)
 			}
-			checkParentForBlock(client, importer, block)
+			checkParentForBlock(client, importer, block, 5)
 		}
 		blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
 	}
 }
 
-func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
-	lastUpdatedAt := time.Unix(0, 0)
-	for {
-		addresses := importer.GetActiveAdresses(lastUpdatedAt)
-		fmt.Println("Addresses in db:", len(*addresses))
-		for _, address := range *addresses {
-			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address), nil)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Println("Balance of the address:", address, " - ", balance.String())
-			importer.importAddress(address, balance)
-		}
-		lastUpdatedAt = time.Now()
-	}
-}
-
-func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block *types.Block) {
+func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block *types.Block, numBlocksToCheck int) {
+	numBlocksToCheck--
 	blockNumber := block.Header().Number
 	fmt.Println("Checking the block for it's parent:", blockNumber.String())
 	if importer.needReloadBlock(block) {
 		blockNumber.Sub(blockNumber, big.NewInt(1))
-		fmt.Println("Redownloading the block because it's corrupted:", blockNumber.String())
+		fmt.Println("Redownloading the block because it's corrupted or missing:", blockNumber.String())
 		block, err := client.BlockByNumber(context.Background(), blockNumber)
-		importer.importBlockIfNotExists(block)
+		importer.importBlock(block)
 		if err != nil {
 			log.Fatal(err)
 		}
-		checkParentForBlock(client, importer, block)
+		if numBlocksToCheck > 0 {
+			checkParentForBlock(client, importer, block, numBlocksToCheck)
+		}
 	}
 }
+
+// func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
+// 	lastUpdatedAt := time.Unix(0, 0)
+// 	for {
+// 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
+// 		fmt.Println("Addresses in db:", len(*addresses))
+// 		for _, address := range *addresses {
+// 			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address), nil)
+// 			if err != nil {
+// 				log.Fatal(err)
+// 			}
+// 			fmt.Println("Balance of the address:", address, " - ", balance.String())
+// 			importer.importAddress(address, balance)
+// 		}
+// 		lastUpdatedAt = time.Now()
+// 	}
+// }
