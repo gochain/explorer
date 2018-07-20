@@ -9,9 +9,9 @@ import (
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/api/iterator"
 
 	"github.com/gochain-io/explorer/api/models"
-	"github.com/gochain-io/gochain/cmd/utils"
 	"github.com/gochain-io/gochain/core/types"
 )
 
@@ -30,14 +30,12 @@ func appendIfMissing(slice []string, i string) []string {
 }
 
 func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
-	var from = ""
-	if msg, err := tx.AsMessage(context.Background(), types.HomesteadSigner{}); err != nil {
-		from = msg.From().Hex()
-	} else {
-		utils.Fatalf("Could not parse from address: %v", err)
+	from, err := types.Sender(self.ctx, types.HomesteadSigner{}, tx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("parseTx")
 	}
 	// TxHash,	To,	From,	Amount,	Price,	GasLimit,	BlockNumber,	Nonce,	BlockHash,	CreatedAt,
-	txx := &models.Transaction{tx.Hash().Hex(), tx.To().Hex(), from,
+	txx := &models.Transaction{tx.Hash().Hex(), tx.To().Hex(), from.Hex(),
 		tx.Value().String(), tx.GasPrice().String(), strconv.Itoa(int(tx.Gas())),
 		block.Number().String(), string(tx.Nonce()),
 		block.Hash().Hex(), time.Unix(block.Time().Int64(), 0)}
@@ -81,12 +79,28 @@ func (self *ImportMaster) importBlock(block *types.Block) {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 
+	_, err = self.fs.Collection("ActiveAddress").Doc(block.Coinbase().Hex()).Set(self.ctx, &models.ActiveAddress{time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("importBlock")
+	}
+
 }
 func (self *ImportMaster) importTx(tx *types.Transaction, block *types.Block) {
 	log.Info().Msg("Importing tx" + tx.Hash().Hex())
-	_, err := self.fs.Collection("Transactions").Doc(tx.Hash().String()).Set(self.ctx, self.parseTx(tx, block))
+	transaction := self.parseTx(tx, block)
+	_, err := self.fs.Collection("Transactions").Doc(tx.Hash().String()).Set(self.ctx, transaction)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importTx")
+	}
+
+	_, err = self.fs.Collection("ActiveAddress").Doc(transaction.From).Set(self.ctx, &models.ActiveAddress{time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("importBlock")
+	}
+
+	_, err = self.fs.Collection("ActiveAddress").Doc(transaction.To).Set(self.ctx, &models.ActiveAddress{time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("importBlock")
 	}
 }
 func (self *ImportMaster) needReloadBlock(block *types.Block) bool {
@@ -118,56 +132,19 @@ func (self *ImportMaster) GetBlocksByNumber(blockNumber string) *models.Block {
 	return &c
 }
 
-// func (self *ImportMaster) GetActiveAdresses(fromDate time.Time) *[]string {
-// 	var addresses []string
-// 	query := datastore.NewQuery("Blocks").
-// 		// Filter("num >", 0)
-// 		DistinctOn("miner")
-// 	it := self.ds.Run(self.ctx, query)
-// 	for {
-// 		var block models.Block
-// 		_, err := it.Next(&block)
-// 		if err == iterator.Done {
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatal().Err(err).Msg("distinct on blocks")
-// 		}
-// 		addresses = appendIfMissing(addresses, block.Miner)
-// 		log.Info().Str("miner", block.Miner).Msg("Got miner")
-// 	}
-
-// 	query = datastore.NewQuery("Transactions").
-// 		// Filter("created_at >", fromDate)
-// 		DistinctOn("from")
-// 	it = self.ds.Run(self.ctx, query)
-// 	for {
-// 		var tx models.Transaction
-// 		_, err := it.Next(&tx)
-// 		if err == iterator.Done {
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatal().Err(err).Msg("oops")
-// 		}
-// 		addresses = appendIfMissing(addresses, tx.From)
-// 		log.Info().Str("tx_from", tx.From).Msg("Got from tx")
-// 	}
-// 	query = datastore.NewQuery("Transactions").
-// 		// Filter("created_at >", fromDate)
-// 		DistinctOn("to")
-// 	it = self.ds.Run(self.ctx, query)
-// 	for {
-// 		var tx models.Transaction
-// 		_, err := it.Next(&tx)
-// 		if err == iterator.Done {
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatal().Err(err).Msg("oops")
-// 		}
-// 		addresses = appendIfMissing(addresses, tx.To)
-// 		log.Info().Str("tx_to", tx.To).Msg("Got to tx")
-// 	}
-// 	return &addresses
-// }
+func (self *ImportMaster) GetActiveAdresses(fromDate time.Time) *[]string {
+	var addresses []string
+	iter := self.fs.Collection("ActiveAddress").Where("updated_at", ">", fromDate).Documents(self.ctx)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Info().Err(err).Msg("GetActiveAdresses")
+		}
+		// log.Info().Str("DOC:", doc.Ref.ID).Msg("GetActiveAdresses")
+		addresses = append(addresses, doc.Ref.ID)
+	}
+	return &addresses
+}

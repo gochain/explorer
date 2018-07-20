@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 )
@@ -20,8 +21,8 @@ func main() {
 		log.Fatal(err)
 	}
 	go listener(client, importer)
-	backfill(client, importer)
-	// updateAddresses(client, importer)
+	go backfill(client, importer)
+	updateAddresses(client, importer)
 
 }
 
@@ -90,19 +91,20 @@ func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block
 	}
 }
 
-// func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
-// 	lastUpdatedAt := time.Unix(0, 0)
-// 	for {
-// 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
-// 		fmt.Println("Addresses in db:", len(*addresses))
-// 		for _, address := range *addresses {
-// 			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address), nil)
-// 			if err != nil {
-// 				log.Fatal(err)
-// 			}
-// 			fmt.Println("Balance of the address:", address, " - ", balance.String())
-// 			importer.importAddress(address, balance)
-// 		}
-// 		lastUpdatedAt = time.Now()
-// 	}
-// }
+func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
+	lastUpdatedAt := time.Unix(0, 0)
+	for {
+		addresses := importer.GetActiveAdresses(lastUpdatedAt)
+		fmt.Println("Addresses in db:", len(*addresses), " for date:", lastUpdatedAt)
+		for _, address := range *addresses {
+			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address), nil)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Balance of the address:", address, " - ", balance.String())
+			importer.importAddress(address, balance)
+		}
+		lastUpdatedAt = time.Now()
+		time.Sleep(120 * time.Second) //sleep for 2 minutes
+	}
+}
