@@ -13,11 +13,13 @@ import (
 
 	"github.com/gochain-io/explorer/api/models"
 	"github.com/gochain-io/gochain/core/types"
+	"github.com/gochain-io/gochain/ethclient"
 )
 
 type ImportMaster struct {
-	fs  *firestore.Client
-	ctx context.Context
+	fs        *firestore.Client
+	ethclient *ethclient.Client
+	ctx       context.Context
 }
 
 func appendIfMissing(slice []string, i string) []string {
@@ -30,7 +32,7 @@ func appendIfMissing(slice []string, i string) []string {
 }
 
 func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
-	from, err := types.Sender(self.ctx, types.HomesteadSigner{}, tx)
+	from, err := self.ethclient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
@@ -42,7 +44,7 @@ func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *mo
 	return txx
 }
 
-func NewImporter() *ImportMaster {
+func NewImporter(ethclient *ethclient.Client) *ImportMaster {
 	ctx := context.Background()
 	conf := &firebase.Config{ProjectID: "gochain-explorer"}
 	app, err := firebase.NewApp(ctx, conf)
@@ -57,6 +59,7 @@ func NewImporter() *ImportMaster {
 	importer := new(ImportMaster)
 	importer.fs = client
 	importer.ctx = ctx
+	importer.ethclient = ethclient
 	return importer
 }
 

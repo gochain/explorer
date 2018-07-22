@@ -14,12 +14,11 @@ import (
 
 func main() {
 
-	importer := NewImporter()
-
 	client, err := ethclient.Dial("https://rpc.gochain.io")
 	if err != nil {
 		log.Fatal(err)
 	}
+	importer := NewImporter(client)
 	go listener(client, importer)
 	go backfill(client, importer)
 	updateAddresses(client, importer)
