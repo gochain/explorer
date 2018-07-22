@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 )
 
@@ -43,7 +42,7 @@ func listener(client *ethclient.Client, importer *ImportMaster) {
 				if err != nil {
 					log.Fatal(err)
 				}
-				checkParentForBlock(client, importer, block, 5)
+				checkParentForBlock(client, importer, block.Number().Int64(), 5)
 				prevHeader = header.Number.String()
 			}
 		}
@@ -66,26 +65,38 @@ func backfill(client *ethclient.Client, importer *ImportMaster) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			checkParentForBlock(client, importer, block, 5)
 		}
+		checkParentForBlock(client, importer, blockNumber.Int64(), 5)
+		checkTransactionsConsistency(client, importer, blockNumber.Int64())
 		blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
 	}
 }
 
-func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block *types.Block, numBlocksToCheck int) {
+func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
-	blockNumber := block.Header().Number
-	fmt.Println("Checking the block for it's parent:", blockNumber.String())
-	if importer.needReloadBlock(block) {
-		blockNumber.Sub(blockNumber, big.NewInt(1))
-		fmt.Println("Redownloading the block because it's corrupted or missing:", blockNumber.String())
-		block, err := client.BlockByNumber(context.Background(), blockNumber)
+	fmt.Println("Checking the block for it's parent:", blockNumber)
+	if importer.needReloadBlock(blockNumber) {
+		blockNumber--
+		fmt.Println("Redownloading the block because it's corrupted or missing:", blockNumber)
+		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
 		importer.importBlock(block)
 		if err != nil {
 			log.Fatal(err)
 		}
 		if numBlocksToCheck > 0 {
-			checkParentForBlock(client, importer, block, numBlocksToCheck)
+			checkParentForBlock(client, importer, block.Number().Int64(), numBlocksToCheck)
+		}
+	}
+}
+
+func checkTransactionsConsistency(client *ethclient.Client, importer *ImportMaster, blockNumber int64) {
+	fmt.Println("Checking a transaction consistency for the block :", blockNumber)
+	if !importer.TransactionsConsistent(blockNumber) {
+		fmt.Println("Redownloading the block because number of transactions are wrong", blockNumber)
+		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
+		importer.importBlock(block)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }
