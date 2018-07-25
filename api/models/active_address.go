@@ -3,5 +3,6 @@ package models
 import "time"
 
 type ActiveAddress struct {
-	UpdatedAt time.Time `json:"last_updated_at" firestore:"updated_at"`
+	Address   string    `json:"address" bson:"address"`
+	UpdatedAt time.Time `json:"last_updated_at" bson:"updated_at"`
 }
