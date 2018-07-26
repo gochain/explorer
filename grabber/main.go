@@ -2,30 +2,64 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"os"
 
 	"math/big"
 	"time"
 
+	"github.com/codegangsta/cli"
+	"github.com/gochain-io/explorer/api/backend"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/ethclient"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	var url string
+	var loglevel string
+	app := cli.NewApp()
 
-	client, err := ethclient.Dial("https://rpc.gochain.io")
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "rpc-url, u",
+			Value:       "https://rpc.gochain.io",
+			Usage:       "rpc api url, 'https://rpc.gochain.io'",
+			Destination: &url,
+		},
+		cli.StringFlag{
+			Name:        "log, l",
+			Value:       "info",
+			Usage:       "loglevel debug/info/warn/fatal, default is Info",
+			Destination: &loglevel,
+		},
+	}
+
+	app.Action = func(c *cli.Context) error {
+		level, _ := zerolog.ParseLevel(loglevel)
+		zerolog.SetGlobalLevel(level)
+		client := getClient(url)
+		importer := backend.NewBackend(&client)
+		go listener(url, importer)
+		go backfill(url, importer)
+		updateAddresses(url, importer)
+		return nil
+	}
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Run")
+	}
+}
+
+func getClient(url string) ethclient.Client {
+	client, err := ethclient.Dial(url)
 	if err != nil {
 		log.Fatal().Err(err).Msg("main")
 	}
-	importer := NewImporter(client)
-	go listener(client, importer)
-	backfill(client, importer)
-	// updateAddresses(client, importer)
-
+	return *client
 }
-
-func listener(client *ethclient.Client, importer *ImportMaster) {
+func listener(url string, importer *backend.MongoBackend) {
+	client := getClient(url)
 	var prevHeader string
 	ticker := time.NewTicker(time.Second * 1).C
 	for {
@@ -35,55 +69,57 @@ func listener(client *ethclient.Client, importer *ImportMaster) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("HeaderByNumber")
 			}
-			fmt.Println(header.Number.String())
+			log.Info().Int64("Block", header.Number.Int64()).Msg("Gettting block in listener")
 			if prevHeader != header.Number.String() {
-				fmt.Println("Listener is downloading the block:", header.Number.String())
+				log.Info().Str("Listener is downloading the block:", header.Number.String()).Msg("Gettting block in listener")
 				block, err := client.BlockByNumber(context.Background(), header.Number)
-				importer.importBlock(block)
+				importer.ImportBlock(block)
 				if err != nil {
 					log.Fatal().Err(err).Msg("listener")
 				}
-				checkParentForBlock(client, importer, block.Number().Int64(), 5)
+				checkParentForBlock(&client, importer, block.Number().Int64(), 5)
 				prevHeader = header.Number.String()
 			}
 		}
 	}
 }
 
-func backfill(client *ethclient.Client, importer *ImportMaster) {
+func backfill(url string, importer *backend.MongoBackend) {
+	client := getClient(url)
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Fatal().Err(err).Msg("backfill - HeaderByNumber")
 	}
-	fmt.Println(header.Number.String())
+	log.Info().Msg(header.Number.String())
 	blockNumber := header.Number
 	for {
-		blocksFromDB := importer.GetBlocksByNumber(blockNumber.Int64())
+		log.Info().Int64("Block", blockNumber.Int64()).Msg("Checking block in backfill")
+		blocksFromDB := importer.GetBlockByNumber(blockNumber.Int64())
 		if blocksFromDB == nil {
-			fmt.Println("Backfilling the block:", blockNumber.String())
+			log.Info().Str("Backfilling the block:", blockNumber.String()).Msg("Gettting block in backfill")
 			block, err := client.BlockByNumber(context.Background(), blockNumber)
 			if block != nil {
-				importer.importBlock(block)
+				importer.ImportBlock(block)
 				if err != nil {
 					log.Fatal().Err(err).Msg("importBlock - backfill")
 				}
 			}
 		}
-		checkParentForBlock(client, importer, blockNumber.Int64(), 5)
-		checkTransactionsConsistency(client, importer, blockNumber.Int64())
+		checkParentForBlock(&client, importer, blockNumber.Int64(), 5)
+		checkTransactionsConsistency(&client, importer, blockNumber.Int64())
 		blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
 	}
 }
 
-func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, blockNumber int64, numBlocksToCheck int) {
+func checkParentForBlock(client *ethclient.Client, importer *backend.MongoBackend, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
-	fmt.Println("Checking the block for it's parent:", blockNumber)
-	if importer.needReloadBlock(blockNumber) {
+	log.Info().Int64("Checking the block for it's parent:", blockNumber)
+	if importer.NeedReloadBlock(blockNumber) {
 		blockNumber--
-		fmt.Println("Redownloading the block because it's corrupted or missing:", blockNumber)
+		log.Info().Int64("Redownloading the block because it's corrupted or missing:", blockNumber).Msg("checkParentForBlock")
 		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
 		if block != nil {
-			importer.importBlock(block)
+			importer.ImportBlock(block)
 			if err != nil {
 				log.Fatal().Err(err).Msg("importBlock - checkParentForBlock")
 			}
@@ -98,13 +134,13 @@ func checkParentForBlock(client *ethclient.Client, importer *ImportMaster, block
 	}
 }
 
-func checkTransactionsConsistency(client *ethclient.Client, importer *ImportMaster, blockNumber int64) {
-	fmt.Println("Checking a transaction consistency for the block :", blockNumber)
+func checkTransactionsConsistency(client *ethclient.Client, importer *backend.MongoBackend, blockNumber int64) {
+	log.Info().Int64("Checking a transaction consistency for the block :", blockNumber)
 	if !importer.TransactionsConsistent(blockNumber) {
-		fmt.Println("Redownloading the block because number of transactions are wrong", blockNumber)
+		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
 		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
 		if block != nil {
-			importer.importBlock(block)
+			importer.ImportBlock(block)
 			if err != nil {
 				log.Fatal().Err(err).Msg("importBlock - checkParentForBlock")
 			}
@@ -115,18 +151,19 @@ func checkTransactionsConsistency(client *ethclient.Client, importer *ImportMast
 	}
 }
 
-func updateAddresses(client *ethclient.Client, importer *ImportMaster) {
+func updateAddresses(url string, importer *backend.MongoBackend) {
+	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
 	for {
 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
-		fmt.Println("Addresses in db:", len(*addresses), " for date:", lastUpdatedAt)
+		log.Info().Int("Addresses in db", len(*addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for _, address := range *addresses {
 			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address.Address), nil)
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")
 			}
-			fmt.Println("Balance of the address:", address, " - ", balance.String())
-			importer.importAddress(address.Address, balance)
+			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Msg("updateAddresses")
+			importer.ImportAddress(address.Address, balance)
 		}
 		lastUpdatedAt = time.Now()
 		time.Sleep(120 * time.Second) //sleep for 2 minutes

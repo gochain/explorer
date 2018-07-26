@@ -1,4 +1,4 @@
-package main
+package backend
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/gochain-io/gochain/ethclient"
 )
 
-type ImportMaster struct {
+type MongoBackend struct {
 	mongo     *mgo.Database
 	ethclient *ethclient.Client
 }
@@ -29,7 +29,7 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
+func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
 	from, err := self.ethclient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
@@ -46,7 +46,7 @@ func (self *ImportMaster) parseTx(tx *types.Transaction, block *types.Block) *mo
 		CreatedAt:   time.Unix(block.Time().Int64(), 0)}
 	return txx
 }
-func (self *ImportMaster) createIndexes() {
+func (self *MongoBackend) createIndexes() {
 	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -80,7 +80,7 @@ func (self *ImportMaster) createIndexes() {
 		panic(err)
 	}
 }
-func NewImporter(ethclient *ethclient.Client) *ImportMaster {
+func NewBackend(ethclient *ethclient.Client) *MongoBackend {
 
 	Host := []string{
 		"127.0.0.1:27017",
@@ -93,7 +93,7 @@ func NewImporter(ethclient *ethclient.Client) *ImportMaster {
 	}
 	// defer session.Close()
 
-	importer := new(ImportMaster)
+	importer := new(MongoBackend)
 
 	importer.mongo = session.DB("blocks")
 	importer.ethclient = ethclient
@@ -101,10 +101,10 @@ func NewImporter(ethclient *ethclient.Client) *ImportMaster {
 	return importer
 }
 
-func (self *ImportMaster) importBlock(block *types.Block) {
+func (self *MongoBackend) ImportBlock(block *types.Block) {
 	blockNumber := block.Header().Number
 	txAmount := uint64(len(block.Transactions()))
-	log.Info().Str("BlockNumber", blockNumber.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
+	log.Debug().Str("BlockNumber", blockNumber.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
 	b := &models.Block{Number: blockNumber.Int64(),
 		GasLimit:   int(block.Header().GasLimit),
 		BlockHash:  block.Hash().Hex(),
@@ -116,63 +116,57 @@ func (self *ImportMaster) importBlock(block *types.Block) {
 		Miner:      block.Coinbase().Hex(),
 		TxCount:    int(txAmount)}
 	for _, tx := range block.Transactions() {
-		self.importTx(tx, block)
+		self.ImportTx(tx, block)
 	}
-	log.Info().Interface("Block", b)
-	// _, err := self.fs.Collection("Blocks").Doc(strconv.Itoa(blockNumber)).Set(self.ctx, b)
+	log.Debug().Interface("Block", b)
 	_, err := self.mongo.C("Blocks").Upsert(bson.M{"number": b.Number}, b)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 
-	// _, err = self.fs.Collection("ActiveAddress").Doc(block.Coinbase().Hex()).Set(self.ctx, &models.ActiveAddress{time.Now()})
 	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 
 }
-func (self *ImportMaster) importTx(tx *types.Transaction, block *types.Block) {
-	log.Info().Msg("Importing tx" + tx.Hash().Hex())
+func (self *MongoBackend) ImportTx(tx *types.Transaction, block *types.Block) {
+	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
-	// _, err := self.fs.Collection("Transactions").Doc(tx.Hash().String()).Set(self.ctx, transaction)
 	_, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importTx")
 	}
-
-	// _, err = self.fs.Collection("ActiveAddress").Doc(transaction.From).Set(self.ctx, &models.ActiveAddress{time.Now()})
 	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 
-	// _, err = self.fs.Collection("ActiveAddress").Doc(transaction.To).Set(self.ctx, &models.ActiveAddress{time.Now()})
 	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.To}, &models.ActiveAddress{Address: transaction.To, UpdatedAt: time.Now()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 }
-func (self *ImportMaster) needReloadBlock(blockNumber int64) bool {
-	block := self.GetBlocksByNumber(blockNumber)
+func (self *MongoBackend) NeedReloadBlock(blockNumber int64) bool {
+	block := self.GetBlockByNumber(blockNumber)
 	if block == nil {
-		log.Info().Msg("Checking parent - main block not found")
+		log.Debug().Msg("Checking parent - main block not found")
 		return true
 	}
 	parentBlockNumber := (block.Number - 1)
-	parentBlock := self.GetBlocksByNumber(parentBlockNumber)
+	parentBlock := self.GetBlockByNumber(parentBlockNumber)
 	if parentBlock != nil {
-		log.Info().Str("ParentHash", block.ParentHash).Str("Hash from parent", parentBlock.BlockHash).Int64("BlockNumber", block.Number).Int64("ParentNumber", parentBlock.Number).Msg("Checking parent")
+		log.Debug().Str("ParentHash", block.ParentHash).Str("Hash from parent", parentBlock.BlockHash).Int64("BlockNumber", block.Number).Int64("ParentNumber", parentBlock.Number).Msg("Checking parent")
 	}
 	return parentBlock == nil || (block.ParentHash != parentBlock.BlockHash)
 
 }
 
-func (self *ImportMaster) TransactionsConsistent(blockNumber int64) bool {
-	block := self.GetBlocksByNumber(blockNumber)
+func (self *MongoBackend) TransactionsConsistent(blockNumber int64) bool {
+	block := self.GetBlockByNumber(blockNumber)
 	if block != nil {
 		transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
-		log.Info().Int("Transactions in block", block.TxCount).Int("Num of transactions in db", transactionCounter).Msg("TransactionsConsistent")
+		log.Debug().Int("Transactions in block", block.TxCount).Int("Num of transactions in db", transactionCounter).Msg("TransactionsConsistent")
 		if err != nil {
 			log.Fatal().Err(err).Msg("TransactionsConsistent")
 		}
@@ -186,9 +180,8 @@ func (self *ImportMaster) TransactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *ImportMaster) importAddress(address string, balance *big.Int) {
-	log.Info().Str("address", address).Str("balance", balance.String()).Msg("Updating address")
-	// _, err := self.fs.Collection("Addresses").Doc(address).Set(self.ctx, &models.Address{address, "", balance.String(), time.Now()})
+func (self *MongoBackend) ImportAddress(address string, balance *big.Int) {
+	log.Debug().Str("address", address).Str("balance", balance.String()).Msg("Updating address")
 	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
@@ -196,30 +189,32 @@ func (self *ImportMaster) importAddress(address string, balance *big.Int) {
 
 }
 
-func (self *ImportMaster) GetBlocksByNumber(blockNumber int64) *models.Block {
+func (self *MongoBackend) GetBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).One(&c)
 	if err != nil {
-		log.Info().Int64("Block", blockNumber).Err(err).Msg("GetBlocksByNumber")
+		log.Debug().Int64("Block", blockNumber).Err(err).Msg("GetBlockByNumber")
 		return nil
 	}
-	// dsnap, err := self.fs.Collection("Blocks").Doc(blockNumber).Get(self.ctx)
-	// if err != nil {
-	// 	// log.Info().Err(err).Msg("GetBlocksByNumber")
-	// 	return nil
-	// }
-	// var c models.Block
-	// dsnap.DataTo(&c)
 	return &c
 }
 
-func (self *ImportMaster) GetActiveAdresses(fromDate time.Time) *[]models.ActiveAddress {
+func (self *MongoBackend) GetLatestsBlocks(numOfBlocks int) []*models.Block {
+	var blocks []*models.Block
+	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Limit(numOfBlocks).All(&blocks)
+	if err != nil {
+		log.Debug().Int("Block", numOfBlocks).Err(err).Msg("GetLatestsBlocks")
+		return nil
+	}
+	return blocks
+}
+
+func (self *MongoBackend) GetActiveAdresses(fromDate time.Time) *[]models.ActiveAddress {
 	var addresses []models.ActiveAddress
-	// iter := self.fs.Collection("ActiveAddress").Where("updated_at", ">", fromDate).Documents(self.ctx)
 
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).All(&addresses)
 	if err != nil {
-		log.Info().Err(err).Msg("GetActiveAdresses")
+		log.Debug().Err(err).Msg("GetActiveAdresses")
 	}
 	return &addresses
 }

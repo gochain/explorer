@@ -5,7 +5,7 @@ import (
 )
 
 type Block struct {
-	Number     int64     `json:"number" bson:"num"`
+	Number     int64     `json:"number" bson:"number"`
 	GasLimit   int       `json:"gas_limit" bson:"gas_limit"`
 	BlockHash  string    `json:"hash" bson:"hash"`
 	CreatedAt  time.Time `json:"created_at" bson:"created_at"`
