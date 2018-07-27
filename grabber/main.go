@@ -156,8 +156,8 @@ func updateAddresses(url string, importer *backend.MongoBackend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	for {
 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
-		log.Info().Int("Addresses in db", len(*addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
-		for _, address := range *addresses {
+		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
+		for _, address := range addresses {
 			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address.Address), nil)
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")

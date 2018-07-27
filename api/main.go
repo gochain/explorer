@@ -81,8 +81,19 @@ func main() {
 			w.Write([]byte("welcome"))
 		})
 		r.Route("/blocks", func(r chi.Router) {
-			r.Get("/", listBlocks)
+			r.Get("/", getListBlocks)
 			r.Get("/{num}", getBlock)
+		})
+		r.Route("/address", func(r chi.Router) {
+			r.Get("/{address}", getAddress)
+			r.Get("/{address}/transactions", getAddressTransactions)
+		})
+		r.Route("/transaction", func(r chi.Router) {
+			r.Get("/{hash}", getTransaction)
+		})
+
+		r.Route("/richlist", func(r chi.Router) {
+			r.Get("/", getRichlist)
 		})
 		http.ListenAndServe(":8080", r)
 		return nil
@@ -94,7 +105,38 @@ func main() {
 
 }
 
-func listBlocks(w http.ResponseWriter, r *http.Request) {
+func getRichlist(w http.ResponseWriter, r *http.Request) {
+	bl := &models.AddressesList{
+		Adresses: []*models.Address{},
+	}
+	bl.Adresses = mongoBackend.GetRichlist()
+	writeJSON(w, http.StatusOK, bl)
+}
+
+func getAddress(w http.ResponseWriter, r *http.Request) {
+	addressHash := chi.URLParam(r, "address")
+	log.Info().Str("address", addressHash).Msg("looking up address")
+	address := mongoBackend.GetAddressByHash(addressHash)
+	writeJSON(w, http.StatusOK, address)
+}
+
+func getTransaction(w http.ResponseWriter, r *http.Request) {
+	transactionHash := chi.URLParam(r, "hash")
+	log.Info().Str("transaction", transactionHash).Msg("looking up transaction")
+	transaction := mongoBackend.GetTransactionByHash(transactionHash)
+	writeJSON(w, http.StatusOK, transaction)
+}
+
+func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
+	address := chi.URLParam(r, "address")
+	transactions := &models.TransactionList{
+		Transactions: []*models.Transaction{},
+	}
+	transactions.Transactions = mongoBackend.GetTransactionList(address)
+	writeJSON(w, http.StatusOK, transactions)
+}
+
+func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	bl := &models.BlockList{
 		Blocks: []*models.Block{},
 	}

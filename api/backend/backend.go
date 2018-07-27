@@ -79,6 +79,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Address").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 func NewBackend(ethclient *ethclient.Client) *MongoBackend {
 
@@ -181,8 +186,9 @@ func (self *MongoBackend) TransactionsConsistent(blockNumber int64) bool {
 }
 
 func (self *MongoBackend) ImportAddress(address string, balance *big.Int) {
-	log.Debug().Str("address", address).Str("balance", balance.String()).Msg("Updating address")
-	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now()})
+	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000000000))
+	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
+	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
@@ -209,12 +215,49 @@ func (self *MongoBackend) GetLatestsBlocks(numOfBlocks int) []*models.Block {
 	return blocks
 }
 
-func (self *MongoBackend) GetActiveAdresses(fromDate time.Time) *[]models.ActiveAddress {
-	var addresses []models.ActiveAddress
-
+func (self *MongoBackend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
+	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetActiveAdresses")
 	}
-	return &addresses
+	return addresses
+}
+
+func (self *MongoBackend) GetAddressByHash(address string) *models.Address {
+	var c models.Address
+	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).One(&c)
+	if err != nil {
+		log.Debug().Str("Address", address).Err(err).Msg("GetAddressByHash")
+		return nil
+	}
+	return &c
+}
+
+func (self *MongoBackend) GetTransactionByHash(transactionHash string) *models.Transaction {
+	var c models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
+	if err != nil {
+		log.Debug().Str("Transaction", transactionHash).Err(err).Msg("GetTransactionByHash")
+		return nil
+	}
+	return &c
+}
+
+func (self *MongoBackend) GetTransactionList(address string) []*models.Transaction {
+	var transactions []*models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).All(&transactions)
+	if err != nil {
+		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
+	}
+	return transactions
+}
+
+func (self *MongoBackend) GetRichlist() []*models.Address {
+	var addresses []*models.Address
+	err := self.mongo.C("Addresses").Find(nil).Sort("-balance_int").All(&addresses)
+	if err != nil {
+		log.Debug().Err(err).Msg("GetRichlist")
+	}
+	return addresses
 }
