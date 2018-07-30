@@ -128,7 +128,7 @@ func checkParentForBlock(client *ethclient.Client, importer *backend.MongoBacken
 			log.Info().Err(err).Msg("BlockByNumber - checkParentForBlock")
 			checkParentForBlock(client, importer, blockNumber+1, numBlocksToCheck)
 		}
-		if numBlocksToCheck > 0 {
+		if numBlocksToCheck > 0 && block != nil {
 			checkParentForBlock(client, importer, block.Number().Int64(), numBlocksToCheck)
 		}
 	}

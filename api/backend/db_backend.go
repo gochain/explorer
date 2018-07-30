@@ -34,18 +34,43 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
-	txx := &models.Transaction{TxHash: tx.Hash().Hex(),
+	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:          tx.To().Hex(),
 		From:        from.Hex(),
-		Amount:      tx.Value().Int64(),
-		Price:       tx.GasPrice().String(),
-		GasLimit:    strconv.Itoa(int(tx.Gas())),
+		Value:       tx.Value().String(),
+		GasPrice:    tx.GasPrice().String(),
+		GasLimit:    tx.Gas(),
 		BlockNumber: block.Number().Int64(),
+		GasFee:      new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(tx.Gas()))).String(),
 		Nonce:       string(tx.Nonce()),
 		BlockHash:   block.Hash().Hex(),
-		CreatedAt:   time.Unix(block.Time().Int64(), 0)}
-	return txx
+		CreatedAt:   time.Unix(block.Time().Int64(), 0),
+		InputData:   string(tx.Data()[:]),
+	}
 }
+func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
+	var transactions []string
+	for _, tx := range block.Transactions() {
+		transactions = append(transactions, tx.Hash().Hex())
+	}
+	return &models.Block{Number: block.Header().Number.Int64(),
+		GasLimit:   int(block.Header().GasLimit),
+		BlockHash:  block.Hash().Hex(),
+		CreatedAt:  time.Unix(block.Time().Int64(), 0),
+		ParentHash: block.ParentHash().Hex(),
+		TxHash:     block.Header().TxHash.Hex(),
+		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
+		Nonce:      string(block.Nonce()),
+		Miner:      block.Coinbase().Hex(),
+		TxCount:    int(uint64(len(block.Transactions()))),
+		Difficulty: block.Difficulty().Int64(),
+		// TotalDifficulty: block.DeprecatedTd().Int64(), # deprecated https://github.com/ethereum/go-ethereum/blob/master/core/types/block.go#L154
+		Sha3Uncles:   block.UncleHash().Hex(),
+		ExtraData:    string(block.Extra()[:]),
+		Transactions: transactions,
+	}
+}
+
 func (self *MongoBackend) createIndexes() {
 	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from"}, Background: true, Sparse: true})
 	if err != nil {
@@ -107,28 +132,16 @@ func NewBackend(ethclient *ethclient.Client) *MongoBackend {
 }
 
 func (self *MongoBackend) ImportBlock(block *types.Block) {
-	blockNumber := block.Header().Number
-	txAmount := uint64(len(block.Transactions()))
-	log.Debug().Str("BlockNumber", blockNumber.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
-	b := &models.Block{Number: blockNumber.Int64(),
-		GasLimit:   int(block.Header().GasLimit),
-		BlockHash:  block.Hash().Hex(),
-		CreatedAt:  time.Unix(block.Time().Int64(), 0),
-		ParentHash: block.ParentHash().Hex(),
-		TxHash:     block.Header().TxHash.Hex(),
-		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
-		Nonce:      string(block.Nonce()),
-		Miner:      block.Coinbase().Hex(),
-		TxCount:    int(txAmount)}
-	for _, tx := range block.Transactions() {
-		self.ImportTx(tx, block)
-	}
+	log.Debug().Str("BlockNumber", block.Header().Number.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
+	b := self.parseBlock(block)
 	log.Debug().Interface("Block", b)
 	_, err := self.mongo.C("Blocks").Upsert(bson.M{"number": b.Number}, b)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
-
+	for _, tx := range block.Transactions() {
+		self.ImportTx(tx, block)
+	}
 	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
@@ -260,4 +273,15 @@ func (self *MongoBackend) GetRichlist() []*models.Address {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}
 	return addresses
+}
+func (self *MongoBackend) GetStats() *models.Stats {
+	numOfBlocks, err := self.mongo.C("Blocks").Find(nil).Count()
+	if err != nil {
+		log.Debug().Err(err).Msg("GetStats num of Blocks")
+	}
+	numOfTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
+	if err != nil {
+		log.Debug().Err(err).Msg("GetStats num of Transactions")
+	}
+	return &models.Stats{NumberOfBlocks: int64(numOfBlocks), NumberOfTransactions: int64(numOfTransactions)}
 }
