@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/gochain-io/explorer/api/models"
 
 	"github.com/codegangsta/cli"
-	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -22,15 +20,7 @@ import (
 )
 
 var ethClient *ethclient.Client
-var mongoBackend *backend.MongoBackend
-
-func getClient(url string) *ethclient.Client {
-	client, err := ethclient.Dial(url)
-	if err != nil {
-		log.Fatal().Err(err).Msg("main")
-	}
-	return client
-}
+var backendInstance *backend.Backend
 
 func main() {
 	var url string
@@ -55,9 +45,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
-		client := getClient(url)
-		mongoBackend = backend.NewBackend(client)
-		ethClient = client
+		backendInstance = backend.NewBackend(url)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -110,24 +98,26 @@ func main() {
 
 }
 func getCurrentStats(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, mongoBackend.GetStats())
+	writeJSON(w, http.StatusOK, backendInstance.GetStats())
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
+	totalSupply, _ := backendInstance.TotalSupply()
+	circulatingSupply, _ := backendInstance.CirculatingSupply()
 	bl := &models.Richlist{
 		Rankings:          []*models.Address{},
-		TotalSupply:       0,
-		CirculatingSupply: 0,
+		TotalSupply:       totalSupply.String(),
+		CirculatingSupply: circulatingSupply.String(),
 	}
-	bl.Rankings = mongoBackend.GetRichlist()
+	bl.Rankings = backendInstance.GetRichlist()
 	writeJSON(w, http.StatusOK, bl)
 }
 
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
 	log.Info().Str("address", addressHash).Msg("looking up address")
-	address := mongoBackend.GetAddressByHash(addressHash)
-	balance, err := ethClient.BalanceAt(context.Background(), common.HexToAddress(address.Address), nil)
+	address := backendInstance.GetAddressByHash(addressHash)
+	balance, err := backendInstance.BalanceAt(addressHash, "pending")
 	if err == nil {
 		address.Balance = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	}
@@ -137,7 +127,7 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 func getTransaction(w http.ResponseWriter, r *http.Request) {
 	transactionHash := chi.URLParam(r, "hash")
 	log.Info().Str("transaction", transactionHash).Msg("looking up transaction")
-	transaction := mongoBackend.GetTransactionByHash(transactionHash)
+	transaction := backendInstance.GetTransactionByHash(transactionHash)
 	writeJSON(w, http.StatusOK, transaction)
 }
 
@@ -146,7 +136,7 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	transactions := &models.TransactionList{
 		Transactions: []*models.Transaction{},
 	}
-	transactions.Transactions = mongoBackend.GetTransactionList(address)
+	transactions.Transactions = backendInstance.GetTransactionList(address)
 	writeJSON(w, http.StatusOK, transactions)
 }
 
@@ -154,7 +144,7 @@ func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	bl := &models.BlockList{
 		Blocks: []*models.Block{},
 	}
-	bl.Blocks = mongoBackend.GetLatestsBlocks(10)
+	bl.Blocks = backendInstance.GetLatestsBlocks(10)
 	writeJSON(w, http.StatusOK, bl)
 }
 
@@ -167,6 +157,6 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Info().Int("bnum", bnum).Msg("looking up block")
-	block := mongoBackend.GetBlockByNumber(int64(bnum))
+	block := backendInstance.GetBlockByNumber(int64(bnum))
 	writeJSON(w, http.StatusOK, block)
 }

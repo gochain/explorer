@@ -38,8 +38,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
-		client := getClient(url)
-		importer := backend.NewBackend(&client)
+		importer := backend.NewBackend(url)
 		go listener(url, importer)
 		go backfill(url, importer)
 		updateAddresses(url, importer)
@@ -58,7 +57,7 @@ func getClient(url string) ethclient.Client {
 	}
 	return *client
 }
-func listener(url string, importer *backend.MongoBackend) {
+func listener(url string, importer *backend.Backend) {
 	client := getClient(url)
 	var prevHeader string
 	ticker := time.NewTicker(time.Second * 1).C
@@ -84,7 +83,7 @@ func listener(url string, importer *backend.MongoBackend) {
 	}
 }
 
-func backfill(url string, importer *backend.MongoBackend) {
+func backfill(url string, importer *backend.Backend) {
 	client := getClient(url)
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
@@ -111,7 +110,7 @@ func backfill(url string, importer *backend.MongoBackend) {
 	}
 }
 
-func checkParentForBlock(client *ethclient.Client, importer *backend.MongoBackend, blockNumber int64, numBlocksToCheck int) {
+func checkParentForBlock(client *ethclient.Client, importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
 	log.Info().Int64("Checking the block for it's parent:", blockNumber)
 	if importer.NeedReloadBlock(blockNumber) {
@@ -134,7 +133,7 @@ func checkParentForBlock(client *ethclient.Client, importer *backend.MongoBacken
 	}
 }
 
-func checkTransactionsConsistency(client *ethclient.Client, importer *backend.MongoBackend, blockNumber int64) {
+func checkTransactionsConsistency(client *ethclient.Client, importer *backend.Backend, blockNumber int64) {
 	log.Info().Int64("Checking a transaction consistency for the block :", blockNumber)
 	if !importer.TransactionsConsistent(blockNumber) {
 		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
@@ -151,7 +150,7 @@ func checkTransactionsConsistency(client *ethclient.Client, importer *backend.Mo
 	}
 }
 
-func updateAddresses(url string, importer *backend.MongoBackend) {
+func updateAddresses(url string, importer *backend.Backend) {
 	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
 	for {
