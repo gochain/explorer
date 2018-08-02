@@ -25,6 +25,10 @@ func (err EthError) Error() string {
 	return fmt.Sprintf("Error %d (%s)", err.Code, err.Message)
 }
 
+type GenesisAccount struct {
+	Balance string `json:"balance"`
+}
+
 type ethResponse struct {
 	ID      int             `json:"id"`
 	JSONRPC string          `json:"jsonrpc"`
@@ -44,11 +48,6 @@ type EthRPC struct {
 	client httpClient
 }
 
-type GenesisAccount struct {
-	Balance string `json:"balance"`
-}
-
-// New create new rpc client with given url
 func NewEthClient(url string) *EthRPC {
 	rpc := &EthRPC{
 		url:    url,
@@ -108,28 +107,28 @@ func (rpc *EthRPC) call(method string, target interface{}, params ...interface{}
 
 	return json.Unmarshal(result, target)
 }
-func (rpc *EthRPC) EthGetBalance(address, block string) (*big.Int, error) {
+func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
 	var response string
 	log.Info().Str("checking balance", address).Msg("response from eth_getBalance")
 	if err := rpc.call("eth_getBalance", &response, address, block); err != nil {
 		return new(big.Int), err
 	}
 	log.Info().Str("checking balance response", response).Msg("response from eth_getBalance")
-	balance, err := ParseBigInt(response)
+	balance, err := parseBigInt(response)
 	return balance, err
 }
 
-func (rpc *EthRPC) EthTotalSupply() (*big.Int, error) {
+func (rpc *EthRPC) ethTotalSupply() (*big.Int, error) {
 	var response string
 	if err := rpc.call("eth_totalSupply", &response, "latest"); err != nil {
 		return new(big.Int), err
 	}
-	totalSupply, _ := ParseBigInt(response)
+	totalSupply, _ := parseBigInt(response)
 	log.Info().Str("totalSupply", totalSupply.String()).Msg("response from EthTotalSupply")
 	return totalSupply, nil
 }
 
-func (rpc *EthRPC) EthGenesisAlloc() (map[common.Address]GenesisAccount, error) {
+func (rpc *EthRPC) ethGenesisAlloc() (map[common.Address]GenesisAccount, error) {
 	var response map[common.Address]GenesisAccount
 	if err := rpc.call("eth_genesisAlloc", &response); err != nil {
 		log.Info().Err(err).Msg("failed response from eth_genesisAlloc")
@@ -139,24 +138,24 @@ func (rpc *EthRPC) EthGenesisAlloc() (map[common.Address]GenesisAccount, error) 
 	return response, nil
 }
 
-func (rpc *EthRPC) GenesisAlloc() (*big.Int, error) {
-	data, err := rpc.EthGenesisAlloc()
+func (rpc *EthRPC) genesisAlloc() (*big.Int, error) {
+	data, err := rpc.ethGenesisAlloc()
 	genesisAlloc := new(big.Int)
 	if err != nil {
 		log.Info().Err(err).Msg("failed response from GenesisAlloc")
 		return genesisAlloc, err
 	}
 	for _, val := range data {
-		bal, _ := ParseBigInt(val.Balance)
+		bal, _ := parseBigInt(val.Balance)
 		genesisAlloc = new(big.Int).Add(genesisAlloc, bal)
 	}
 	log.Info().Str("GenesisAlloc", genesisAlloc.String()).Msg("response from GenesisAlloc")
 	return genesisAlloc, nil
 }
 
-func (rpc *EthRPC) CirculatingSupply() (*big.Int, error) {
-	genesisAllocated, err := rpc.GenesisAlloc()
-	totalSupply, err2 := rpc.EthTotalSupply()
+func (rpc *EthRPC) circulatingSupply() (*big.Int, error) {
+	genesisAllocated, err := rpc.genesisAlloc()
+	totalSupply, err2 := rpc.ethTotalSupply()
 	if err != nil || err2 != nil {
 		log.Info().Err(err).Err(err2).Msg("failed parsing CirculatingSupply")
 		return new(big.Int), err
@@ -165,7 +164,7 @@ func (rpc *EthRPC) CirculatingSupply() (*big.Int, error) {
 	return circulatingSupply, nil
 }
 
-func ParseBigInt(value string) (*big.Int, error) {
+func parseBigInt(value string) (*big.Int, error) {
 	i := big.Int{}
 	_, err := fmt.Sscan(value, &i)
 

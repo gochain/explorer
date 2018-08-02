@@ -22,6 +22,23 @@ import (
 var ethClient *ethclient.Client
 var backendInstance *backend.Backend
 
+func parseSkipLimit(r *http.Request) (int, int) {
+	limitS := r.URL.Query().Get("limit")
+	skipS := r.URL.Query().Get("skip")
+	skip := 0
+	limit := 100
+	if skipS != "" {
+		skip, _ = strconv.Atoi(skipS)
+	}
+	if limitS != "" {
+		limit, _ = strconv.Atoi(limitS)
+	}
+	if limit > 500 {
+		limit = 100
+	}
+	return skip, limit
+}
+
 func main() {
 	var url string
 	var loglevel string
@@ -103,13 +120,14 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
 	totalSupply, _ := backendInstance.TotalSupply()
+	skip, limit := parseSkipLimit(r)
 	circulatingSupply, _ := backendInstance.CirculatingSupply()
 	bl := &models.Richlist{
 		Rankings:          []*models.Address{},
 		TotalSupply:       totalSupply.String(),
 		CirculatingSupply: circulatingSupply.String(),
 	}
-	bl.Rankings = backendInstance.GetRichlist()
+	bl.Rankings = backendInstance.GetRichlist(skip, limit)
 	writeJSON(w, http.StatusOK, bl)
 }
 
@@ -144,7 +162,8 @@ func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	bl := &models.BlockList{
 		Blocks: []*models.Block{},
 	}
-	bl.Blocks = backendInstance.GetLatestsBlocks(10)
+	skip, limit := parseSkipLimit(r)
+	bl.Blocks = backendInstance.GetLatestsBlocks(skip, limit)
 	writeJSON(w, http.StatusOK, bl)
 }
 
@@ -153,7 +172,6 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 	bnum, err := strconv.Atoi(bnumS)
 	if err != nil {
 		log.Error().Err(err).Str("bnumS", bnumS).Msg("Error converting bnumS to num")
-		// todo: sendError()
 		return
 	}
 	log.Info().Int("bnum", bnum).Msg("looking up block")

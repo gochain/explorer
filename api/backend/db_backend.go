@@ -12,6 +12,7 @@ import (
 
 	"github.com/gochain-io/explorer/api/models"
 	"github.com/gochain-io/gochain/core/types"
+	"github.com/gochain-io/gochain/ethclient"
 )
 
 func appendIfMissing(slice []string, i string) []string {
@@ -23,7 +24,38 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func (self *Backend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
+type MongoBackend struct {
+	host      string
+	mongo     *mgo.Database
+	ethClient *ethclient.Client
+}
+
+// New create new rpc client with given url
+func NewMongoClient(host, rpcUrl string) *MongoBackend {
+	client, err := ethclient.Dial(rpcUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("main")
+	}
+	Host := []string{
+		host,
+	}
+	session, err := mgo.DialWithInfo(&mgo.DialInfo{
+		Addrs: Host,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	importer := new(MongoBackend)
+
+	importer.mongo = session.DB("blocks")
+	importer.ethClient = client
+	importer.createIndexes()
+
+	return importer
+
+}
+func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
 	from, err := self.ethClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
@@ -42,7 +74,7 @@ func (self *Backend) parseTx(tx *types.Transaction, block *types.Block) *models.
 		InputData:   string(tx.Data()[:]),
 	}
 }
-func (self *Backend) parseBlock(block *types.Block) *models.Block {
+func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	var transactions []string
 	for _, tx := range block.Transactions() {
 		transactions = append(transactions, tx.Hash().Hex())
@@ -65,7 +97,7 @@ func (self *Backend) parseBlock(block *types.Block) *models.Block {
 	}
 }
 
-func (self *Backend) createIndexes() {
+func (self *MongoBackend) createIndexes() {
 	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -105,7 +137,7 @@ func (self *Backend) createIndexes() {
 	}
 }
 
-func (self *Backend) ImportBlock(block *types.Block) {
+func (self *MongoBackend) importBlock(block *types.Block) {
 	log.Debug().Str("BlockNumber", block.Header().Number.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
 	b := self.parseBlock(block)
 	log.Debug().Interface("Block", b)
@@ -114,7 +146,7 @@ func (self *Backend) ImportBlock(block *types.Block) {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 	for _, tx := range block.Transactions() {
-		self.ImportTx(tx, block)
+		self.importTx(tx, block)
 	}
 	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
 	if err != nil {
@@ -122,7 +154,7 @@ func (self *Backend) ImportBlock(block *types.Block) {
 	}
 
 }
-func (self *Backend) ImportTx(tx *types.Transaction, block *types.Block) {
+func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
 	_, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction)
@@ -139,14 +171,14 @@ func (self *Backend) ImportTx(tx *types.Transaction, block *types.Block) {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
 }
-func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
-	block := self.GetBlockByNumber(blockNumber)
+func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
+	block := self.getBlockByNumber(blockNumber)
 	if block == nil {
 		log.Debug().Msg("Checking parent - main block not found")
 		return true
 	}
 	parentBlockNumber := (block.Number - 1)
-	parentBlock := self.GetBlockByNumber(parentBlockNumber)
+	parentBlock := self.getBlockByNumber(parentBlockNumber)
 	if parentBlock != nil {
 		log.Debug().Str("ParentHash", block.ParentHash).Str("Hash from parent", parentBlock.BlockHash).Int64("BlockNumber", block.Number).Int64("ParentNumber", parentBlock.Number).Msg("Checking parent")
 	}
@@ -154,8 +186,8 @@ func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
 
 }
 
-func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
-	block := self.GetBlockByNumber(blockNumber)
+func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
+	block := self.getBlockByNumber(blockNumber)
 	if block != nil {
 		transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
 		log.Debug().Int("Transactions in block", block.TxCount).Int("Num of transactions in db", transactionCounter).Msg("TransactionsConsistent")
@@ -172,7 +204,7 @@ func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *Backend) ImportAddress(address string, balance *big.Int) {
+func (self *MongoBackend) importAddress(address string, balance *big.Int) {
 	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000000000))
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
 	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()})
@@ -182,7 +214,7 @@ func (self *Backend) ImportAddress(address string, balance *big.Int) {
 
 }
 
-func (self *Backend) GetBlockByNumber(blockNumber int64) *models.Block {
+func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).One(&c)
 	if err != nil {
@@ -192,17 +224,17 @@ func (self *Backend) GetBlockByNumber(blockNumber int64) *models.Block {
 	return &c
 }
 
-func (self *Backend) GetLatestsBlocks(numOfBlocks int) []*models.Block {
+func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.Block {
 	var blocks []*models.Block
-	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Limit(numOfBlocks).All(&blocks)
+	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Skip(skip).Limit(limit).All(&blocks)
 	if err != nil {
-		log.Debug().Int("Block", numOfBlocks).Err(err).Msg("GetLatestsBlocks")
+		log.Debug().Int("Block", limit).Err(err).Msg("GetLatestsBlocks")
 		return nil
 	}
 	return blocks
 }
 
-func (self *Backend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
+func (self *MongoBackend) getActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).All(&addresses)
 	if err != nil {
@@ -211,7 +243,7 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddre
 	return addresses
 }
 
-func (self *Backend) GetAddressByHash(address string) *models.Address {
+func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).One(&c)
 	if err != nil {
@@ -221,7 +253,7 @@ func (self *Backend) GetAddressByHash(address string) *models.Address {
 	return &c
 }
 
-func (self *Backend) GetTransactionByHash(transactionHash string) *models.Transaction {
+func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.Transaction {
 	var c models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
 	if err != nil {
@@ -231,7 +263,7 @@ func (self *Backend) GetTransactionByHash(transactionHash string) *models.Transa
 	return &c
 }
 
-func (self *Backend) GetTransactionList(address string) []*models.Transaction {
+func (self *MongoBackend) getTransactionList(address string) []*models.Transaction {
 	var transactions []*models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).All(&transactions)
 	if err != nil {
@@ -240,15 +272,15 @@ func (self *Backend) GetTransactionList(address string) []*models.Transaction {
 	return transactions
 }
 
-func (self *Backend) GetRichlist() []*models.Address {
+func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(nil).Sort("-balance_int").All(&addresses)
+	err := self.mongo.C("Addresses").Find(nil).Sort("-balance_int").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}
 	return addresses
 }
-func (self *Backend) GetStats() *models.Stats {
+func (self *MongoBackend) getStats() *models.Stats {
 	numOfBlocks, err := self.mongo.C("Blocks").Find(nil).Count()
 	if err != nil {
 		log.Debug().Err(err).Msg("GetStats num of Blocks")
