@@ -16,13 +16,13 @@ type Backend struct {
 	extendedEthClient *EthRPC
 }
 
-func NewBackend(rpcUrl string) *Backend {
+func NewBackend(mongoUrl, rpcUrl string) *Backend {
 	client, err := ethclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create eth client")
 	}
 	exClient := NewEthClient(rpcUrl)
-	mongoBackend := NewMongoClient("127.0.0.1:27017", rpcUrl)
+	mongoBackend := NewMongoClient(mongoUrl, rpcUrl)
 	importer := new(Backend)
 	importer.ethClient = client
 	importer.extendedEthClient = exClient

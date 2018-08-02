@@ -40,7 +40,8 @@ func parseSkipLimit(r *http.Request) (int, int) {
 }
 
 func main() {
-	var url string
+	var rpcUrl string
+	var mongoUrl string
 	var loglevel string
 	app := cli.NewApp()
 
@@ -49,7 +50,13 @@ func main() {
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
 			Usage:       "rpc api url, 'https://rpc.gochain.io'",
-			Destination: &url,
+			Destination: &rpcUrl,
+		},
+		cli.StringFlag{
+			Name:        "mongo-url, m",
+			Value:       "127.0.0.1:27017",
+			Usage:       "mongo connection url, '127.0.0.1:27017'",
+			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
@@ -62,7 +69,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
-		backendInstance = backend.NewBackend(url)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
