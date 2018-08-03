@@ -137,7 +137,7 @@ func (self *MongoBackend) createIndexes() {
 	}
 }
 
-func (self *MongoBackend) importBlock(block *types.Block) {
+func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 	log.Debug().Str("BlockNumber", block.Header().Number.String()).Str("Hash", block.Hash().Hex()).Str("ParentHash", block.ParentHash().Hex()).Msg("Importing block")
 	b := self.parseBlock(block)
 	log.Debug().Interface("Block", b)
@@ -152,6 +152,7 @@ func (self *MongoBackend) importBlock(block *types.Block) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
+	return b
 
 }
 func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
@@ -204,13 +205,15 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int) {
+func (self *MongoBackend) importAddress(address string, balance *big.Int) *models.Address {
 	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000000000))
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
-	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()})
+	addressM := &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()}
+	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
+	return addressM
 
 }
 

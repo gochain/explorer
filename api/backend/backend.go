@@ -1,10 +1,12 @@
 package backend
 
 import (
+	"context"
 	"math/big"
 	"time"
 
 	"github.com/gochain-io/explorer/api/models"
+	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog/log"
@@ -47,7 +49,16 @@ func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 	return self.mongo.getRichlist(skip, limit)
 }
 func (self *Backend) GetAddressByHash(hash string) *models.Address {
-	return self.mongo.getAddressByHash(hash)
+	address := self.mongo.getAddressByHash(hash)
+	if address == nil {
+		balance, err := self.ethClient.BalanceAt(context.Background(), common.HexToAddress(hash), nil)
+		if err != nil {
+			log.Info().Err(err).Str("address", hash).Msg("cannot get address information neither from eth or db")
+			return nil
+		}
+		address = self.mongo.importAddress(hash, balance)
+	}
+	return address
 }
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
@@ -59,13 +70,22 @@ func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.Block {
 	return self.mongo.getLatestsBlocks(skip, limit)
 }
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
-	return self.mongo.getBlockByNumber(number)
+	block := self.mongo.getBlockByNumber(number)
+	if block == nil {
+		log.Info().Int64("blockNumber", number).Msg("cannot get block from db, importing it")
+		blockEth, err := self.ethClient.BlockByNumber(context.Background(), big.NewInt(number))
+		if err != nil {
+			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
+			return nil
+		}
+		block = self.ImportBlock(blockEth)
+	}
+	return block
 }
 
 //METHODS USED IN GRABBER
-//
-func (self *Backend) ImportBlock(block *types.Block) {
-	self.mongo.importBlock(block)
+func (self *Backend) ImportBlock(block *types.Block) *models.Block {
+	return self.mongo.importBlock(block)
 }
 func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
 	return self.mongo.needReloadBlock(blockNumber)
@@ -76,6 +96,6 @@ func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 func (self *Backend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
 	return self.mongo.getActiveAdresses(fromDate)
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int) {
-	self.mongo.importAddress(address, balance)
+func (self *Backend) ImportAddress(address string, balance *big.Int) *models.Address {
+	return self.mongo.importAddress(address, balance)
 }
