@@ -2,16 +2,18 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore, AngularFirestoreDocument } from 'angularfire2/firestore';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {environment} from '../environments/environment';
+import { environment } from '../environments/environment';
 import { BlockList } from "./block_list";
 import { Block } from './block';
+import { Transaction } from './transaction';
+import { Address } from './address';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
- 
-  constructor(private afs: AngularFirestore,  private http: HttpClient) { 
+
+  constructor(private afs: AngularFirestore, private http: HttpClient) {
   }
 
   getRecentBlocks(): Observable<BlockList> {
@@ -22,9 +24,18 @@ export class ApiService {
   }
 
   getBlock(blockNum: number): Observable<Block> {
-    // return this.afs.collection('items', ref => ref.where('bnum', '>=', 2)).valueChanges();
-    // return this.afs.collection('items', ref => ref.where('type', '==', 'foo'));
-    // return this.afs.collection('items', ref => ref.orderBy('bnum', 'desc').limit(2)).valueChanges();
     return this.http.get<Block>(environment.apiURL + "/blocks/" + blockNum);
+  }
+
+  getTransaction(txHash: string): Observable<Transaction> {
+    return this.http.get<Transaction>(environment.apiURL + "/transaction/" + txHash);
+  }
+
+  getAddress(addrHash: string): Observable<Address> {
+    return this.http.get<Address>(environment.apiURL + "/address/" + addrHash);
+  }
+
+  getAddressTransactions(addrHash: string): Observable<Transaction[]> {
+    return this.http.get<Transaction[]>(environment.apiURL + "/address/" + addrHash + "/transactions");
   }
 }

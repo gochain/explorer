@@ -1,3 +1,41 @@
-<p>
-  address works!
-</p>
+<h1>Address</h1>
+<table *ngIf="(address | async) as addr">
+  <tr>
+    <td>Address hash</td>
+    <td>{{addr.address}}</td>
+  </tr>
+  <tr>
+    <td>Balance</td>
+    <td>{{addr.balance}}</td>
+  </tr>  
+</table>
+<h2>Transactions:</h2>
+
+<table *ngIf="(transactions | async) as txs">
+    <mat-list-item *ngFor="let tx of txs.transactions">
+      <tr>
+        <td>Transaction hash</td>
+        <p><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></p>
+      </tr>
+      <tr>
+        <td>Created at</td>
+        <td>{{tx.created_at}}</td>
+      </tr>
+      <tr>
+        <td>To</td>
+        <td>
+          <a routerLink="/address/{{tx.to}}">{{tx.to}}</a>
+        </td>
+      </tr>
+      <tr>
+        <td>From</td>
+        <td>
+          <a routerLink="/address/{{tx.from}}">{{tx.from}}</a>
+        </td>
+      </tr>
+      <tr>
+        <td>Value</td>
+        <td>{{tx.value}}</td>
+      </tr>
+    </mat-list-item>
+</table>

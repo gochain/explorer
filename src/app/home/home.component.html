@@ -5,7 +5,7 @@ Transactions in database: {{ txCount }}
     <h3 mat-subheader>Recent Blocks</h3>
     <mat-list-item *ngFor="let b of recentBlocks.blocks">
        <mat-icon mat-list-icon>folder</mat-icon>
-       <h4 mat-line><a routerLink="/block/{{b.num}}">{{b.num}}</a></h4>
+       <h4 mat-line><a routerLink="/block/{{b.number}}">{{b.number}}</a></h4>
        <p mat-line class="demo-2"> {{b.created_at | timeAgo}} </p>
        <p mat-line-end class="line-end">{{b.tx_count}} transactions</p>
        <mat-divider [inset]="true" *ngIf="!last"></mat-divider>

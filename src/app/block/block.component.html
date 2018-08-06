@@ -1,14 +1,59 @@
 <h1>Block</h1>
-
-
-
 <table *ngIf="(block | async) as b">
   <tr>
     <td>Block Number</td>
-    <td><a routerLink="/block/{{b.num}}">{{b.num}}</a></td>
+    <td>{{b.number}}</td>
+  </tr>
+  <tr>
+    <td>BlockHash</td>   
+    <td>{{b.hash }}</td>
   </tr>
   <tr>
     <td>Created At</td>   
     <td>{{b.created_at }}</td>
   </tr>
+  <tr>
+    <td>GasLimit</td>   
+    <td>{{b.gas_limit }}</td>
+  </tr>
+  <tr>
+    <td>Parent block hash</td>   
+    <td>{{b.parent_hash }}</td>
+  </tr>
+  <tr>
+    <td>GasUsed</td>   
+    <td>{{b.gas_used }}</td>
+  </tr>
+  <tr>
+    <td>Nonce</td>   
+    <td>{{b.nonce }}</td>
+  </tr>
+  <tr>
+    <td>Miner</td>   
+    <td><a routerLink="/address/{{b.miner}}">{{b.miner}}</a></td>
+  </tr>
+  <tr>
+    <td>Transactions count</td>   
+    <td>{{b.tx_count }}</td>
+  </tr>
+  <tr>
+    <td>Difficulty</td>   
+    <td>{{b.difficulty }}</td>
+  </tr>
+  <tr>
+    <td>Sha3Uncles</td>   
+    <td>{{b.sha3_uncles }}</td>
+  </tr>
+  <tr>
+    <td>ExtraData</td>   
+    <td>{{b.extra_data }}</td>
+  </tr>
+</table>
+
+<h2>Transactions:</h2>
+
+<table *ngIf="(block | async) as b">
+    <mat-list-item *ngFor="let tx of b.transactions">
+        <p><a routerLink="/tx/{{tx}}">{{tx}}</a></p>
+    </mat-list-item>
 </table>

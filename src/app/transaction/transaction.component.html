@@ -1,3 +1,53 @@
-<p>
-  transaction works!
-</p>
+<h1>Transaction</h1>
+<table *ngIf="(transaction | async) as tx">
+  <tr>
+    <td>Transaction hash</td>
+    <td>{{tx.tx_hash}}</td>
+  </tr>
+  <tr>
+    <td>Created at</td>
+    <td>{{tx.created_at}}</td>
+  </tr>
+  <tr>
+    <td>To</td>
+    <td>
+      <a routerLink="/address/{{tx.to}}">{{tx.to}}</a>
+    </td>
+  </tr>
+  <tr>
+    <td>From</td>
+    <td>
+      <a routerLink="/address/{{tx.from}}">{{tx.from}}</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Value</td>
+    <td>{{tx.value}}</td>
+  </tr>
+  <tr>
+    <td>Gas price</td>
+    <td>{{tx.gas_price}}</td>
+  </tr>
+  <tr>
+    <td>Gas fee</td>
+    <td>{{tx.gas_fee}}</td>
+  </tr>
+  <tr>
+    <td>Gas limit</td>
+    <td>{{tx.gas_limit}}</td>
+  </tr>
+  <tr>
+    <td>Block number</td>
+    <td>
+      <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
+    </td>
+  </tr>
+  <tr>
+    <td>Nonce</td>
+    <td>{{tx.nonce}}</td>
+  </tr>
+  <tr>
+    <td>Input data</td>
+    <td>{{tx.input_data}}</td>
+  </tr>
+</table>
