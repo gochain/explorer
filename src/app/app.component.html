@@ -13,7 +13,7 @@
     <span class="fill-remaining-space"></span>
 
     <mat-form-field style="font-size: 65%; max-width: 200px; ">
-        <input matInput placeholder="Search by address/tx hash" value="">
+        <input matInput  type="text" [(ngModel)]="searchFor" (keyup)="($event.which===13)?search():return" placeholder="Search by address/tx hash" value="">
     </mat-form-field>
   
   </mat-toolbar-row>

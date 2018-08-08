@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-
+import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 
 import { AngularFireModule } from 'angularfire2';
@@ -21,11 +21,13 @@ import { TransactionComponent } from './transaction/transaction.component';
 import { AddressComponent } from './address/address.component';
 import { HomeComponent } from './home/home.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { RichlistComponent } from './richlist/richlist.component';
 
 const appRoutes: Routes = [
   { path: 'block/:id', component: BlockComponent },
   { path: 'tx/:id', component: TransactionComponent },
   { path: 'address/:id', component: AddressComponent },
+  { path: 'richlist', component: RichlistComponent },
   // { path: 'send-tx', component: SendTxComponent },
   // { path: 'hero/:id',      component: HeroDetailComponent },
   // {
@@ -49,7 +51,8 @@ const appRoutes: Routes = [
     AddressComponent,
     HomeComponent,
     PageNotFoundComponent,
-    TimeAgoPipe
+    TimeAgoPipe,
+    RichlistComponent
   ],
   imports: [
     RouterModule.forRoot(
@@ -62,6 +65,7 @@ const appRoutes: Routes = [
     AngularFireAuthModule,
     BrowserAnimationsModule,
     FlexLayoutModule,
+    FormsModule,
     MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
     MatSelectModule, MatListModule, MatIconModule,
     HttpClientModule

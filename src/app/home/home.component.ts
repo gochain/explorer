@@ -17,27 +17,15 @@ export class HomeComponent implements OnInit {
     
   }
 
-  ngOnInit() {
-    // let db = this.db;
-    // let observable = Observable.create(observer => this.db
-    //   .collection('conversations')
-    //   .where('members.' + auth.currentUser.uid, '==', true)
-    //   .onSnapshot(observer)
-    // );
-    // observable.subscribe({
-    //   next(value) { console.log('value', value); }
-    // });
-    console.log("INIT")
+  ngOnInit() {        
     this.api.getRecentBlocks().subscribe((data: BlockList) => {
       console.log("blocklist", data)
       this.recentBlocks = data;
-    }
-      // tap(rb => {
-      //   console.log("YOOO")
-      //   console.log("rb", rb)
-      // }),
-      // catchError(this.handleError('getHeroes', []))
+    }    
     );
+    setTimeout(() => {
+      this.ngOnInit();
+      }, 5000);
   }
 
   /**

@@ -7,6 +7,7 @@ import { BlockList } from "./block_list";
 import { Block } from './block';
 import { Transaction } from './transaction';
 import { Address } from './address';
+import { RichList } from './rich_list';
 
 @Injectable({
   providedIn: 'root'
@@ -17,9 +18,6 @@ export class ApiService {
   }
 
   getRecentBlocks(): Observable<BlockList> {
-    // return this.afs.collection('items', ref => ref.where('bnum', '>=', 2)).valueChanges();
-    // return this.afs.collection('items', ref => ref.where('type', '==', 'foo'));
-    // return this.afs.collection('items', ref => ref.orderBy('bnum', 'desc').limit(2)).valueChanges();
     return this.http.get<BlockList>(environment.apiURL + "/blocks");
   }
 
@@ -37,5 +35,9 @@ export class ApiService {
 
   getAddressTransactions(addrHash: string): Observable<Transaction[]> {
     return this.http.get<Transaction[]>(environment.apiURL + "/address/" + addrHash + "/transactions");
+  }
+
+  getRichlist(skip: number, limit: number): Observable<RichList> {
+    return this.http.get<RichList>(environment.apiURL + "/richlist");
   }
 }
