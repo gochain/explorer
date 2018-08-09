@@ -60,8 +60,13 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
+	to := ""
+	if tx.To() != nil {
+		to = tx.To().Hex()
+	}
+	log.Info().Interface("TX:", tx).Msg("parseTx")
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
-		To:          tx.To().Hex(),
+		To:          to,
 		From:        from.Hex(),
 		Value:       tx.Value().String(),
 		GasPrice:    tx.GasPrice().String(),
@@ -195,18 +200,13 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 		if err != nil {
 			log.Fatal().Err(err).Msg("TransactionsConsistent")
 		}
-
-		if transactionCounter != block.TxCount {
-			log.Fatal().Err(err).Msg("TransactionsConsistent")
-		}
-
 		return transactionCounter == block.TxCount
 	}
 	return true
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int) *models.Address {
-	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000000000))
+	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
 	addressM := &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()}
 	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)

@@ -38,6 +38,6 @@ export class ApiService {
   }
 
   getRichlist(skip: number, limit: number): Observable<RichList> {
-    return this.http.get<RichList>(environment.apiURL + "/richlist");
+    return this.http.get<RichList>(environment.apiURL + "/richlist?skip="+skip+"&limit="+limit);
   }
 }

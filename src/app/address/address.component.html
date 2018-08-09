@@ -1,21 +1,24 @@
-<h1>Address</h1>
-<table *ngIf="(address | async) as addr">
-  <tr>
-    <td>Address hash</td>
-    <td>{{addr.address}}</td>
-  </tr>
-  <tr>
-    <td>Balance</td>
-    <td>{{addr.balance}}</td>
-  </tr>  
-</table>
-<h2>Transactions:</h2>
+<div *ngIf="(address | async) as addr; else addressNotFound">
+  <h1>Address</h1>
+  <table>
+    <tr>
+      <td>Address hash</td>
+      <td>{{addr.address}}</td>
+    </tr>
+    <tr>
+      <td>Balance</td>
+      <td>{{addr.balance}}</td>
+    </tr>
+  </table>
+  <h2>Transactions:</h2>
 
-<table *ngIf="(transactions | async) as txs">
+  <table *ngIf="(transactions | async) as txs">
     <mat-list-item *ngFor="let tx of txs.transactions">
       <tr>
         <td>Transaction hash</td>
-        <p><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></p>
+        <p>
+          <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+        </p>
       </tr>
       <tr>
         <td>Created at</td>
@@ -38,4 +41,8 @@
         <td>{{tx.value}}</td>
       </tr>
     </mat-list-item>
-</table>
+  </table>
+</div>
+<ng-template #addressNotFound>
+  Address not found.
+</ng-template>

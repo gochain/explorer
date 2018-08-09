@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
 import { ApiService } from '../api.service';
 import { RichList } from "../rich_list";
-import { of } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
 
 
 @Component({
@@ -14,13 +11,27 @@ import { catchError, tap, map } from 'rxjs/operators';
 export class RichlistComponent implements OnInit {
 
   richList: RichList;
+  
+  skip = 0;
+  limit = 100;
+  isMoreDisabled = false;
   constructor(private api: ApiService) {
   }
-  ngOnInit() {
-    this.api.getRichlist(0, 100).subscribe((data: RichList) => {
-      this.richList = data;
-    }
-    );
-
+  ngOnInit() {    
+    this.richList = new RichList;
+    this.richList.rankings = [];
+    this.getMore();
   }
+  getMore() {    
+    this.api.getRichlist(this.skip, this.limit).subscribe((data: RichList) => {      
+      this.richList.rankings = this.richList.rankings.concat(data.rankings);
+      this.richList.circulating_supply = data.circulating_supply;
+      this.richList.total_supply = data.total_supply;
+      this.skip += 100;
+      if (data.rankings.length < this.limit) {        
+        this.isMoreDisabled = true;
+      }
+    });
+  }
+
 }
