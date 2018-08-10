@@ -3,7 +3,9 @@ package main
 import (
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gochain-io/explorer/api/backend"
@@ -91,27 +93,29 @@ func main() {
 		// processing should be stopped.
 		r.Use(middleware.Timeout(60 * time.Second))
 
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("welcome"))
-		})
-		r.Route("/stats", func(r chi.Router) {
+		r.Route("/api/stats", func(r chi.Router) {
 			r.Get("/", getCurrentStats)
 		})
-		r.Route("/blocks", func(r chi.Router) {
+		r.Route("/api/blocks", func(r chi.Router) {
 			r.Get("/", getListBlocks)
 			r.Get("/{num}", getBlock)
 		})
-		r.Route("/address", func(r chi.Router) {
+		r.Route("/api/address", func(r chi.Router) {
 			r.Get("/{address}", getAddress)
 			r.Get("/{address}/transactions", getAddressTransactions)
 		})
-		r.Route("/transaction", func(r chi.Router) {
+		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
 		})
 
-		r.Route("/richlist", func(r chi.Router) {
+		r.Route("/api/richlist", func(r chi.Router) {
 			r.Get("/", getRichlist)
 		})
+
+		r.Route("/", func(r chi.Router) {
+			r.Get("/*", staticHandler)
+		})
+
 		http.ListenAndServe(":8080", r)
 		return nil
 	}
@@ -121,6 +125,25 @@ func main() {
 	}
 
 }
+
+func staticHandler(w http.ResponseWriter, r *http.Request) {
+	workDir, _ := os.Getwd()
+	wwwRoot := filepath.Join(workDir, "..", "dist", "explorer") + "/"
+	requestPath := r.URL.Path
+	fileSystemPath := wwwRoot + r.URL.Path
+	endURIPath := strings.Split(requestPath, "/")[len(strings.Split(requestPath, "/"))-1]
+	splitPath := strings.Split(endURIPath, ".")
+	if len(splitPath) > 1 {
+		if f, err := os.Stat(fileSystemPath); err == nil && !f.IsDir() {
+			http.ServeFile(w, r, fileSystemPath)
+			return
+		}
+		http.NotFound(w, r)
+		return
+	}
+	http.ServeFile(w, r, wwwRoot+"index.html")
+}
+
 func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, backendInstance.GetStats())
 }
