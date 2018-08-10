@@ -113,6 +113,9 @@ func main() {
 		})
 
 		r.Route("/", func(r chi.Router) {
+			r.Get("/totalSupply", getTotalSupply)
+			r.Get("/circulatingSupply", getCirculating)
+
 			r.Get("/*", staticHandler)
 		})
 
@@ -124,6 +127,15 @@ func main() {
 		log.Fatal().Err(err).Msg("Run")
 	}
 
+}
+func getTotalSupply(w http.ResponseWriter, r *http.Request) {
+	totalSupply, _ := backendInstance.TotalSupply()
+	w.Write([]byte(totalSupply.String()))
+}
+
+func getCirculating(w http.ResponseWriter, r *http.Request) {
+	circulatingSupply, _ := backendInstance.CirculatingSupply()
+	w.Write([]byte(circulatingSupply.String()))
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
