@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/gochain-io/explorer/api/models"
+	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"

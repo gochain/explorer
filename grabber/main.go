@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/gochain-io/explorer/api/backend"
+	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog"

@@ -10,7 +10,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/gochain-io/explorer/api/models"
+	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 )

@@ -44,3 +44,5 @@ testem.log
 Thumbs.db
 
 .firebaserc
+grabber/grabber
+server/server

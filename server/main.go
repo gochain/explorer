@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gochain-io/explorer/api/backend"
-	"github.com/gochain-io/explorer/api/models"
+	"github.com/gochain-io/explorer/server/backend"
+	"github.com/gochain-io/explorer/server/models"
 
 	"github.com/codegangsta/cli"
 	"github.com/gochain-io/gochain/ethclient"
