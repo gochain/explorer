@@ -11,10 +11,10 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/codegangsta/cli"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/urfave/cli"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
