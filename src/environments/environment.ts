@@ -3,15 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false,
-  firebase: {
-    apiKey: "AIzaSyDWOHNDV4X2IXnWeeC29V7Lm1XZSC8bbLk",
-    authDomain: "gochain-explorer.firebaseapp.com",
-    databaseURL: "https://gochain-explorer.firebaseio.com",
-    projectId: "gochain-explorer",
-    storageBucket: "",
-    messagingSenderId: "881132861207"
-  },
+  production: false,  
   apiURL: "http://localhost:8080/api"
 };
 

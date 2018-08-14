@@ -1,23 +1,27 @@
-.PHONY: dep run build docker release install test deploy
+.PHONY: dep server grabber build buildback buildfront docker release install test deploy
 
 docker:
 	docker build -t gochain/explorer .
 
-test:
-	npm install
-	./run_tests.sh
+# test:
+# 	npm install
+# 	./run_tests.sh
 
-release: docker
-	./release.sh
+# release: docker
+# 	./release.sh
 
-run:
-	ng serve --host 0.0.0.0
+server: build
+	cd server && ./server
 
-build:
-	ng build --prod --aot
+grabber: buildback
+	cd grabber && ./grabber
 
-runprod: build
-	ruby -run -e httpd ./dist/ -p 8080
+build: buildback buildfront
 
-deploy: build
-	firebase deploy
+buildback:
+	cd server && go get && go build	
+	cd grabber && go get && go build
+buildfront:
+	npm i
+	rm -rf dist/explorer
+	ng build --aot	

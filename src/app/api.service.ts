@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore, AngularFirestoreDocument } from 'angularfire2/firestore';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../environments/environment';
 import { BlockList } from "./block_list";
@@ -14,7 +13,7 @@ import { RichList } from './rich_list';
 })
 export class ApiService {
 
-  constructor(private afs: AngularFirestore, private http: HttpClient) {
+  constructor(private http: HttpClient) {
   }
 
   getRecentBlocks(): Observable<BlockList> {
@@ -38,6 +37,6 @@ export class ApiService {
   }
 
   getRichlist(skip: number, limit: number): Observable<RichList> {
-    return this.http.get<RichList>(environment.apiURL + "/richlist?skip="+skip+"&limit="+limit);
+    return this.http.get<RichList>(environment.apiURL + "/richlist?skip=" + skip + "&limit=" + limit);
   }
 }
