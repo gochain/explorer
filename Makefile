@@ -1,4 +1,4 @@
-.PHONY: dep server grabber build buildback buildfront docker release install test deploy
+.PHONY: dep server grabber build frontend backend docker release install test deploy
 
 docker:
 	docker build -t gochain/explorer .
@@ -16,12 +16,13 @@ server: build
 grabber: buildback
 	cd grabber && ./grabber
 
-build: buildback buildfront
+build: backend frontend
 
-buildback:
+backend:
 	cd server && go get && go build	
 	cd grabber && go get && go build
-buildfront:
+
+frontend:
 	npm i
 	rm -rf dist/explorer
 	ng build --aot	
