@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +22,7 @@ import (
 
 var ethClient *ethclient.Client
 var backendInstance *backend.Backend
+var wwwRoot string
 
 func parseSkipLimit(r *http.Request) (int, int) {
 	limitS := r.URL.Query().Get("limit")
@@ -65,6 +65,12 @@ func main() {
 			Value:       "info",
 			Usage:       "loglevel debug/info/warn/fatal, default is Info",
 			Destination: &loglevel,
+		},
+		cli.StringFlag{
+			Name:        "dist, d",
+			Value:       "../dist/explorer/",
+			Usage:       "folder that should be served",
+			Destination: &wwwRoot,
 		},
 	}
 
@@ -139,8 +145,6 @@ func getCirculating(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	workDir, _ := os.Getwd()
-	wwwRoot := filepath.Join(workDir, "..", "dist", "explorer") + "/"
 	requestPath := r.URL.Path
 	fileSystemPath := wwwRoot + r.URL.Path
 	endURIPath := strings.Split(requestPath, "/")[len(strings.Split(requestPath, "/"))-1]

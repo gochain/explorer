@@ -8,25 +8,19 @@
   revision = "f899737d7f2764dc13e4d01ff00108ec58f766a9"
 
 [[projects]]
-  name = "github.com/go-chi/chi"
-  packages = [
-    ".",
-    "middleware"
-  ]
-  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
-  version = "v3.3.2"
-
-[[projects]]
-  name = "github.com/go-chi/cors"
-  packages = ["."]
-  revision = "dba6525398619dead495962a916728e7ee2ca322"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/go-stack/stack"
   packages = ["."]
   revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
   version = "v1.7.0"
+
+[[projects]]
+  branch = "angular6"
+  name = "github.com/gochain-io/explorer"
+  packages = [
+    "server/backend",
+    "server/models"
+  ]
+  revision = "fae11c4e0ead3c06ddbc7346dcb35f139f655af6"
 
 [[projects]]
   name = "github.com/gochain-io/gochain"
@@ -148,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0aac1ad94693676d8feaefa1c439770c6f1604a674d638e095c1e1b5049c568b"
+  inputs-digest = "6664cd2575a0d69c458bac98422100558494a697b47fca26fc23ffc538f02ad0"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -19,8 +19,8 @@ grabber: buildback
 build: backend frontend
 
 backend:
-	cd server && go get && go build	
-	cd grabber && go get && go build
+	cd server && dep ensure --vendor-only && go build	
+	cd grabber &&  dep ensure --vendor-only && go build
 
 frontend:
 	npm i
