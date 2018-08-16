@@ -4,11 +4,13 @@ import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {FlexLayoutModule} from '@angular/flex-layout';
-import {MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
-        MatSelectModule, MatListModule, MatIconModule} from '@angular/material';
-import {TimeAgoPipe} from 'time-ago-pipe';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import {
+  MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
+  MatSelectModule, MatListModule, MatIconModule, MatSidenavModule, MatMenuModule
+} from '@angular/material';
+import { TimeAgoPipe } from 'time-ago-pipe';
 
 import { AppComponent } from './app.component';
 
@@ -31,7 +33,8 @@ const appRoutes: Routes = [
   //   component: HeroListComponent,
   //   data: { title: 'Heroes List' }
   // },
-  { path: '',
+  {
+    path: '',
     // redirectTo: '/heroes',
     pathMatch: 'full',
     component: HomeComponent
@@ -55,12 +58,12 @@ const appRoutes: Routes = [
       appRoutes,
       { enableTracing: true } // <-- debugging purposes only
     ),
-    BrowserModule,    
+    BrowserModule,
     BrowserAnimationsModule,
     FlexLayoutModule,
     FormsModule,
     MatFormFieldModule, MatButtonModule, MatCheckboxModule, MatInputModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule, MatToolbarModule, MatSnackBarModule,
-    MatSelectModule, MatListModule, MatIconModule,
+    MatSelectModule, MatListModule, MatIconModule, MatSidenavModule, MatMenuModule,
     HttpClientModule
   ],
   providers: [],

@@ -48,3 +48,4 @@ grabber/grabber
 server/server
 server/vendor/*
 grabber/vendor/*
+data/*

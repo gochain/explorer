@@ -20,4 +20,5 @@ COPY --from=backend_builder /tmp/gochain/* /usr/local/bin/
 COPY --from=frontend_builder /explorer/dist/* /explorer/
 
 EXPOSE 8080
+
 CMD [ "server","-d", "/explorer/" ]
