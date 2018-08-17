@@ -31,7 +31,11 @@ export class RichlistComponent implements OnInit {
       if (data.rankings.length < this.limit) {        
         this.isMoreDisabled = true;
       }
+      this.richList.rankings = this.richList.rankings.map(acct => {
+        acct.supply_owned = (acct.balance / this.richList.circulating_supply * 100).toFixed(2);
+        return acct;
     });
-  }
+    });
+  }  
 
 }

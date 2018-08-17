@@ -145,8 +145,9 @@ func (rpc *EthRPC) genesisAlloc() (*big.Int, error) {
 		log.Info().Err(err).Msg("failed response from GenesisAlloc")
 		return genesisAlloc, err
 	}
-	for _, val := range data {
-		bal, _ := parseBigInt(val.Balance)
+	for k := range data {
+		bal, _ := rpc.ethGetBalance(k.Hex(), "latest")
+		log.Info().Str("Address", k.Hex()).Str("Balance", bal.String()).Msg("GenesisAlloc")
 		genesisAlloc = new(big.Int).Add(genesisAlloc, bal)
 	}
 	log.Info().Str("GenesisAlloc", genesisAlloc.String()).Msg("response from GenesisAlloc")
@@ -156,6 +157,7 @@ func (rpc *EthRPC) genesisAlloc() (*big.Int, error) {
 func (rpc *EthRPC) circulatingSupply() (*big.Int, error) {
 	genesisAllocated, err := rpc.genesisAlloc()
 	totalSupply, err2 := rpc.ethTotalSupply()
+	log.Info().Str("GenesisAlloc", genesisAllocated.String()).Str("totalSupply", totalSupply.String()).Msg("circulatingSupply")
 	if err != nil || err2 != nil {
 		log.Info().Err(err).Err(err2).Msg("failed parsing CirculatingSupply")
 		return new(big.Int), err

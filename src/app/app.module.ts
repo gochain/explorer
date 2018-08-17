@@ -11,6 +11,8 @@ import {
   MatSelectModule, MatListModule, MatIconModule, MatSidenavModule, MatMenuModule
 } from '@angular/material';
 import { TimeAgoPipe } from 'time-ago-pipe';
+import {BigNumberPipe} from './big_number'
+import {WeiToGOPipe} from './wei_to_go'
 
 import { AppComponent } from './app.component';
 
@@ -51,7 +53,9 @@ const appRoutes: Routes = [
     HomeComponent,
     PageNotFoundComponent,
     TimeAgoPipe,
-    RichlistComponent
+    RichlistComponent,
+    BigNumberPipe,
+    WeiToGOPipe
   ],
   imports: [
     RouterModule.forRoot(

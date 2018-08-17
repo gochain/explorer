@@ -11,11 +11,11 @@
     </tr>
     <tr mat-row>
       <td mat-cell>Created At</td>
-      <td mat-cell>{{b.created_at }}</td>
+      <td mat-cell>{{b.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{b.created_at | timeAgo }})</td>
     </tr>
     <tr mat-row>
       <td mat-cell>GasLimit</td>
-      <td mat-cell>{{b.gas_limit }}</td>
+      <td mat-cell>{{b.gas_limit |bigNumber}}</td>
     </tr>
     <tr mat-row>
       <td mat-cell>Parent block hash</td>
@@ -23,7 +23,7 @@
     </tr>
     <tr mat-row>
       <td mat-cell>GasUsed</td>
-      <td mat-cell>{{b.gas_used }}</td>
+      <td mat-cell>{{b.gas_used | bigNumber}}</td>
     </tr>
     <tr mat-row>
       <td mat-cell>Nonce</td>
@@ -62,7 +62,7 @@
         </p>
       </mat-list-item>
     </table>
-  </div>  
+  </div>
 </div>
 <ng-template #blockNotFound>
   Block not found.

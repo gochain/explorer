@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/big"
 	"net/http"
 	"os"
 	"strconv"
@@ -136,11 +137,13 @@ func main() {
 }
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 	totalSupply, _ := backendInstance.TotalSupply()
+	totalSupply = new(big.Int).Div(totalSupply, big.NewInt(1000000000000000000)) //return in GO instead of wei
 	w.Write([]byte(totalSupply.String()))
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
 	circulatingSupply, _ := backendInstance.CirculatingSupply()
+	circulatingSupply = new(big.Int).Div(circulatingSupply, big.NewInt(1000000000000000000)) //return in GO instead of wei
 	w.Write([]byte(circulatingSupply.String()))
 }
 

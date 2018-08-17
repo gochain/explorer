@@ -1,11 +1,26 @@
-<mat-list *ngIf="richList">
-  <h3 mat-subheader>Richlist</h3>
-  <mat-list-item *ngFor="let address of richList.rankings">
-    <h4 mat-line>
+<table mat-table>
+<thead>
+  <tr>
+    <th>Rank</th>
+    <th>Address</th>
+    <th style="text-align: right">Balance</th>
+    <th style="text-align:right">Supply Owned</th>
+  </tr>
+</thead>
+<tbody>
+  <tr mat-row *ngFor="let address of richList.rankings">
+    <td mat-cell>
       <a routerLink="/address/{{address.address}}">{{address.address}}</a>
-    </h4>
-    <p mat-line class="demo-2"> {{address.balance}} </p>
-  </mat-list-item>
-</mat-list>
+    </td>
+    <td mat-cell>
+      <p mat-line> {{address.balance | weiToGO | bigNumber}} </p>
+    </td>
+    <td mat-cell>
+      <p mat-line> {{address.supply_owned}} %</p>
+    </td>
+  </tr>
+
+</tbody>
+</table>
 
 <button type="button" [disabled]="isMoreDisabled" (click)="getMore()">More</button>

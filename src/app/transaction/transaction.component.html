@@ -7,7 +7,7 @@
     </tr>
     <tr>
       <td>Created at</td>
-      <td>{{tx.created_at}}</td>
+      <td>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</td>      
     </tr>
     <tr>
       <td>To</td>
@@ -23,19 +23,19 @@
     </tr>
     <tr>
       <td>Value</td>
-      <td>{{tx.value}}</td>
+      <td>{{tx.value | weiToGO | bigNumber}}</td>
     </tr>
     <tr>
       <td>Gas price</td>
-      <td>{{tx.gas_price}}</td>
+      <td>{{tx.gas_price| bigNumber}}</td>
     </tr>
     <tr>
       <td>Gas fee</td>
-      <td>{{tx.gas_fee}}</td>
+      <td>{{tx.gas_fee | weiToGO | bigNumber}}</td>
     </tr>
     <tr>
       <td>Gas limit</td>
-      <td>{{tx.gas_limit}}</td>
+      <td>{{tx.gas_limit | bigNumber}}</td>
     </tr>
     <tr>
       <td>Block number</td>
