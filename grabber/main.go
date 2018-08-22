@@ -168,7 +168,20 @@ func updateAddresses(url string, importer *backend.Backend) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")
 			}
-			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Msg("updateAddresses")
+			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(address.Address), nil)
+			contractData := string(contractDataArray[:])
+			if contractData != "" {
+				txs := importer.GetTransactionList(address.Address)
+				for _, tx := range txs {
+					res, err := importer.GetTokenBalance(address.Address, tx.From)
+					if err != nil {
+						log.Fatal().Err(err).Msg("GetTokenBalance")
+					}
+					log.Info().Str("Balance", res.Balance.String()).Str("Transaction", tx.From).Msg("Contract data is not empty")
+				}
+				// log.Fatal().Err(err).Msg("GetTokenBalance")
+			}
+			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Str("Contract data", contractData).Msg("updateAddresses")
 			importer.ImportAddress(address.Address, balance)
 		}
 		lastUpdatedAt = time.Now()

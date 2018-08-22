@@ -16,6 +16,7 @@ type Backend struct {
 	mongo             *MongoBackend
 	ethClient         *ethclient.Client
 	extendedEthClient *EthRPC
+	tokenBalance      *TokenBalance
 }
 
 func NewBackend(mongoUrl, rpcUrl string) *Backend {
@@ -29,6 +30,7 @@ func NewBackend(mongoUrl, rpcUrl string) *Backend {
 	importer.ethClient = client
 	importer.extendedEthClient = exClient
 	importer.mongo = mongoBackend
+	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
 	return importer
 }
 
@@ -84,6 +86,9 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 }
 
 //METHODS USED IN GRABBER
+func (self *Backend) GetTokenBalance(contract, wallet string) (*tokenBalance, error) {
+	return self.tokenBalance.GetTokenBalance(contract, wallet)
+}
 func (self *Backend) ImportBlock(block *types.Block) *models.Block {
 	return self.mongo.importBlock(block)
 }
