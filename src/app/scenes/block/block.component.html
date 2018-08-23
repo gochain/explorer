@@ -1,0 +1,69 @@
+<div *ngIf="(block | async) as b; else blockNotFound">
+  <h1>Block</h1>
+  <table mat-table>
+    <tr mat-row>
+      <td mat-cell>Block Number</td>
+      <td mat-cell>{{b.number}}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>BlockHash</td>
+      <td mat-cell>{{b.hash }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Created At</td>
+      <td mat-cell>{{b.created_at }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>GasLimit</td>
+      <td mat-cell>{{b.gas_limit }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Parent block hash</td>
+      <td mat-cell>{{b.parent_hash }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>GasUsed</td>
+      <td mat-cell>{{b.gas_used }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Nonce</td>
+      <td mat-cell>{{b.nonce }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Miner</td>
+      <td mat-cell>
+        <a routerLink="/address/{{b.miner}}">{{b.miner}}</a>
+      </td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Transactions count</td>
+      <td mat-cell>{{b.tx_count }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Difficulty</td>
+      <td mat-cell>{{b.difficulty }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>Sha3Uncles</td>
+      <td mat-cell>{{b.sha3_uncles }}</td>
+    </tr>
+    <tr mat-row>
+      <td mat-cell>ExtraData</td>
+      <td mat-cell>{{b.extra_data }}</td>
+    </tr>
+  </table>
+  <div *ngIf="b.transactions.length>0">
+    <h2>Transactions:</h2>
+
+    <table>
+      <mat-list-item *ngFor="let tx of b.transactions">
+        <p>
+          <a routerLink="/tx/{{tx}}">{{tx}}</a>
+        </p>
+      </mat-list-item>
+    </table>
+  </div>  
+</div>
+<ng-template #blockNotFound>
+  Block not found.
+</ng-template>

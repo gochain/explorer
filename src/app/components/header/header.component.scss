@@ -1,0 +1,15 @@
+.toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+  &__icon {
+    display: flex;
+    img {
+      height:30px;
+    }
+  }
+}

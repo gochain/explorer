@@ -1,37 +1,7 @@
-<mat-toolbar color="primary">
-  <mat-toolbar-row>
-    <span>
-      <a routerLink="/" class="page-logo">
-        <img src="/assets/images/logo-full.svg" style="height:30px;" />
-      </a>
-      <a routerLink="/" class="page-logo icon-logo">
-        <img src="/assets/images/icon.svg" style="height:30px;" />
-      </a>
-    </span>
-
-    <!-- This fills the remaining space of the current row -->
-    <span class="fill-remaining-space"></span>
-
-    <mat-form-field style="font-size: 65%; max-width: 200px; ">
-      <input matInput type="text" [(ngModel)]="searchFor" (keyup)="($event.which===13)?search():0" placeholder="Search by address/tx hash"
-        value="">
-    </mat-form-field>
-
-  </mat-toolbar-row>
-
-</mat-toolbar>
-
-<mat-drawer-container class="example-container">
-  <mat-drawer mode="side" opened>
-    <mat-list>
-      <mat-list-item> <a routerLink="/">Blocks</a> </mat-list-item>
-      <mat-list-item> <a routerLink="/richlist">Richlist</a> </mat-list-item>
-      <mat-list-item> <a href="https://wallet.gochain.io">Wallet</a></mat-list-item>
-    </mat-list>
-  </mat-drawer>
-  <mat-drawer-content>
-    <div class="content-wrapper">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-drawer-content>
-</mat-drawer-container>
+<app-header></app-header>
+<div class="app-container" [ngClass]="{'sidenav-open': isSidenavOpen}">
+  <app-sidenav></app-sidenav>
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>
