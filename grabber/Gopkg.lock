@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/aristanetworks/goarista"
+  packages = ["monotime"]
+  revision = "18b896026201d8e1758468d9c5d5a558c69c5e9b"
+
+[[projects]]
+  branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
   revision = "f899737d7f2764dc13e4d01ff00108ec58f766a9"
@@ -20,22 +26,29 @@
     "server/backend",
     "server/models"
   ]
-  revision = "fae11c4e0ead3c06ddbc7346dcb35f139f655af6"
+  revision = ""
 
 [[projects]]
   name = "github.com/gochain-io/gochain"
   packages = [
     ".",
+    "accounts",
+    "accounts/abi",
+    "accounts/abi/bind",
+    "accounts/keystore",
     "common",
     "common/hexutil",
     "common/math",
+    "common/mclock",
     "common/perfutils",
     "core/types",
     "crypto",
+    "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
     "ethclient",
     "ethdb",
+    "event",
     "log",
     "metrics",
     "params",
@@ -53,6 +66,12 @@
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
+  name = "github.com/pborman/uuid"
+  packages = ["."]
+  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
+  version = "v1.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/rcrowley/go-metrics"
   packages = [
@@ -60,6 +79,12 @@
     "exp"
   ]
   revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/rjeczalik/notify"
+  packages = ["."]
+  revision = "4e54e7fd043e865c50bda93359fb78813a8d165b"
 
 [[projects]]
   name = "github.com/rs/cors"
@@ -105,9 +130,34 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/crypto"
+  packages = [
+    "pbkdf2",
+    "scrypt"
+  ]
+  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["websocket"]
   revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/tools"
+  packages = [
+    "go/ast/astutil",
+    "imports",
+    "internal/fastwalk"
+  ]
+  revision = "447b503c8ba6e20bc730585499fc01c81a78c621"
 
 [[projects]]
   name = "gopkg.in/fatih/set.v0"
@@ -142,6 +192,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6664cd2575a0d69c458bac98422100558494a697b47fca26fc23ffc538f02ad0"
+  inputs-digest = "0a411f5e9d8888639c1c449c599f27c98b611e55ca863fe4ca82de10632dd7bf"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -21,3 +21,7 @@
     name = "github.com/gochain-io/gochain" 
     unused-packages = false
 
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/aristanetworks/goarista"
