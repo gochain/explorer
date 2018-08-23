@@ -1,0 +1,32 @@
+.sidenav {
+  top: 64px;
+  width: 60px;
+  min-height: calc(100vh - 64px);
+  position: fixed;
+  box-shadow: 6px 0 6px rgba(0,0,0,.1);
+  &--open {
+    width: 230px;
+    .menu__item__title {
+      display: inline !important;
+    }
+  }
+  &__toolbar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    button {
+      width: 100%;
+      min-width: initial;
+      border-radius: 0;
+    }
+  }
+
+  .menu {
+    &__item {
+      &__title {
+        display: none;
+        margin-left: 20px;
+      }
+    }
+  }
+}

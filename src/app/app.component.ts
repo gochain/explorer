@@ -1,28 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { ApiService } from './api.service';
+import {Component, OnInit} from '@angular/core';
+import {LayoutService} from './services/template.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  searchFor: string = '';
-  constructor(private api: ApiService,private router: Router) {    
+  isSidenavOpen = true;
+
+  constructor(private _layoutService: LayoutService) {
   }
+
   ngOnInit() {
-  
+    this._layoutService.isSidenavOpen.subscribe((state: boolean) => {
+      this.isSidenavOpen = state;
+    });
   }
-  
-  search() {
-    console.log(this.searchFor);   
-    if (this.searchFor.length == 42){
-    this.router.navigate(['/address/',this.searchFor]); 
-    }
-    if (this.searchFor.length == 66){
-      this.router.navigate(['/tx/',this.searchFor]); 
-      }
-  }
-    
 }

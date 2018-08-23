@@ -1,0 +1,77 @@
+<div *ngIf="(address | async) as addr; else addressNotFound">
+  <h2 class="uk-heading-divider">Address</h2>
+  <div class="uk-margin">
+    <table class="uk-table">
+      <tr>
+        <td>Address hash</td>
+        <td>{{addr.address}}</td>
+      </tr>
+      <tr>
+        <td>Balance</td>
+        <td>{{addr.balance}}</td>
+      </tr>
+    </table>
+  </div>
+  <mat-tab-group>
+    <mat-tab label="Transactions">
+      <ng-container *ngIf="(transactions | async) as txs;">
+        <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small" *ngFor="let tx of txs.transactions">
+          <table class="uk-table uk-table-small">
+            <tr>
+              <td>Transaction hash</td>
+              <td><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+            </tr>
+            <tr>
+              <td>Created at</td>
+              <td>{{tx.created_at}}</td>
+            </tr>
+            <tr>
+              <td>To</td>
+              <td><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
+            </tr>
+            <tr>
+              <td>From</td>
+              <td><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
+            </tr>
+            <tr>
+              <td>Value</td>
+              <td>{{tx.value}}</td>
+            </tr>
+          </table>
+        </div>
+      </ng-container>
+    </mat-tab>
+    <mat-tab label="Holders">
+      <ng-container *ngIf="(token_holders | async) as hlds">
+        <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small"
+             *ngFor="let holder of hlds.token_holders">
+          <table class="uk-table uk-table-small">
+            <!--<tr>
+              <td>Contract address</td>
+              <td><a routerLink="/address/{{holder.contract_address}}">{{holder.contract_address}}</a></td>
+            </tr>-->
+            <tr>
+              <td>Token holder</td>
+              <td><a routerLink="/address/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>
+            </tr>
+            <tr>
+              <td>Balance</td>
+              <td>{{holder.balance}}</td>
+            </tr>
+            <tr>
+              <td>Token name</td>
+              <td>{{holder.token_name}}</td>
+            </tr>
+            <tr>
+              <td>Token symbol</td>
+              <td>{{holder.token_symbol}}</td>
+            </tr>
+          </table>
+        </div>
+      </ng-container>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+<ng-template #addressNotFound>
+  Address not found.
+</ng-template>

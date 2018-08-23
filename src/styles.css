@@ -2,29 +2,24 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 @import url('https://fonts.googleapis.com/css?family=Roboto');
 
-
 body {
-  /* background-color: #2A2D2F; */
-  /* color: #647982; */
   margin: 0;
   font-size: 14px;
-  /* background-color: ghostwhite; */
 }
 
 body, input[text], button {
-  /* color: #888; */
   font-family: 'Roboto', Cambria, Georgia;
 }
+
 /* everywhere else */
 * {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
 
 h1 {
-  /* color: red; */
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
-  /* font-size: 250%; */
 }
+
 h2, h3 {
   color: #444;
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
@@ -32,11 +27,11 @@ h2, h3 {
 }
 
 .full-width {
-    width: 100%;
+  width: 100%;
 }
 
 .fill-remaining-space {
-    /* This fills the remaining space, by using flexbox.
-        Every toolbar row uses a flexbox row layout. */
-    flex: 1 1 auto;
+  /* This fills the remaining space, by using flexbox.
+      Every toolbar row uses a flexbox row layout. */
+  flex: 1 1 auto;
 }
