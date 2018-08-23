@@ -140,6 +140,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"contract_address", "token_holder_address"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
@@ -205,15 +210,41 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
 	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
-	addressM := &models.Address{Address: address, Balance: balance.String(), LastUpdatedAt: time.Now(), BalanceInt: balanceInt.Int64()}
+	addressM := &models.Address{Address: address,
+		Balance:       balance.String(),
+		LastUpdatedAt: time.Now(),
+		TokenName:     tokenName,
+		TokenSymbol:   tokenSymbol,
+		Contract:      contract,
+		GO20:          go20,
+		BalanceInt:    balanceInt.Int64()}
 	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
 	return addressM
+
+}
+
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, balance *big.Int, tokenName, tokenSymbol string) *models.TokenHolder {
+	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
+	log.Info().Str("contractAddress", contractAddress).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
+	tokenHolder := &models.TokenHolder{
+		ContractAddress:    contractAddress,
+		TokenHolderAddress: tokenHolderAddress,
+		Balance:            balance.String(),
+		UpdatedAt:          time.Now(),
+		TokenName:          tokenName,
+		TokenSymbol:        tokenSymbol,
+		BalanceInt:         balanceInt.Int64()}
+	_, err := self.mongo.C("TokensHolders").Upsert(bson.M{"contract_address": contractAddress, "token_holder_address": tokenHolderAddress}, tokenHolder)
+	if err != nil {
+		log.Fatal().Err(err).Msg("importTokenHolder")
+	}
+	return tokenHolder
 
 }
 
@@ -273,6 +304,15 @@ func (self *MongoBackend) getTransactionList(address string) []*models.Transacti
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}
 	return transactions
+}
+
+func (self *MongoBackend) getTokenHoldersList(contractAddress string) []*models.TokenHolder {
+	var tokenHoldersList []*models.TokenHolder
+	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).All(&tokenHoldersList)
+	if err != nil {
+		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getTokenHoldersList")
+	}
+	return tokenHoldersList
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {

@@ -19,6 +19,7 @@ func main() {
 	var rpcUrl string
 	var mongoUrl string
 	var loglevel string
+	var startFrom int64
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag{
@@ -40,14 +41,20 @@ func main() {
 			Usage:       "loglevel debug/info/warn/fatal, default is Info",
 			Destination: &loglevel,
 		},
+		cli.Int64Flag{
+			Name:        "start-from, s",
+			Value:       0, //1365000
+			Usage:       "refill from this block",
+			Destination: &startFrom,
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		importer := backend.NewBackend(mongoUrl, rpcUrl)
-		go listener(rpcUrl, importer)
-		go backfill(rpcUrl, importer)
+		// go listener(rpcUrl, importer)
+		go backfill(rpcUrl, importer, startFrom)
 		updateAddresses(rpcUrl, importer)
 		return nil
 	}
@@ -90,7 +97,7 @@ func listener(url string, importer *backend.Backend) {
 	}
 }
 
-func backfill(url string, importer *backend.Backend) {
+func backfill(url string, importer *backend.Backend, startFrom int64) {
 	client := getClient(url)
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
@@ -98,6 +105,9 @@ func backfill(url string, importer *backend.Backend) {
 	}
 	log.Info().Msg(header.Number.String())
 	blockNumber := header.Number
+	if startFrom > 0 {
+		blockNumber = big.NewInt(startFrom)
+	}
 	for {
 		log.Info().Int64("Block", blockNumber.Int64()).Msg("Checking block in backfill")
 		blocksFromDB := importer.GetBlockByNumber(blockNumber.Int64())
@@ -170,19 +180,28 @@ func updateAddresses(url string, importer *backend.Backend) {
 			}
 			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(address.Address), nil)
 			contractData := string(contractDataArray[:])
+			var tokenName, tokenSymbol string
+			go20 := false
+			contract := false
 			if contractData != "" {
+				go20 = true
+				contract = true
 				txs := importer.GetTransactionList(address.Address)
 				for _, tx := range txs {
 					res, err := importer.GetTokenBalance(address.Address, tx.From)
 					if err != nil {
-						log.Fatal().Err(err).Msg("GetTokenBalance")
+						log.Info().Err(err).Msg("Cannot GetTokenBalance, seems like not ERC20 compatible contract")
+						go20 = false
+						continue
 					}
+					tokenName = res.Name
+					tokenSymbol = res.Symbol
+					importer.ImportTokenHolder(address.Address, tx.From, res.Balance, tokenName, tokenSymbol)
 					log.Info().Str("Balance", res.Balance.String()).Str("Transaction", tx.From).Msg("Contract data is not empty")
 				}
-				// log.Fatal().Err(err).Msg("GetTokenBalance")
 			}
 			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Str("Contract data", contractData).Msg("updateAddresses")
-			importer.ImportAddress(address.Address, balance)
+			importer.ImportAddress(address.Address, balance, tokenName, tokenSymbol, contract, go20)
 		}
 		lastUpdatedAt = time.Now()
 		time.Sleep(120 * time.Second) //sleep for 2 minutes

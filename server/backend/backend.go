@@ -58,7 +58,7 @@ func (self *Backend) GetAddressByHash(hash string) *models.Address {
 			log.Info().Err(err).Str("address", hash).Msg("cannot get address information neither from eth or db")
 			return nil
 		}
-		address = self.mongo.importAddress(hash, balance)
+		address = self.mongo.importAddress(hash, balance, "", "", false, false)
 	}
 	return address
 }
@@ -67,6 +67,9 @@ func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 }
 func (self *Backend) GetTransactionList(address string) []*models.Transaction {
 	return self.mongo.getTransactionList(address)
+}
+func (self *Backend) GetTokenHoldersList(contractAddress string) []*models.TokenHolder {
+	return self.mongo.getTokenHoldersList(contractAddress)
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.Block {
 	return self.mongo.getLatestsBlocks(skip, limit)
@@ -101,6 +104,9 @@ func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 func (self *Backend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
 	return self.mongo.getActiveAdresses(fromDate)
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int) *models.Address {
-	return self.mongo.importAddress(address, balance)
+func (self *Backend) ImportAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
+	return self.mongo.importAddress(address, balance, tokenName, tokenSymbol, contract, go20)
+}
+func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, balance *big.Int, tokenName, tokenSymbol string) *models.TokenHolder {
+	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, balance, tokenName, tokenSymbol)
 }

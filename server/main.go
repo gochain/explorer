@@ -110,6 +110,7 @@ func main() {
 		r.Route("/api/address", func(r chi.Router) {
 			r.Get("/{address}", getAddress)
 			r.Get("/{address}/transactions", getAddressTransactions)
+			r.Get("/{address}/holders", getTokenHolders)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -205,6 +206,15 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	transactions.Transactions = backendInstance.GetTransactionList(address)
 	writeJSON(w, http.StatusOK, transactions)
+}
+
+func getTokenHolders(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	tokenHolders := &models.TokenHolderList{
+		Holders: []*models.TokenHolder{},
+	}
+	tokenHolders.Holders = backendInstance.GetTokenHoldersList(contractAddress)
+	writeJSON(w, http.StatusOK, tokenHolders)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
