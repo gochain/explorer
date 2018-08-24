@@ -1,4 +1,4 @@
-<div *ngIf="(address | async) as addr; else addressNotFound">
+<ng-container *ngIf="(address | async) as addr; else addressNotFound">
   <h3 class="uk-heading-divider">Address</h3>
   <div class="uk-margin">
     <table class="uk-table uk-table-small">
@@ -8,7 +8,7 @@
       </tr>
       <tr>
         <td>Balance</td>
-        <td>{{addr.balance}}</td>
+        <td>{{addr.balance | weiToGO | bigNumber}}</td>
       </tr>
     </table>
   </div>
@@ -28,10 +28,11 @@
           <tbody>
           <tr *ngFor="let tx of txs.transactions">
             <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-            <td class="uk-text-truncate">{{tx.created_at | date: 'short'}}</td>
+            <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            </td>
             <td class="uk-text-truncate"><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
             <td class="uk-text-truncate"><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
-            <td class="uk-text-truncate">{{tx.value}}</td>
+            <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
           </tr>
           </tbody>
         </table>
@@ -48,7 +49,7 @@
             </tr>
             <tr>
               <td>Balance</td>
-              <td>{{holder.balance}}</td>
+              <td>{{holder.balance | weiToGO | bigNumber}}</td>
             </tr>
             <tr>
               <td>Token name</td>
@@ -63,7 +64,7 @@
       </ng-container>
     </mat-tab>
   </mat-tab-group>
-</div>
+</ng-container>
 <ng-template #addressNotFound>
   Address not found.
 </ng-template>

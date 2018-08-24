@@ -1,12 +1,13 @@
-<mat-list *ngIf="recentBlocks">
-  <h3 mat-subheader>Recent Blocks</h3>
-  <mat-list-item *ngFor="let b of recentBlocks.blocks">
-    <mat-icon mat-list-icon>folder</mat-icon>
-    <h4 mat-line>
-      <a routerLink="/block/{{b.number}}">{{b.number}}</a>
-    </h4>
-    <p mat-line class="demo-2"> {{b.created_at | timeAgo}} </p>
-    <p mat-line-end class="line-end">{{b.tx_count}} transactions</p>
-    <mat-divider [inset]="true" *ngIf="!last"></mat-divider>
-  </mat-list-item>  
-</mat-list>
+<h3 class="uk-heading-divider">Recent Blocks</h3>
+<div class="uk-margin">
+  <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
+    <tr *ngFor="let b of recentBlocks.blocks">
+      <td class="uk-table-shrink">
+        <mat-icon mat-list-icon>folder</mat-icon>
+      </td>
+      <td><a routerLink="/block/{{b.number}}">{{b.number}}</a></td>
+      <td>{{b.created_at | timeAgo}}</td>
+      <td>{{b.tx_count}} transactions</td>
+    </tr>
+  </table>
+</div>

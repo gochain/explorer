@@ -2,6 +2,7 @@
 import {Component, OnInit} from '@angular/core';
 import {RichList} from '../../models/rich_list.model';
 import {CommonService} from '../../services/common.service';
+import {LayoutService} from '../../services/template.service';
 
 @Component({
   selector: 'app-richlist',
@@ -16,10 +17,11 @@ export class RichlistComponent implements OnInit {
   limit = 100;
   isMoreDisabled = false;
 
-  constructor(private _commonService: CommonService) {
+  constructor(private _commonService: CommonService, private _layoutService: LayoutService) {
   }
 
   ngOnInit() {
+    this._layoutService.isPageLoading.next(true);
     this.richList = new RichList;
     this.richList.rankings = [];
     this.getMore();
@@ -34,7 +36,7 @@ export class RichlistComponent implements OnInit {
       if (data.rankings.length < this.limit) {
         this.isMoreDisabled = true;
       }
+      this._layoutService.isPageLoading.next(false);
     });
   }
-
 }

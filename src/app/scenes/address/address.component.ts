@@ -22,10 +22,10 @@ export class AddressComponent implements OnInit {
   token_holders: Observable<Holder[]>;
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
-    this._layoutService.isPageLoading.next(true);
   }
 
   ngOnInit() {
+    this._layoutService.isPageLoading.next(true);
     this._route.paramMap.pipe(
       tap((params: ParamMap) => {
         const addrHash: string = params.get('id');

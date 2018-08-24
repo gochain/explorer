@@ -1,11 +1,14 @@
-<mat-list *ngIf="richList">
-  <h3 mat-subheader>Richlist</h3>
-  <mat-list-item *ngFor="let address of richList.rankings">
-    <h4 mat-line>
-      <a routerLink="/address/{{address.address}}">{{address.address}}</a>
-    </h4>
-    <p mat-line class="demo-2"> {{address.balance}} </p>
-  </mat-list-item>
-</mat-list>
-
-<button type="button" [disabled]="isMoreDisabled" (click)="getMore()">More</button>
+<ng-container *ngIf="richList">
+  <h3 class="uk-heading-divider">Richlist</h3>
+  <div class="uk-margin">
+    <table class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
+      <tr *ngFor="let address of richList.rankings">
+        <td><a routerLink="/address/{{address.address}}">{{address.address}}</a></td>
+        <td>{{address.balance | weiToGO | bigNumber}}</td>
+      </tr>
+    </table>
+  </div>
+</ng-container>
+<button type="button" class="uk-button uk-button-default uk-button-small uk-margin" [disabled]="isMoreDisabled"
+        (click)="getMore()">More
+</button>

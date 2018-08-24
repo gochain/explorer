@@ -14,9 +14,13 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
+    setTimeout(() => this.subs(), 0);
+  }
+
+  subs() {
     this._layoutService.isSidenavOpen.subscribe((state: boolean) => {
-      this.isSidenavOpen = state;
-    });
+          this.isSidenavOpen = state;
+        });
     this._layoutService.isPageLoading.subscribe((state: boolean) => {
       this.isPageLoading = state;
     });
