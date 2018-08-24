@@ -1,0 +1,26 @@
+<div class="sidenav" [ngClass]="{'sidenav--open': isOpen}">
+  <div class="menu">
+    <mat-nav-list>
+      <a *ngFor="let navItem of navItems"
+         mat-list-item
+         routerLinkActive
+         #routerLinkActiveInstance="routerLinkActive"
+         [attr.tabindex]="routerLinkActiveInstance.isActive ? 0 : -1"
+         [routerLink]="[navItem.link]"
+         class="menu__item"
+      >
+        <div class="menu__item__icon">
+          <mat-icon>{{ navItem.icon }}</mat-icon>
+        </div>
+        <div class="menu__item__title">
+          {{navItem.title}}
+        </div>
+      </a>
+    </mat-nav-list>
+  </div>
+  <div class="sidenav__toolbar">
+    <button mat-flat-button color="primary" (click)="toggle()">
+      <mat-icon>{{isOpen ? 'arrow_back' : 'arrow_forward'}}</mat-icon>
+    </button>
+  </div>
+</div>

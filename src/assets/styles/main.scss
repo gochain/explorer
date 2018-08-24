@@ -1,0 +1,20 @@
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+
+.bg-gradient {
+  background-color: #151721;
+  background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(#51597e), to(#151721));
+  background-image: -webkit-radial-gradient(circle, #51597e, #151721);
+  background-image: -moz-radial-gradient(circle, #51597e, #151721);
+  background-image: -o-radial-gradient(circle, #51597e, #151721);
+  background-image: -ms-radial-gradient(circle, #51597e, #151721);
+  background-repeat: no-repeat;
+  color: #fff;
+}
+
+.uk-table-small {
+  font-size: 12px;
+
+  th {
+    font-size: 12px;
+  }
+}

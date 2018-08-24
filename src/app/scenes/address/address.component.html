@@ -1,0 +1,70 @@
+<ng-container *ngIf="(address | async) as addr; else addressNotFound">
+  <h3 class="uk-heading-divider">Address</h3>
+  <div class="uk-margin">
+    <table class="uk-table uk-table-small">
+      <tr>
+        <td>Address hash</td>
+        <td>{{addr.address}}</td>
+      </tr>
+      <tr>
+        <td>Balance</td>
+        <td>{{addr.balance | weiToGO | bigNumber}}</td>
+      </tr>
+    </table>
+  </div>
+  <mat-tab-group>
+    <mat-tab label="Transactions">
+      <ng-container *ngIf="(transactions | async) as txs;">
+        <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+          <thead>
+          <tr>
+            <th class="uk-width-1-4">Transaction hash</th>
+            <th class="">Created at</th>
+            <th class="uk-width-1-4">To</th>
+            <th class="uk-width-1-4">From</th>
+            <th class="">Value</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let tx of txs.transactions">
+            <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+            <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            </td>
+            <td class="uk-text-truncate"><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
+            <td class="uk-text-truncate"><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
+            <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </ng-container>
+    </mat-tab>
+    <mat-tab label="Holders" *ngIf="addr.contract && addr.go20">
+      <ng-container *ngIf="(token_holders | async) as hlds">
+        <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small"
+             *ngFor="let holder of hlds.token_holders">
+          <table class="uk-table uk-table-small">
+            <tr>
+              <td>Token holder</td>
+              <td><a routerLink="/address/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>
+            </tr>
+            <tr>
+              <td>Balance</td>
+              <td>{{holder.balance | weiToGO | bigNumber}}</td>
+            </tr>
+            <tr>
+              <td>Token name</td>
+              <td>{{holder.token_name}}</td>
+            </tr>
+            <tr>
+              <td>Token symbol</td>
+              <td>{{holder.token_symbol}}</td>
+            </tr>
+          </table>
+        </div>
+      </ng-container>
+    </mat-tab>
+  </mat-tab-group>
+</ng-container>
+<ng-template #addressNotFound>
+  Address not found.
+</ng-template>

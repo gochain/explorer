@@ -1,0 +1,68 @@
+<ng-container *ngIf="(block | async) as b; else blockNotFound">
+  <h3 class="uk-heading-divider">Block</h3>
+  <table class="uk-table uk-table-small">
+    <tr>
+      <td>Block Number</td>
+      <td>{{b.number}}</td>
+    </tr>
+    <tr>
+      <td>BlockHash</td>
+      <td>{{b.hash }}</td>
+    </tr>
+    <tr>
+      <td>Created At</td>
+      <td mat-cell>{{b.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{b.created_at | timeAgo }})</td>
+    </tr>
+    <tr>
+      <td>GasLimit</td>
+      <td mat-cell>{{b.gas_limit |bigNumber}}</td>
+    </tr>
+    <tr>
+      <td>Parent block hash</td>
+      <td>{{b.parent_hash }}</td>
+    </tr>
+    <tr>
+      <td>GasUsed</td>
+      <td mat-cell>{{b.gas_used | bigNumber}}</td>
+    </tr>
+    <tr>
+      <td>Nonce</td>
+      <td>{{b.nonce }}</td>
+    </tr>
+    <tr>
+      <td>Miner</td>
+      <td>
+        <a routerLink="/address/{{b.miner}}">{{b.miner}}</a>
+      </td>
+    </tr>
+    <tr>
+      <td>Transactions count</td>
+      <td>{{b.tx_count }}</td>
+    </tr>
+    <tr>
+      <td>Difficulty</td>
+      <td>{{b.difficulty }}</td>
+    </tr>
+    <tr>
+      <td>Sha3Uncles</td>
+      <td>{{b.sha3_uncles }}</td>
+    </tr>
+    <tr>
+      <td>ExtraData</td>
+      <td>{{b.extra_data }}</td>
+    </tr>
+  </table>
+  <div *ngIf="b.transactions.length>0">
+    <h4 class="uk-heading-divider">Transactions:</h4>
+    <table>
+      <mat-list-item *ngFor="let tx of b.transactions">
+        <p>
+          <a routerLink="/tx/{{tx}}">{{tx}}</a>
+        </p>
+      </mat-list-item>
+    </table>
+  </div>  
+</ng-container>
+<ng-template #blockNotFound>
+  Block not found.
+</ng-template>
