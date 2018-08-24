@@ -14,19 +14,21 @@ import {AddressComponent} from './scenes/address/address.component';
 import {HomeComponent} from './scenes/home/home.component';
 import {PageNotFoundComponent} from './scenes/page-not-found/page-not-found.component';
 import {RichlistComponent} from './scenes/richlist/richlist.component';
+import {HeaderComponent} from './components/header/header.component';
+import {SearchComponent} from './components/search/search.component';
+import {SidenavComponent} from './components/sidenav/sidenav.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
+import {LayoutService} from './services/template.service';
 /*MODULES*/
 import {MaterialModule} from './modules/material.module';
+import {PipesModule} from './modules/pipes.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
-import {HeaderComponent} from './components/header/header.component';
-import {SearchComponent} from './components/search/search.component';
-import {SidenavComponent} from './components/sidenav/sidenav.component';
-import {LayoutService} from './services/template.service';
+
 
 @NgModule({
   declarations: [
@@ -53,6 +55,7 @@ import {LayoutService} from './services/template.service';
     FormsModule,
     HttpClientModule,
     MaterialModule,
+    PipesModule
   ],
   providers: [
     ApiService,

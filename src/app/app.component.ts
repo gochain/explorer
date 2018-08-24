@@ -8,6 +8,7 @@ import {LayoutService} from './services/template.service';
 })
 export class AppComponent implements OnInit {
   isSidenavOpen = true;
+  isPageLoading = false;
 
   constructor(private _layoutService: LayoutService) {
   }
@@ -15,6 +16,9 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this._layoutService.isSidenavOpen.subscribe((state: boolean) => {
       this.isSidenavOpen = state;
+    });
+    this._layoutService.isPageLoading.subscribe((state: boolean) => {
+      this.isPageLoading = state;
     });
   }
 }

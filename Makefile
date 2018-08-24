@@ -25,4 +25,5 @@ backend:
 frontend:
 	npm i
 	rm -rf dist/explorer
-	ng build --aot	
+	npm rebuild node-sass
+	ng build --aot

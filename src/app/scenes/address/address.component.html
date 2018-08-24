@@ -1,7 +1,7 @@
 <div *ngIf="(address | async) as addr; else addressNotFound">
-  <h2 class="uk-heading-divider">Address</h2>
+  <h3 class="uk-heading-divider">Address</h3>
   <div class="uk-margin">
-    <table class="uk-table">
+    <table class="uk-table uk-table-small">
       <tr>
         <td>Address hash</td>
         <td>{{addr.address}}</td>
@@ -15,41 +15,33 @@
   <mat-tab-group>
     <mat-tab label="Transactions">
       <ng-container *ngIf="(transactions | async) as txs;">
-        <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small" *ngFor="let tx of txs.transactions">
-          <table class="uk-table uk-table-small">
-            <tr>
-              <td>Transaction hash</td>
-              <td><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-            </tr>
-            <tr>
-              <td>Created at</td>
-              <td>{{tx.created_at}}</td>
-            </tr>
-            <tr>
-              <td>To</td>
-              <td><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
-            </tr>
-            <tr>
-              <td>From</td>
-              <td><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
-            </tr>
-            <tr>
-              <td>Value</td>
-              <td>{{tx.value}}</td>
-            </tr>
-          </table>
-        </div>
+        <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+          <thead>
+          <tr>
+            <th class="uk-width-1-4">Transaction hash</th>
+            <th class="">Created at</th>
+            <th class="uk-width-1-4">To</th>
+            <th class="uk-width-1-4">From</th>
+            <th class="">Value</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let tx of txs.transactions">
+            <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+            <td class="uk-text-truncate">{{tx.created_at | date: 'short'}}</td>
+            <td class="uk-text-truncate"><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
+            <td class="uk-text-truncate"><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
+            <td class="uk-text-truncate">{{tx.value}}</td>
+          </tr>
+          </tbody>
+        </table>
       </ng-container>
     </mat-tab>
-    <mat-tab label="Holders">
+    <mat-tab label="Holders" *ngIf="addr.contract && addr.go20">
       <ng-container *ngIf="(token_holders | async) as hlds">
         <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small"
              *ngFor="let holder of hlds.token_holders">
           <table class="uk-table uk-table-small">
-            <!--<tr>
-              <td>Contract address</td>
-              <td><a routerLink="/address/{{holder.contract_address}}">{{holder.contract_address}}</a></td>
-            </tr>-->
             <tr>
               <td>Token holder</td>
               <td><a routerLink="/address/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>

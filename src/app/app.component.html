@@ -1,7 +1,17 @@
 <app-header></app-header>
 <div class="app-container" [ngClass]="{'sidenav-open': isSidenavOpen}">
   <app-sidenav></app-sidenav>
-  <div class="app-content">
-    <router-outlet></router-outlet>
+  <div class="app-content" [ngClass]="{'app-content--loading': isPageLoading}">
+    <div class="loader">
+      <div class="loader__content">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>
