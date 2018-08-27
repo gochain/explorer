@@ -36,7 +36,12 @@ func parseSkipLimit(r *http.Request) (int, int) {
 	if limitS != "" {
 		limit, _ = strconv.Atoi(limitS)
 	}
-	if limit > 500 {
+
+	if skip < 0 {
+		skip = 0
+	}
+
+	if limit > 500 || limit <= 0 {
 		limit = 100
 	}
 	return skip, limit
@@ -201,19 +206,21 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
+	skip, limit := parseSkipLimit(r)
 	transactions := &models.TransactionList{
 		Transactions: []*models.Transaction{},
 	}
-	transactions.Transactions = backendInstance.GetTransactionList(address)
+	transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit)
 	writeJSON(w, http.StatusOK, transactions)
 }
 
 func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	skip, limit := parseSkipLimit(r)
 	tokenHolders := &models.TokenHolderList{
 		Holders: []*models.TokenHolder{},
 	}
-	tokenHolders.Holders = backendInstance.GetTokenHoldersList(contractAddress)
+	tokenHolders.Holders = backendInstance.GetTokenHoldersList(contractAddress, skip, limit)
 	writeJSON(w, http.StatusOK, tokenHolders)
 }
 

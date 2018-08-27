@@ -53,7 +53,7 @@ func main() {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		importer := backend.NewBackend(mongoUrl, rpcUrl)
-		// go listener(rpcUrl, importer)
+		go listener(rpcUrl, importer)
 		go backfill(rpcUrl, importer, startFrom)
 		updateAddresses(rpcUrl, importer)
 		return nil
@@ -186,7 +186,7 @@ func updateAddresses(url string, importer *backend.Backend) {
 			if contractData != "" {
 				go20 = true
 				contract = true
-				txs := importer.GetTransactionList(address.Address)
+				txs := importer.GetTransactionList(address.Address, 0, 0) //get list of all transactions
 				for _, tx := range txs {
 					res, err := importer.GetTokenBalance(address.Address, tx.From)
 					if err != nil {

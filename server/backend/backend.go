@@ -65,11 +65,11 @@ func (self *Backend) GetAddressByHash(hash string) *models.Address {
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
 }
-func (self *Backend) GetTransactionList(address string) []*models.Transaction {
-	return self.mongo.getTransactionList(address)
+func (self *Backend) GetTransactionList(address string, skip, limit int) []*models.Transaction {
+	return self.mongo.getTransactionList(address, skip, limit)
 }
-func (self *Backend) GetTokenHoldersList(contractAddress string) []*models.TokenHolder {
-	return self.mongo.getTokenHoldersList(contractAddress)
+func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
+	return self.mongo.getTokenHoldersList(contractAddress, skip, limit)
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.Block {
 	return self.mongo.getLatestsBlocks(skip, limit)

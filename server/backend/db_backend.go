@@ -135,12 +135,12 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
-	err = self.mongo.C("Address").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
+	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
 
-	err = self.mongo.C("Address").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
+	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
@@ -217,15 +217,27 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
 	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
+	//this one is heavy but it doesn't make sense to put it into transaction parse, even with atomic increment because it could be out of sync (no way to decrement)
+	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
 	addressM := &models.Address{Address: address,
-		Balance:       balance.String(),
-		LastUpdatedAt: time.Now(),
-		TokenName:     tokenName,
-		TokenSymbol:   tokenSymbol,
-		Contract:      contract,
-		GO20:          go20,
-		BalanceInt:    balanceInt.Int64()}
-	_, err := self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
+		Balance:              balance.String(),
+		LastUpdatedAt:        time.Now(),
+		TokenName:            tokenName,
+		TokenSymbol:          tokenSymbol,
+		Contract:             contract,
+		GO20:                 go20,
+		BalanceInt:           balanceInt.Int64(),
+		NumberOfTransactions: transactionCounter,
+		NumberOfTokenHolders: tokenHoldersCounter,
+	}
+	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
@@ -301,18 +313,24 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 	return &c
 }
 
-func (self *MongoBackend) getTransactionList(address string) []*models.Transaction {
+func (self *MongoBackend) getTransactionList(address string, skip, limit int) []*models.Transaction {
 	var transactions []*models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).All(&transactions)
+	var err error
+	if skip >= 0 && limit > 0 {
+		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Skip(skip).Limit(limit).All(&transactions)
+	} else {
+		//get list of all transactions - needed for grabber
+		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).All(&transactions)
+	}
 	if err != nil {
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}
 	return transactions
 }
 
-func (self *MongoBackend) getTokenHoldersList(contractAddress string) []*models.TokenHolder {
+func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
 	var tokenHoldersList []*models.TokenHolder
-	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).All(&tokenHoldersList)
+	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getTokenHoldersList")
 	}
