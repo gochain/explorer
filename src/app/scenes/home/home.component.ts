@@ -1,8 +1,10 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
-import {CommonService} from '../../services/common.service';
-import {BlockList} from '../../models/block_list.model';
+/*SERVICES*/
 import {LayoutService} from '../../services/template.service';
+import {CommonService} from '../../services/common.service';
+/*MODELS*/
+import {BlockList} from '../../models/block_list.model';
 
 
 @Component({

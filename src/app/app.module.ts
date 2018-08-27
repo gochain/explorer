@@ -16,7 +16,6 @@ import {PageNotFoundComponent} from './scenes/page-not-found/page-not-found.comp
 import {RichlistComponent} from './scenes/richlist/richlist.component';
 import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
-import {SidenavComponent} from './components/sidenav/sidenav.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -41,14 +40,10 @@ import {APP_ROUTES} from './utils/routes';
     TimeAgoPipe,
     RichlistComponent,
     HeaderComponent,
-    SearchComponent,
-    SidenavComponent
+    SearchComponent
   ],
   imports: [
-    RouterModule.forRoot(
-      APP_ROUTES,
-      {enableTracing: true} // <-- debugging purposes only
-    ),
+    RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
     FlexLayoutModule,

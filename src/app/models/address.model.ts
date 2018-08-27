@@ -5,5 +5,5 @@ export class Address {
   token_symbol: string;
   contract: boolean;
   go20: boolean;
+  supplyOwned?: string;
 }
-{}

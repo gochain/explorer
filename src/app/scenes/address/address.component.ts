@@ -1,8 +1,8 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, ParamMap} from '@angular/router';
 import {Observable} from 'rxjs';
 import {tap} from 'rxjs/operators';
-import {ActivatedRoute, ParamMap} from '@angular/router';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/template.service';

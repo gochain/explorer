@@ -1,10 +1,36 @@
-<mat-toolbar color="primary" class="toolbar">
-  <div class="toolbar__icon">
-    <a routerLink="/" class="page-logo">
-      <img src="/assets/images/logo-full.svg"/>
-    </a>
+<nav class="topbar bg-gradient">
+  <div class="topbar__left">
+    <div class="topbar__icon">
+      <a routerLink="/">
+        <img src="../../../assets/images/logo-full.svg"/>
+      </a>
+    </div>
+    <div class="topbar__menu">
+      <ng-container *ngFor="let navItem of navItems">
+        <a
+            *ngIf="!navItem.external"
+            routerLinkActive="menu__item--active"
+            [routerLink]="navItem.link"
+            class="menu__item"
+        >
+          <!--<div class="menu__item__icon">
+            <i class="{{ navItem.icon }}"></i>
+          </div>-->
+          <div class="menu__item__title">
+            {{navItem.title}}
+          </div>
+        </a>
+        <a *ngIf="navItem.external" class="menu__item" href="{{navItem.link}}">
+          <div class="menu__item__title">
+            {{navItem.title}}
+          </div>
+        </a>
+      </ng-container>
+    </div>
   </div>
-  <div class="toolbar__search">
-    <app-search></app-search>
+  <div class="topbar__left">
+    <div class="toolbar__search">
+      <app-search></app-search>
+    </div>
   </div>
-</mat-toolbar>
+</nav>

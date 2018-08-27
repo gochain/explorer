@@ -1,14 +1,8 @@
 .app-container {
   display: flex;
   margin-top: 64px;
-  &.sidenav-open {
-    .app-content {
-      margin-left: 230px;
-    }
-  }
   .app-content {
     flex: 1;
-    margin-left: 60px;
     padding: 15px 20px 0;
     height: calc(100vh - 64px - 15px);
     overflow-y: scroll;
