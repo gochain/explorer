@@ -11,7 +11,13 @@ export class ApiService {
   apiURL: string;
 
   constructor(private http: HttpClient) {
-    this.apiURL = environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
+    this.apiURL = this.getApiURL();
+  }
+
+  getApiURL() {
+    return environment.production
+      ? window.location.origin + '/' + environment.API_PATH
+      : environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
   }
 
   get(url: string): Observable<any> {
