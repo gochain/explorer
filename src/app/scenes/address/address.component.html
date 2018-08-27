@@ -1,7 +1,7 @@
 <ng-container *ngIf="(address | async) as addr; else addressNotFound">
   <h3 class="uk-heading-divider">Address</h3>
   <div class="uk-margin">
-    <table class="uk-table uk-table-small">
+    <table class="uk-table uk-table-small uk-table-small">
       <tr>
         <td>Address hash</td>
         <td>{{addr.address}}</td>
@@ -18,11 +18,11 @@
         <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
           <thead>
           <tr>
-            <th class="uk-width-1-4">Transaction hash</th>
-            <th class="">Created at</th>
-            <th class="uk-width-1-4">To</th>
-            <th class="uk-width-1-4">From</th>
-            <th class="">Value</th>
+            <th class="uk-width-1-5">Transaction hash</th>
+            <th class="uk-width-1-5">Created at</th>
+            <th class="uk-width-1-5">To</th>
+            <th class="uk-width-1-5">From</th>
+            <th class="uk-width-1-6">Value</th>
           </tr>
           </thead>
           <tbody>
@@ -30,8 +30,8 @@
             <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
             <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
             </td>
-            <td class="uk-text-truncate"><a routerLink="/address/{{tx.to}}">{{tx.to}}</a></td>
-            <td class="uk-text-truncate"><a routerLink="/address/{{tx.from}}">{{tx.from}}</a></td>
+            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
+            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
             <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
           </tr>
           </tbody>
@@ -45,7 +45,7 @@
           <table class="uk-table uk-table-small">
             <tr>
               <td>Token holder</td>
-              <td><a routerLink="/address/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>
+              <td><a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>
             </tr>
             <tr>
               <td>Balance</td>

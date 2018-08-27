@@ -1,13 +1,21 @@
 <h3 class="uk-heading-divider">Recent Blocks</h3>
 <div class="uk-margin">
-  <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
+  <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-striped uk-table-middle">
+    <thead>
+    <tr>
+      <th class="uk-width-1-5">Block</th>
+      <th class="uk-width-1-5">Created</th>
+      <th class="uk-width-2-5">Signer Address</th>
+      <th class="uk-width-1-5">Transactions</th>
+    </tr>
+    </thead>
+    <tbody>
     <tr *ngFor="let b of recentBlocks.blocks">
-      <td class="uk-table-shrink">
-        <mat-icon mat-list-icon>folder</mat-icon>
-      </td>
-      <td><a routerLink="/block/{{b.number}}">{{b.number}}</a></td>
+      <td><i class="fa fa-folder icon"></i> <a routerLink="/block/{{b.number}}">{{b.number}}</a></td>
       <td>{{b.created_at | timeAgo}}</td>
+      <td><a routerLink="/addr/{{b.miner}}">{{b.miner}}</a></td>
       <td>{{b.tx_count}} transactions</td>
     </tr>
+    </tbody>
   </table>
 </div>

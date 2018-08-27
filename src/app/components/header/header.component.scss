@@ -1,15 +1,46 @@
-.toolbar {
-  width: 100%;
+.topbar {
+  position: fixed;
   display: flex;
   justify-content: space-between;
-  position: fixed;
+  align-items: center;
   top: 0;
+  right: 0;
+  left: 0;
   z-index: 2;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+  height: 64px;
+  padding: 0 20px;
+
+  &__left {
+    display: flex;
+    align-items: baseline;
+  }
+
   &__icon {
     display: flex;
     img {
       height:30px;
+    }
+  }
+  &__menu {
+    display: flex;
+    margin-left: 20px;
+  }
+}
+
+.menu {
+  &__item {
+    display: flex;
+    color: #fff;
+    align-items: center;
+    margin:  0 20px;
+
+    &--active {
+      text-decoration: underline;
+    }
+
+    &__icon {
+      margin-right: 5px;
     }
   }
 }

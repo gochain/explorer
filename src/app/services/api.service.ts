@@ -8,11 +8,13 @@ import {environment} from '../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
+  apiURL: string;
 
   constructor(private http: HttpClient) {
+    this.apiURL = environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
   }
 
   get(url: string): Observable<any> {
-    return this.http.get<any>(environment.apiURL + url);
+    return this.http.get<any>(this.apiURL + url);
   }
 }

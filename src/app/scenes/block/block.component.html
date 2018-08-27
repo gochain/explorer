@@ -1,6 +1,6 @@
 <ng-container *ngIf="(block | async) as b; else blockNotFound">
   <h3 class="uk-heading-divider">Block</h3>
-  <table class="uk-table uk-table-small">
+  <table class="uk-table uk-table-small uk-table-striped">
     <tr>
       <td>Block Number</td>
       <td>{{b.number}}</td>
@@ -32,7 +32,7 @@
     <tr>
       <td>Miner</td>
       <td>
-        <a routerLink="/address/{{b.miner}}">{{b.miner}}</a>
+        <a routerLink="/addr/{{b.miner}}">{{b.miner}}</a>
       </td>
     </tr>
     <tr>
@@ -54,12 +54,12 @@
   </table>
   <div *ngIf="b.transactions.length>0">
     <h4 class="uk-heading-divider">Transactions:</h4>
-    <table>
-      <mat-list-item *ngFor="let tx of b.transactions">
-        <p>
+    <table class="uk-table uk-table-small uk-table-striped">
+      <tr>
+        <td *ngFor="let tx of b.transactions">
           <a routerLink="/tx/{{tx}}">{{tx}}</a>
-        </p>
-      </mat-list-item>
+        </td>
+      </tr>
     </table>
   </div>  
 </ng-container>

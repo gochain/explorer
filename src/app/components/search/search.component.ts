@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
+import {ROUTES} from '../../utils/routes';
 
 @Component({
   selector: 'app-search',
@@ -14,9 +15,9 @@ export class SearchComponent {
 
   async search() {
     if (this.value.length === 42) {
-      await this.router.navigate(['/address/', this.value]);
+      await this.router.navigate([`/${ROUTES.ADDRESS}/`, this.value]);
     } else if (this.value.length === 66) {
-      await this.router.navigate(['/tx/', this.value]);
+      await this.router.navigate([`/${ROUTES.TRANSACTION}/`, this.value]);
     }
   }
 }
