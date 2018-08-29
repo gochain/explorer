@@ -25,9 +25,9 @@ export class AddressComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._layoutService.isPageLoading.next(true);
     this._route.paramMap.pipe(
       tap((params: ParamMap) => {
+        this._layoutService.isPageLoading.next(true);
         const addrHash: string = params.get('id');
         this.address = this._commonService.getAddress(addrHash).pipe(
           // getting token holder data if address is contract
