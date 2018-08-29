@@ -13,14 +13,17 @@
             [routerLink]="navItem.link"
             class="menu__item"
         >
-          <!--<div class="menu__item__icon">
+          <div class="menu__item__icon">
             <i class="{{ navItem.icon }}"></i>
-          </div>-->
+          </div>
           <div class="menu__item__title">
             {{navItem.title}}
           </div>
         </a>
         <a *ngIf="navItem.external" class="menu__item" href="{{navItem.link}}">
+          <div class="menu__item__icon">
+            <i class="{{ navItem.icon }}"></i>
+          </div>
           <div class="menu__item__title">
             {{navItem.title}}
           </div>
