@@ -71,6 +71,9 @@ func (self *Backend) GetTransactionList(address string, skip, limit int) []*mode
 func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
 	return self.mongo.getTokenHoldersList(contractAddress, skip, limit)
 }
+func (self *Backend) GetInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
+	return self.mongo.getInternalTransactionsList(contractAddress, skip, limit)
+}
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.Block {
 	return self.mongo.getLatestsBlocks(skip, limit)
 }
@@ -92,6 +95,9 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 func (self *Backend) GetTokenBalance(contract, wallet string) (*tokenBalance, error) {
 	return self.tokenBalance.GetTokenBalance(contract, wallet)
 }
+func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
+	return self.tokenBalance.getInternalTransactions(address)
+}
 func (self *Backend) ImportBlock(block *types.Block) *models.Block {
 	return self.mongo.importBlock(block)
 }
@@ -109,4 +115,7 @@ func (self *Backend) ImportAddress(address string, balance *big.Int, tokenName, 
 }
 func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, balance *big.Int, tokenName, tokenSymbol string) *models.TokenHolder {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, balance, tokenName, tokenSymbol)
+}
+func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
+	return self.mongo.importInternalTransaction(contractAddress, transferEvent)
 }

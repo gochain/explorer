@@ -149,6 +149,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"contract_address", "from_address", "to_address"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
@@ -226,16 +231,23 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
+
+	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+
 	addressM := &models.Address{Address: address,
-		Balance:              balance.String(),
-		LastUpdatedAt:        time.Now(),
-		TokenName:            tokenName,
-		TokenSymbol:          tokenSymbol,
-		Contract:             contract,
-		GO20:                 go20,
-		BalanceInt:           balanceInt.Int64(),
-		NumberOfTransactions: transactionCounter,
-		NumberOfTokenHolders: tokenHoldersCounter,
+		Balance:                      balance.String(),
+		LastUpdatedAt:                time.Now(),
+		TokenName:                    tokenName,
+		TokenSymbol:                  tokenSymbol,
+		Contract:                     contract,
+		GO20:                         go20,
+		BalanceInt:                   balanceInt.Int64(),
+		NumberOfTransactions:         transactionCounter,
+		NumberOfTokenHolders:         tokenHoldersCounter,
+		NumberOfInternalTransactions: internalTransactionsCounter,
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
@@ -262,6 +274,24 @@ func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress 
 	}
 	return tokenHolder
 
+}
+
+func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
+
+	internalTransaction := &models.InternalTransaction{
+		Contract:        contractAddress,
+		From:            transferEvent.From.String(),
+		To:              transferEvent.To.String(),
+		Value:           transferEvent.Value.String(),
+		BlockNumber:     transferEvent.BlockNumber,
+		TransactionHash: transferEvent.TransactionHash,
+		UpdatedAt:       time.Now(),
+	}
+	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"contract_address": contractAddress, "from_address": internalTransaction.From, "to_address": internalTransaction.To}, internalTransaction)
+	if err != nil {
+		log.Fatal().Err(err).Msg("importInternalTransaction")
+	}
+	return internalTransaction
 }
 
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
@@ -335,6 +365,15 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getTokenHoldersList")
 	}
 	return tokenHoldersList
+}
+
+func (self *MongoBackend) getInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
+	var internalTransactionsList []*models.InternalTransaction
+	err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": contractAddress}).Skip(skip).Limit(limit).All(&internalTransactionsList)
+	if err != nil {
+		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getInternalTransactionsList")
+	}
+	return internalTransactionsList
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {

@@ -197,7 +197,12 @@ func updateAddresses(url string, importer *backend.Backend) {
 					tokenName = res.Name
 					tokenSymbol = res.Symbol
 					importer.ImportTokenHolder(address.Address, tx.From, res.Balance, tokenName, tokenSymbol)
-					log.Info().Str("Balance", res.Balance.String()).Str("Transaction", tx.From).Msg("Contract data is not empty")
+					log.Info().Str("Token Balance", res.Balance.String()).Str("Transaction", tx.From).Msg("Contract")
+				}
+				internalTxs := importer.GetInternalTransactions(address.Address)
+				for _, itx := range internalTxs {
+					log.Info().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
+					importer.ImportInternalTransaction(address.Address, itx)
 				}
 			}
 			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Str("Contract data", contractData).Msg("updateAddresses")

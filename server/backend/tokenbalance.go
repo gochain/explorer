@@ -6,40 +6,62 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
+	"github.com/gochain-io/gochain"
+	"github.com/gochain-io/gochain/accounts/abi"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog/log"
 )
 
 type TokenBalance struct {
-	url string
-}
-
-var (
+	url     string
 	conn    *ethclient.Client
 	config  *Config
 	VERSION string
-)
+}
+
+type TransferEvent struct {
+	From            common.Address
+	To              common.Address
+	Value           *big.Int
+	BlockNumber     int64
+	TransactionHash string
+}
+
+var ()
 
 func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
+	c := &Config{
+		GethLocation: rpcUrl,
+		Logs:         true,
+	}
+	var err error
+
+	if c.GethLocation == "" {
+		log.Fatal().Msg("geth endpoint has not been set")
+	}
+	ethConn, err := ethclient.Dial(c.GethLocation)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
+	}
+	block, err := ethConn.BlockByNumber(context.TODO(), nil)
+	if block == nil {
+		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
+	}
+	log.Info().Str("url", c.GethLocation).Msg("Connected to Geth at")
+
 	return &TokenBalance{
-		url: rpcUrl,
+		url:    rpcUrl,
+		config: c,
+		conn:   ethConn,
 	}
 }
 func (rpc *TokenBalance) GetTokenBalance(contract, wallet string) (*tokenBalance, error) {
-	configs := &Config{
-		GethLocation: rpc.url,
-		Logs:         true,
-	}
-	configs.Connect()
-	return New(contract, wallet)
-
-}
-
-func New(contract, wallet string) (*tokenBalance, error) {
 	var err error
-	if config == nil || conn == nil {
+	if rpc.config == nil || rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
 	tb := &tokenBalance{
@@ -49,27 +71,8 @@ func New(contract, wallet string) (*tokenBalance, error) {
 		Balance:  big.NewInt(0),
 		ctx:      context.TODO(),
 	}
-	err = tb.query()
+	err = tb.query(rpc.conn)
 	return tb, err
-}
-
-func (c *Config) Connect() error {
-	var err error
-	if c.GethLocation == "" {
-		return errors.New("geth endpoint has not been set")
-	}
-	ethConn, err := ethclient.Dial(c.GethLocation)
-	if err != nil {
-		return err
-	}
-	block, err := ethConn.BlockByNumber(context.TODO(), nil)
-	if block == nil {
-		return err
-	}
-	config = c
-	conn = ethConn
-	log.Info().Str("url", c.GethLocation).Msg("Connected to Geth at")
-	return err
 }
 
 func (tb *tokenBalance) ETHString() string {
@@ -83,7 +86,7 @@ func (tb *tokenBalance) BalanceString() string {
 	return BigIntString(tb.Balance, tb.Decimals)
 }
 
-func (tb *tokenBalance) query() error {
+func (tb *tokenBalance) query(conn *ethclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
@@ -187,4 +190,42 @@ func clean(newNum string) string {
 		newNum = "0" + newNum
 	}
 	return newNum
+}
+
+func (rpc *TokenBalance) getInternalTransactions(address string) []TransferEvent {
+	contractAddress := common.HexToAddress(address)
+	transferOperation := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
+	query := gochain.FilterQuery{
+		Addresses: []common.Address{contractAddress},
+		Topics:    [][]common.Hash{[]common.Hash{transferOperation}},
+	}
+
+	ctx := context.Background()
+
+	events, err := rpc.conn.FilterLogs(ctx, query)
+
+	if err != nil {
+		log.Info().Err(err)
+	}
+
+	tokenAbi, err := abi.JSON(strings.NewReader(string(TokenABI)))
+
+	if err != nil {
+		log.Info().Err(err)
+	}
+	var transferEvents []TransferEvent
+	for _, event := range events {
+		var transferEvent TransferEvent
+		err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
+		if err != nil {
+			log.Info().Msg("Failed to unpack event")
+		}
+		transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
+		transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
+		transferEvent.BlockNumber = int64(event.BlockNumber)
+		transferEvent.TransactionHash = event.TxHash.String()
+		log.Info().Uint64("Block", event.BlockNumber).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
+		transferEvents = append(transferEvents, transferEvent)
+	}
+	return transferEvents
 }
