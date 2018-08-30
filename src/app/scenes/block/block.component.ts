@@ -38,7 +38,9 @@ export class BlockComponent implements OnInit {
       this._layoutService.isPageLoading.next(true);
       this.getData();
     }));
-    this._layoutService.isPageLoading.next(false);
+    this._subsArr$.push(this.transactionQueryParams.state.subscribe(() => {
+      this.getData();
+    }));
   }
 
   getData() {
@@ -52,6 +54,5 @@ export class BlockComponent implements OnInit {
 
   onTransactionPageSelect(page: number) {
     this.transactionQueryParams.toPage(page);
-    this.getData();
   }
 }

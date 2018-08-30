@@ -53,7 +53,17 @@
     </tr>
   </table>
   <div>
-    <h4 class="uk-heading-divider">Transactions:</h4>
+    <div class="uk-flex uk-flex-between">
+      <h4 class="uk-heading-divider">Transactions:</h4>
+      <div class="uk-form-width-small">
+        <select class="uk-select" [(ngModel)]="transactionQueryParams.limit">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="25">25</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select>
+      </div>
+    </div>
     <ng-container *ngIf="!b.transactions.length">
       <p>No transactions</p>
     </ng-container>

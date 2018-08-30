@@ -1,7 +1,16 @@
 import {Subject} from 'rxjs';
 
 export class QueryParams {
-  limit: number;
+  private _limit: number;
+  get limit(): number {
+    return this._limit;
+  }
+
+  set limit(value: number) {
+    this._limit = value;
+    this.toStart();
+  }
+
   skip: number;
   page: number;
   total: number;
@@ -11,32 +20,32 @@ export class QueryParams {
   private _state = 0;
 
   constructor(limit?: number) {
-    this.limit = limit || 20;
+    this._limit = limit || 25;
     this.skip = 0;
     this.page = 1;
-    this.currentTotal = this.limit;
+    this.currentTotal = this._limit;
   }
 
   setTotalPage(total: number) {
-    this.totalPage = Math.ceil(total / this.limit);
+    this.totalPage = Math.ceil(total / this._limit);
   }
 
   next() {
     this.page++;
-    this.skip += this.limit;
-    this.currentTotal = this.page * this.limit;
+    this.skip += this._limit;
+    this.currentTotal = this.page * this._limit;
     this.state.next(++this._state);
   }
 
   previous() {
     this.page--;
-    this.skip -= this.limit;
+    this.skip -= this._limit;
     this.state.next(++this._state);
   }
 
   toPage(page: number) {
     this.page = page;
-    this.skip = (this.page - 1) * this.limit;
+    this.skip = (this.page - 1) * this._limit;
     this.state.next(++this._state);
   }
 
@@ -48,11 +57,11 @@ export class QueryParams {
 
   toEnd() {
     this.page = this.totalPage;
-    this.skip = (this.page - 1) * this.limit;
+    this.skip = (this.page - 1) * this._limit;
     this.state.next(++this._state);
   }
 
   get params() {
-    return {limit: this.limit, skip: this.skip};
+    return {limit: this._limit, skip: this.skip};
   }
 }
