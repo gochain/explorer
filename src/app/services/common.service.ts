@@ -32,8 +32,8 @@ export class CommonService {
     return this._apiService.get('/address/' + addrHash);
   }
 
-  getAddressTransactions(addrHash: string): Observable<Transaction[]> {
-    return this._apiService.get('/address/' + addrHash + '/transactions');
+  getAddressTransactions(addrHash: string, data?: any): Observable<Transaction[]> {
+    return this._apiService.get('/address/' + addrHash + '/transactions', data);
   }
 
   getAddressHolders(addrHash: string): Observable<Holder[]> {

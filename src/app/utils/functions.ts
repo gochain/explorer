@@ -1,5 +1,9 @@
 import {Subscription} from 'rxjs';
 
-export function clearSubs(subs$: Subscription[]) {
-  subs$.forEach((sub: Subscription) => sub.unsubscribe());
+/**
+ * clears array from subscriptions
+ * @param {Array<Subscription>} arr
+ */
+export function unsubArr(arr: Array<Subscription>) {
+  arr.forEach(item => item.unsubscribe());
 }

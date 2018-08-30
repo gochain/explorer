@@ -52,8 +52,11 @@
       <td>{{b.extra_data }}</td>
     </tr>
   </table>
-  <div *ngIf="b.transactions.length>0">
+  <div>
     <h4 class="uk-heading-divider">Transactions:</h4>
+    <ng-container *ngIf="!b.transactions.length">
+      <p>No transactions</p>
+    </ng-container>
     <table class="uk-table uk-table-small uk-table-striped">
       <tr>
         <td *ngFor="let tx of b.transactions">
