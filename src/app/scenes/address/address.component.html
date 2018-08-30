@@ -10,10 +10,21 @@
         <td>Balance</td>
         <td>{{addr.balance | weiToGO | bigNumber}}</td>
       </tr>
+      <tr>
+        <td>Total transactions</td>
+        <td>{{addr.number_of_transactions}}</td>
+      </tr>
+      <tr *ngIf="addr.contract && addr.go20">
+        <td>Total holders</td>
+        <td>{{addr.number_of_token_holders}}</td>
+      </tr>
     </table>
   </div>
   <mat-tab-group>
     <mat-tab label="Transactions">
+      <ng-container *ngIf="!transactions.length">
+        <p>No transactions</p>
+      </ng-container>
       <ng-container *ngIf="!!transactions.length">
         <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
           <thead>
@@ -37,34 +48,41 @@
           </tbody>
         </table>
         <div class="uk-margin">
-          <ng-template [appInfinityScroll]="scrollState" (onView)="onScroll($event)">
+          <ng-template [appInfinityScroll]="transactionScrollState" (onView)="onScroll('transaction')">
             <app-loader></app-loader>
           </ng-template>
         </div>
       </ng-container>
     </mat-tab>
     <mat-tab label="Holders" *ngIf="addr.contract && addr.go20">
-      <ng-container *ngIf="(token_holders | async) as hlds">
-        <div class="uk-margin uk-card uk-card-default uk-card-body uk-card-small"
-             *ngFor="let holder of hlds.token_holders">
-          <table class="uk-table uk-table-small">
-            <tr>
-              <td>Token holder</td>
-              <td><a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a></td>
-            </tr>
-            <tr>
-              <td>Balance</td>
-              <td>{{holder.balance | weiToGO | bigNumber}}</td>
-            </tr>
-            <tr>
-              <td>Token name</td>
-              <td>{{holder.token_name}}</td>
-            </tr>
-            <tr>
-              <td>Token symbol</td>
-              <td>{{holder.token_symbol}}</td>
-            </tr>
-          </table>
+      <ng-container *ngIf="!token_holders.length">
+        <p>No holders</p>
+      </ng-container>
+      <ng-container *ngIf="!!token_holders.length">
+        <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+          <thead>
+          <tr>
+            <th class="uk-width-1-4">Token holder</th>
+            <th class="uk-width-1-4">Balance</th>
+            <th class="uk-width-1-4">Token name</th>
+            <th class="uk-width-1-4">Token symbol</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let holder of token_holders">
+            <td class="uk-text-truncate">
+              <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
+            </td>
+            <td class="uk-text-truncate">{{holder.balance | weiToGO | bigNumber}}</td>
+            <td class="uk-text-truncate">{{holder.token_name}}</td>
+            <td class="uk-text-truncate">{{holder.token_symbol}}</td>
+          </tr>
+          </tbody>
+        </table>
+        <div class="uk-margin">
+          <ng-template [appInfinityScroll]="holderScrollState" (onView)="onScroll('holder')">
+            <app-loader></app-loader>
+          </ng-template>
         </div>
       </ng-container>
     </mat-tab>

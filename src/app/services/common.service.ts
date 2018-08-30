@@ -20,8 +20,8 @@ export class CommonService {
     return this._apiService.get('/blocks');
   }
 
-  getBlock(blockNum: number): Observable<Block> {
-    return this._apiService.get('/blocks/' + blockNum);
+  getBlock(blockNum: number, data?: any): Observable<Block> {
+    return this._apiService.get('/blocks/' + blockNum, data);
   }
 
   getTransaction(txHash: string): Observable<Transaction> {
@@ -36,8 +36,8 @@ export class CommonService {
     return this._apiService.get('/address/' + addrHash + '/transactions', data);
   }
 
-  getAddressHolders(addrHash: string): Observable<Holder[]> {
-    return this._apiService.get('/address/' + addrHash + '/holders');
+  getAddressHolders(addrHash: string, data?: any): Observable<Holder[]> {
+    return this._apiService.get('/address/' + addrHash + '/holders', data);
   }
 
   getRichlist(skip: number, limit: number): Observable<RichList> {

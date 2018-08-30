@@ -17,6 +17,7 @@ import {RichlistComponent} from './scenes/richlist/richlist.component';
 import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
+import {PaginationComponent} from './components/pagination/pagination.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -30,7 +31,6 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 
-
 @NgModule({
   declarations: [
     AppComponent,
@@ -43,7 +43,8 @@ import {APP_ROUTES} from './utils/routes';
     RichlistComponent,
     HeaderComponent,
     SearchComponent,
-    LoaderComponent
+    LoaderComponent,
+    PaginationComponent
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),

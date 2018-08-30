@@ -1,4 +1,4 @@
-<ng-container *ngIf="(block | async) as b; else blockNotFound">
+<ng-container *ngIf="block as b; else blockNotFound">
   <h3 class="uk-heading-divider">Block</h3>
   <table class="uk-table uk-table-small uk-table-striped">
     <tr>
@@ -48,7 +48,7 @@
       <td>{{b.sha3_uncles }}</td>
     </tr>
     <tr>
-      <td>ExtraData</td>
+      <td>Extra Data</td>
       <td>{{b.extra_data }}</td>
     </tr>
   </table>
@@ -64,7 +64,10 @@
         </td>
       </tr>
     </table>
-  </div>  
+    <div class="uk-margin-medium">
+      <app-pagination [total]="transactionQueryParams.totalPage" (onSelect)="onTransactionPageSelect($event)"></app-pagination>
+    </div>
+  </div>
 </ng-container>
 <ng-template #blockNotFound>
   Block not found.

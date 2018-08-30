@@ -1,8 +1,9 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, ParamMap} from '@angular/router';
-import {fromEvent, Observable, Subscription} from 'rxjs';
-import {debounceTime, filter, flatMap, map, tap} from 'rxjs/operators';
+import {ActivatedRoute} from '@angular/router';
+import {Observable, Subscription} from 'rxjs';
+import {filter, tap} from 'rxjs/operators';
+import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/template.service';
@@ -11,7 +12,7 @@ import {Address} from '../../models/address.model';
 import {Transaction} from '../../models/transaction.model';
 import {Holder} from '../../models/holder.model';
 import {QueryParams} from '../../models/query_params';
-import {Params} from '@angular/router/src/shared';
+/*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
 
@@ -24,12 +25,14 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 export class AddressComponent implements OnInit {
   address: Observable<Address>;
   transactions: Transaction[] = [];
-  token_holders: Observable<Holder[]>;
-  queryParams: QueryParams = new QueryParams();
-  scrollState = true;
+  token_holders: Holder[] = [];
+  transactionQueryParams: QueryParams = new QueryParams();
+  holderQueryParams: QueryParams = new QueryParams();
+  transactionScrollState = true;
+  holderScrollState = true;
   addrHash: string;
 
-  private _transactionLoading = false;
+  private _dataLoading = false;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -45,8 +48,11 @@ export class AddressComponent implements OnInit {
         this.getAddress();
       })
     );
-    this._subsArr$.push(this.queryParams.state.subscribe(() => {
-      this.getData();
+    this._subsArr$.push(this.transactionQueryParams.state.subscribe(() => {
+      this.getTransactionData();
+    }));
+    this._subsArr$.push(this.holderQueryParams.state.subscribe(() => {
+      this.getHolderData();
     }));
   }
 
@@ -56,29 +62,49 @@ export class AddressComponent implements OnInit {
       tap((addr: Address) => {
         this._layoutService.isPageLoading.next(false);
         if (addr.contract && addr.go20) {
-          this.token_holders = this._commonService.getAddressHolders(this.addrHash);
+          this.getHolderData();
         }
-        this.getData();
+        this.getTransactionData();
       })
     );
   }
 
-  getData() {
-    this._transactionLoading = true;
-    this._commonService.getAddressTransactions(this.addrHash, this.queryParams.params).subscribe((data: any) => {
+  getTransactionData() {
+    this._dataLoading = true;
+    this._commonService.getAddressTransactions(this.addrHash, this.transactionQueryParams.params).subscribe((data: any) => {
       if (data.transactions && data.transactions.length) {
         this.transactions = this.transactions.concat(data.transactions);
-        if (data.transactions.length < this.queryParams.limit) {
-          this.scrollState = false;
+        if (data.transactions.length < this.transactionQueryParams.limit) {
+          this.transactionScrollState = false;
         }
       }
-      this._transactionLoading = false;
+      this._dataLoading = false;
     });
   }
 
-  onScroll() {
-    if (!this._transactionLoading) {
-      this.queryParams.next();
+  getHolderData() {
+    this._dataLoading = true;
+    this._commonService.getAddressHolders(this.addrHash, this.holderQueryParams.params).subscribe((data: any) => {
+      if (data.token_holders && data.token_holders.length) {
+        this.token_holders = this.token_holders.concat(data.token_holders);
+        if (data.token_holders.length < this.holderQueryParams.limit) {
+          this.holderScrollState = false;
+        }
+      }
+      this._dataLoading = false;
+    });
+  }
+
+  onScroll(type: string) {
+    if (!this._dataLoading) {
+      switch (type) {
+        case 'transaction':
+          this.transactionQueryParams.next();
+          break;
+        case 'holder':
+          this.holderQueryParams.next();
+          break;
+      }
     }
   }
 }

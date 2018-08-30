@@ -1,5 +1,4 @@
-import {BehaviorSubject, Observable, Subject} from 'rxjs';
-import {HttpParams} from '@angular/common/http';
+import {Subject} from 'rxjs';
 
 export class QueryParams {
   limit: number;
@@ -16,6 +15,10 @@ export class QueryParams {
     this.skip = 0;
     this.page = 1;
     this.currentTotal = this.limit;
+  }
+
+  setTotalPage(total: number) {
+    this.totalPage = Math.ceil(total / this.limit);
   }
 
   next() {
@@ -44,12 +47,12 @@ export class QueryParams {
   }
 
   toEnd() {
-    this.page = Math.ceil(this.total / this.limit);
+    this.page = this.totalPage;
     this.skip = (this.page - 1) * this.limit;
     this.state.next(++this._state);
   }
 
   get params() {
-   return {limit: this.limit, skip: this.skip};
+    return {limit: this.limit, skip: this.skip};
   }
 }
