@@ -1,6 +1,6 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../environments/environment';
 
@@ -20,7 +20,9 @@ export class ApiService {
       : environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
   }
 
-  get(url: string): Observable<any> {
-    return this.http.get<any>(this.apiURL + url);
+  get(url: string, params?: HttpParams): Observable<any> {
+    return this.http.get<any>(this.apiURL + url, {
+      params
+    });
   }
 }

@@ -16,6 +16,8 @@ import {PageNotFoundComponent} from './scenes/page-not-found/page-not-found.comp
 import {RichlistComponent} from './scenes/richlist/richlist.component';
 import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
+import {LoaderComponent} from './components/loader/loader.component';
+import {PaginationComponent} from './components/pagination/pagination.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -23,11 +25,11 @@ import {LayoutService} from './services/template.service';
 /*MODULES*/
 import {MaterialModule} from './modules/material.module';
 import {PipesModule} from './modules/pipes.module';
+import {DirectiveModule} from './directives/directives.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
-
 
 @NgModule({
   declarations: [
@@ -40,7 +42,9 @@ import {APP_ROUTES} from './utils/routes';
     TimeAgoPipe,
     RichlistComponent,
     HeaderComponent,
-    SearchComponent
+    SearchComponent,
+    LoaderComponent,
+    PaginationComponent
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
@@ -50,7 +54,8 @@ import {APP_ROUTES} from './utils/routes';
     FormsModule,
     HttpClientModule,
     MaterialModule,
-    PipesModule
+    PipesModule,
+    DirectiveModule
   ],
   providers: [
     ApiService,

@@ -1,0 +1,14 @@
+<ul class="uk-pagination uk-flex-center">
+  <li [ngClass]="{'uk-disabled': current === 1}"><span><i class="fa fa-chevron-left" (click)="previous()"></i></span></li>
+  <ng-container *ngFor="let item of items">
+    <li
+        *ngIf="item.type === 'page'"
+        (click)="onPageSelect(item.value)"
+        [ngClass]="{'uk-active': current == item.value}"
+    >
+      <span>{{item.value}}</span>
+    </li>
+    <li *ngIf="item.type === 'dot'" class="uk-disabled"><span>{{item.value}}</span></li>
+  </ng-container>
+  <li [ngClass]="{'uk-disabled': current === _total}"><span><i class="fa fa-chevron-right" (click)="next()"></i></span></li>
+</ul>

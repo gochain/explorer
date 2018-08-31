@@ -11,17 +11,17 @@ export class HeaderComponent {
     {
       title: 'Blocks',
       link: '/home',
-      icon: 'fa fa-link'
+      icon: 'fa fa-link fa-fw'
     },
     {
       title: 'Rich List',
       link: '/richlist',
-      icon: 'fa fa-bars'
+      icon: 'fa fa-list-ul fa-fw'
     },
     {
       title: 'Wallet',
       link: 'https://wallet.gochain.io',
-      icon: 'fa fa-wallet',
+      icon: 'fa fa-wallet fa-fw',
       external: true
     },
   ];
