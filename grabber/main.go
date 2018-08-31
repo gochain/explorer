@@ -186,23 +186,26 @@ func updateAddresses(url string, importer *backend.Backend) {
 			if contractData != "" {
 				go20 = true
 				contract = true
-				txs := importer.GetTransactionList(address.Address, 0, 0) //get list of all transactions
-				for _, tx := range txs {
-					res, err := importer.GetTokenBalance(address.Address, tx.From)
-					if err != nil {
-						log.Info().Err(err).Msg("Cannot GetTokenBalance, seems like not ERC20 compatible contract")
-						go20 = false
-						continue
-					}
-					tokenName = res.Name
-					tokenSymbol = res.Symbol
-					importer.ImportTokenHolder(address.Address, tx.From, res.Balance, tokenName, tokenSymbol)
-					log.Info().Str("Token Balance", res.Balance.String()).Str("Transaction", tx.From).Msg("Contract")
-				}
 				internalTxs := importer.GetInternalTransactions(address.Address)
 				for _, itx := range internalTxs {
 					log.Info().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
 					importer.ImportInternalTransaction(address.Address, itx)
+					res, err := importer.GetTokenBalance(address.Address, itx.To.String())
+					tokenName = res.Name
+					tokenSymbol = res.Symbol
+					if err != nil {
+						log.Info().Err(err).Str("Address", itx.To.String()).Msg("Cannot GetTokenBalance, in internal transaction")
+						go20 = false
+						continue
+					}
+					importer.ImportTokenHolder(address.Address, itx.To.String(), res.Balance, tokenName, tokenSymbol)
+					res, err = importer.GetTokenBalance(address.Address, itx.From.String())
+					if err != nil {
+						log.Info().Err(err).Str("Address", itx.From.String()).Msg("Cannot GetTokenBalance, in internal transaction")
+						go20 = false
+						continue
+					}
+					importer.ImportTokenHolder(address.Address, itx.From.String(), res.Balance, tokenName, tokenSymbol)
 				}
 			}
 			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Str("Contract data", contractData).Msg("updateAddresses")
