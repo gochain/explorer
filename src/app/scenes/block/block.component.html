@@ -71,8 +71,8 @@
     </ng-container>
     <ng-container *ngIf="!!b.transactions.length">
       <table class="uk-table uk-table-small uk-table-striped">
-        <tr>
-          <td *ngFor="let tx of b.transactions">
+        <tr *ngFor="let tx of b.transactions">
+          <td>
             <a routerLink="/tx/{{tx}}">{{tx}}</a>
           </td>
         </tr>
