@@ -1,12 +1,23 @@
-import {Component} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {MenuItem} from '../../models/menu_item.model';
+import {LayoutService} from '../../services/template.service';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
+  themeColor: string;
+  constructor(private _layoutService: LayoutService) {
+  }
+
+  ngOnInit() {
+    this._layoutService.themeColor.subscribe(value => {
+      this.themeColor = value;
+    })
+  }
+
   navItems: MenuItem[] = [
     {
       title: 'Blocks',
@@ -23,6 +34,11 @@ export class HeaderComponent {
       link: 'https://wallet.gochain.io',
       icon: 'fa fa-wallet fa-fw',
       external: true
+    },
+    {
+      title: 'Settings',
+      link: '/settings',
+      icon: 'fa fa-cogs fa-fw',
     },
   ];
 }

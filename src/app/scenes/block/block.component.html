@@ -65,18 +65,22 @@
       </div>
     </div>
     <ng-container *ngIf="!b.transactions.length">
-      <p>No transactions</p>
+      <div class="uk-margin">
+        <p>No transactions</p>
+      </div>
     </ng-container>
-    <table class="uk-table uk-table-small uk-table-striped">
-      <tr>
-        <td *ngFor="let tx of b.transactions">
-          <a routerLink="/tx/{{tx}}">{{tx}}</a>
-        </td>
-      </tr>
-    </table>
-    <div class="uk-margin-medium">
-      <app-pagination [total]="transactionQueryParams.totalPage" (onSelect)="onTransactionPageSelect($event)"></app-pagination>
-    </div>
+    <ng-container *ngIf="!!b.transactions.length">
+      <table class="uk-table uk-table-small uk-table-striped">
+        <tr>
+          <td *ngFor="let tx of b.transactions">
+            <a routerLink="/tx/{{tx}}">{{tx}}</a>
+          </td>
+        </tr>
+      </table>
+      <div class="uk-margin-medium">
+        <app-pagination [total]="transactionQueryParams.totalPage" (onSelect)="onTransactionPageSelect($event)"></app-pagination>
+      </div>
+    </ng-container>
   </div>
 </ng-container>
 <ng-template #blockNotFound>

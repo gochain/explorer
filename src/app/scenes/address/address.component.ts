@@ -12,6 +12,7 @@ import {Address} from '../../models/address.model';
 import {Transaction} from '../../models/transaction.model';
 import {Holder} from '../../models/holder.model';
 import {QueryParams} from '../../models/query_params';
+import {InternalTransaction} from '../../models/internal-transaction.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
@@ -26,9 +27,12 @@ export class AddressComponent implements OnInit {
   address: Observable<Address>;
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
+  internal_transactions: InternalTransaction[] = [];
   transactionQueryParams: QueryParams = new QueryParams();
+  internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
   transactionScrollState = true;
+  internalTransactionScrollState = true;
   holderScrollState = true;
   addrHash: string;
 
@@ -54,6 +58,9 @@ export class AddressComponent implements OnInit {
     this._subsArr$.push(this.holderQueryParams.state.subscribe(() => {
       this.getHolderData();
     }));
+    this._subsArr$.push(this.internalTransactionQueryParams.state.subscribe(() => {
+      this.getInternalTransactions();
+    }));
   }
 
   getAddress() {
@@ -63,6 +70,7 @@ export class AddressComponent implements OnInit {
         this._layoutService.isPageLoading.next(false);
         if (addr.contract && addr.go20) {
           this.getHolderData();
+          this.getInternalTransactions();
         }
         this.getTransactionData();
       })
@@ -95,11 +103,27 @@ export class AddressComponent implements OnInit {
     });
   }
 
+  getInternalTransactions() {
+    this._dataLoading = true;
+    this._commonService.getAddressInternalTransaction(this.addrHash, this.internalTransactionQueryParams.params).subscribe((data: any) => {
+      if (data.internal_transactions && data.internal_transactions.length) {
+        this.internal_transactions = this.internal_transactions.concat(data.internal_transactions);
+        if (data.internal_transactions.length < this.internalTransactionQueryParams.limit) {
+          this.internalTransactionScrollState = false;
+        }
+      }
+      this._dataLoading = false;
+    });
+  }
+
   onScroll(type: string) {
     if (!this._dataLoading) {
       switch (type) {
         case 'transaction':
           this.transactionQueryParams.next();
+          break;
+        case 'internalTransaction':
+          this.holderQueryParams.next();
           break;
         case 'holder':
           this.holderQueryParams.next();

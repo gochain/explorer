@@ -18,6 +18,7 @@ import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
+import {SettingsComponent} from './scenes/settings/settings.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -44,7 +45,8 @@ import {APP_ROUTES} from './utils/routes';
     HeaderComponent,
     SearchComponent,
     LoaderComponent,
-    PaginationComponent
+    PaginationComponent,
+    SettingsComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
@@ -55,7 +57,7 @@ import {APP_ROUTES} from './utils/routes';
     HttpClientModule,
     MaterialModule,
     PipesModule,
-    DirectiveModule
+    DirectiveModule,
   ],
   providers: [
     ApiService,
