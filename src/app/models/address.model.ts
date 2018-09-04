@@ -8,4 +8,5 @@ export class Address {
   supplyOwned?: string;
   number_of_transactions: number;
   number_of_token_holders: number;
+  number_of_internal_transactions: number;
 }

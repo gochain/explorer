@@ -10,6 +10,7 @@ import {Transaction} from '../models/transaction.model';
 import {Address} from '../models/address.model';
 import {RichList} from '../models/rich_list.model';
 import {Holder} from '../models/holder.model';
+import {InternalTransaction} from '../models/internal-transaction.model';
 
 @Injectable()
 export class CommonService {
@@ -38,6 +39,10 @@ export class CommonService {
 
   getAddressHolders(addrHash: string, data?: any): Observable<Holder[]> {
     return this._apiService.get('/address/' + addrHash + '/holders', data);
+  }
+
+  getAddressInternalTransaction(addrHash: string, data?: any): Observable<InternalTransaction[]> {
+    return this._apiService.get('/address/' + addrHash + '/internal_transactions', data);
   }
 
   getRichlist(skip: number, limit: number): Observable<RichList> {

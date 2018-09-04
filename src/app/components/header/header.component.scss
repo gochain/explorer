@@ -31,7 +31,6 @@
 .menu {
   &__item {
     display: flex;
-    color: #fff;
     align-items: center;
     margin:  0 20px;
 
@@ -41,6 +40,21 @@
 
     &__icon {
       margin-right: 5px;
+    }
+  }
+}
+
+:host-context(body.light) {
+  .menu {
+    &__item {
+      color: #333;
+    }
+  }
+}
+:host-context(body.dark) {
+  .menu {
+    &__item {
+      color: #fff;
     }
   }
 }
