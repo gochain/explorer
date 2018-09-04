@@ -14,7 +14,7 @@
         <td>Total transactions</td>
         <td>{{addr.number_of_transactions}}</td>
       </tr>
-      <tr>
+      <tr *ngIf="addr.contract && addr.go20">
         <td>Total internal transactions</td>
         <td>{{addr.number_of_internal_transactions}}</td>
       </tr>
