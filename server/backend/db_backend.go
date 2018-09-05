@@ -62,7 +62,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	}
 	receipt, err := self.ethClient.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
-		log.Fatal().Err(err).Msg("TransactionReceipt")
+		log.Warn().Err(err).Str("TX hash", tx.Hash().String()).Msg("TransactionReceipt")
 	}
 	to := ""
 	if tx.To() != nil {
