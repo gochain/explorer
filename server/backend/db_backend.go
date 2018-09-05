@@ -60,9 +60,12 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
+	gas := tx.Gas()
 	receipt, err := self.ethClient.TransactionReceipt(context.Background(), tx.Hash())
 	if err != nil {
 		log.Warn().Err(err).Str("TX hash", tx.Hash().String()).Msg("TransactionReceipt")
+	} else {
+		gas = receipt.GasUsed
 	}
 	to := ""
 	if tx.To() != nil {
@@ -76,7 +79,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		GasPrice:    tx.GasPrice().String(),
 		GasLimit:    tx.Gas(),
 		BlockNumber: block.Number().Int64(),
-		GasFee:      new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(receipt.GasUsed))).String(),
+		GasFee:      new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
 		Nonce:       string(tx.Nonce()),
 		BlockHash:   block.Hash().Hex(),
 		CreatedAt:   time.Unix(block.Time().Int64(), 0),
