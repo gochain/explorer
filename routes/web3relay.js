@@ -87,12 +87,13 @@ exports.data = function (req, res) {
         res.write(JSON.stringify({ "error": true }));
         res.end();
       } else {
-        web3.eth.getTransactionReceipt(txHash, function (err, txReceipt) {          
+        web3.eth.getTransactionReceipt(txHash, function (err, txReceipt) {
           var ttx = tx;
           const gasPrice = new BigNumber(tx.gasPrice);
-          // const gas = new BigNumber(tx.gas);
-          const gas = new BigNumber(txReceipt.gasUsed);
-
+          gas = new BigNumber(tx.gas);
+          if (txReceipt) {
+            gas = new BigNumber(txReceipt.gasUsed);
+          }
           ttx.value = etherUnits.toEther(tx.value, "wei");
           ttx.actualGasCost = etherUnits.toEther(gas.multipliedBy(gasPrice), "wei");
           //get timestamp from block
