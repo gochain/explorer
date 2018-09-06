@@ -33,10 +33,9 @@
         <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
           <thead>
           <tr>
-            <th class="uk-width-1-5">Transaction hash</th>
-            <th class="uk-width-1-5">Created at</th>
-            <th class="uk-width-1-5">To</th>
-            <th class="uk-width-1-5">From</th>
+            <th class="uk-width-1-4">Transaction hash</th>
+            <th class="uk-width-1-4">Created at</th>
+            <th>Associate</th>
             <th class="uk-width-1-6">Value</th>
           </tr>
           </thead>
@@ -45,9 +44,15 @@
             <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
             <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
             </td>
-            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
-            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
-            <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
+            <td class="uk-text-truncate">
+              <ng-container *ngIf="addr.address === tx.to">
+                <i class="fas fa-arrow-left fa-fw"></i> <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+              </ng-container>
+              <ng-container *ngIf="addr.address !== tx.to">
+                <i class="fas fa-arrow-right fa-fw"></i> <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+              </ng-container>
+            </td>
+            <td class="uk-text-truncate">{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO | bigNumber}}</td>
           </tr>
           </tbody>
         </table>
@@ -78,7 +83,8 @@
           <tr *ngFor="let tx of internal_transactions">
             <td class="uk-text-truncate"><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a></td>
             <td class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
-            <td class="uk-text-truncate">{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
+            <td class="uk-text-truncate">{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+            </td>
             <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
             <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
             <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
