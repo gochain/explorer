@@ -25,6 +25,10 @@ export class CommonService {
     return this._apiService.get('/blocks/' + blockNum, data);
   }
 
+  getBlockTransactions(blockNum: number, data?: any) {
+    return this._apiService.get('/blocks/' + blockNum + '/transactions', data);
+  }
+
   getTransaction(txHash: string): Observable<Transaction> {
     return this._apiService.get('/transaction/' + txHash);
   }
