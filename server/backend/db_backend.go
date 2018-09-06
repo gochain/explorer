@@ -71,7 +71,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	if tx.To() != nil {
 		to = tx.To().Hex()
 	}
-	log.Info().Interface("TX:", tx).Msg("parseTx")
+	log.Debug().Interface("TX:", tx).Msg("parseTx")
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:          to,
 		From:        from.Hex(),
@@ -122,6 +122,12 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -299,7 +305,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
-	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).One(&c)
+	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
 		log.Debug().Int64("Block", blockNumber).Err(err).Msg("GetBlockByNumber")
 		return nil
@@ -307,9 +313,18 @@ func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	return &c
 }
 
-func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.Block {
-	var blocks []*models.Block
-	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Skip(skip).Limit(limit).All(&blocks)
+func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
+	var transactions []*models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Skip(skip).Limit(limit).All(&transactions)
+	if err != nil {
+		log.Debug().Int64("block", blockNumber).Err(err).Msg("getBlockTransactions")
+	}
+	return transactions
+}
+
+func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock {
+	var blocks []*models.LightBlock
+	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1}).Skip(skip).Limit(limit).All(&blocks)
 	if err != nil {
 		log.Debug().Int("Block", limit).Err(err).Msg("GetLatestsBlocks")
 		return nil
@@ -348,13 +363,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 
 func (self *MongoBackend) getTransactionList(address string, skip, limit int) []*models.Transaction {
 	var transactions []*models.Transaction
-	var err error
-	if skip >= 0 && limit > 0 {
-		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Skip(skip).Limit(limit).All(&transactions)
-	} else {
-		//get list of all transactions - needed for grabber
-		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).All(&transactions)
-	}
+	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Skip(skip).Limit(limit).All(&transactions)
 	if err != nil {
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}

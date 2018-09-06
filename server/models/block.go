@@ -22,6 +22,17 @@ type Block struct {
 	Transactions    []string  `json:"transactions" bson:"transactions"`
 }
 
+type LightBlock struct {
+	Number    int64     `json:"number" bson:"number"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	Miner     string    `json:"miner" bson:"miner"`
+	TxCount   int       `json:"tx_count" bson:"tx_count"`
+}
+
+type LightBlockList struct {
+	Blocks []*LightBlock `json:"blocks" bson:"blocks"`
+}
+
 type BlockList struct {
 	Blocks []*Block `json:"blocks" bson:"blocks"`
 }

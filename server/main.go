@@ -47,6 +47,16 @@ func parseSkipLimit(r *http.Request) (int, int) {
 	return skip, limit
 }
 
+func parseBlockNumber(r *http.Request) (int, error) {
+	bnumS := chi.URLParam(r, "num")
+	bnum, err := strconv.Atoi(bnumS)
+	if err != nil {
+		log.Error().Err(err).Str("bnumS", bnumS).Msg("Error converting bnumS to num")
+		return 0, err
+	}
+	return bnum, nil
+}
+
 func main() {
 	var rpcUrl string
 	var mongoUrl string
@@ -111,6 +121,7 @@ func main() {
 		r.Route("/api/blocks", func(r chi.Router) {
 			r.Get("/", getListBlocks)
 			r.Get("/{num}", getBlock)
+			r.Get("/{num}/transactions", getBlockTransactions)
 		})
 		r.Route("/api/address", func(r chi.Router) {
 			r.Get("/{address}", getAddress)
@@ -236,19 +247,29 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
-	bl := &models.BlockList{
-		Blocks: []*models.Block{},
+	bl := &models.LightBlockList{
+		Blocks: []*models.LightBlock{},
 	}
 	skip, limit := parseSkipLimit(r)
 	bl.Blocks = backendInstance.GetLatestsBlocks(skip, limit)
 	writeJSON(w, http.StatusOK, bl)
 }
+func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
+	bnum, err := parseBlockNumber(r)
+	if err != nil {
+		return
+	}
+	skip, limit := parseSkipLimit(r)
+	transactions := &models.TransactionList{
+		Transactions: []*models.Transaction{},
+	}
+	transactions.Transactions = backendInstance.GetBlockTransactionsByNumber(int64(bnum), skip, limit)
+	writeJSON(w, http.StatusOK, transactions)
+}
 
 func getBlock(w http.ResponseWriter, r *http.Request) {
-	bnumS := chi.URLParam(r, "num")
-	bnum, err := strconv.Atoi(bnumS)
+	bnum, err := parseBlockNumber(r)
 	if err != nil {
-		log.Error().Err(err).Str("bnumS", bnumS).Msg("Error converting bnumS to num")
 		return
 	}
 	log.Info().Int("bnum", bnum).Msg("looking up block")

@@ -74,9 +74,13 @@ func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int
 func (self *Backend) GetInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
 	return self.mongo.getInternalTransactionsList(contractAddress, skip, limit)
 }
-func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.Block {
+func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
 	return self.mongo.getLatestsBlocks(skip, limit)
 }
+func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
+	return self.mongo.getBlockTransactionsByNumber(blockNumber, skip, limit)
+}
+
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
 	if block == nil {
