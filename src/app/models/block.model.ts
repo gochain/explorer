@@ -9,5 +9,4 @@ export class Block {
   difficulty: any;
   sha3_uncles: any;
   extra_data: any;
-  transactions?: any;
 }

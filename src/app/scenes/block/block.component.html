@@ -64,18 +64,32 @@
         </select>
       </div>
     </div>
-    <ng-container *ngIf="!b.transactions.length">
+    <ng-container *ngIf="!transactions.length">
       <div class="uk-margin">
         <p>No transactions</p>
       </div>
     </ng-container>
-    <ng-container *ngIf="!!b.transactions.length">
-      <table class="uk-table uk-table-small uk-table-striped">
-        <tr *ngFor="let tx of b.transactions">
-          <td>
-            <a routerLink="/tx/{{tx}}">{{tx}}</a>
-          </td>
+    <ng-container *ngIf="!!transactions.length">
+      <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+        <thead>
+        <tr>
+          <th class="uk-width-1-5">Transaction hash</th>
+          <th class="uk-width-1-5">Created at</th>
+          <th class="uk-width-1-5">To</th>
+          <th class="uk-width-1-5">From</th>
+          <th class="uk-width-1-6">Value</th>
         </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let tx of transactions">
+          <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+          <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+          </td>
+          <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
+          <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
+          <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
+        </tr>
+        </tbody>
       </table>
       <div class="uk-margin-medium">
         <app-pagination [total]="transactionQueryParams.totalPage" (onSelect)="onTransactionPageSelect($event)"></app-pagination>

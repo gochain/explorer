@@ -10,6 +10,7 @@ import {LayoutService} from '../../services/template.service';
 /*MODELS*/
 import {Block} from '../../models/block.model';
 import {QueryParams} from '../../models/query_params';
+import {Transaction} from '../../models/transaction.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
@@ -21,7 +22,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class BlockComponent implements OnInit {
   block: Block;
-  transactions: string[] = [];
+  transactions: Transaction[] = [];
   transactionQueryParams: QueryParams = new QueryParams();
 
   private _blockNum: number;
@@ -46,9 +47,20 @@ export class BlockComponent implements OnInit {
   getData() {
     this._commonService.getBlock(this._blockNum, this.transactionQueryParams.params).subscribe((data: Block) => {
       this.block = data;
-      /*this.transactions = transactions;*/
       this.transactionQueryParams.setTotalPage(this.block.tx_count);
+      if (this.block.tx_count) {
+        this.getTransactionData();
+      } else {
+        this.transactions = [];
+      }
       this._layoutService.isPageLoading.next(false);
+    });
+  }
+
+  // to-do: add caching
+  getTransactionData() {
+    this._commonService.getBlockTransactions(this._blockNum, this.transactionQueryParams.params).subscribe((data: any) => {
+      this.transactions = data.transactions;
     });
   }
 
