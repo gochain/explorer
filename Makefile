@@ -1,7 +1,7 @@
 .PHONY: dep server grabber build frontend backend docker release install test deploy
 
 docker:
-	docker build -t gochain/explorer .
+	docker build -t gochain/explorer:go-test .
 
 # test:
 # 	npm install
