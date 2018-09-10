@@ -1,6 +1,9 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { BlockComponent } from './block.component';
+/*CORE*/
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+/*MODULES*/
+import {AppModule} from '../../app.module';
+/*COMPONENTS*/
+import {BlockComponent} from './block.component';
 
 describe('BlockComponent', () => {
   let component: BlockComponent;
@@ -8,9 +11,9 @@ describe('BlockComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ BlockComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

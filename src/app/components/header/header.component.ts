@@ -9,14 +9,6 @@ import {LayoutService} from '../../services/template.service';
 })
 export class HeaderComponent implements OnInit {
   themeColor: string;
-  constructor(private _layoutService: LayoutService) {
-  }
-
-  ngOnInit() {
-    this._layoutService.themeColor.subscribe(value => {
-      this.themeColor = value;
-    })
-  }
 
   navItems: MenuItem[] = [
     {
@@ -41,4 +33,13 @@ export class HeaderComponent implements OnInit {
       icon: 'fa fa-cogs fa-fw',
     },
   ];
+
+  constructor(private _layoutService: LayoutService) {
+  }
+
+  ngOnInit() {
+    this._layoutService.themeColor.subscribe(value => {
+      this.themeColor = value;
+    })
+  }
 }
