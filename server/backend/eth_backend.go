@@ -138,24 +138,26 @@ func (rpc *EthRPC) ethGenesisAlloc() (map[common.Address]GenesisAccount, error) 
 	return response, nil
 }
 
-func (rpc *EthRPC) genesisAlloc() (*big.Int, error) {
+func (rpc *EthRPC) genesisAlloc() (*big.Int, []string, error) {
 	data, err := rpc.ethGenesisAlloc()
+	var genesisAdresses []string
 	genesisAlloc := new(big.Int)
 	if err != nil {
 		log.Info().Err(err).Msg("failed response from GenesisAlloc")
-		return genesisAlloc, err
+		return nil, nil, err
 	}
 	for k := range data {
 		bal, _ := rpc.ethGetBalance(k.Hex(), "latest")
+		genesisAdresses = append(genesisAdresses, k.Hex())
 		log.Info().Str("Address", k.Hex()).Str("Balance", bal.String()).Msg("GenesisAlloc")
 		genesisAlloc = new(big.Int).Add(genesisAlloc, bal)
 	}
 	log.Info().Str("GenesisAlloc", genesisAlloc.String()).Msg("response from GenesisAlloc")
-	return genesisAlloc, nil
+	return genesisAlloc, genesisAdresses, nil
 }
 
 func (rpc *EthRPC) circulatingSupply() (*big.Int, error) {
-	genesisAllocated, err := rpc.genesisAlloc()
+	genesisAllocated, _, err := rpc.genesisAlloc()
 	totalSupply, err2 := rpc.ethTotalSupply()
 	log.Info().Str("GenesisAlloc", genesisAllocated.String()).Str("totalSupply", totalSupply.String()).Msg("circulatingSupply")
 	if err != nil || err2 != nil {

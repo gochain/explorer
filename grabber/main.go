@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 
 	"math/big"
 	"time"
@@ -167,13 +168,30 @@ func checkTransactionsConsistency(client *ethclient.Client, importer *backend.Ba
 	}
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if strings.ToLower(b) == strings.ToLower(a) {
+			return true
+		}
+	}
+	return false
+}
 func updateAddresses(url string, importer *backend.Backend) {
 	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
+	_, genesisAddressList, err := importer.GenesisAlloc()
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed response from GenesisAlloc")
+	}
+	log.Info().Str("Genesis addresses", strings.Join(genesisAddressList[:], ",")).Msg("updateAddresses")
 	for {
 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for _, address := range addresses {
+			if stringInSlice(address.Address, genesisAddressList) {
+				log.Info().Str("Following address is in the list of genesis addresses", address.Address).Msg("updateAddresses")
+				continue
+			}
 			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address.Address), nil)
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")

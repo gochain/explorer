@@ -96,6 +96,10 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 }
 
 //METHODS USED IN GRABBER
+
+func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
+	return self.extendedEthClient.genesisAlloc()
+}
 func (self *Backend) GetTokenBalance(contract, wallet string) (*tokenBalance, error) {
 	return self.tokenBalance.GetTokenBalance(contract, wallet)
 }
