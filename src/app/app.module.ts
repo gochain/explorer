@@ -31,6 +31,7 @@ import {DirectiveModule} from './directives/directives.module';
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
+import {APP_BASE_HREF} from '@angular/common';
 
 @NgModule({
   declarations: [
@@ -60,6 +61,7 @@ import {APP_ROUTES} from './utils/routes';
     DirectiveModule,
   ],
   providers: [
+    {provide: APP_BASE_HREF, useValue: '/'},
     ApiService,
     CommonService,
     LayoutService

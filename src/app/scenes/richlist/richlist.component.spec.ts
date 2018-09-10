@@ -1,5 +1,8 @@
+/*CORE*/
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+/*MODULES*/
+import {AppModule} from '../../app.module';
+/*COMPONENTS*/
 import { RichlistComponent } from './richlist.component';
 
 describe('RichlistComponent', () => {
@@ -8,7 +11,7 @@ describe('RichlistComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ RichlistComponent ]
+      imports: [AppModule]
     })
     .compileComponents();
   }));
