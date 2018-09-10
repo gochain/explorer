@@ -5,7 +5,7 @@ import {AddressComponent} from '../scenes/address/address.component';
 import {RichlistComponent} from '../scenes/richlist/richlist.component';
 import {HomeComponent} from '../scenes/home/home.component';
 import {PageNotFoundComponent} from '../scenes/page-not-found/page-not-found.component';
-import {SettingsComponent} from '../scenes/settings/settings.component';
+// import {SettingsComponent} from '../scenes/settings/settings.component';
 
 export const ROUTES = {
   HOME: 'home',
@@ -21,7 +21,7 @@ export const APP_ROUTES: Routes = [
   {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
   {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
   {path: ROUTES.RICHLIST, component: RichlistComponent},
-  {path: ROUTES.SETTINGS, component: SettingsComponent},
+  /*{path: ROUTES.SETTINGS, component: SettingsComponent},*/
   {path: ROUTES.HOME, component: HomeComponent},
   {path: '', pathMatch: 'full', redirectTo: 'home'},
   {path: '**', component: PageNotFoundComponent}
