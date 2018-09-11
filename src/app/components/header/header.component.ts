@@ -27,11 +27,11 @@ export class HeaderComponent implements OnInit {
       icon: 'fa fa-wallet fa-fw',
       external: true
     },
-    {
+    /*{
       title: 'Settings',
       link: '/settings',
       icon: 'fa fa-cogs fa-fw',
-    },
+    },*/
   ];
 
   constructor(private _layoutService: LayoutService) {

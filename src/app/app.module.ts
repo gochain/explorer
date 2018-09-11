@@ -18,7 +18,7 @@ import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
-import {SettingsComponent} from './scenes/settings/settings.component';
+// import {SettingsComponent} from './scenes/settings/settings.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -32,6 +32,7 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
+import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.component';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import {APP_BASE_HREF} from '@angular/common';
     SearchComponent,
     LoaderComponent,
     PaginationComponent,
-    SettingsComponent,
+    /*SettingsComponent,*/
+    ToggleSwitchComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
