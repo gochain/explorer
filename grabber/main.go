@@ -98,14 +98,17 @@ func listener(url string, importer *backend.Backend) {
 	}
 }
 
-func backfill(url string, importer *backend.Backend, startFrom int64) {
-	client := getClient(url)
+func getFirstBlockNumber(client ethclient.Client) *big.Int {
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Fatal().Err(err).Msg("backfill - HeaderByNumber")
 	}
 	log.Info().Msg(header.Number.String())
-	blockNumber := header.Number
+	return header.Number
+}
+func backfill(url string, importer *backend.Backend, startFrom int64) {
+	client := getClient(url)
+	blockNumber := getFirstBlockNumber(client)
 	if startFrom > 0 {
 		blockNumber = big.NewInt(startFrom)
 	}
@@ -124,13 +127,19 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 		}
 		checkParentForBlock(&client, importer, blockNumber.Int64(), 5)
 		checkTransactionsConsistency(&client, importer, blockNumber.Int64())
-		blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
+		if blockNumber.Int64() > 0 {
+			blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
+		} else {
+			blockNumber = getFirstBlockNumber(client)
+		}
 	}
 }
 
 func checkParentForBlock(client *ethclient.Client, importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
-	log.Info().Int64("Checking the block for it's parent:", blockNumber)
+	if blockNumber == 0 {
+		return
+	}
 	if importer.NeedReloadBlock(blockNumber) {
 		blockNumber--
 		log.Info().Int64("Redownloading the block because it's corrupted or missing:", blockNumber).Msg("checkParentForBlock")
@@ -152,7 +161,6 @@ func checkParentForBlock(client *ethclient.Client, importer *backend.Backend, bl
 }
 
 func checkTransactionsConsistency(client *ethclient.Client, importer *backend.Backend, blockNumber int64) {
-	log.Info().Int64("Checking a transaction consistency for the block :", blockNumber)
 	if !importer.TransactionsConsistent(blockNumber) {
 		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
 		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
@@ -230,6 +238,6 @@ func updateAddresses(url string, importer *backend.Backend) {
 			importer.ImportAddress(address.Address, balance, tokenName, tokenSymbol, contract, go20)
 		}
 		lastUpdatedAt = time.Now()
-		time.Sleep(120 * time.Second) //sleep for 2 minutes
+		time.Sleep(300 * time.Second) //sleep for 5 minutes
 	}
 }
