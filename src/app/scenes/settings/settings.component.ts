@@ -1,3 +1,4 @@
+/*
 import {Component, OnInit} from '@angular/core';
 import {LayoutService} from '../../services/template.service';
 import {filter} from 'rxjs/operators';
@@ -29,3 +30,4 @@ export class SettingsComponent implements OnInit {
 
   }
 }
+*/
