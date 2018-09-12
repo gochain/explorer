@@ -192,8 +192,8 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 	circulatingSupply, _ := backendInstance.CirculatingSupply()
 	bl := &models.Richlist{
 		Rankings:          []*models.Address{},
-		TotalSupply:       totalSupply.String(),
-		CirculatingSupply: circulatingSupply.String(),
+		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
+		CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
 	}
 	bl.Rankings = backendInstance.GetRichlist(skip, limit)
 	writeJSON(w, http.StatusOK, bl)
@@ -205,7 +205,8 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 	address := backendInstance.GetAddressByHash(addressHash)
 	balance, err := backendInstance.BalanceAt(addressHash, "pending")
 	if err == nil {
-		address.Balance = balance.String() //to make sure that we are showing most recent balance even if db is outdated
+		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
+		address.Balance = new(big.Int).Div(balance, wei).Int64()
 	}
 	writeJSON(w, http.StatusOK, address)
 }

@@ -14,8 +14,8 @@
       <tr *ngFor="let address of richList.rankings; let rankI = index;">
         <td>{{rankI}}</td>
         <td><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
-        <td>{{address.balance | weiToGO | bigNumber}}</td>
-        <td>{{address.supplyOwned}}</td>
+        <td>{{address.balance_wei | weiToGO | bigNumber}}</td>
+        <td>{{address.supplyOwned}}%</td>
       </tr>
       </tbody>
     </table>

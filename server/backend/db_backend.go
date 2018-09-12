@@ -15,6 +15,8 @@ import (
 	"github.com/gochain-io/gochain/ethclient"
 )
 
+var wei = big.NewInt(1000000000000000000)
+
 func appendIfMissing(slice []string, i string) []string {
 	for _, ele := range slice {
 		if ele == i {
@@ -229,8 +231,8 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
-	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
-	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating address")
+	balanceGo := new(big.Int).Div(balance, wei) //converting to GO from wei
+	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceGo.String()).Msg("Updating address")
 	//this one is heavy but it doesn't make sense to put it into transaction parse, even with atomic increment because it could be out of sync (no way to decrement)
 	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
 	if err != nil {
@@ -247,13 +249,13 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 	}
 
 	addressM := &models.Address{Address: address,
-		Balance:                      balance.String(),
+		BalanceWei:                   balance.String(),
 		LastUpdatedAt:                time.Now(),
 		TokenName:                    tokenName,
 		TokenSymbol:                  tokenSymbol,
 		Contract:                     contract,
 		GO20:                         go20,
-		BalanceInt:                   balanceInt.Int64(),
+		Balance:                      balanceGo.Int64(),
 		NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
@@ -267,7 +269,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 }
 
 func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, balance *big.Int, tokenName, tokenSymbol string) *models.TokenHolder {
-	balanceInt := new(big.Int).Div(balance, big.NewInt(1000000000000))
+	balanceInt := new(big.Int).Div(balance, wei) //converting to GO from wei
 	log.Info().Str("contractAddress", contractAddress).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
 	tokenHolder := &models.TokenHolder{
 		ContractAddress:    contractAddress,
@@ -390,7 +392,7 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, sk
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(nil).Sort("-balance_int").Skip(skip).Limit(limit).All(&addresses)
+	err := self.mongo.C("Addresses").Find(bson.M{"balance": bson.M{"$gt": 0}}).Sort("-balance").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}

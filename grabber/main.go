@@ -234,7 +234,7 @@ func updateAddresses(url string, importer *backend.Backend) {
 					importer.ImportTokenHolder(address.Address, itx.From.String(), res.Balance, tokenName, tokenSymbol)
 				}
 			}
-			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Str("Contract data", contractData).Msg("updateAddresses")
+			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Msg("updateAddresses")
 			importer.ImportAddress(address.Address, balance, tokenName, tokenSymbol, contract, go20)
 		}
 		lastUpdatedAt = time.Now()

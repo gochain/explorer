@@ -1,6 +1,7 @@
 export class Address {
   address: string;
   balance: number;
+  balance_wei: number;
   token_name: string;
   token_symbol: string;
   contract: boolean;
