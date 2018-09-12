@@ -24,6 +24,7 @@ import (
 var ethClient *ethclient.Client
 var backendInstance *backend.Backend
 var wwwRoot string
+var wei = big.NewInt(1000000000000000000)
 
 func parseSkipLimit(r *http.Request) (int, int) {
 	limitS := r.URL.Query().Get("limit")
@@ -153,18 +154,18 @@ func main() {
 	}
 
 }
+
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 	totalSupply, _ := backendInstance.TotalSupply()
-	totalSupply = new(big.Int).Div(totalSupply, big.NewInt(1000000000000000000)) //return in GO instead of wei
-	w.Write([]byte(totalSupply.String()))
+	total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
+	w.Write([]byte(total.FloatString(18)))
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
 	circulatingSupply, _ := backendInstance.CirculatingSupply()
-	circulatingSupply = new(big.Int).Div(circulatingSupply, big.NewInt(1000000000000000000)) //return in GO instead of wei
-	w.Write([]byte(circulatingSupply.String()))
+	circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
+	w.Write([]byte(circulating.FloatString(18)))
 }
-
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	fileSystemPath := wwwRoot + r.URL.Path
