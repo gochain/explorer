@@ -91,7 +91,7 @@ func listener(url string, importer *backend.Backend) {
 				if err != nil {
 					log.Fatal().Err(err).Msg("listener")
 				}
-				checkParentForBlock(&client, importer, block.Number().Int64(), 5)
+				checkParentForBlock(&client, importer, block.Number().Int64(), 100)
 				prevHeader = header.Number.String()
 			}
 		}

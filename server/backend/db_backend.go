@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 )
@@ -63,12 +65,6 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		log.Fatal().Err(err).Msg("parseTx")
 	}
 	gas := tx.Gas()
-	receipt, err := self.ethClient.TransactionReceipt(context.Background(), tx.Hash())
-	if err != nil {
-		log.Warn().Err(err).Str("TX hash", tx.Hash().String()).Msg("TransactionReceipt")
-	} else {
-		gas = receipt.GasUsed
-	}
 	to := ""
 	if tx.To() != nil {
 		to = tx.To().Hex()
@@ -175,6 +171,10 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 	if err != nil {
 		log.Fatal().Err(err).Msg("importBlock")
 	}
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": b.Number}) //deleting all txs belong to this block if any exist
+	if err != nil {
+		log.Fatal().Err(err).Msg("importBlock")
+	}
 	for _, tx := range block.Transactions() {
 		self.importTx(tx, block)
 	}
@@ -233,11 +233,6 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
 	balanceGo := new(big.Int).Div(balance, wei) //converting to GO from wei
 	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceGo.String()).Msg("Updating address")
-	//this one is heavy but it doesn't make sense to put it into transaction parse, even with atomic increment because it could be out of sync (no way to decrement)
-	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
-	if err != nil {
-		log.Fatal().Err(err).Msg("importAddress")
-	}
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
@@ -249,14 +244,14 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 	}
 
 	addressM := &models.Address{Address: address,
-		BalanceWei:                   balance.String(),
-		LastUpdatedAt:                time.Now(),
-		TokenName:                    tokenName,
-		TokenSymbol:                  tokenSymbol,
-		Contract:                     contract,
-		GO20:                         go20,
-		Balance:                      balanceGo.Int64(),
-		NumberOfTransactions:         transactionCounter,
+		BalanceWei:    balance.String(),
+		LastUpdatedAt: time.Now(),
+		TokenName:     tokenName,
+		TokenSymbol:   tokenSymbol,
+		Contract:      contract,
+		GO20:          go20,
+		Balance:       balanceGo.Int64(),
+		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
 	}
@@ -350,6 +345,12 @@ func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 		log.Debug().Str("Address", address).Err(err).Msg("GetAddressByHash")
 		return nil
 	}
+	//lazy calculation for number of transactions
+	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+	c.NumberOfTransactions = transactionCounter
 	return &c
 }
 
@@ -359,6 +360,19 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 	if err != nil {
 		log.Debug().Str("Transaction", transactionHash).Err(err).Msg("GetTransactionByHash")
 		return nil
+	}
+	//lazy calculation for receipt
+	receipt, err := self.ethClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
+	if err != nil {
+		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
+	} else {
+		gasPrice := new(big.Int)
+		_, err := fmt.Sscan(c.GasPrice, gasPrice)
+		if err != nil {
+			log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
+		}
+		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
 	}
 	return &c
 }
