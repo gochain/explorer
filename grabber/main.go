@@ -83,7 +83,7 @@ func listener(url string, importer *backend.Backend) {
 			if err != nil {
 				log.Fatal().Err(err).Msg("HeaderByNumber")
 			}
-			log.Info().Int64("Block", header.Number.Int64()).Msg("Gettting block in listener")
+			log.Debug().Int64("Block", header.Number.Int64()).Msg("Gettting block in listener")
 			if prevHeader != header.Number.String() {
 				log.Info().Str("Listener is downloading the block:", header.Number.String()).Msg("Gettting block in listener")
 				block, err := client.BlockByNumber(context.Background(), header.Number)
