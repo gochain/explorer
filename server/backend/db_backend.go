@@ -130,6 +130,12 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"-number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"miner"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -231,8 +237,8 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
-	balanceGo := new(big.Int).Div(balance, wei) //converting to GO from wei
-	log.Info().Str("address", address).Str("balance", balance.String()).Str("Balance int", balanceGo.String()).Msg("Updating address")
+	balanceGo, _ := new(big.Float).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
+	log.Info().Str("address", address).Str("balance", balance.String()).Float64("Balance float", balanceGo).Msg("Updating address")
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
@@ -250,7 +256,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 		TokenSymbol:   tokenSymbol,
 		Contract:      contract,
 		GO20:          go20,
-		Balance:       balanceGo.Int64(),
+		Balance:       balanceGo,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,

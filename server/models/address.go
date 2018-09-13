@@ -5,7 +5,7 @@ import "time"
 type Address struct {
 	Address                      string    `json:"address" bson:"address"`
 	Owner                        string    `json:"owner,omitempty" bson:"owner"`
-	Balance                      int64     `json:"balance" bson:"balance"` //backward compability
+	Balance                      float64   `json:"balance,string" bson:"balance"` //backward compability
 	BalanceWei                   string    `json:"balance_wei" bson:"balance_wei"`
 	LastUpdatedAt                time.Time `json:"last_updated_at" bson:"last_updated_at"`
 	TokenName                    string    `json:"token_name,omitempty" bson:"token_name"`
