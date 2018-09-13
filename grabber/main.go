@@ -113,7 +113,9 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 		blockNumber = big.NewInt(startFrom)
 	}
 	for {
-		log.Info().Int64("Block", blockNumber.Int64()).Msg("Checking block in backfill")
+		if (blockNumber.Int64() % 1000) == 0 {
+			log.Info().Int64("Block", blockNumber.Int64()).Msg("Checking block in backfill")
+		}
 		blocksFromDB := importer.GetBlockByNumber(blockNumber.Int64())
 		if blocksFromDB == nil {
 			log.Info().Str("Backfilling the block:", blockNumber.String()).Msg("Gettting block in backfill")
