@@ -2,7 +2,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {interval, Subscription} from 'rxjs';
 /*SERVICES*/
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';

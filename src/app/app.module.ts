@@ -18,13 +18,18 @@ import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
+import { MobileMenuComponent } from './components/mobile-menu/mobile-menu.component';
+import { MobileSearchComponent } from './mobile-search/mobile-search.component';
+import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.component';
+import { MobileHeaderComponent } from './components/mobile-header/mobile-header.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
-import {LayoutService} from './services/template.service';
+import {LayoutService} from './services/layout.service';
+import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 /*MODULES*/
-import {MaterialModule} from './modules/material.module';
+import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 /*PIPES*/
@@ -32,7 +37,8 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
-import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.component';
+import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
+
 
 @NgModule({
   declarations: [
@@ -50,6 +56,9 @@ import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.
     PaginationComponent,
     /*SettingsComponent,*/
     ToggleSwitchComponent,
+    MobileHeaderComponent,
+    MobileMenuComponent,
+    MobileSearchComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
@@ -58,15 +67,16 @@ import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.
     FlexLayoutModule,
     FormsModule,
     HttpClientModule,
-    MaterialModule,
     PipesModule,
     DirectiveModule,
+    ViewportSizeModule.forRoot(VIEWPORT_SIZES),
+    TabsModule
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},
     ApiService,
     CommonService,
-    LayoutService
+    LayoutService,
   ],
   bootstrap: [AppComponent]
 })

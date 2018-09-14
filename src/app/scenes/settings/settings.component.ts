@@ -1,6 +1,6 @@
 /*
 import {Component, OnInit} from '@angular/core';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 import {filter} from 'rxjs/operators';
 
 @Component({

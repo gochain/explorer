@@ -5,7 +5,7 @@ import {Observable} from 'rxjs';
 import {switchMap, tap} from 'rxjs/operators';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 /*MODELS*/
 import {Transaction} from '../../models/transaction.model';
 

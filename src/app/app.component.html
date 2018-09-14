@@ -1,4 +1,6 @@
-<app-header></app-header>
+<app-header *ifViewportSize="['medium', 'large']"></app-header>
+<app-mobile-header *ifViewportSize="['small']"></app-mobile-header>
+<app-mobile-menu *ifViewportSize="['small']"></app-mobile-menu>
 <div class="app-container">
   <div class="app-content" [ngClass]="{'app-content--loading': isPageLoading}">
     <div class="loader">

@@ -6,7 +6,7 @@ import {filter, tap} from 'rxjs/operators';
 import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 /*MODELS*/
 import {Address} from '../../models/address.model';
 import {Transaction} from '../../models/transaction.model';
@@ -20,7 +20,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @Component({
   selector: 'app-address',
   templateUrl: './address.component.html',
-  styleUrls: ['./address.component.css']
+  styleUrls: ['./address.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
 export class AddressComponent implements OnInit {

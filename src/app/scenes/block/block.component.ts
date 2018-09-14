@@ -6,7 +6,7 @@ import {ActivatedRoute} from '@angular/router';
 import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 /*MODELS*/
 import {Block} from '../../models/block.model';
 import {QueryParams} from '../../models/query_params';

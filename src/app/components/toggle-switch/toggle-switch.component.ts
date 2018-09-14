@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {filter} from 'rxjs/operators';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 
 @Component({
   selector: 'app-toggle-switch',

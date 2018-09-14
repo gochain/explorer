@@ -1,24 +1,26 @@
 <ng-container *ngIf="richList">
   <h3 class="uk-heading-divider">Richlist</h3>
   <div class="uk-margin">
-    <table class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
-      <thead>
-      <tr>
-        <th>Rank</th>
-        <th class="">Address</th>
-        <th class="">Balance</th>
-        <th class="">Supply owned</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let address of richList.rankings; let rankI = index;">
-        <td>{{rankI}}</td>
-        <td><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
-        <td>{{address.balance_wei | weiToGO | bigNumber}}</td>
-        <td>{{address.supplyOwned}}%</td>
-      </tr>
-      </tbody>
-    </table>
+    <div class="uk-overflow-auto">
+      <table class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
+        <thead>
+        <tr>
+          <th>Rank</th>
+          <th class="">Address</th>
+          <th class="">Balance</th>
+          <th class="">Supply owned</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let address of richList.rankings; let rankI = index;">
+          <td>{{rankI}}</td>
+          <td><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
+          <td>{{address.balance_wei | weiToGO | bigNumber}}</td>
+          <td>{{address.supplyOwned}}%</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </ng-container>
 <div class="center">

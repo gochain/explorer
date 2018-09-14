@@ -1,61 +1,63 @@
 <ng-container *ngIf="block as b; else blockNotFound">
   <h3 class="uk-heading-divider">Block</h3>
-  <table class="uk-table uk-table-small uk-table-striped">
-    <tr>
-      <td>Block Number</td>
-      <td>{{b.number}}</td>
-    </tr>
-    <tr>
-      <td>BlockHash</td>
-      <td>{{b.hash }}</td>
-    </tr>
-    <tr>
-      <td>Created At</td>
-      <td mat-cell>{{b.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{b.created_at | timeAgo }})</td>
-    </tr>
-    <tr>
-      <td>GasLimit</td>
-      <td mat-cell>{{b.gas_limit |bigNumber}}</td>
-    </tr>
-    <tr>
-      <td>Parent block hash</td>
-      <td>{{b.parent_hash }}</td>
-    </tr>
-    <tr>
-      <td>GasUsed</td>
-      <td mat-cell>{{b.gas_used | bigNumber}}</td>
-    </tr>
-    <tr>
-      <td>Nonce</td>
-      <td>{{b.nonce }}</td>
-    </tr>
-    <tr>
-      <td>Miner</td>
-      <td>
-        <a routerLink="/addr/{{b.miner}}">{{b.miner}}</a>
-      </td>
-    </tr>
-    <tr>
-      <td>Transactions count</td>
-      <td>{{b.tx_count }}</td>
-    </tr>
-    <tr>
-      <td>Difficulty</td>
-      <td>{{b.difficulty }}</td>
-    </tr>
-    <tr>
-      <td>Sha3Uncles</td>
-      <td>{{b.sha3_uncles }}</td>
-    </tr>
-    <tr>
-      <td>Extra Data</td>
-      <td>{{b.extra_data }}</td>
-    </tr>
-  </table>
-  <div>
+  <div class="uk-overflow-auto">
+    <table class="uk-table uk-table-small uk-table-striped">
+      <tr>
+        <td>Block Number</td>
+        <td>{{b.number}}</td>
+      </tr>
+      <tr>
+        <td>BlockHash</td>
+        <td>{{b.hash }}</td>
+      </tr>
+      <tr>
+        <td>Created At</td>
+        <td mat-cell>{{b.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{b.created_at | timeAgo }})</td>
+      </tr>
+      <tr>
+        <td>GasLimit</td>
+        <td mat-cell>{{b.gas_limit |bigNumber}}</td>
+      </tr>
+      <tr>
+        <td>Parent block hash</td>
+        <td>{{b.parent_hash }}</td>
+      </tr>
+      <tr>
+        <td>GasUsed</td>
+        <td mat-cell>{{b.gas_used | bigNumber}}</td>
+      </tr>
+      <tr>
+        <td>Nonce</td>
+        <td>{{b.nonce }}</td>
+      </tr>
+      <tr>
+        <td>Miner</td>
+        <td>
+          <a routerLink="/addr/{{b.miner}}">{{b.miner}}</a>
+        </td>
+      </tr>
+      <tr>
+        <td>Transactions count</td>
+        <td>{{b.tx_count }}</td>
+      </tr>
+      <tr>
+        <td>Difficulty</td>
+        <td>{{b.difficulty }}</td>
+      </tr>
+      <tr>
+        <td>Sha3Uncles</td>
+        <td>{{b.sha3_uncles }}</td>
+      </tr>
+      <tr>
+        <td>Extra Data</td>
+        <td>{{b.extra_data }}</td>
+      </tr>
+    </table>
+  </div>
+  <div class="uk-margin">
     <div class="uk-flex uk-flex-between">
       <h4 class="uk-heading-divider">Transactions:</h4>
-      <div class="uk-form-width-small">
+      <div class="uk-form-width-small" *ngIf="transactions.length">
         <select class="uk-select" [(ngModel)]="transactionQueryParams.limit">
           <option [ngValue]="10">10</option>
           <option [ngValue]="25">25</option>
@@ -64,39 +66,42 @@
         </select>
       </div>
     </div>
-    <ng-container *ngIf="!transactions.length">
-      <div class="uk-margin">
-        <p>No transactions</p>
+    <ng-container *ngIf="transactions.length; else empty">
+      <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+          <thead>
+          <tr>
+            <th class="uk-width-1-5">Transaction hash</th>
+            <th class="uk-width-1-5">Created at</th>
+            <th class="uk-width-1-5">To</th>
+            <th class="uk-width-1-5">From</th>
+            <th class="uk-width-1-6">Value</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let tx of transactions">
+            <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+            <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            </td>
+            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
+            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
+            <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
+          </tr>
+          </tbody>
+        </table>
       </div>
-    </ng-container>
-    <ng-container *ngIf="!!transactions.length">
-      <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
-        <thead>
-        <tr>
-          <th class="uk-width-1-5">Transaction hash</th>
-          <th class="uk-width-1-5">Created at</th>
-          <th class="uk-width-1-5">To</th>
-          <th class="uk-width-1-5">From</th>
-          <th class="uk-width-1-6">Value</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let tx of transactions">
-          <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-          <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-          </td>
-          <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
-          <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
-          <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
-        </tr>
-        </tbody>
-      </table>
       <div class="uk-margin-medium">
-        <app-pagination [total]="transactionQueryParams.totalPage" (onSelect)="onTransactionPageSelect($event)"></app-pagination>
+        <app-pagination [total]="transactionQueryParams.totalPage"
+                        (onSelect)="onTransactionPageSelect($event)"></app-pagination>
       </div>
     </ng-container>
+    <ng-template #empty>
+      <div class="empty">No transactions</div>
+    </ng-template>
   </div>
 </ng-container>
 <ng-template #blockNotFound>
-  Block not found.
+  <div class="empty">
+    Block not found.
+  </div>
 </ng-template>

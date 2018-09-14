@@ -1,0 +1,21 @@
+.topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+
+  &__menu {
+    font-size: 20px;
+  }
+
+  &__icon {
+    img {
+      height: 30px;
+    }
+  }
+
+  &__search {
+    font-size: 20px;
+  }
+}
