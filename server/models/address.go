@@ -5,7 +5,8 @@ import "time"
 type Address struct {
 	Address                      string    `json:"address" bson:"address"`
 	Owner                        string    `json:"owner,omitempty" bson:"owner"`
-	Balance                      float64   `json:"balance,string" bson:"balance"` //backward compability
+	BalanceFloat                 float64   `json:"-" bson:"balance_float"`        //low precise balance for sorting purposes
+	BalanceString                string    `json:"balance" bson:"balance_string"` //high precise balance for API
 	BalanceWei                   string    `json:"balance_wei" bson:"balance_wei"`
 	LastUpdatedAt                time.Time `json:"last_updated_at" bson:"last_updated_at"`
 	TokenName                    string    `json:"token_name,omitempty" bson:"token_name"`

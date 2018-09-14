@@ -19,7 +19,7 @@ type Block struct {
 	TotalDifficulty int64     `json:"total_difficulty" bson:"total_difficulty"`
 	Sha3Uncles      string    `json:"sha3_uncles" bson:"sha3_uncles"`
 	ExtraData       string    `json:"extra_data" bson:"extra_data"`
-	Transactions    []string  `json:"transactions" bson:"transactions"`
+	// Transactions    []string  `json:"transactions" bson:"transactions"`
 }
 
 type LightBlock struct {

@@ -153,7 +153,7 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
-	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
+	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"-balance_float"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
@@ -237,8 +237,9 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
-	balanceGo, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
-	log.Info().Str("address", address).Str("balance", balance.String()).Float64("Balance float", balanceGo).Msg("Updating address")
+	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
+	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
+	log.Info().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
@@ -256,7 +257,8 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 		TokenSymbol:   tokenSymbol,
 		Contract:      contract,
 		GO20:          go20,
-		Balance:       balanceGo,
+		BalanceFloat:  balanceGoFloat,
+		BalanceString: balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
@@ -412,7 +414,7 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, sk
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(bson.M{"balance": bson.M{"$gt": 0}}).Sort("-balance").Skip(skip).Limit(limit).All(&addresses)
+	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}
