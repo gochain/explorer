@@ -101,9 +101,9 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		TxCount:    int(uint64(len(block.Transactions()))),
 		Difficulty: block.Difficulty().Int64(),
 		// TotalDifficulty: block.DeprecatedTd().Int64(), # deprecated https://github.com/ethereum/go-ethereum/blob/master/core/types/block.go#L154
-		Sha3Uncles:   block.UncleHash().Hex(),
-		ExtraData:    string(block.Extra()[:]),
-		Transactions: transactions,
+		Sha3Uncles: block.UncleHash().Hex(),
+		ExtraData:  string(block.Extra()[:]),
+		// Transactions: transactions,
 	}
 }
 
@@ -237,7 +237,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
-	balanceGo, _ := new(big.Float).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
+	balanceGo, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	log.Info().Str("address", address).Str("balance", balance.String()).Float64("Balance float", balanceGo).Msg("Updating address")
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {

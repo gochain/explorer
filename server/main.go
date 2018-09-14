@@ -205,8 +205,8 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 	address := backendInstance.GetAddressByHash(addressHash)
 	balance, err := backendInstance.BalanceAt(addressHash, "pending")
 	if err == nil {
-		address.BalanceWei = balance.String()                                                                         //to make sure that we are showing most recent balance even if db is outdated
-		address.Balance, _ = new(big.Float).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
+		address.BalanceWei = balance.String()                                                                                      //to make sure that we are showing most recent balance even if db is outdated
+		address.Balance, _ = new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	}
 	writeJSON(w, http.StatusOK, address)
 }
