@@ -1,0 +1,32 @@
+<div class="drawer" [ngClass]="{'drawer--active': layoutService.mobileMenuState | async}" (click)="toggleMenu()">
+  <div class="drawer__content">
+    <div class="icon">
+      <img src="../../../assets/images/logo-full--light.svg"/>
+    </div>
+    <div class="menu">
+      <ng-container *ngFor="let navItem of navItems">
+        <a
+            *ngIf="!navItem.external"
+            routerLinkActive="menu__item--active"
+            [routerLink]="navItem.link"
+            class="menu__item"
+        >
+          <div class="menu__item__icon">
+            <i class="{{ navItem.icon }}"></i>
+          </div>
+          <div class="menu__item__title">
+            {{navItem.title}}
+          </div>
+        </a>
+        <a *ngIf="navItem.external" class="menu__item" href="{{navItem.link}}">
+          <div class="menu__item__icon">
+            <i class="{{ navItem.icon }}"></i>
+          </div>
+          <div class="menu__item__title">
+            {{navItem.title}}
+          </div>
+        </a>
+      </ng-container>
+    </div>
+  </div>
+</div>

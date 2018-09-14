@@ -1,0 +1,31 @@
+.tabs {
+  &__titles {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+    list-style: none;
+    position: relative;
+    border-bottom: 1px solid rgba(0,0,0,.12);
+    user-select: none;
+  }
+  &__title {
+    flex: none;
+    /*padding-left: 20px;*/
+    position: relative;
+    display: block;
+    text-align: center;
+    padding: 9px 20px;
+    color: #999;
+    border-bottom: 2px solid transparent;
+    font-size: 12px;
+    text-transform: uppercase;
+    transition: color .1s ease-in-out;
+    line-height: 20px;
+    user-select: none;
+
+    &--active {
+      color: #222;
+      border-color: #1e87f0;
+    }
+  }
+}

@@ -2,7 +2,7 @@
 import {Component, OnInit} from '@angular/core';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
-import {LayoutService} from '../../services/template.service';
+import {LayoutService} from '../../services/layout.service';
 /*MODELS*/
 import {RichList} from '../../models/rich_list.model';
 import {Address} from '../../models/address.model';

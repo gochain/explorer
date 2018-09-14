@@ -8,21 +8,21 @@ import {LayoutService} from '../../services/layout.service';
 import {MENU_ITEMS} from '../../utils/constants';
 
 @Component({
-  selector: 'app-header',
-  templateUrl: './header.component.html',
-  styleUrls: ['./header.component.scss']
+  selector: 'app-mobile-menu',
+  templateUrl: './mobile-menu.component.html',
+  styleUrls: ['./mobile-menu.component.scss']
 })
-export class HeaderComponent implements OnInit {
-  themeColor: string;
+export class MobileMenuComponent implements OnInit {
 
   navItems: MenuItem[] = MENU_ITEMS;
 
-  constructor(private _layoutService: LayoutService) {
+  constructor(public layoutService: LayoutService) {
   }
 
   ngOnInit() {
-    this._layoutService.themeColor.subscribe(value => {
-      this.themeColor = value;
-    })
+  }
+
+  toggleMenu() {
+    this.layoutService.mobileMenuState.next(false);
   }
 }

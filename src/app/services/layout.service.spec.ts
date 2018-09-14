@@ -1,4 +1,4 @@
-import {LayoutService} from './template.service';
+import {LayoutService} from './layout.service';
 
 describe('LayoutService', () => {
   let service: LayoutService;

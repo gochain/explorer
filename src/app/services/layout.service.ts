@@ -6,11 +6,14 @@ import {ThemeSettings} from '../models/theme_settings.model';
 /*UTILS*/
 import {THEME_SETTINGS} from '../utils/constants';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class LayoutService {
   isPageLoading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   themeColor: BehaviorSubject<string>;
   themeSettings: ThemeSettings;
+  mobileMenuState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   constructor() {
     const themeSettings = localStorage.getItem('THEME_SETTINGS');
