@@ -19,7 +19,6 @@ import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
 import { MobileMenuComponent } from './components/mobile-menu/mobile-menu.component';
-import { MobileSearchComponent } from './mobile-search/mobile-search.component';
 import { ToggleSwitchComponent } from './components/toggle-switch/toggle-switch.component';
 import { MobileHeaderComponent } from './components/mobile-header/mobile-header.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
@@ -58,7 +57,6 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     ToggleSwitchComponent,
     MobileHeaderComponent,
     MobileMenuComponent,
-    MobileSearchComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),

@@ -8,12 +8,16 @@ import {LayoutService} from '../../services/layout.service';
 })
 export class MobileHeaderComponent implements OnInit {
 
-  constructor(private _layoutService: LayoutService) { }
+  constructor(public layoutService: LayoutService) { }
 
   ngOnInit() {
   }
 
   toggleMenu() {
-    this._layoutService.mobileMenuState.next(true);
+    this.layoutService.mobileMenuState.next(true);
+  }
+
+  toggleSearch() {
+    this.layoutService.mobileSearchState.next(!this.layoutService.mobileSearchState.value);
   }
 }

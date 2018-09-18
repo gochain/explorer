@@ -1,8 +1,3 @@
-body {
-  margin: 0;
-  font-size: 14px;
-}
-
 body, input[text], button {
   font-family: 'Roboto', Cambria, Georgia;
 }
@@ -26,14 +21,21 @@ h2, h3 {
   width: 100%;
 }
 
+/* This fills the remaining space, by using flexbox. Every toolbar row uses a flexbox row layout. */
 .fill-remaining-space {
-  /* This fills the remaining space, by using flexbox.
-      Every toolbar row uses a flexbox row layout. */
   flex: 1 1 auto;
 }
 
 body {
+  margin: 0;
+  font-size: 14px;
+
   &.dark {
+    background: #282a36;
+    * {
+      color: #eee !important;
+    }
+
     .bg-gradient {
       background-color: #151721;
       background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(#51597e), to(#151721));
@@ -44,8 +46,16 @@ body {
       background-repeat: no-repeat;
       color: #fff;
     }
+
+    .uk-table-striped tbody tr:nth-of-type(odd), .uk-table-striped > tr:nth-of-type(odd) {
+      border-top: 1px solid #44475a;
+      border-bottom: 1px solid #44475a;
+      background: #44475a;
+    }
   }
   &.light {
+    background: #fff;
+
     .bg-gradient {
       background-color: #fefefe;
       // background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(#e0eafc), to(#cfdef3));

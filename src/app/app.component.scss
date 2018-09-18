@@ -59,3 +59,13 @@
     }
   }
 }
+
+:host-context(body.dark) {
+  .loader {
+    .loader__content {
+      div {
+        background: #f8f8f2 !important;
+      }
+    }
+  }
+}

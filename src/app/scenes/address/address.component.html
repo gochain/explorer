@@ -33,26 +33,22 @@
           Transactions
         </tab-title>
         <tab-content>
-          <ng-container *ngIf="!transactions.length">
-            <div class="empty">No transactions</div>
-          </ng-container>
-          <ng-container *ngIf="!!transactions.length">
+          <ng-container *ngIf="transactions.length; else emptyTransactions">
             <div class="uk-overflow-auto">
-              <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+              <table class="uk-table uk-table-small uk-table-striped">
                 <thead>
                 <tr>
                   <th class="uk-width-1-4">Transaction hash</th>
-                  <th class="uk-width-1-4">Created at</th>
+                  <th class="uk-text-nowrap uk-table-shrink">Created at</th>
                   <th class="uk-table-shrink"></th>
-                  <th>Associate</th>
-                  <th class="uk-width-1-6">Value</th>
+                  <th class="uk-width-1-4">Associate</th>
+                  <th class="uk-table-shrink">Value</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr *ngFor="let tx of transactions">
                   <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-                  <td class="uk-text-truncate">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo
-                    }})
+                  <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
                   </td>
                   <ng-container *ngIf="addr.address === tx.to; else out">
                     <td>
@@ -70,7 +66,7 @@
                       <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
                     </td>
                   </ng-template>
-                  <td class="uk-text-truncate">{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO | bigNumber}}
+                  <td>{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO | bigNumber}}
                   </td>
                 </tr>
                 </tbody>
@@ -82,6 +78,9 @@
               </ng-template>
             </div>
           </ng-container>
+          <ng-template #emptyTransactions>
+            <div class="empty">No transactions</div>
+          </ng-template>
         </tab-content>
       </tab>
       <tab *ngIf="addr.contract && addr.go20">
@@ -89,10 +88,7 @@
           Internal Transactions
         </tab-title>
         <tab-content>
-          <ng-container *ngIf="!internal_transactions.length">
-            <p>No internal transactions</p>
-          </ng-container>
-          <ng-container *ngIf="!!internal_transactions.length">
+          <ng-container *ngIf="internal_transactions.length; else emptyInternal">
             <div class="uk-overflow-auto">
               <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
                 <thead>
@@ -127,6 +123,9 @@
               </ng-template>
             </div>
           </ng-container>
+          <ng-template #emptyInternal>
+            <p>No internal transactions</p>
+          </ng-template>
         </tab-content>
       </tab>
       <tab *ngIf="addr.contract && addr.go20">
@@ -134,10 +133,7 @@
           Holders
         </tab-title>
         <tab-content>
-          <ng-container *ngIf="!token_holders.length">
-            <p>No holders</p>
-          </ng-container>
-          <ng-container *ngIf="!!token_holders.length">
+          <ng-container *ngIf="token_holders.length; else emptyHolders">
             <div class="uk-overflow-auto">
               <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
                 <thead>
@@ -166,6 +162,9 @@
               </ng-template>
             </div>
           </ng-container>
+          <ng-template #emptyHolders>
+            <p>No holders</p>
+          </ng-template>
         </tab-content>
       </tab>
     </app-tabs>

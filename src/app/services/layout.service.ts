@@ -14,6 +14,7 @@ export class LayoutService {
   themeColor: BehaviorSubject<string>;
   themeSettings: ThemeSettings;
   mobileMenuState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  mobileSearchState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   constructor() {
     const themeSettings = localStorage.getItem('THEME_SETTINGS');
