@@ -4,6 +4,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
 
   &__menu {
     font-size: 20px;
@@ -17,5 +18,15 @@
 
   &__search {
     font-size: 20px;
+  }
+}
+.search-bar {
+  border-top: 1px solid #44475a;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+  padding: 15px;
+  justify-content: center;
+  display: none;
+  &.--active {
+    display: flex;
   }
 }

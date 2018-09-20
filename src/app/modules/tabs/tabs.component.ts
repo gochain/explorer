@@ -1,16 +1,21 @@
-import { AfterContentInit, Component, ContentChildren, QueryList } from '@angular/core';
-import { TabComponent } from './components/tab/tab.component';
+import {AfterContentInit, Component, ContentChildren, QueryList} from '@angular/core';
+import {TabComponent} from './components/tab/tab.component';
+import {Subscription} from 'rxjs';
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+
 @Component({
   selector: 'app-tabs',
   templateUrl: 'tabs.component.html',
   styleUrls: ['./tabs.component.scss']
 })
+@AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements AfterContentInit {
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
+  private _subsArr$: Subscription[] = [];
 
   ngAfterContentInit() {
-    this.tabs.changes.subscribe(this.onTabsChange);
+    this._subsArr$.push(this.tabs.changes.subscribe(this.onTabsChange));
     this.activeTab = this.tabs.first;
   }
 
@@ -23,7 +28,7 @@ export class TabsComponent implements AfterContentInit {
     } else {
       this.activeTab = null;
     }
-  }
+  };
 
   onTabSelect(tab: TabComponent) {
     this.activeTab = tab;
