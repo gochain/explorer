@@ -38,7 +38,7 @@
               <table class="uk-table uk-table-small uk-table-striped">
                 <thead>
                 <tr>
-                  <th class="uk-width-1-4">Transaction hash</th>
+                  <th class="uk-width-2-5">Transaction hash</th>
                   <th class="uk-text-nowrap uk-table-shrink">Created at</th>
                   <th class="uk-table-shrink"></th>
                   <th class="uk-width-1-4">Associate</th>
@@ -48,7 +48,8 @@
                 <tbody>
                 <tr *ngFor="let tx of transactions">
                   <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-                  <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+                  <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at |
+                    timeAgo}})
                   </td>
                   <ng-container *ngIf="addr.address === tx.to; else out">
                     <td>
@@ -93,25 +94,23 @@
               <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
                 <thead>
                 <tr>
-                  <th class="uk-width-1-6">Block</th>
-                  <th class="uk-width-1-6">Transaction hash</th>
-                  <th class="uk-width-1-6">Created at</th>
+                  <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
+                  <th class="uk-width-2-5">Transaction hash</th>
+                  <th class="uk-text-nowrap uk-table-shrink">Created at</th>
                   <th class="uk-width-1-6">To</th>
                   <th class="uk-width-1-6">From</th>
-                  <th class="uk-width-1-6">Value</th>
+                  <th class="uk-table-shrink">Value</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr *ngFor="let tx of internal_transactions">
-                  <td class="uk-text-truncate"><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a></td>
+                  <!--<td class="uk-text-nowrap"><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a></td>-->
                   <td class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
                   </td>
-                  <td class="uk-text-truncate">{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo
-                    }})
-                  </td>
+                  <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
                   <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
                   <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
-                  <td class="uk-text-truncate">{{tx.value | weiToGO | bigNumber}}</td>
+                  <td>{{tx.value | weiToGO | bigNumber}}</td>
                 </tr>
                 </tbody>
               </table>
