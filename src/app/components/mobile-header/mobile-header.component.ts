@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {LayoutService} from '../../services/layout.service';
 
 @Component({
@@ -7,10 +7,15 @@ import {LayoutService} from '../../services/layout.service';
   styleUrls: ['./mobile-header.component.scss']
 })
 export class MobileHeaderComponent implements OnInit {
+  themeColor: string;
 
-  constructor(public layoutService: LayoutService) { }
+  constructor(public layoutService: LayoutService) {
+  }
 
   ngOnInit() {
+    this.layoutService.themeColor.subscribe(value => {
+      this.themeColor = value;
+    });
   }
 
   toggleMenu() {

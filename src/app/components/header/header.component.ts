@@ -23,6 +23,6 @@ export class HeaderComponent implements OnInit {
   ngOnInit() {
     this._layoutService.themeColor.subscribe(value => {
       this.themeColor = value;
-    })
+    });
   }
 }
