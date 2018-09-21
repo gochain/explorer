@@ -11,6 +11,7 @@ import {Address} from '../models/address.model';
 import {RichList} from '../models/rich_list.model';
 import {Holder} from '../models/holder.model';
 import {InternalTransaction} from '../models/internal-transaction.model';
+import {Stats} from '../models/stats.model';
 
 @Injectable()
 export class CommonService {
@@ -51,5 +52,9 @@ export class CommonService {
 
   getRichlist(skip: number, limit: number): Observable<RichList> {
     return this._apiService.get('/richlist?skip=' + skip + '&limit=' + limit);
+  }
+
+  getStats(): Observable<Stats> {
+    return this._apiService.get('/stats');
   }
 }

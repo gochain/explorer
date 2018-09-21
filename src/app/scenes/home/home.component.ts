@@ -1,11 +1,12 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {interval, Subscription} from 'rxjs';
+import {interval, Observable, Subscription} from 'rxjs';
 /*SERVICES*/
 import {LayoutService} from '../../services/layout.service';
 import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';
+import {Stats} from '../../models/stats.model';
 
 @Component({
   selector: 'app-home',
@@ -15,6 +16,7 @@ import {BlockList} from '../../models/block_list.model';
 export class HomeComponent implements OnInit, OnDestroy {
 
   recentBlocks: BlockList;
+  stats$: Observable<Stats>;
   private _sub: Subscription;
 
   constructor(private _commonService: CommonService, private _layoutService: LayoutService) {
@@ -30,6 +32,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       );
     });
+
+    this.stats$ = this._commonService.getStats();
   }
 
   ngOnDestroy() {
