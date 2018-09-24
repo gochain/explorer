@@ -1,3 +1,8 @@
+<div *ngIf="stats$ | async as stats">
+  <p>
+    Total transactions: {{stats.total_transactions_count}}
+  </p>
+</div>
 <h3 class="uk-heading-divider">Recent Blocks</h3>
 <div class="uk-overflow-auto uk-margin">
   <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-striped">

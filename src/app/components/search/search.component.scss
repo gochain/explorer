@@ -40,6 +40,7 @@
     line-height: 24px;
     border-left: #666 solid 1px;
 
+
     @include respond-to(small) {
       display: initial;
     }
@@ -48,6 +49,10 @@
       box-shadow: none;
       border: none;
       outline: none;
+    }
+
+    i {
+      color: #666 !important;
     }
   }
 }
