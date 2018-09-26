@@ -7,7 +7,7 @@
         <td>{{b.number}}</td>
       </tr>
       <tr>
-        <td>BlockHash</td>
+        <td>Block Hash</td>
         <td>{{b.hash }}</td>
       </tr>
       <tr>
@@ -20,7 +20,9 @@
       </tr>
       <tr>
         <td>Parent block hash</td>
-        <td>{{b.parent_hash }}</td>
+        <td>
+          <a routerLink="/blocks/{{b.parent_hash }}">{{b.parent_hash }}</a>
+        </td>
       </tr>
       <tr>
         <td>Gas Used</td>
@@ -37,7 +39,7 @@
         </td>
       </tr>
       <tr>
-        <td>Transactions count</td>
+        <td>Transactions Count</td>
         <td>{{b.tx_count }}</td>
       </tr>
       <tr>

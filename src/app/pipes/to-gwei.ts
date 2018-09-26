@@ -10,6 +10,6 @@ export class ToGwei implements PipeTransform {
       return '';
     }
 
-    return Math.round(val / 1e7) / 1e2 + ' gwei';
+    return val / 1e9 + ' gwei';
   }
 }
