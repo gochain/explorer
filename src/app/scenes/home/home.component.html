@@ -1,6 +1,6 @@
 <div *ngIf="stats$ | async as stats">
   <p>
-    Total transactions: {{stats.total_transactions_count}}
+    Total transactions: {{stats.total_transactions_count | bigNumber}}
   </p>
 </div>
 <h3 class="uk-heading-divider">Recent Blocks</h3>
