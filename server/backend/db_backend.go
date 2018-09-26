@@ -78,7 +78,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		GasLimit:    tx.Gas(),
 		BlockNumber: block.Number().Int64(),
 		GasFee:      new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:       string(tx.Nonce()),
+		Nonce:       strconv.Itoa(int(tx.Nonce())),
 		BlockHash:   block.Hash().Hex(),
 		CreatedAt:   time.Unix(block.Time().Int64(), 0),
 		InputData:   string(tx.Data()[:]),
