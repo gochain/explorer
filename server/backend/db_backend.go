@@ -140,6 +140,12 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("ActiveAddress").EnsureIndex(mgo.Index{Key: []string{"updated_at"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -313,6 +319,16 @@ func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
 		log.Debug().Int64("Block", blockNumber).Err(err).Msg("GetBlockByNumber")
+		return nil
+	}
+	return &c
+}
+
+func (self *MongoBackend) getBlockByHash(blockHash string) *models.Block {
+	var c models.Block
+	err := self.mongo.C("Blocks").Find(bson.M{"hash": blockHash}).Select(bson.M{"transactions": 0}).One(&c)
+	if err != nil {
+		log.Debug().Str("Block", blockHash).Err(err).Msg("GetBlockByNumber")
 		return nil
 	}
 	return &c

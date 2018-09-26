@@ -95,6 +95,10 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	return block
 }
 
+func (self *Backend) GetBlockByHash(hash string) *models.Block {
+	return self.mongo.getBlockByHash(hash)
+}
+
 //METHODS USED IN GRABBER
 
 func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {

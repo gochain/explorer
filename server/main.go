@@ -271,10 +271,14 @@ func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
 
 func getBlock(w http.ResponseWriter, r *http.Request) {
 	bnum, err := parseBlockNumber(r)
+	var block *models.Block
 	if err != nil {
-		return
+		hash := chi.URLParam(r, "num")
+		log.Info().Str("hash", hash).Msg("failed to parse number of the block so assuming it's hash")
+		block = backendInstance.GetBlockByHash(hash)
+	} else {
+		log.Info().Int("bnum", bnum).Msg("looking up block")
+		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
-	log.Info().Int("bnum", bnum).Msg("looking up block")
-	block := backendInstance.GetBlockByNumber(int64(bnum))
 	writeJSON(w, http.StatusOK, block)
 }
