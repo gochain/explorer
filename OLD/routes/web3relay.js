@@ -61,9 +61,9 @@ exports.circulatingSupply = function (callback) {
       id: new Date().getTime()
     }, function (error, result) {
       if (!error && result && result["result"]) {
-        allocGo = new BigNumber(Object.keys(result["result"]).map(function (v) {          
+        allocGo = new BigNumber(Object.keys(result["result"]).map(function (v) {
           return web3.fromWei(web3.eth.getBalance(v));
-        }).reduce((a, b) => a + b, 0));        
+        }).reduce((a, b) => a + b, 0));
         circulatingSupplyCached = total - allocGo;
         callback(total - allocGo);
       } else {
@@ -87,20 +87,24 @@ exports.data = function (req, res) {
         res.write(JSON.stringify({ "error": true }));
         res.end();
       } else {
-        var ttx = tx;
-        const gasPrice = new BigNumber(tx.gasPrice);
-        const gas = new BigNumber(tx.gas);
-
-        ttx.value = etherUnits.toEther(tx.value, "wei");
-        ttx.actualGasCost = etherUnits.toEther(gas.multipliedBy(gasPrice), "wei");
-        //get timestamp from block
-        var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
-          if (!err && block)
-            ttx.timestamp = block.timestamp;
-          ttx.isTrace = (ttx.input != "0x");
-          res.write(JSON.stringify(ttx));
-          res.end();
-        });
+        web3.eth.getTransactionReceipt(txHash, function (err, txReceipt) {
+          var ttx = tx;
+          const gasPrice = new BigNumber(tx.gasPrice);
+          gas = new BigNumber(tx.gas);
+          if (txReceipt) {
+            gas = new BigNumber(txReceipt.gasUsed);
+          }
+          ttx.value = etherUnits.toEther(tx.value, "wei");
+          ttx.actualGasCost = etherUnits.toEther(gas.multipliedBy(gasPrice), "wei");
+          //get timestamp from block
+          var block = web3.eth.getBlock(tx.blockNumber, function (err, block) {
+            if (!err && block)
+              ttx.timestamp = block.timestamp;
+            ttx.isTrace = (ttx.input != "0x");
+            res.write(JSON.stringify(ttx));
+            res.end();
+          });
+        })
       }
     });
 

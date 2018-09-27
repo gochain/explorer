@@ -279,6 +279,7 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
             grabBlock(web3, blockHashOrNumber, false);
         } else {
             checkParentBlock(web3, b, false);
+            checkTransactionsNumber(web3, b);
             if (b.number % 10000 == 0) { console.log("Block exist, trying next", blockHashOrNumber['end']) }
             blockHashOrNumber['end'] = blockHashOrNumber['end'] - 1;
             if (blockHashOrNumber['end'] > blockHashOrNumber['start']) {
@@ -290,6 +291,18 @@ var checkBlockDBExistsThenGrab = function (web3, blockHashOrNumber) {
         }
 
     })
+}
+var checkTransactionsNumber = function (web3, block) {
+    Transaction.count({ blockNumber: block.number }, function (err, transactionsNumber) {
+        if (err) {
+            console.error(err);
+        } else {
+            if (transactionsNumber != block.transactionsCount) {
+                console.log("Number of transactions from tx collection:", transactionsNumber, " from block:", block.transactionsCount, " block number:", block.number);
+                cleanupBlockAndTransactionsThenGrab(web3, block.number)
+            }
+        }
+    });
 }
 
 /**
