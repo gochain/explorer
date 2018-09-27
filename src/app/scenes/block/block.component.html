@@ -7,7 +7,7 @@
         <td>{{b.number}}</td>
       </tr>
       <tr>
-        <td>BlockHash</td>
+        <td>Block Hash</td>
         <td>{{b.hash }}</td>
       </tr>
       <tr>
@@ -15,15 +15,17 @@
         <td mat-cell>{{b.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{b.created_at | timeAgo }})</td>
       </tr>
       <tr>
-        <td>GasLimit</td>
+        <td>Gas Limit</td>
         <td mat-cell>{{b.gas_limit |bigNumber}}</td>
       </tr>
       <tr>
         <td>Parent block hash</td>
-        <td>{{b.parent_hash }}</td>
+        <td>
+          <a routerLink="/blocks/{{b.parent_hash }}">{{b.parent_hash }}</a>
+        </td>
       </tr>
       <tr>
-        <td>GasUsed</td>
+        <td>Gas Used</td>
         <td mat-cell>{{b.gas_used | bigNumber}}</td>
       </tr>
       <tr>
@@ -31,22 +33,18 @@
         <td>{{b.nonce }}</td>
       </tr>
       <tr>
-        <td>Miner</td>
+        <td>Signer</td>
         <td>
           <a routerLink="/addr/{{b.miner}}">{{b.miner}}</a>
         </td>
       </tr>
       <tr>
-        <td>Transactions count</td>
+        <td>Transactions Count</td>
         <td>{{b.tx_count }}</td>
       </tr>
       <tr>
         <td>Difficulty</td>
         <td>{{b.difficulty }}</td>
-      </tr>
-      <tr>
-        <td>Sha3Uncles</td>
-        <td>{{b.sha3_uncles }}</td>
       </tr>
       <tr>
         <td>Extra Data</td>

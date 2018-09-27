@@ -25,7 +25,7 @@ export class BlockComponent implements OnInit {
   transactions: Transaction[] = [];
   transactionQueryParams: QueryParams = new QueryParams();
 
-  private _blockNum: number;
+  private _blockNum: number | string;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {

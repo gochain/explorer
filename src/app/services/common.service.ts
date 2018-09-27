@@ -22,11 +22,11 @@ export class CommonService {
     return this._apiService.get('/blocks');
   }
 
-  getBlock(blockNum: number, data?: any): Observable<Block> {
+  getBlock(blockNum: number | string, data?: any): Observable<Block> {
     return this._apiService.get('/blocks/' + blockNum, data);
   }
 
-  getBlockTransactions(blockNum: number, data?: any) {
+  getBlockTransactions(blockNum: number | string, data?: any) {
     return this._apiService.get('/blocks/' + blockNum + '/transactions', data);
   }
 
