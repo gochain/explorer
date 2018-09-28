@@ -1,6 +1,6 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { MobileHeaderComponent } from './mobile-header.component';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import {AppModule} from '../../app.module';
+import {MobileHeaderComponent} from './mobile-header.component';
 
 describe('MobileHeaderComponent', () => {
   let component: MobileHeaderComponent;
@@ -8,9 +8,9 @@ describe('MobileHeaderComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ MobileHeaderComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {
