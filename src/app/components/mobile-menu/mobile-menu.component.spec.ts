@@ -1,6 +1,6 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { MobileMenuComponent } from './mobile-menu.component';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import {AppModule} from '../../app.module';
+import {MobileMenuComponent} from './mobile-menu.component';
 
 describe('MobileMenuComponent', () => {
   let component: MobileMenuComponent;
@@ -8,9 +8,9 @@ describe('MobileMenuComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ MobileMenuComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {
