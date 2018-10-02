@@ -31,6 +31,7 @@ import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
+import {NgProgressModule} from '@ngx-progressbar/core';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
@@ -68,7 +69,13 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     PipesModule,
     DirectiveModule,
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
-    TabsModule
+    TabsModule,
+    NgProgressModule.forRoot({
+      trickleSpeed: 200,
+      min: 20,
+      meteor: false,
+      spinner: false
+    })
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},
