@@ -173,6 +173,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
@@ -421,7 +426,7 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 
 func (self *MongoBackend) getInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
 	var internalTransactionsList []*models.InternalTransaction
-	err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": contractAddress}).Skip(skip).Limit(limit).All(&internalTransactionsList)
+	err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": contractAddress}).Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
 	if err != nil {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getInternalTransactionsList")
 	}
