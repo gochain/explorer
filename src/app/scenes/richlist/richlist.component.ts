@@ -32,7 +32,7 @@ export class RichlistComponent implements OnInit {
 
   calcSupplyOwned(addresses: Address[], circulatingSupply: any) {
     addresses.forEach((addr: Address) => {
-      addr.supplyOwned = (addr.balance / circulatingSupply * 100).toFixed(2);
+      addr.supplyOwned = (addr.balance / circulatingSupply * 100).toFixed(6);
     });
   }
 
