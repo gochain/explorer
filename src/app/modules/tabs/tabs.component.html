@@ -1,0 +1,17 @@
+<div class="tabs">
+  <div class="tabs__titles">
+    <div class="tabs__title"
+         *ngFor="let tab of tabs"
+         [ngClass]="{'tabs__title--active': tab === activeTab}"
+         (click)="onTabSelect(tab)"
+         [innerHTML]="tab.title.element.nativeElement.innerHTML"
+    >
+    </div>
+  </div>
+  <div
+      *ngIf="activeTab"
+      class="tabs__content"
+      [innerHTML]="activeTab.content.element.nativeElement.innerHTML"
+  >
+  </div>
+</div>

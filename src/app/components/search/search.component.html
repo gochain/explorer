@@ -1,0 +1,12 @@
+<form class="search" (submit)="search()">
+  <input
+      name="search"
+      type="search"
+      placeholder="Search by address/tx hash"
+      [(ngModel)]="value"
+      (keyup)="($event.which===13)?search():0"
+  />
+  <button type="submit">
+    <i class="fas fa-search"></i>
+  </button>
+</form>

@@ -1,0 +1,19 @@
+<ng-progress></ng-progress>
+<app-header *ifViewportSize="['medium', 'large']"></app-header>
+<app-mobile-header *ifViewportSize="['small']"></app-mobile-header>
+<app-mobile-menu *ifViewportSize="['small']"></app-mobile-menu>
+<div class="app-container">
+  <div class="app-content" [ngClass]="{'app-content--loading': isPageLoading}">
+    <div class="loader">
+      <div class="loader__content">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+version: "3"
+services:
+  web:
+    container_name: web
+    image: gcr.io/gochain-core/explorer:go-test
+    restart: "always"
+    command: "server -d /explorer/ -m mongodb:27017"
+    links:
+        - "mongodb"
+    ports:
+        - "80:8080"
+        - "8080:8080"
+    depends_on:
+      - mongodb    
+  grabber:
+    container_name: grabber
+    image: gcr.io/gochain-core/explorer:go-test
+    restart: "always"
+    command: "grabber -m mongodb:27017"
+    links:
+        - "mongodb"
+    depends_on:
+      - mongodb    
+  mongodb:
+        image: mongo
+        container_name: "mongodb"
+        environment:
+          - MONGO_DATA_DIR=/data/db
+          - MONGO_LOG_DIR=/dev/null
+        volumes:
+          - ./data/db:/data/db
+        command: mongod --smallfiles --logpath=/dev/null

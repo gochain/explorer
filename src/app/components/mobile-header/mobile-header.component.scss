@@ -1,0 +1,35 @@
+.topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+
+  &__menu {
+    font-size: 20px;
+  }
+
+  &__icon {
+    img {
+      height: 30px;
+    }
+  }
+
+  &__search {
+    font-size: 20px;
+  }
+}
+.search-bar {
+  border-top: 1px solid #44475a;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+  padding: 15px;
+  justify-content: center;
+  position: fixed;
+  width: 100%;
+  
+  display: none;
+  &.--active {
+    display: flex;
+  }
+}

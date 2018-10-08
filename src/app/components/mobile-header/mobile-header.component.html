@@ -1,0 +1,16 @@
+<nav class="topbar bg-gradient">
+  <div class="topbar__menu" (click)="toggleMenu()">
+    <i class="fas fa-bars"></i>
+  </div>
+  <div class="topbar__icon">
+    <a routerLink="/">
+      <img src="{{themeColor === 'dark' ? '../../../assets/images/logo-full--light.svg' : '../../../assets/images/logo-full--dark.svg'}}"/>
+    </a>
+  </div>
+  <div class="topbar__search">
+    <i class="fas fa-search" (click)="toggleSearch()"></i>
+  </div>
+</nav>
+<div class="search-bar bg-gradient" [ngClass]="{'--active': layoutService.mobileSearchState | async}">
+  <app-search></app-search>
+</div>
