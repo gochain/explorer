@@ -90,3 +90,12 @@ body {
 .empty {
   padding: 20px 0;
 }
+
+.ta {
+  &-r {
+    text-align: right !important;
+  }
+  &-l {
+    text-align: left !important;
+  }
+}
