@@ -42,7 +42,7 @@
                   <th class="uk-text-nowrap uk-table-shrink">Created at</th>
                   <th class="uk-table-shrink"></th>
                   <th class="uk-width-1-3">Associate</th>
-                  <th class="uk-text-nowrap uk-table-shrink ta-r">Value (GO)</th>
+                  <th class="uk-text-nowrap uk-table-shrink">Value (GO)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -67,7 +67,7 @@
                       <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
                     </td>
                   </ng-template>
-                  <td class="uk-text-nowrap ta-r">{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : 4 | bigNumber}}
+                  <td class="uk-text-nowrap ta-r ws-p">{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
                   </td>
                 </tr>
                 </tbody>
