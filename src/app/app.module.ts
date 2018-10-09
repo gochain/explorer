@@ -32,6 +32,7 @@ import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
+import {NgProgressHttpModule } from '@ngx-progressbar/http';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
@@ -75,7 +76,8 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
       min: 20,
       meteor: false,
       spinner: false
-    })
+    }),
+    NgProgressHttpModule.forRoot(),
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},
