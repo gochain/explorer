@@ -91,11 +91,17 @@ body {
   padding: 20px 0;
 }
 
+// atomic modifiers
 .ta {
   &-r {
     text-align: right !important;
   }
   &-l {
     text-align: left !important;
+  }
+}
+.ws {
+  &-p {
+    white-space: pre;
   }
 }
