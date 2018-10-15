@@ -2,7 +2,7 @@
   <h3 class="uk-heading-divider">Address</h3>
   <div class="uk-margin">
     <div class="uk-overflow-auto">
-      <table class="uk-table uk-table-small uk-table-small">
+      <table class="uk-table uk-table-small uk-table-small fs-14">
         <tr>
           <td>Address hash</td>
           <td>{{addr.address}}</td>
@@ -48,8 +48,8 @@
                 <tbody>
                 <tr *ngFor="let tx of transactions">
                   <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-                  <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at |
-                    timeAgo}})
+                  <td class="uk-text-nowrap">
+                    {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
                   </td>
                   <ng-container *ngIf="addr.address === tx.to; else out">
                     <td>
@@ -67,7 +67,8 @@
                       <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
                     </td>
                   </ng-template>
-                  <td class="uk-text-nowrap ta-r ws-p">{{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
+                  <td class="uk-text-nowrap ta-r ws-p">
+                    {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
                   </td>
                 </tr>
                 </tbody>

@@ -103,5 +103,12 @@ body {
 .ws {
   &-p {
     white-space: pre;
+    font-family: monospace;
+  }
+}
+
+.fs {
+  &-14 {
+    font-size: 14px !important;
   }
 }
