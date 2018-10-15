@@ -6,8 +6,9 @@
         <thead>
         <tr>
           <th class="uk-text-nowrap">Rank</th>
-          <th class="uk-text-nowrap">Address</th>
-          <th class="uk-text-nowrap">Balance</th>
+          <th class="uk-text-nowrap uk-width-1-3@l">Address</th>
+          <th class="uk-text-nowrap uk-width-1-5@l">Balance (GO)</th>
+          <th class="uk-width-1-6@l"></th>
           <th class="uk-text-nowrap">Supply owned</th>
         </tr>
         </thead>
@@ -15,7 +16,8 @@
         <tr *ngFor="let address of richList.rankings; let rankI = index;">
           <td>{{rankI}}</td>
           <td class="uk-text-nowrap"><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
-          <td class="uk-text-nowrap">{{address.balance_wei | weiToGO | bigNumber}}</td>
+          <td class="uk-text-nowrap ta-r ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
+          <td></td>
           <td class="uk-text-nowrap">{{address.supplyOwned}}%</td>
         </tr>
         </tbody>
