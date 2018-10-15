@@ -39,6 +39,7 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
+import { InfoComponent } from './components/info/info.component';
 
 
 @NgModule({
@@ -59,6 +60,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     ToggleSwitchComponent,
     MobileHeaderComponent,
     MobileMenuComponent,
+    InfoComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),

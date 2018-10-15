@@ -7,7 +7,6 @@ import {PipeTransform, Pipe} from '@angular/core';
 export class WeiToGOPipe implements PipeTransform {
 
   transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = null): string {
-    console.log(val);
     const moveTo = 18;
     const parts = val.toString().split('.');
     if (parts[0].length > moveTo) {
