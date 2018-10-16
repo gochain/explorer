@@ -19,6 +19,7 @@ export class WeiToGOPipe implements PipeTransform {
     if (removeTrailingZeros) {
       // replace trailing zeros with exact amount of spaces
       value = value.replace(/0(?=(0+$|$))/g, ` `);
+      value = value.replace(/\.(?=\s)/g, ` `);
     } else {
       // delete trailing zeros
       value = value.replace(/\.?0+$/, '');

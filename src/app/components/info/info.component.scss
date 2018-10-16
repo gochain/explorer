@@ -1,0 +1,16 @@
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  &__content {
+    padding: 20px;
+    font-size: 20px;
+    border: 2px solid;
+    width: 400px;
+    text-align: center;
+    margin-top: 20vh;
+    font-weight: 500;
+    color: #333;
+  }
+}

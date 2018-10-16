@@ -32,12 +32,16 @@
           <td>{{tx.gas_price| toGwei}}</td>
         </tr>
         <tr>
-          <td>Gas fee</td>
-          <td>{{tx.gas_fee | weiToGO | bigNumber}}</td>
-        </tr>
-        <tr>
           <td>Gas limit</td>
           <td>{{tx.gas_limit | bigNumber}}</td>
+        </tr>
+        <tr>
+          <td>Gas used</td>
+          <td>{{tx.gas_fee/tx.gas_price | bigNumber}}</td>
+        </tr>
+        <tr>
+          <td>Gas fee</td>
+          <td>{{tx.gas_fee | weiToGO | bigNumber}}</td>
         </tr>
         <tr>
           <td>Block number</td>
@@ -51,12 +55,14 @@
         </tr>
         <tr>
           <td>Input data</td>
-          <td>{{tx.input_data}}</td>
+          <td>
+            <pre>{{tx.input_data}}</pre>
+          </td>
         </tr>
       </table>
     </div>
   </div>
 </ng-container>
 <ng-template #transactionNotFound>
-  Transaction not found.
+  <app-info text="Transaction not found."></app-info>
 </ng-template>
