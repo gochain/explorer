@@ -96,11 +96,11 @@
                 <thead>
                 <tr>
                   <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
-                  <th class="uk-width-2-5">Transaction hash</th>
-                  <th class="uk-text-nowrap uk-table-shrink">Created at</th>
-                  <th class="uk-width-1-6">To</th>
-                  <th class="uk-width-1-6">From</th>
-                  <th class="uk-table-shrink">Value</th>
+                  <th class="uk-width-1-5">Transaction hash</th>
+                  <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Created at</th>
+                  <th class="uk-width-1-5">To</th>
+                  <th class="uk-width-1-5">From</th>
+                  <th class="uk-width-1-5 uk-text-nowrap">Value (GO)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -111,7 +111,7 @@
                   <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
                   <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
                   <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
-                  <td>{{tx.value | weiToGO | bigNumber}}</td>
+                  <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true | bigNumber}}</td>
                 </tr>
                 </tbody>
               </table>
@@ -139,7 +139,7 @@
                 <thead>
                 <tr>
                   <th class="uk-width-1-4">Token holder</th>
-                  <th class="uk-width-1-4">Balance</th>
+                  <th class="uk-width-1-4">Balance (GO)</th>
                   <th class="uk-width-1-4">Token name</th>
                   <th class="uk-width-1-4">Token symbol</th>
                 </tr>
@@ -149,7 +149,7 @@
                   <td class="uk-text-truncate">
                     <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
                   </td>
-                  <td class="uk-text-truncate">{{holder.balance | weiToGO | bigNumber}}</td>
+                  <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true | bigNumber}}</td>
                   <td class="uk-text-truncate">{{holder.token_name}}</td>
                   <td class="uk-text-truncate">{{holder.token_symbol}}</td>
                 </tr>
