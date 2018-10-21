@@ -1,7 +1,9 @@
 <div class="drawer" [ngClass]="{'drawer--active': layoutService.mobileMenuState | async}" (click)="toggleMenu()">
   <div class="drawer__content">
     <div class="icon">
-      <img src="../../../assets/images/logo-full--light.svg"/>
+      <a routerLink="/">
+        <img src="../../../assets/images/logo-full--light.svg"/>
+      </a>
     </div>
     <div class="menu">
       <ng-container *ngFor="let navItem of navItems">

@@ -16,7 +16,10 @@ export class TabsComponent implements AfterContentInit {
 
   ngAfterContentInit() {
     this._subsArr$.push(this.tabs.changes.subscribe(this.onTabsChange));
-    this.activeTab = this.tabs.first;
+    // Asynchronous update preventing ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.activeTab = this.tabs.first;
+    });
   }
 
   onTabsChange = () => {

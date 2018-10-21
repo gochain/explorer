@@ -1,15 +1,4 @@
-import {
-  AfterViewInit,
-  Directive,
-  ElementRef,
-  EventEmitter,
-  Input,
-  NgZone,
-  OnChanges,
-  Output,
-  TemplateRef,
-  ViewContainerRef
-} from '@angular/core';
+import {AfterViewInit, Directive, EventEmitter, Input, NgZone, OnChanges, Output, TemplateRef, ViewContainerRef} from '@angular/core';
 import {fromEvent, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 import {AutoUnsubscribe} from '../decorators/auto-unsubscribe';
@@ -47,6 +36,9 @@ export class InfinityScrollDirective implements OnChanges, AfterViewInit {
         debounceTime(this.debounceInterval),
         distinctUntilChanged(),
         filter(() => {
+          if (!this._templateRef.elementRef.nativeElement.nextSibling) {
+            return false;
+          }
           const targetTop = this._templateRef.elementRef.nativeElement.nextSibling.offsetTop;
           const containerBottom = this._target.scrollTop + this._target.offsetHeight + 300;
           return containerBottom > targetTop;
