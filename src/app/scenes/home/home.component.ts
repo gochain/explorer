@@ -7,6 +7,7 @@ import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';
 import {Stats} from '../../models/stats.model';
+import {startWith} from 'rxjs/operators';
 
 @Component({
   selector: 'app-home',
@@ -25,7 +26,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this._layoutService.isPageLoading.next(true);
     // to-do: replace to ws
-    this._sub = interval(5000).subscribe(() => {
+    this._sub = interval(5000).pipe(
+      startWith(0)
+    ).subscribe(() => {
       this._commonService.getRecentBlocks().subscribe((data: BlockList) => {
           this.recentBlocks = data;
           this._layoutService.isPageLoading.next(false);

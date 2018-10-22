@@ -32,7 +32,7 @@ body {
 
   &.dark {
     background: #282a36;
-    *:not(a):not(input):not(select):not(option):not(textarea) {
+    *:not(a):not(input):not(select):not(option):not(textarea):not(.code) {
       color: #eee !important;
     }
 
@@ -89,6 +89,14 @@ body {
 
 .empty {
   padding: 20px 0;
+}
+
+.code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  font-size: 12px;
 }
 
 // atomic modifiers
