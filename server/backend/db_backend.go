@@ -126,6 +126,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "to", "-block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -413,7 +418,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 
 func (self *MongoBackend) getTransactionList(address string, skip, limit int) []*models.Transaction {
 	var transactions []*models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Skip(skip).Limit(limit).All(&transactions)
+	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "block_number": bson.M{"$gte": 0}}).Sort("-block_number").Skip(skip).Limit(limit).All(&transactions)
 	if err != nil {
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}
