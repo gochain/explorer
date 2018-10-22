@@ -205,6 +205,9 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 	address := backendInstance.GetAddressByHash(addressHash)
 	balance, err := backendInstance.BalanceAt(addressHash, "pending")
 	if err == nil {
+		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet TODO:move it to backend, but need to filter out genesis
+			address = &models.Address{Address: addressHash}
+		}
 		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 		address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	}
