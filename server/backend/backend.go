@@ -51,28 +51,19 @@ func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 	return self.mongo.getRichlist(skip, limit)
 }
 func (self *Backend) GetAddressByHash(hash string) *models.Address {
-	address := self.mongo.getAddressByHash(hash)
-	if address == nil {
-		balance, err := self.ethClient.BalanceAt(context.Background(), common.HexToAddress(hash), nil)
-		if err != nil {
-			log.Info().Err(err).Str("address", hash).Msg("cannot get address information neither from eth or db")
-			return nil
-		}
-		address = self.mongo.importAddress(hash, balance, "", "", false, false)
-	}
-	return address
+	return self.mongo.getAddressByHash(common.HexToAddress(hash).Hex())
 }
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
 }
 func (self *Backend) GetTransactionList(address string, skip, limit int) []*models.Transaction {
-	return self.mongo.getTransactionList(address, skip, limit)
+	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), skip, limit)
 }
 func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
-	return self.mongo.getTokenHoldersList(contractAddress, skip, limit)
+	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), skip, limit)
 }
 func (self *Backend) GetInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
-	return self.mongo.getInternalTransactionsList(contractAddress, skip, limit)
+	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), skip, limit)
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
 	return self.mongo.getLatestsBlocks(skip, limit)
