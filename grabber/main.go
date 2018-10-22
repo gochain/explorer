@@ -87,12 +87,14 @@ func listener(url string, importer *backend.Backend) {
 			if prevHeader != header.Number.String() {
 				log.Info().Str("Listener is downloading the block:", header.Number.String()).Msg("Gettting block in listener")
 				block, err := client.BlockByNumber(context.Background(), header.Number)
-				importer.ImportBlock(block)
-				if err != nil {
-					log.Fatal().Err(err).Msg("listener")
+				if block != nil {
+					importer.ImportBlock(block)
+					if err != nil {
+						log.Fatal().Err(err).Msg("listener")
+					}
+					checkParentForBlock(&client, importer, block.Number().Int64(), 100)
+					prevHeader = header.Number.String()
 				}
-				checkParentForBlock(&client, importer, block.Number().Int64(), 100)
-				prevHeader = header.Number.String()
 			}
 		}
 	}
