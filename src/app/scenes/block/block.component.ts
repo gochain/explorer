@@ -25,7 +25,8 @@ export class BlockComponent implements OnInit {
   transactions: Transaction[] = [];
   transactionQueryParams: QueryParams = new QueryParams();
 
-  private _blockNum: number | string;
+  private _blockIdentifier: number | string;
+  private _blockNumber: number;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -35,18 +36,23 @@ export class BlockComponent implements OnInit {
     this._subsArr$.push(this._route.params.pipe(
       filter((params: Params) => !!params.id),
     ).subscribe((params: Params) => {
-      this._blockNum = params.id;
+      this._blockIdentifier = params.id;
       this._layoutService.isPageLoading.next(true);
       this.getData();
     }));
     this._subsArr$.push(this.transactionQueryParams.state.subscribe(() => {
-      this.getData();
+      this.getTransactionData();
     }));
   }
 
   getData() {
-    this._commonService.getBlock(this._blockNum, this.transactionQueryParams.params).subscribe((data: Block) => {
+    this._commonService.getBlock(this._blockIdentifier, this.transactionQueryParams.params).subscribe((data: Block) => {
+      if (!data) {
+        this._layoutService.isPageLoading.next(false);
+        return;
+      }
       this.block = data;
+      this._blockNumber = data.number;
       this.transactionQueryParams.setTotalPage(this.block.tx_count);
       if (this.block.tx_count) {
         this.getTransactionData();
@@ -59,7 +65,7 @@ export class BlockComponent implements OnInit {
 
   // to-do: add caching
   getTransactionData() {
-    this._commonService.getBlockTransactions(this._blockNum, this.transactionQueryParams.params).subscribe((data: any) => {
+    this._commonService.getBlockTransactions(this._blockNumber, this.transactionQueryParams.params).subscribe((data: any) => {
       this.transactions = data.transactions;
     });
   }
