@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -81,7 +82,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		Nonce:       strconv.Itoa(int(tx.Nonce())),
 		BlockHash:   block.Hash().Hex(),
 		CreatedAt:   time.Unix(block.Time().Int64(), 0),
-		InputData:   string(tx.Data()[:]),
+		InputData:   hex.EncodeToString(tx.Data()[:]),
 	}
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
