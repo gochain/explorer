@@ -27,8 +27,8 @@
     </div>
   </div>
   <div class="uk-margin">
-    <app-tabs>
-      <tab>
+    <app-tabs name="addr_tab">
+      <tab name="transactions">
         <tab-title>
           Transactions
         </tab-title>
@@ -85,7 +85,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20">
+      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions">
         <tab-title>
           Internal Transactions
         </tab-title>
@@ -128,7 +128,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20">
+      <tab *ngIf="addr.contract && addr.go20" name="holders">
         <tab-title>
           Holders
         </tab-title>
