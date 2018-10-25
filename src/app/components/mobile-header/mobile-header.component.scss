@@ -11,7 +11,7 @@
   }
 
   &__icon {
-    img {
+    img, svg {
       height: 30px;
     }
   }
@@ -30,6 +30,6 @@
   
   display: none;
   &.--active {
-    display: flex;
+    display: block;
   }
 }
