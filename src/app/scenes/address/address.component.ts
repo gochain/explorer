@@ -65,6 +65,14 @@ export class AddressComponent implements OnInit {
 
   getAddress() {
     this.address = this._commonService.getAddress(this.addrHash).pipe(
+      filter(value => {
+        if (!value) {
+          this._layoutService.isPageLoading.next(false);
+          return false;
+        }
+
+        return true;
+      }),
       // getting token holder data if address is contract
       tap((addr: Address) => {
         this._layoutService.isPageLoading.next(false);
@@ -123,7 +131,7 @@ export class AddressComponent implements OnInit {
           this.transactionQueryParams.next();
           break;
         case 'internalTransaction':
-          this.holderQueryParams.next();
+          this.internalTransactionQueryParams.next();
           break;
         case 'holder':
           this.holderQueryParams.next();

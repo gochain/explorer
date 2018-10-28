@@ -3,6 +3,11 @@
 .search {
   display: flex;
 
+  @include respond-to(small) {
+    justify-content: center;
+    padding: 0 15px;
+  }
+
   input {
     border: none;
     border-radius: 20px;
@@ -18,8 +23,8 @@
 
     @include respond-to(small) {
       border-radius: 20px 0 0 20px;
-      width: 300px;
-      max-width: 300px;
+      flex: 1;
+      max-width: none;
     }
 
     &:focus {
