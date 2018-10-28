@@ -200,15 +200,16 @@ func updateAddresses(url string, importer *backend.Backend) {
 		addresses := importer.GetActiveAdresses(lastUpdatedAt)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for _, address := range addresses {
+			normalizedAddress := common.HexToAddress(address.Address).Hex()
 			if stringInSlice(address.Address, genesisAddressList) {
-				log.Info().Str("Following address is in the list of genesis addresses", address.Address).Msg("updateAddresses")
+				log.Info().Str("Following address is in the list of genesis addresses", normalizedAddress).Msg("updateAddresses")
 				continue
 			}
-			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(address.Address), nil)
+			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")
 			}
-			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(address.Address), nil)
+			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
 			contractData := string(contractDataArray[:])
 			var tokenName, tokenSymbol string
 			go20 := false
@@ -216,11 +217,11 @@ func updateAddresses(url string, importer *backend.Backend) {
 			if contractData != "" {
 				go20 = true
 				contract = true
-				internalTxs := importer.GetInternalTransactions(address.Address)
+				internalTxs := importer.GetInternalTransactions(normalizedAddress)
 				for _, itx := range internalTxs {
 					log.Info().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
-					importer.ImportInternalTransaction(address.Address, itx)
-					res, err := importer.GetTokenBalance(address.Address, itx.To.String())
+					importer.ImportInternalTransaction(normalizedAddress, itx)
+					res, err := importer.GetTokenBalance(normalizedAddress, itx.To.String())
 					tokenName = res.Name
 					tokenSymbol = res.Symbol
 					if err != nil {
@@ -228,18 +229,18 @@ func updateAddresses(url string, importer *backend.Backend) {
 						go20 = false
 						continue
 					}
-					importer.ImportTokenHolder(address.Address, itx.To.String(), res.Balance, tokenName, tokenSymbol)
-					res, err = importer.GetTokenBalance(address.Address, itx.From.String())
+					importer.ImportTokenHolder(normalizedAddress, itx.To.String(), res.Balance, tokenName, tokenSymbol)
+					res, err = importer.GetTokenBalance(normalizedAddress, itx.From.String())
 					if err != nil {
 						log.Info().Err(err).Str("Address", itx.From.String()).Msg("Cannot GetTokenBalance, in internal transaction")
 						go20 = false
 						continue
 					}
-					importer.ImportTokenHolder(address.Address, itx.From.String(), res.Balance, tokenName, tokenSymbol)
+					importer.ImportTokenHolder(normalizedAddress, itx.From.String(), res.Balance, tokenName, tokenSymbol)
 				}
 			}
-			log.Info().Str("Balance of the address:", address.Address).Str("Balance", balance.String()).Msg("updateAddresses")
-			importer.ImportAddress(address.Address, balance, tokenName, tokenSymbol, contract, go20)
+			log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")
+			importer.ImportAddress(normalizedAddress, balance, tokenName, tokenSymbol, contract, go20)
 		}
 		lastUpdatedAt = time.Now()
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
