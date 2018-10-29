@@ -17,7 +17,6 @@
   }
 
   &__content {
-    padding: 15px;
     width: 0;
     max-width: 220px;
     background: #0d0e14;
@@ -31,18 +30,20 @@
   img, svg {
     height: 30px;
   }
+  padding: 15px;
 }
 
 .menu {
-  margin-top: 30px;
+  margin-top: 15px;
   &__item {
     display: flex;
     align-items: center;
-    margin:  0 0 15px;
-    padding: 5px 0;
+    padding: 10px 5px 10px 15px;
+    border: none;
+    border-radius: 0;
 
     &--active {
-      text-decoration: underline;
+      background: rgba(0,0,0,0.1);
     }
 
     &__icon {
