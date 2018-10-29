@@ -371,11 +371,21 @@ func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock
 
 func (self *MongoBackend) getActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
 	var addresses []*models.ActiveAddress
-	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).All(&addresses)
+	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetActiveAdresses")
 	}
 	return addresses
+}
+
+func (self *MongoBackend) isContract(address string) bool {
+	var c models.Address
+	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).Select(bson.M{"contract": 1}).One(&c)
+	if err != nil {
+		log.Debug().Str("Address", address).Err(err).Msg("isContract")
+		return false
+	}
+	return c.Contract
 }
 
 func (self *MongoBackend) getAddressByHash(address string) *models.Address {

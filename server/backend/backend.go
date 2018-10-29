@@ -110,8 +110,14 @@ func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
 func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 	return self.mongo.transactionsConsistent(blockNumber)
 }
-func (self *Backend) GetActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
-	return self.mongo.getActiveAdresses(fromDate)
+func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) []*models.ActiveAddress {
+	var selectedAddresses []*models.ActiveAddress
+	for _, address := range self.mongo.getActiveAdresses(fromDate) {
+		if onlyContracts == self.mongo.isContract(address.Address) {
+			selectedAddresses = append(selectedAddresses, address)
+		}
+	}
+	return selectedAddresses
 }
 func (self *Backend) ImportAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
 	return self.mongo.importAddress(address, balance, tokenName, tokenSymbol, contract, go20)
