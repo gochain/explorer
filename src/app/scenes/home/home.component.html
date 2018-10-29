@@ -4,24 +4,38 @@
   </p>
 </div>
 <h3 class="uk-heading-divider">Recent Blocks</h3>
-<div class="uk-overflow-auto uk-margin">
-  <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-striped">
-    <thead>
-    <tr>
-      <th class="uk-text-nowrap uk-width-1-4 uk-width-1-5@l">Block</th>
-      <th class="uk-text-nowrap uk-width-1-4 uk-width-1-5@l">Created</th>
-      <th class="uk-text-nowrap uk-width-1-4 uk-width-2-5@l">Signer</th>
-      <th class="uk-text-nowrap uk-width-1-4 uk-width-1-5@l">Transactions</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let b of recentBlocks.blocks">
-      <td class="uk-text-nowrap"><i class="fa fa-folder icon"></i> <a routerLink="/block/{{b.number}}">{{b.number}}</a>
-      </td>
-      <td class="uk-text-nowrap">{{b.created_at | timeAgo}}</td>
-      <td class="uk-text-nowrap"><a routerLink="/addr/{{b.miner}}">{{b.miner}}</a></td>
-      <td>{{b.tx_count}}</td>
-    </tr>
-    </tbody>
-  </table>
-</div>
+<ng-container *ifViewportSize="['small']">
+  <div class="uk-margin" *ngIf="recentBlocks">
+    <div class="tr-card" *ngFor="let block of recentBlocks.blocks">
+      <div>Block: <a routerLink="/block/{{block.number}}">{{block.number}}</a></div>
+      <div>Created: {{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})</div>
+      <div>Signer: <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a></div>
+      <div>Transactions: {{block.tx_count}}</div>
+    </div>
+  </div>
+</ng-container>
+<ng-container *ifViewportSize="['medium', 'large']">
+  <div class="uk-overflow-auto uk-margin">
+    <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-striped">
+      <thead>
+      <tr>
+        <th class="uk-text-nowrap uk-width-1-4 uk-width-1-5@l">Block</th>
+        <th class="uk-text-nowrap uk-width-1-4 uk-width-2-6@l">Created</th>
+        <th class="uk-text-nowrap uk-width-1-4 uk-width-2-6@l">Signer</th>
+        <th class="uk-text-nowrap uk-width-1-4 uk-width-1-6@l">Transactions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let block of recentBlocks.blocks">
+        <td class="uk-text-nowrap"><i class="fa fa-folder icon"></i> <a routerLink="/block/{{block.number}}">{{block.number}}</a>
+        </td>
+        <td class="uk-text-truncate">
+          {{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})
+        </td>
+        <td class="uk-text-truncate"><a routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
+        <td>{{block.tx_count}}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-container>
