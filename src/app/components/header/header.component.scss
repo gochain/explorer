@@ -36,14 +36,24 @@
   &__item {
     display: flex;
     align-items: center;
-    margin:  0 20px;
+    margin:  0 3px;
+    padding: 5px 20px 5px 15px;
+    font-weight: 500;
+    /*border-radius: 2px;*/
 
     &--active {
-      text-decoration: underline;
+      /*background-color: rgba(0,0,0,.12);*/
+      & * {
+        color: #0c91e5 !important;
+      }
     }
 
     &__icon {
       margin-right: 5px;
+    }
+
+    &:hover {
+      text-decoration: none;
     }
   }
 }
