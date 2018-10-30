@@ -1,13 +1,13 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {interval, Observable, Subscription} from 'rxjs';
+import {startWith} from 'rxjs/operators';
 /*SERVICES*/
 import {LayoutService} from '../../services/layout.service';
 import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';
 import {Stats} from '../../models/stats.model';
-import {startWith} from 'rxjs/operators';
 
 @Component({
   selector: 'app-home',

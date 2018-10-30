@@ -38,6 +38,10 @@ body {
       color: #eee !important;
     }
 
+    .uk-link, a {
+      color: #49d9e6;
+    }
+
     .logo {
       fill:#fff;
       stroke:#fff;
@@ -53,6 +57,13 @@ body {
       background-repeat: no-repeat;
       color: #fff;
     }
+
+    /*thead {
+      background: #eee;
+      th {
+        color: #000 !important;
+      }
+    }*/
 
     .uk-table-striped tbody tr:nth-of-type(odd), .uk-table-striped > tr:nth-of-type(odd) {
       border-top: 1px solid #44475a;
@@ -79,6 +90,13 @@ body {
       background: -webkit-linear-gradient(to right, #ffffff, #f7f7f7);
       background: linear-gradient(to right, #ffffff, #f7f7f7);*/
       color: #333;
+    }
+
+    thead {
+      background: #999;
+    }
+    th {
+      color: #fff;
     }
   }
 }
@@ -153,6 +171,10 @@ body {
   }
 }
 
+*+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
+  margin-top: 25px;
+}
+
 // media
 @include respond-to(small) {
   *+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
@@ -175,6 +197,25 @@ body {
     margin-bottom: 3px;
     overflow: hidden;
     white-space: nowrap;
-    text-overflow: ellipsis;
+    /*text-overflow: ellipsis;*/
   }
+}
+
+.tr-title {
+  font-weight: 500;
+}
+
+.table-holder {
+  border: 1px solid;
+  padding: 5px 10px;
+}
+
+/*
+th, td {
+  border: 1px solid #c1ccd1;
+}*/
+
+.text-break {
+  word-break: break-all;
+  white-space: unset;
 }
