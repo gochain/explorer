@@ -1,13 +1,18 @@
+/*CORE*/
 import {Directive, Input, OnDestroy, OnInit, TemplateRef, ViewContainerRef} from '@angular/core';
-import {ViewportSizeService} from './viewport-size.service';
-import {ViewportSizeEnum} from './viewport-size.enum';
+import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
+/*SERVICES*/
+import {ViewportSizeService} from './viewport-size.service';
+/*UTILS*/
+import {ViewportSizeEnum} from './viewport-size.enum';
 
 
 @Directive({selector: '[ifViewportSize]'})
 export class ViewportSizeDirective implements OnInit, OnDestroy {
   private _visibleSize: ViewportSizeEnum[];
   private _embedded = false;
+  private _sub: Subscription;
 
   constructor(private _viewportSizeService: ViewportSizeService,
               private _templateRef: TemplateRef<any>,
@@ -20,7 +25,7 @@ export class ViewportSizeDirective implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this._viewportSizeService.size$
+    this._sub = this._viewportSizeService.size$
       .pipe(
         filter(currentSize => currentSize !== null)
       )
@@ -30,7 +35,7 @@ export class ViewportSizeDirective implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this._viewportSizeService.size$.unsubscribe();
+    this._sub.unsubscribe();
   }
 
   onResize(currentSize: ViewportSizeEnum) {
