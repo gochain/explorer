@@ -1,5 +1,5 @@
 <ng-container *ngIf="!!block; else blockNotFound">
-  <h3 class="uk-heading-divider">Block</h3>
+  <h3 class="uk-heading-bullet">Block</h3>
   <div class="uk-overflow-auto">
     <table class="uk-table uk-table-small uk-table-striped fs-14">
       <tr>
@@ -54,7 +54,7 @@
   </div>
   <div class="uk-margin">
     <div class="uk-flex uk-flex-between">
-      <h4 class="uk-heading-divider">Transactions:</h4>
+      <h4 class="uk-heading-bullet">Transactions:</h4>
       <div class="uk-form-width-small" *ngIf="transactions.length">
         <select class="uk-select" [(ngModel)]="transactionQueryParams.limit">
           <option [ngValue]="10">10</option>

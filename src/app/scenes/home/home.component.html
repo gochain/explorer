@@ -3,7 +3,7 @@
     Total transactions: {{stats.total_transactions_count | bigNumber}}
   </p>
 </div>
-<h3 class="uk-heading-divider">Recent Blocks</h3>
+<h3 class="uk-heading-bullet">Recent Blocks</h3>
 <ng-container *ifViewportSize="['small']">
   <div class="uk-margin" *ngIf="recentBlocks">
     <div class="tr-card" *ngFor="let block of recentBlocks.blocks">

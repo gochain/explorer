@@ -7,6 +7,7 @@
     position: relative;
     border-bottom: 1px solid rgba(0,0,0,.12);
     user-select: none;
+    /*background: lavender;*/
   }
   &__title {
     flex: none;
@@ -22,6 +23,7 @@
     transition: color .1s ease-in-out;
     line-height: 20px;
     user-select: none;
+    cursor: pointer;
 
     &--active {
       color: #222;
