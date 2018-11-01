@@ -1,56 +1,86 @@
 <ng-container *ngIf="!!block; else blockNotFound">
   <h3 class="uk-heading-bullet">Block</h3>
-  <div class="uk-overflow-auto">
-    <table class="uk-table uk-table-small uk-table-striped fs-14">
-      <tr>
-        <td>Block Number</td>
-        <td>{{block.number}}</td>
-      </tr>
-      <tr>
-        <td>Block Hash</td>
-        <td>{{block.hash }}</td>
-      </tr>
-      <tr>
-        <td>Created At</td>
-        <td>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</td>
-      </tr>
-      <tr>
-        <td>Gas Limit</td>
-        <td>{{block.gas_limit |bigNumber}}</td>
-      </tr>
-      <tr>
-        <td>Parent block hash</td>
-        <td>
-          <a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a>
-        </td>
-      </tr>
-      <tr>
-        <td>Gas Used</td>
-        <td>{{block.gas_used | bigNumber}}</td>
-      </tr>
-      <tr>
-        <td>Nonce</td>
-        <td>{{block.nonce }}</td>
-      </tr>
-      <tr>
-        <td>Signer</td>
-        <td>
-          <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-        </td>
-      </tr>
-      <tr>
-        <td>Transactions Count</td>
-        <td>{{block.tx_count }}</td>
-      </tr>
-      <tr>
-        <td>Difficulty</td>
-        <td>{{block.difficulty }}</td>
-      </tr>
-      <tr>
-        <td>Extra Data</td>
-        <td>{{block.extra_data }}</td>
-      </tr>
-    </table>
+  <div class="uk-margin">
+    <ng-container *ifViewportSize="['small']">
+      <div class="tr-card">
+        <div class="tr-title">Block Number:</div>
+        <div>{{block.number}}</div>
+        <div class="tr-title">Block Hash:</div>
+        <div>{{block.hash}}</div>
+        <div class="tr-title">Created At:</div>
+        <div>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</div>
+        <div class="tr-title">Gas Limit:</div>
+        <div>{{block.gas_limit | bigNumber}}</div>
+        <div class="tr-title">Parent block hash:</div>
+        <div><a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a></div>
+        <div class="tr-title">Gas Used:</div>
+        <div>{{block.gas_used | bigNumber}}</div>
+        <div class="tr-title">Nonce:</div>
+        <div>{{block.nonce}}</div>
+        <div class="tr-title">Signer:</div>
+        <div><a routerLink="/addr/{{block.miner}}">{{block.miner}}</a></div>
+        <div class="tr-title">Transactions Count:</div>
+        <div>{{block.tx_count}}</div>
+        <div class="tr-title">Difficulty:</div>
+        <div>{{block.difficulty}}</div>
+        <div class="tr-title">Extra Data:</div>
+        <div>{{block.extra_data}}</div>
+      </div>
+    </ng-container>
+    <ng-container *ifViewportSize="['medium', 'large']">
+      <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-small uk-table-striped fs-14">
+          <tr>
+            <td>Block Number</td>
+            <td>{{block.number}}</td>
+          </tr>
+          <tr>
+            <td>Block Hash</td>
+            <td>{{block.hash }}</td>
+          </tr>
+          <tr>
+            <td>Created At</td>
+            <td>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</td>
+          </tr>
+          <tr>
+            <td>Gas Limit</td>
+            <td>{{block.gas_limit | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Parent block hash</td>
+            <td>
+              <a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>Gas Used</td>
+            <td>{{block.gas_used | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Nonce</td>
+            <td>{{block.nonce }}</td>
+          </tr>
+          <tr>
+            <td>Signer</td>
+            <td>
+              <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>Transactions Count</td>
+            <td>{{block.tx_count }}</td>
+          </tr>
+          <tr>
+            <td>Difficulty</td>
+            <td>{{block.difficulty }}</td>
+          </tr>
+          <tr>
+            <td>Extra Data</td>
+            <td>{{block.extra_data }}</td>
+          </tr>
+        </table>
+      </div>
+    </ng-container>
   </div>
   <div class="uk-margin">
     <div class="uk-flex uk-flex-between">
@@ -65,29 +95,50 @@
       </div>
     </div>
     <ng-container *ngIf="transactions.length; else empty">
-      <div class="uk-overflow-auto">
-        <table class="uk-table uk-table-small uk-table-striped">
-          <thead>
-          <tr>
-            <th class="uk-width-1-4">Transaction hash</th>
-            <th class="uk-text-nowrap uk-table-shrink">Created at</th>
-            <th class="uk-width-1-5">From</th>
-            <th class="uk-width-1-5">To</th>
-            <th class="uk-table-shrink">Value (GO)</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr *ngFor="let tx of transactions">
-            <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-            <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-            </td>
-            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
-            <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
-            <td>{{tx.value | weiToGO: false : true | bigNumber}}</td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
+      <ng-container *ifViewportSize="['small']">
+        <div class="tr-card" *ngFor="let tx of transactions">
+          <div class="uk-text-truncate">
+            Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+          </div>
+          <div class="uk-text-truncate">
+            Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+          </div>
+          <div class="uk-text-truncate">
+            From: <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+          </div>
+          <div class="uk-text-truncate">
+            To: <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+          </div>
+          <div class="uk-text-truncate">
+            Value (GO): {{tx.value | weiToGO: false : true | bigNumber}}
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *ifViewportSize="['medium', 'large']">
+        <div class="uk-overflow-auto">
+          <table class="uk-table uk-table-small uk-table-striped">
+            <thead>
+            <tr>
+              <th class="uk-width-1-4">Transaction hash</th>
+              <th class="uk-text-nowrap uk-table-shrink">Created at</th>
+              <th class="uk-width-1-5">From</th>
+              <th class="uk-width-1-5">To</th>
+              <th class="uk-table-shrink">Value (GO)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let tx of transactions">
+              <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+              <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+              </td>
+              <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
+              <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
+              <td>{{tx.value | weiToGO: false : true | bigNumber}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
       <div class="uk-margin-medium">
         <app-pagination [total]="transactionQueryParams.totalPage"
                         (onSelect)="onTransactionPageSelect($event)"></app-pagination>
