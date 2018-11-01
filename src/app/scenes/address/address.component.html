@@ -7,6 +7,16 @@
         <div>{{addr.address}}</div>
         <div class="tr-title">Balance:</div>
         <div>{{addr.balance_wei | weiToGO | bigNumber}}</div>
+        <ng-container *ngIf="addr.contract && addr.go20">
+          <div class="tr-title">Token name:</div>
+          <div>{{addr.token_name}}</div>
+          <div class="tr-title">Token symbol:</div>
+          <div>{{addr.token_symbol}}</div>
+          <div class="tr-title">Total supply:</div>
+          <div>{{addr.total_supply}}</div>
+          <div class="tr-title">Decimals:</div>
+          <div>{{addr.decimals}}</div>
+        </ng-container>
         <div class="tr-title">Total transactions:</div>
         <div>{{addr.number_of_transactions}}</div>
         <ng-container *ngIf="addr.contract && addr.go20">
@@ -28,6 +38,24 @@
             <td class="uk-text-nowrap">Balance:</td>
             <td>{{addr.balance_wei | weiToGO | bigNumber}}</td>
           </tr>
+          <ng-container *ngIf="addr.contract && addr.go20">
+            <tr>
+              <td class="uk-text-nowrap">Token name::</td>
+              <td>{{addr.token_name}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Token symbol:</td>
+              <td>{{addr.token_symbol}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Total supply:</td>
+              <td>{{addr.total_supply}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Decimals:</td>
+              <td>{{addr.decimals}}</td>
+            </tr>
+          </ng-container>
           <tr>
             <td class="uk-text-nowrap">Total transactions:</td>
             <td>{{addr.number_of_transactions}}</td>

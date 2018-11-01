@@ -2,8 +2,10 @@ export class Address {
   address: string;
   balance: number;
   balance_wei: number;
+  decimals: number;
   token_name: string;
   token_symbol: string;
+  total_supply: number;
   contract: boolean;
   go20: boolean;
   supplyOwned?: string;
