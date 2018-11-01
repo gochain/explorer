@@ -1,0 +1,38 @@
+.loader {
+  transition: opacity .8s ease-out;
+  text-align: center;
+  .loader__content {
+    div {
+      background: #151721;
+      margin: 2px;
+      border-radius: 50%;
+      height: 10px;
+      width: 10px;
+      display: inline-block;
+      box-sizing: border-box;
+
+      &:nth-of-type(1) {
+        animation: flash 0.8s -0.2s linear infinite;
+      }
+      &:nth-of-type(2) {
+        animation: flash 0.8s -0.1s linear infinite;
+      }
+      &:nth-of-type(3) {
+        animation: flash 0.8s linear infinite;
+      }
+      &:nth-of-type(4) {
+        animation: flash 0.8s 0.1s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+:host-context(body.dark) {
+  .loader {
+    .loader__content {
+      div {
+        background: #f8f8f2;
+      }
+    }
+  }
+}

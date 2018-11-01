@@ -1,0 +1,98 @@
+<ng-container *ngIf="(transaction | async) as tx; else transactionNotFound">
+  <h3 class="uk-heading-bullet">Transaction</h3>
+  <div class="uk-margin">
+    <ng-container *ifViewportSize="['small']">
+      <div class="tr-card">
+        <div class="tr-title">Transaction hash:</div>
+        <div class="uk-text-wrap">{{tx.tx_hash}}</div>
+        <div class="tr-title">Created at:</div>
+        <div>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</div>
+        <div class="tr-title">From:</div>
+        <div><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></div>
+        <div class="tr-title">To:</div>
+        <div><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></div>
+        <div class="tr-title">Value:</div>
+        <div>{{tx.value | weiToGO | bigNumber}}</div>
+        <div class="tr-title">Gas price:</div>
+        <div>{{tx.gas_price| toGwei}}</div>
+        <div class="tr-title">Gas limit:</div>
+        <div>{{tx.gas_limit | bigNumber}}</div>
+        <div class="tr-title">Gas used:</div>
+        <div>{{tx.gas_fee/tx.gas_price | bigNumber}}</div>
+        <div class="tr-title">Gas fee:</div>
+        <div>{{tx.gas_fee | weiToGO | bigNumber}}</div>
+        <div class="tr-title">Block number:</div>
+        <div><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a></div>
+        <div class="tr-title">Nonce:</div>
+        <div>{{tx.nonce}}</div>
+        <div class="tr-title">Input data:</div>
+        <div><pre class="code">{{tx.input_data}}</pre></div>
+      </div>
+    </ng-container>
+    <ng-container *ifViewportSize="['medium', 'large']">
+      <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-small uk-table-divider uk-table-striped fs-14">
+          <tr>
+            <td>Transaction hash</td>
+            <td>{{tx.tx_hash}}</td>
+          </tr>
+          <tr>
+            <td>Created at</td>
+            <td>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</td>
+          </tr>
+          <tr>
+            <td>From</td>
+            <td>
+              <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>To</td>
+            <td>
+              <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>Value</td>
+            <td>{{tx.value | weiToGO | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Gas price</td>
+            <td>{{tx.gas_price| toGwei}}</td>
+          </tr>
+          <tr>
+            <td>Gas limit</td>
+            <td>{{tx.gas_limit | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Gas used</td>
+            <td>{{tx.gas_fee/tx.gas_price | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Gas fee</td>
+            <td>{{tx.gas_fee | weiToGO | bigNumber}}</td>
+          </tr>
+          <tr>
+            <td>Block number</td>
+            <td>
+              <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>Nonce</td>
+            <td>{{tx.nonce}}</td>
+          </tr>
+          <tr>
+            <td>Input data</td>
+            <td>
+              <pre class="code">{{tx.input_data}}</pre>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>
+<ng-template #transactionNotFound>
+  <app-info text="Transaction not found."></app-info>
+</ng-template>

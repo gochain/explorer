@@ -1,0 +1,15 @@
+<h3 class="uk-heading-bullet">Settings</h3>
+<div class="uk-margin">
+  <form class="uk-form-horizontal" (submit)="onSubmit()">
+    <div class="uk-margin">
+      <div class="uk-form-label">Theme color</div>
+      <div class="uk-form-controls uk-form-controls-text">
+        <label><input class="uk-radio" type="radio" name="themeColor" [(ngModel)]="themeColor" (change)="onThemeColorChange()" [value]="'light'"> Light</label><br>
+        <label><input class="uk-radio" type="radio" name="themeColor" [(ngModel)]="themeColor" (change)="onThemeColorChange()" [value]="'dark'"> Dark</label>
+      </div>
+    </div>
+    <!--<div class="uk-margin">
+      <button type="submit" class="uk-button uk-button-default uk-button-small">Submit</button>
+    </div>-->
+  </form>
+</div>

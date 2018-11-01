@@ -1,0 +1,227 @@
+@import "./mixins";
+
+body, input[text], button {
+  font-family: 'Roboto', Cambria, Georgia;
+}
+
+/* everywhere else */
+* {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+h1 {
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+h2, h3 {
+  color: #444;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  font-weight: lighter;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* This fills the remaining space, by using flexbox. Every toolbar row uses a flexbox row layout. */
+.fill-remaining-space {
+  flex: 1 1 auto;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+
+  &.dark {
+    background: #282a36;
+    *:not(a):not(input):not(select):not(option):not(textarea):not(.code) {
+      color: #eee !important;
+    }
+
+    .uk-link, a {
+      color: #49d9e6;
+    }
+
+    .logo {
+      fill:#fff;
+      stroke:#fff;
+    }
+
+    .bg-gradient {
+      background-color: #151721;
+      background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(#51597e), to(#151721));
+      background-image: -webkit-radial-gradient(circle, #51597e, #151721);
+      background-image: -moz-radial-gradient(circle, #51597e, #151721);
+      background-image: -o-radial-gradient(circle, #51597e, #151721);
+      background-image: -ms-radial-gradient(circle, #51597e, #151721);
+      background-repeat: no-repeat;
+      color: #fff;
+    }
+
+    /*thead {
+      background: #eee;
+      th {
+        color: #000 !important;
+      }
+    }*/
+
+    .uk-table-striped tbody tr:nth-of-type(odd), .uk-table-striped > tr:nth-of-type(odd) {
+      border-top: 1px solid #44475a;
+      border-bottom: 1px solid #44475a;
+      background: #44475a;
+    }
+  }
+  &.light {
+    background: #fff;
+
+    .logo {
+      fill:#333;
+      stroke:#333;
+    }
+
+    .bg-gradient {
+      background-color: #fefefe;
+      // background-image: -webkit-gradient(radial, center center, 0, center center, 460, from(#e0eafc), to(#cfdef3));
+      /*background-image: -webkit-radial-gradient(circle, #ffffff, #f7f7f7);
+      background-image: -moz-radial-gradient(circle, #ffffff, #f7f7f7);
+      background-image: -o-radial-gradient(circle, #ffffff, #f7f7f7);
+      background-image: -ms-radial-gradient(circle, #ffffff, #f7f7f7);
+      background-repeat: no-repeat;
+      background: -webkit-linear-gradient(to right, #ffffff, #f7f7f7);
+      background: linear-gradient(to right, #ffffff, #f7f7f7);*/
+      color: #333;
+    }
+
+    thead {
+      background: #999;
+    }
+    th {
+      color: #fff;
+    }
+  }
+}
+
+.logo {
+  stroke-miterlimit:10;
+
+  .cls-1, .cls-2, .cls-3 {
+    stroke-miterlimit: 10;
+  }
+  .cls-1 {
+    stroke-width: 4px;
+  }
+  .cls-3 {
+    stroke-width: 18px;
+  }
+}
+
+.uk-table-small {
+  font-size: 12px;
+
+  th {
+    font-size: 12px;
+  }
+}
+
+.center {
+  text-align: center;
+}
+
+.icon {
+  margin-right: 10px;
+}
+
+.empty {
+  padding: 20px 0;
+}
+
+.code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  display: block;
+  word-break: break-all;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  line-height: 1.42857;
+  color: #333;
+}
+
+// atomic modifiers
+.ta {
+  &-r {
+    text-align: right !important;
+  }
+  &-l {
+    text-align: left !important;
+  }
+}
+
+.ws {
+  &-p {
+    white-space: pre;
+    font-family: monospace;
+  }
+}
+
+.fs {
+  &-14 {
+    font-size: 14px !important;
+  }
+}
+
+*+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
+  margin-top: 25px;
+}
+
+// media
+@include respond-to(small) {
+  *+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
+    margin-top: 20px;
+  }
+  .uk-h3, h3 {
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+  .uk-form-width-small {
+    width: 80px;
+  }
+  .uk-select {
+    height: 30px !important;
+  }
+}
+
+.tr-card {
+  padding: 10px;
+  border: 1px solid;
+  margin-bottom: 5px;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+
+  & > div {
+    margin-bottom: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    /*text-overflow: ellipsis;*/
+  }
+}
+
+.tr-title {
+  font-weight: 500;
+}
+
+.table-holder {
+  border: 1px solid;
+  padding: 5px 10px;
+}
+
+/*
+th, td {
+  border: 1px solid #c1ccd1;
+}*/
+
+.text-break {
+  word-break: break-all;
+  white-space: unset;
+}

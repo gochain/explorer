@@ -1,0 +1,40 @@
+<ng-container *ngIf="richList">
+  <h3 class="uk-heading-bullet">Richlist</h3>
+  <div class="uk-margin">
+    <ng-container *ifViewportSize="['small']">
+      <div class="tr-card" *ngFor="let address of richList.rankings; let rankI = index;">
+        <div>Rank: {{rankI + 1}}</div>
+        <div>Address: <a routerLink="/addr/{{address.address}}">{{address.address}}</a></div>
+        <div>Balance (GO): {{address.balance_wei | weiToGO: false : true | bigNumber}}</div>
+        <div>Supply owned: {{address.supplyOwned}}%</div>
+      </div>
+    </ng-container>
+    <ng-container *ifViewportSize="['medium', 'large']">
+      <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
+          <thead>
+          <tr>
+            <th class="uk-text-nowrap">Rank</th>
+            <th class="uk-text-nowrap">Address</th>
+            <th class="uk-text-nowrap uk-width-1-4">Balance (GO)</th>
+            <th class="uk-text-nowrap uk-width-1-6">Supply owned</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let address of richList.rankings; let rankI = index;">
+            <td>{{rankI + 1}}</td>
+            <td class="uk-text-nowrap"><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
+            <td class="uk-text-nowrap ta-r ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
+            <td class="uk-text-nowrap">{{address.supplyOwned}}%</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>
+<div class="center">
+  <button type="button" class="uk-button uk-button-default uk-button-small uk-margin" [disabled]="isMoreDisabled"
+          (click)="getMore()">More
+  </button>
+</div>

@@ -1,0 +1,274 @@
+<ng-container *ngIf="(address | async) as addr; else addressNotFound">
+  <h3 class="uk-heading-bullet">Address</h3>
+  <div class="uk-margin">
+    <ng-container *ifViewportSize="['small']">
+      <div class="tr-card">
+        <div class="tr-title">Address hash:</div>
+        <div>{{addr.address}}</div>
+        <div class="tr-title">Balance:</div>
+        <div>{{addr.balance_wei | weiToGO | bigNumber}}</div>
+        <ng-container *ngIf="addr.contract && addr.go20">
+          <div class="tr-title">Token name:</div>
+          <div>{{addr.token_name}}</div>
+          <div class="tr-title">Token symbol:</div>
+          <div>{{addr.token_symbol}}</div>
+          <div class="tr-title">Total supply:</div>
+          <div>{{addr.total_supply}}</div>
+          <div class="tr-title">Decimals:</div>
+          <div>{{addr.decimals}}</div>
+        </ng-container>
+        <div class="tr-title">Total transactions:</div>
+        <div>{{addr.number_of_transactions}}</div>
+        <ng-container *ngIf="addr.contract && addr.go20">
+          <div class="tr-title">Total internal transactions:</div>
+          <div>{{addr.number_of_internal_transactions}}</div>
+          <div class="tr-title">Total holders:</div>
+          <div>{{addr.number_of_token_holders}}</div>
+        </ng-container>
+      </div>
+    </ng-container>
+    <ng-container *ifViewportSize="['medium', 'large']">
+      <div class="uk-overflow-auto table-holder">
+        <table class="uk-table uk-table-small uk-table-small fs-14">
+          <tr>
+            <td class="uk-text-nowrap uk-table-shrink">Address hash:</td>
+            <td>{{addr.address}}</td>
+          </tr>
+          <tr>
+            <td class="uk-text-nowrap">Balance:</td>
+            <td>{{addr.balance_wei | weiToGO | bigNumber}}</td>
+          </tr>
+          <ng-container *ngIf="addr.contract && addr.go20">
+            <tr>
+              <td class="uk-text-nowrap">Token name::</td>
+              <td>{{addr.token_name}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Token symbol:</td>
+              <td>{{addr.token_symbol}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Total supply:</td>
+              <td>{{addr.total_supply}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Decimals:</td>
+              <td>{{addr.decimals}}</td>
+            </tr>
+          </ng-container>
+          <tr>
+            <td class="uk-text-nowrap">Total transactions:</td>
+            <td>{{addr.number_of_transactions}}</td>
+          </tr>
+          <ng-container *ngIf="addr.contract && addr.go20">
+            <tr>
+              <td class="uk-text-nowrap">Total internal transactions:</td>
+              <td>{{addr.number_of_internal_transactions}}</td>
+            </tr>
+            <tr>
+              <td class="uk-text-nowrap">Total holders:</td>
+              <td>{{addr.number_of_token_holders}}</td>
+            </tr>
+          </ng-container>
+        </table>
+      </div>
+    </ng-container>
+  </div>
+  <div class="uk-margin">
+    <app-tabs name="addr_tab">
+      <tab name="transactions">
+        <tab-title>
+          Transactions
+        </tab-title>
+        <tab-content>
+          <ng-container *ngIf="transactions.length; else emptyTransactions">
+            <ng-container *ifViewportSize="['small']">
+              <div class="tr-card" *ngFor="let tx of transactions">
+                <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+                </div>
+                <div class="uk-text-truncate">Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}}
+                  ({{tx.created_at | timeAgo}})
+                </div>
+                <div class="uk-text-truncate">Associate:
+                  <ng-container *ngIf="addr.address === tx.to; else out">
+                    <i class="fas fa-arrow-left fa-fw"></i>
+                    <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+                  </ng-container>
+                  <ng-template #out>
+                    <i class="fas fa-arrow-right fa-fw"></i>
+                    <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+                  </ng-template>
+                </div>
+                <div>Value (GO): {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false |
+                  bigNumber}}
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *ifViewportSize="['medium', 'large']">
+              <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-small uk-table-striped">
+                  <thead>
+                  <tr>
+                    <th class="uk-width-1-3">Transaction hash</th>
+                    <th class="uk-text-nowrap uk-table-shrink">Created at</th>
+                    <th class="uk-table-shrink"></th>
+                    <th class="uk-width-1-3">Associate</th>
+                    <th class="uk-text-nowrap uk-table-shrink">Value (GO)</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let tx of transactions">
+                    <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+                    <td class="uk-text-nowrap">
+                      {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+                    </td>
+                    <ng-container *ngIf="addr.address === tx.to; else out">
+                      <td>
+                        <i class="fas fa-arrow-left fa-fw"></i>
+                      </td>
+                      <td class="uk-text-truncate">
+                        <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+                      </td>
+                    </ng-container>
+                    <ng-template #out>
+                      <td>
+                        <i class="fas fa-arrow-right fa-fw"></i>
+                      </td>
+                      <td class="uk-text-truncate">
+                        <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+                      </td>
+                    </ng-template>
+                    <td class="uk-text-nowrap ta-r ws-p">
+                      {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+            <div class="uk-margin">
+              <ng-template [appInfinityScroll]="transactionScrollState" (onView)="onScroll('transaction')">
+                <app-loader></app-loader>
+              </ng-template>
+            </div>
+          </ng-container>
+          <ng-template #emptyTransactions>
+            <div class="empty">No transactions</div>
+          </ng-template>
+        </tab-content>
+      </tab>
+      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions">
+        <tab-title>
+          Internal Transactions
+        </tab-title>
+        <tab-content>
+          <ng-container *ngIf="internal_transactions.length; else emptyInternal">
+            <ng-container *ifViewportSize="['small']">
+              <div class="tr-card" *ngFor="let tx of internal_transactions">
+                <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+                </div>
+                <div class="uk-text-truncate">Created: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at |
+                  timeAgo }})
+                </div>
+                <div class="uk-text-truncate">From: <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
+                </div>
+                <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
+                <div>Value (GO): {{tx.value | weiToGO: false : false | bigNumber}}</div>
+              </div>
+            </ng-container>
+            <ng-container *ifViewportSize="['medium', 'large']">
+              <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+                  <thead>
+                  <tr>
+                    <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
+                    <th class="uk-width-1-5">Transaction hash</th>
+                    <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Created at</th>
+                    <th class="uk-width-1-5">From</th>
+                    <th class="uk-width-1-5">To</th>
+                    <th class="uk-width-1-5 uk-text-nowrap">Value (GO)</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let tx of internal_transactions">
+                    <!--<td class="uk-text-nowrap"><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a></td>-->
+                    <td class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+                    </td>
+                    <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
+                    <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
+                    <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
+                    <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true | bigNumber}}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+            <div class="uk-margin">
+              <ng-template [appInfinityScroll]="internalTransactionScrollState"
+                           (onView)="onScroll('internalTransaction')">
+                <app-loader></app-loader>
+              </ng-template>
+            </div>
+          </ng-container>
+          <ng-template #emptyInternal>
+            <div class="empty">No internal transactions</div>
+          </ng-template>
+        </tab-content>
+      </tab>
+      <tab *ngIf="addr.contract && addr.go20" name="holders">
+        <tab-title>
+          Holders
+        </tab-title>
+        <tab-content>
+          <ng-container *ngIf="token_holders.length; else emptyHolders">
+            <ng-container *ifViewportSize="['small']">
+              <div class="tr-card" *ngFor="let holder of token_holders">
+                <div class="uk-text-truncate">Token holder: <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
+                </div>
+                <div class="uk-text-truncate">Balance (GO): {{holder.balance | weiToGO: false : false | bigNumber}}
+                </div>
+                <div class="uk-text-truncate">Token name: {{holder.token_name}}</div>
+                <div class="uk-text-truncate">Token symbol: {{holder.token_symbol}}</div>
+              </div>
+            </ng-container>
+            <ng-container *ifViewportSize="['medium', 'large']">
+              <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+                  <thead>
+                  <tr>
+                    <th class="uk-width-1-4">Token holder</th>
+                    <th class="uk-width-1-4">Balance (GO)</th>
+                    <th class="uk-width-1-4">Token name</th>
+                    <th class="uk-width-1-4">Token symbol</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let holder of token_holders">
+                    <td class="uk-text-truncate">
+                      <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
+                    </td>
+                    <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true | bigNumber}}</td>
+                    <td class="uk-text-truncate">{{holder.token_name}}</td>
+                    <td class="uk-text-truncate">{{holder.token_symbol}}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+            <div class="uk-margin">
+              <ng-template [appInfinityScroll]="holderScrollState" (onView)="onScroll('holder')">
+                <app-loader></app-loader>
+              </ng-template>
+            </div>
+          </ng-container>
+          <ng-template #emptyHolders>
+            <div class="empty">No holders</div>
+          </ng-template>
+        </tab-content>
+      </tab>
+    </app-tabs>
+  </div>
+</ng-container>
+<ng-template #addressNotFound>
+  <app-info text="Address not found"></app-info>
+</ng-template>
