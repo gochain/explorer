@@ -8,6 +8,7 @@ export class QueryParams {
 
   set limit(value: number) {
     this._limit = value;
+    this.calculateTotalPage();
     this.toStart();
   }
 
@@ -27,7 +28,11 @@ export class QueryParams {
   }
 
   setTotalPage(total: number) {
-    this.totalPage = Math.ceil(total / this._limit);
+    this.total = total;
+  }
+
+  calculateTotalPage() {
+    this.totalPage = Math.ceil(this.total / this._limit);
   }
 
   next() {
