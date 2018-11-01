@@ -107,6 +107,18 @@ func (_Token *TokenCaller) Decimals(opts *bind.CallOpts) (*big.Int, error) {
 	return *ret0, err
 }
 
+// TotalSupply is a free data retrieval call binding the contract method 0x313ce567.
+//
+// Solidity: function totalSupply() constant returns(uint256)
+func (_Token *TokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Token.contract.Call(opts, out, "totalSupply")
+	return *ret0, err
+}
+
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)

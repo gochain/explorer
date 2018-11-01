@@ -12,25 +12,15 @@ type Config struct {
 	Logs         bool
 }
 
-type tokenBalance struct {
-	Contract common.Address
-	Wallet   common.Address
-	Name     string
-	Symbol   string
-	Balance  *big.Int
-	ETH      *big.Int
-	Decimals int64
-	Block    int64
-	ctx      context.Context
-}
-
-type tokenBalanceJson struct {
-	Contract string `json:"token,omitempty"`
-	Wallet   string `json:"wallet,omitempty"`
-	Name     string `json:"name,omitempty"`
-	Symbol   string `json:"symbol,omitempty"`
-	Balance  string `json:"balance"`
-	ETH      string `json:"eth_balance,omitempty"`
-	Decimals int64  `json:"decimals,omitempty"`
-	Block    int64  `json:"block,omitempty"`
+type TokenDetails struct {
+	Contract    common.Address
+	Wallet      common.Address
+	Name        string
+	Symbol      string
+	Balance     *big.Int
+	TotalSupply *big.Int
+	ETH         *big.Int
+	Decimals    int64
+	Block       int64
+	ctx         context.Context
 }

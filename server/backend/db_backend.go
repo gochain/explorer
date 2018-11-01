@@ -258,7 +258,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenName, tokenSymbol string, contract, go20 bool) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	log.Info().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
@@ -275,8 +275,10 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 	addressM := &models.Address{Address: address,
 		BalanceWei:    balance.String(),
 		LastUpdatedAt: time.Now(),
-		TokenName:     tokenName,
-		TokenSymbol:   tokenSymbol,
+		TokenName:     token.Name,
+		TokenSymbol:   token.Symbol,
+		Decimals:      token.Decimals,
+		TotalSupply:   token.TotalSupply.String(),
 		Contract:      contract,
 		GO20:          go20,
 		BalanceFloat:  balanceGoFloat,
@@ -293,16 +295,14 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, tokenN
 
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, balance *big.Int, tokenName, tokenSymbol string) *models.TokenHolder {
-	balanceInt := new(big.Int).Div(balance, wei) //converting to GO from wei
-	log.Info().Str("contractAddress", contractAddress).Str("balance", balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenDetails) *models.TokenHolder {
+	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
+	log.Info().Str("contractAddress", contractAddress).Str("balance", token.Balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
 	tokenHolder := &models.TokenHolder{
 		ContractAddress:    contractAddress,
 		TokenHolderAddress: tokenHolderAddress,
-		Balance:            balance.String(),
+		Balance:            token.Balance.String(),
 		UpdatedAt:          time.Now(),
-		TokenName:          tokenName,
-		TokenSymbol:        tokenSymbol,
 		BalanceInt:         balanceInt.Int64()}
 	_, err := self.mongo.C("TokensHolders").Upsert(bson.M{"contract_address": contractAddress, "token_holder_address": tokenHolderAddress}, tokenHolder)
 	if err != nil {

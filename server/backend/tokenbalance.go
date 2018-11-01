@@ -59,34 +59,35 @@ func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
 		conn:   ethConn,
 	}
 }
-func (rpc *TokenBalance) GetTokenBalance(contract, wallet string) (*tokenBalance, error) {
+func (rpc *TokenBalance) GetTokenBalance(contract, wallet string) (*TokenDetails, error) {
 	var err error
 	if rpc.config == nil || rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
-	tb := &tokenBalance{
-		Contract: common.HexToAddress(contract),
-		Wallet:   common.HexToAddress(wallet),
-		Decimals: 0,
-		Balance:  big.NewInt(0),
-		ctx:      context.TODO(),
+	tb := &TokenDetails{
+		Contract:    common.HexToAddress(contract),
+		Wallet:      common.HexToAddress(wallet),
+		Decimals:    0,
+		TotalSupply: big.NewInt(0),
+		Balance:     big.NewInt(0),
+		ctx:         context.TODO(),
 	}
 	err = tb.query(rpc.conn)
 	return tb, err
 }
 
-func (tb *tokenBalance) ETHString() string {
+func (tb *TokenDetails) ETHString() string {
 	return BigIntString(tb.ETH, 18)
 }
 
-func (tb *tokenBalance) BalanceString() string {
+func (tb *TokenDetails) BalanceString() string {
 	if tb.Decimals == 0 {
 		return "0"
 	}
 	return BigIntString(tb.Balance, tb.Decimals)
 }
 
-func (tb *tokenBalance) query(conn *ethclient.Client) error {
+func (tb *TokenDetails) query(conn *ethclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
@@ -107,6 +108,14 @@ func (tb *tokenBalance) query(conn *ethclient.Client) error {
 		return err
 	}
 	tb.Decimals = decimals.Int64()
+
+	totalSupply, err := token.TotalSupply(nil)
+	if err != nil {
+		log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
+		tb.TotalSupply = big.NewInt(0)
+		return err
+	}
+	tb.TotalSupply = totalSupply
 
 	tb.ETH, err = conn.BalanceAt(tb.ctx, tb.Wallet, nil)
 	if err != nil {
@@ -140,20 +149,6 @@ func symbolFix(contract string) string {
 		return "EOS"
 	}
 	return "MISSING"
-}
-
-func (tb *tokenBalance) ToJSON() tokenBalanceJson {
-	jsonData := tokenBalanceJson{
-		Contract: tb.Contract.String(),
-		Wallet:   tb.Wallet.String(),
-		Name:     tb.Name,
-		Symbol:   tb.Symbol,
-		Balance:  tb.BalanceString(),
-		ETH:      tb.ETHString(),
-		Decimals: tb.Decimals,
-		Block:    tb.Block,
-	}
-	return jsonData
 }
 
 func BigIntString(balance *big.Int, decimals int64) string {

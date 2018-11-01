@@ -212,38 +212,36 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			}
 			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
 			contractData := string(contractDataArray[:])
-			var tokenName, tokenSymbol string
+			var token = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 			go20 := false
 			contract := false
 			if contractData != "" {
 				contract = true
 				if updateContracts {
-					go20 = true
 					internalTxs := importer.GetInternalTransactions(normalizedAddress)
 					for _, itx := range internalTxs {
 						log.Info().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
 						importer.ImportInternalTransaction(normalizedAddress, itx)
-						res, err := importer.GetTokenBalance(normalizedAddress, itx.To.String())
-						tokenName = res.Name
-						tokenSymbol = res.Symbol
+						token, err = importer.GetTokenBalance(normalizedAddress, itx.To.String())
 						if err != nil {
 							log.Info().Err(err).Str("Address", itx.To.String()).Msg("Cannot GetTokenBalance, in internal transaction")
 							go20 = false
 							continue
 						}
-						importer.ImportTokenHolder(normalizedAddress, itx.To.String(), res.Balance, tokenName, tokenSymbol)
-						res, err = importer.GetTokenBalance(normalizedAddress, itx.From.String())
+						importer.ImportTokenHolder(normalizedAddress, itx.To.String(), token)
+						token, err = importer.GetTokenBalance(normalizedAddress, itx.From.String())
 						if err != nil {
 							log.Info().Err(err).Str("Address", itx.From.String()).Msg("Cannot GetTokenBalance, in internal transaction")
 							go20 = false
 							continue
 						}
-						importer.ImportTokenHolder(normalizedAddress, itx.From.String(), res.Balance, tokenName, tokenSymbol)
+						importer.ImportTokenHolder(normalizedAddress, itx.From.String(), token)
 					}
+					go20 = len(internalTxs) > 0
 				}
 			}
 			log.Info().Str("Balance of the address:", normalizedAddress).Int("Index", index).Int("Total number", len(addresses)).Str("Balance", balance.String()).Msg("updateAddresses")
-			importer.ImportAddress(normalizedAddress, balance, tokenName, tokenSymbol, contract, go20)
+			importer.ImportAddress(normalizedAddress, balance, token, contract, go20)
 		}
 		lastUpdatedAt = time.Now()
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
