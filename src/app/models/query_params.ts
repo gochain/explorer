@@ -29,6 +29,7 @@ export class QueryParams {
 
   setTotalPage(total: number) {
     this.total = total;
+    this.calculateTotalPage();
   }
 
   calculateTotalPage() {
