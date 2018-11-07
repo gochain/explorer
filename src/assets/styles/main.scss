@@ -211,11 +211,6 @@ body {
   font-weight: 500;
 }
 
-.table-holder {
-  border: 1px solid;
-  padding: 5px 10px;
-}
-
 /*
 th, td {
   border: 1px solid #c1ccd1;
@@ -224,4 +219,17 @@ th, td {
 .text-break {
   word-break: break-all;
   white-space: unset;
+}
+
+.table {
+  &--sm {
+    td, th {
+      padding: 6px 12px !important;
+    }
+  }
+
+  &__holder {
+    border: 1px solid;
+    padding: 10px;
+  }
 }
