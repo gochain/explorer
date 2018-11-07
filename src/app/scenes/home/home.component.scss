@@ -1,3 +1,19 @@
 .line-end {
-    min-width: 200px;
+  min-width: 200px;
+}
+
+.stat {
+  display: flex;
+  flex-wrap: wrap;
+
+  &__item {
+    background: #008b8b;
+    padding: 5px 15px;
+    font-size: 12px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    border: 1px solid;
+    color: #fff !important;
+  }
 }

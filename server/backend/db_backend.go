@@ -463,13 +463,27 @@ func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
 	return addresses
 }
 func (self *MongoBackend) getStats() *models.Stats {
-	numOfBlocks, err := self.mongo.C("Blocks").Find(nil).Count()
+	// not used
+	/*numOfBlocks, err := self.mongo.C("Blocks").Find(nil).Count()
 	if err != nil {
 		log.Debug().Err(err).Msg("GetStats num of Blocks")
-	}
-	numOfTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
+	}*/
+	numOfTotalTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
 	if err != nil {
-		log.Debug().Err(err).Msg("GetStats num of Transactions")
+		log.Debug().Err(err).Msg("GetStats num of Total Transactions")
 	}
-	return &models.Stats{NumberOfBlocks: int64(numOfBlocks), NumberOfTransactions: int64(numOfTransactions)}
+	numOfLastWeekTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -7)}}).Count()
+	if err !=nil {
+		log.Debug().Err(err).Msg("GetStats num of Last week Transactions")
+	}
+	numOf24HoursTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -1)}}).Count()
+	if err !=nil {
+		log.Debug().Err(err).Msg("GetStats num of 24H Transactions")
+	}
+	return &models.Stats{
+		// NumberOfBlocks: int64(numOfBlocks),
+		NumberOfTotalTransactions: int64(numOfTotalTransactions),
+		NumberOfLastWeekTransactions: int64(numOfLastWeekTransactions),
+		NumberOf24HoursTransactions: int64(numOf24HoursTransactions),
+	}
 }
