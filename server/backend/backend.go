@@ -92,6 +92,9 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 
 //METHODS USED IN GRABBER
 
+func (self *Backend) UpdateStats() {
+	self.mongo.updateStats()
+}
 func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
 	return self.extendedEthClient.genesisAlloc()
 }
