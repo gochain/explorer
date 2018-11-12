@@ -26,6 +26,8 @@ var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
 
+const defaultFetchLimit = 500
+
 func parseSkipLimit(r *http.Request) (int, int) {
 	limitS := r.URL.Query().Get("limit")
 	skipS := r.URL.Query().Get("skip")
@@ -42,8 +44,8 @@ func parseSkipLimit(r *http.Request) (int, int) {
 		skip = 0
 	}
 
-	if limit > 500 || limit <= 0 {
-		limit = 500
+	if limit <= 0 {
+		limit = defaultFetchLimit
 	}
 	return skip, limit
 }
