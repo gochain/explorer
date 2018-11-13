@@ -15,7 +15,7 @@ import {Stats} from '../../models/stats.model';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  stats$: Observable<Stats> = interval(120000).pipe(
+  stats$: Observable<Stats> = interval(300000).pipe(
     startWith(0),
     mergeMap(() => this._commonService.getStats())
   );
