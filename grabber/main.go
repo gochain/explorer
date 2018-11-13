@@ -55,6 +55,7 @@ func main() {
 		zerolog.SetGlobalLevel(level)
 		importer := backend.NewBackend(mongoUrl, rpcUrl)
 		go listener(rpcUrl, importer)
+		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)
 		go updateAddresses(rpcUrl, true, importer) // update contracts
 		updateAddresses(rpcUrl, false, importer)   // update only addresses
@@ -244,6 +245,14 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			importer.ImportAddress(normalizedAddress, balance, token, contract, go20)
 		}
 		lastUpdatedAt = time.Now()
+		time.Sleep(300 * time.Second) //sleep for 5 minutes
+	}
+}
+func updateStats(importer *backend.Backend) {
+	for {
+		log.Info().Msg("Updating stats")
+		importer.UpdateStats()
+		log.Info().Msg("Updating stats finished")
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
 	}
 }

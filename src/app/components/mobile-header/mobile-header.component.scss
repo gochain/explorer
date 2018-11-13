@@ -27,8 +27,9 @@
   justify-content: center;
   position: fixed;
   width: 100%;
-  
   display: none;
+  z-index: 2;
+  
   &.--active {
     display: block;
   }

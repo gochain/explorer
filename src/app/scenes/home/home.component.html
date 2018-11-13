@@ -1,11 +1,20 @@
-<div *ngIf="stats$ | async as stats">
-  <p>
-    Total transactions: {{stats.total_transactions_count | bigNumber}}
-  </p>
-</div>
+<ng-container *ngIf="stats$ | async as stats">
+  <h4 class="uk-heading-bullet">Transaction count <span class="sm">(updated every 5 minutes)</span></h4>
+  <div class="stat">
+    <div class="stat__item">
+      Total: {{stats.total_transactions_count | bigNumber}}
+    </div>
+    <div class="stat__item">
+      Last 7 days: {{stats.last_week_transactions_count | bigNumber}}
+    </div>
+    <div class="stat__item">
+      Last 24 hours: {{stats['24hours_transactions_count'] | bigNumber}}
+    </div>
+  </div>
+</ng-container>
 <h3 class="uk-heading-bullet">Recent Blocks</h3>
 <ng-container *ifViewportSize="['small']">
-  <div class="uk-margin" *ngIf="recentBlocks">
+  <div class="uk-margin" *ngIf="recentBlocks$ | async as recentBlocks">
     <div class="tr-card" *ngFor="let block of recentBlocks.blocks">
       <div>Block: <a routerLink="/block/{{block.number}}">{{block.number}}</a></div>
       <div>Created: {{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})</div>
@@ -16,7 +25,7 @@
 </ng-container>
 <ng-container *ifViewportSize="['medium', 'large']">
   <div class="uk-overflow-auto uk-margin">
-    <table *ngIf="recentBlocks" class="uk-table uk-table-small uk-table-striped">
+    <table *ngIf="recentBlocks$ | async as recentBlocks" class="uk-table uk-table-small uk-table-striped">
       <thead>
       <tr>
         <th class="uk-text-nowrap uk-width-1-4 uk-width-1-5@l">Block</th>

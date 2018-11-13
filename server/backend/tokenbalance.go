@@ -213,7 +213,8 @@ func (rpc *TokenBalance) getInternalTransactions(address string) []TransferEvent
 		var transferEvent TransferEvent
 		err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
 		if err != nil {
-			log.Info().Msg("Failed to unpack event")
+			log.Info().Str("Address", address).Msg("Failed to unpack event")
+			continue
 		}
 		transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
 		transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())

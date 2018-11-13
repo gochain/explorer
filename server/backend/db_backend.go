@@ -132,6 +132,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"-created_at"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -186,6 +191,11 @@ func (self *MongoBackend) createIndexes() {
 	}
 
 	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
+	err = self.mongo.C("Stats").EnsureIndex(mgo.Index{Key: []string{"-updated_at"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
@@ -462,14 +472,40 @@ func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
 	}
 	return addresses
 }
+func (self *MongoBackend) updateStats() {
+	numOfTotalTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
+	if err != nil {
+		log.Debug().Err(err).Msg("GetStats num of Total Transactions")
+	}
+	numOfLastWeekTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -7)}}).Count()
+	if err != nil {
+		log.Debug().Err(err).Msg("GetStats num of Last week Transactions")
+	}
+	numOf24HoursTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -1)}}).Count()
+	if err != nil {
+		log.Debug().Err(err).Msg("GetStats num of 24H Transactions")
+	}
+	stats := &models.Stats{
+		NumberOfTotalTransactions:    int64(numOfTotalTransactions),
+		NumberOfLastWeekTransactions: int64(numOfLastWeekTransactions),
+		NumberOf24HoursTransactions:  int64(numOf24HoursTransactions),
+		UpdatedAt:                    time.Now(),
+	}
+	err = self.mongo.C("Stats").Insert(stats)
+	if err != nil {
+		log.Debug().Err(err).Msg("Failes to update stats")
+	}
+}
 func (self *MongoBackend) getStats() *models.Stats {
-	numOfBlocks, err := self.mongo.C("Blocks").Find(nil).Count()
+	var s *models.Stats
+	err := self.mongo.C("Stats").Find(nil).Sort("-updated_at").One(&s)
 	if err != nil {
-		log.Debug().Err(err).Msg("GetStats num of Blocks")
+		log.Debug().Err(err).Msg("Cannot get stats")
+		s = &models.Stats{
+			NumberOfTotalTransactions:    0,
+			NumberOfLastWeekTransactions: 0,
+			NumberOf24HoursTransactions:  0,
+		}
 	}
-	numOfTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
-	if err != nil {
-		log.Debug().Err(err).Msg("GetStats num of Transactions")
-	}
-	return &models.Stats{NumberOfBlocks: int64(numOfBlocks), NumberOfTransactions: int64(numOfTransactions)}
+	return s
 }
