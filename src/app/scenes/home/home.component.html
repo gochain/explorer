@@ -1,5 +1,5 @@
 <ng-container *ngIf="stats$ | async as stats">
-  <h4 class="uk-heading-bullet">Transaction count</h4>
+  <h4 class="uk-heading-bullet">Transaction count <span class="sm">(updated every 5 minutes)</span></h4>
   <div class="stat">
     <div class="stat__item">
       Total: {{stats.total_transactions_count | bigNumber}}
