@@ -5,13 +5,13 @@
   branch = "master"
   name = "github.com/aristanetworks/goarista"
   packages = ["monotime"]
-  revision = "18b896026201d8e1758468d9c5d5a558c69c5e9b"
+  revision = "5faa74ffbed7096292069fdcd0eae96146a3158a"
 
 [[projects]]
   branch = "master"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
-  revision = "f899737d7f2764dc13e4d01ff00108ec58f766a9"
+  revision = "67e573d211ace594f1366b4ce9d39726c4b19bd0"
 
 [[projects]]
   name = "github.com/go-chi/chi"
@@ -19,8 +19,8 @@
     ".",
     "middleware"
   ]
-  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
-  version = "v3.3.2"
+  revision = "b5294d10673813fac8558e7f47242bc9e61b4c25"
+  version = "v3.3.3"
 
 [[projects]]
   name = "github.com/go-chi/cors"
@@ -31,8 +31,8 @@
 [[projects]]
   name = "github.com/go-stack/stack"
   packages = ["."]
-  revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
-  version = "v1.7.0"
+  revision = "2fee6af1a9795aafbe0253a0cfbdf668e1fb8a9a"
+  version = "v1.8.0"
 
 [[projects]]
   name = "github.com/gochain-io/gochain"
@@ -62,8 +62,8 @@
     "rpc",
     "trie"
   ]
-  revision = "4c63d0c572eeb8109f8cd82d2c513ee34dacda41"
-  version = "2.1.42"
+  revision = "162344e3a07faa2c6117d2f5ae23a56b947ecabe"
+  version = "2.1.43"
 
 [[projects]]
   branch = "master"
@@ -72,10 +72,16 @@
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/pborman/uuid"
   packages = ["."]
-  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
-  version = "v1.1"
+  revision = "adf5a7427709b9deb95d29d3fa8a2bf9cfd388f1"
+  version = "v1.2"
 
 [[projects]]
   branch = "master"
@@ -84,19 +90,19 @@
     ".",
     "exp"
   ]
-  revision = "e2704e165165ec55d062f5919b4b29494e9fa790"
+  revision = "3113b8401b8a98917cde58f8bbd42a1b1c03b1fd"
 
 [[projects]]
   branch = "master"
   name = "github.com/rjeczalik/notify"
   packages = ["."]
-  revision = "4e54e7fd043e865c50bda93359fb78813a8d165b"
+  revision = "352c463f90a00c0cf83b1148f11ada779308f411"
 
 [[projects]]
   name = "github.com/rs/cors"
   packages = ["."]
-  revision = "3fb1b69b103a84de38a19c3c6ec073dd6caa4d3f"
-  version = "v1.5.0"
+  revision = "9a47f48565a795472d43519dd49aac781f3034fb"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/rs/zerolog"
@@ -106,8 +112,8 @@
     "internal/json",
     "log"
   ]
-  revision = "77db4b4f350e31be66a57c332acb7721cf9ff9bb"
-  version = "v1.8.0"
+  revision = "848482bc3dbeed6a47eb8f8cec0d4484795b1314"
+  version = "v1.10.3"
 
 [[projects]]
   branch = "master"
@@ -126,7 +132,7 @@
     "leveldb/table",
     "leveldb/util"
   ]
-  revision = "ae2bd5eed72d46b28834ec3f60db3a3ebedd8dbd"
+  revision = "f9080354173f192dfc8821931eacf9cfd6819253"
 
 [[projects]]
   name = "github.com/urfave/cli"
@@ -141,19 +147,19 @@
     "pbkdf2",
     "scrypt"
   ]
-  revision = "614d502a4dac94afa3a6ce146bd1736da82514c6"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["websocket"]
-  revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "3b58ed4ad3395d483fc92d5d14123ce2c3581fec"
+  revision = "66b7b1311ac80bbafcd2daeef9a5e6e2cd1e2399"
 
 [[projects]]
   branch = "master"
@@ -161,9 +167,10 @@
   packages = [
     "go/ast/astutil",
     "imports",
-    "internal/fastwalk"
+    "internal/fastwalk",
+    "internal/gopathwalk"
   ]
-  revision = "ef27ca3af5e1f1424fdf755673c150c59c9fbe9d"
+  revision = "f87c222f148786695d2ee5761b06751bb9211f61"
 
 [[projects]]
   name = "gopkg.in/fatih/set.v0"
@@ -198,6 +205,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c8d86847b6cf779e19bbcbd62c05e1eb4e346bbcd96550bb5654c7582581ca09"
+  inputs-digest = "b2ce3b4467aeab22ed18966cebd45ffdada4b9f2fb65e36c443dedd22261b162"
   solver-name = "gps-cdcl"
   solver-version = 1

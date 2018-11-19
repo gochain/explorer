@@ -10,4 +10,5 @@ export class Transaction {
   input_data: string;
   from: string;
   to: string;
+  contract_address: string;
 }

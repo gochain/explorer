@@ -9,8 +9,14 @@
         <div>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</div>
         <div class="tr-title">From:</div>
         <div><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></div>
-        <div class="tr-title">To:</div>
-        <div><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></div>
+        <div *ngIf="tx.to">
+          <div class="tr-title">To:</div>
+          <div><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></div>
+        </div>
+        <div *ngIf="!tx.to">
+          <div class="tr-title">Contract address:</div>
+          <div><a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a></div>
+        </div>>
         <div class="tr-title">Value:</div>
         <div>{{tx.value | weiToGO | bigNumber}}</div>
         <div class="tr-title">Gas price:</div>
@@ -26,7 +32,9 @@
         <div class="tr-title">Nonce:</div>
         <div>{{tx.nonce}}</div>
         <div class="tr-title">Input data:</div>
-        <div><pre class="code">{{tx.input_data}}</pre></div>
+        <div>
+          <pre class="code">{{tx.input_data}}</pre>
+        </div>
       </div>
     </ng-container>
     <ng-container *ifViewportSize="['medium', 'large']">
@@ -46,10 +54,16 @@
               <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
             </td>
           </tr>
-          <tr>
+          <tr *ngIf="tx.to">
             <td>To</td>
             <td>
               <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+            </td>
+          </tr>
+          <tr *ngIf="!tx.to">
+            <td>Contract address</td>
+            <td>
+              <a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>
             </td>
           </tr>
           <tr>

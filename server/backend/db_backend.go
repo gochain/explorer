@@ -445,6 +445,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 			log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
 		}
 		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+		c.ContractAddress = receipt.ContractAddress.String()
 		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
 	}
 	return &c
