@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
 
+	"encoding/json"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -131,6 +132,10 @@ func main() {
 			r.Get("/{address}/transactions", getAddressTransactions)
 			r.Get("/{address}/holders", getTokenHolders)
 			r.Get("/{address}/internal_transactions", getInternalTransactions)
+			r.Get("/{address}/contract", getContract)
+		})
+		r.Route("/api/verify", func(r chi.Router) {
+			r.Post("/", compileContract)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -251,6 +256,23 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, skip, limit)
 	writeJSON(w, http.StatusOK, internalTransactions)
+}
+
+func getContract(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	contract := backendInstance.GetContract(contractAddress)
+	writeJSON(w, http.StatusOK, contract)
+}
+
+func compileContract(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var contractData *models.Contract
+	err := decoder.Decode(&contractData)
+	if err != nil {
+		return
+	}
+	result := backendInstance.CompileContract(contractData)
+	writeJSON(w, http.StatusCreated, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

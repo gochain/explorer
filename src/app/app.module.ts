@@ -2,7 +2,7 @@
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {RouterModule} from '@angular/router';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 /*COMPONENTS*/
@@ -21,6 +21,8 @@ import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.componen
 import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
 import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
+import {InfoComponent} from './components/info/info.component';
+import {ContractComponent} from './scenes/contract/contract.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -38,7 +40,6 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
-import {InfoComponent} from './components/info/info.component';
 
 
 @NgModule({
@@ -60,12 +61,14 @@ import {InfoComponent} from './components/info/info.component';
     MobileHeaderComponent,
     MobileMenuComponent,
     InfoComponent,
+    ContractComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     PipesModule,
     DirectiveModule,

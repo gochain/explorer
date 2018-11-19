@@ -26,5 +26,9 @@ export class ApiService {
       params
     });
   }
+
+  post(url: string, data?: any): Observable<any> {
+    return this.http.post<any>(this.apiURL + url, data);
+  }
 }
 

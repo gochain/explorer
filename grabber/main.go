@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"time"
 
+	"encoding/hex"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/ethclient"
@@ -218,6 +219,8 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			contract := false
 			if contractData != "" {
 				contract = true
+				byteCode := hex.EncodeToString(contractDataArray)
+				importer.ImportContract(normalizedAddress, byteCode)
 				if updateContracts {
 					internalTxs := importer.GetInternalTransactions(normalizedAddress)
 					for _, itx := range internalTxs {

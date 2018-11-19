@@ -7,6 +7,7 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
+	"github.com/gochain-io/gochain/common/compiler"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog/log"
@@ -65,6 +66,9 @@ func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int
 func (self *Backend) GetInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
 	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), skip, limit)
 }
+func (self *Backend) GetContract(contractAddress string) *models.Contract {
+	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
+}
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
 	return self.mongo.getLatestsBlocks(skip, limit)
 }
@@ -88,6 +92,22 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 
 func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
+}
+
+func (self *Backend) CompileContract(contractData *models.Contract) *models.Contract {
+	contract := self.GetContract(contractData.Address)
+	if contract == nil {
+		return contract
+	}
+	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
+	if err != nil {
+		return contract
+	}
+	if compileData[contractData.ContractName].Code == contract.Bytecode {
+		contract.Valid = true
+		self.mongo.updateContract(contract)
+	}
+	return contract
 }
 
 //METHODS USED IN GRABBER
@@ -130,4 +150,7 @@ func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress strin
 }
 func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
 	return self.mongo.importInternalTransaction(contractAddress, transferEvent)
+}
+func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
+	return self.mongo.importContract(contractAddress, byteCode)
 }

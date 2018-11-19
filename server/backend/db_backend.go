@@ -340,6 +340,19 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 	return internalTransaction
 }
 
+func (self *MongoBackend) importContract(contractAddress string, byteCode string) *models.Contract {
+	contract := &models.Contract{
+		Address:  contractAddress,
+		Bytecode: byteCode,
+	}
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address, "code": contract.Bytecode}, contract)
+	if err != nil {
+		log.Fatal().Err(err).Msg("importContract")
+	}
+
+	return contract
+}
+
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
@@ -462,6 +475,24 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, sk
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getInternalTransactionsList")
 	}
 	return internalTransactionsList
+}
+
+func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
+	var contract *models.Contract
+	err := self.mongo.C("Contracts").Find(bson.M{"address": contractAddress}).One(&contract)
+	if err != nil {
+		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getContract")
+	}
+	return contract
+}
+
+func (self *MongoBackend) updateContract(contract *models.Contract) bool {
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
+	if err != nil {
+		log.Fatal().Err(err).Msg("updateContract")
+		return false
+	}
+	return true
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
