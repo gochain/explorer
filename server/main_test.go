@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/gochain-io/explorer/server/backend"
@@ -12,7 +13,11 @@ import (
 var testBackend = backend.NewBackend("127.0.0.1:27017", "https://rpc.gochain.io")
 
 func TestImportAddress(t *testing.T) {
+	var token = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
+
 	addrHash := "0x0000000000000000000000000000000000000000"
+
+	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, false)
 	address := testBackend.GetAddressByHash(addrHash)
 
 	if address.BalanceWei != "1000" {
