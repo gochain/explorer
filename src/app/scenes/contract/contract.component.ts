@@ -19,10 +19,10 @@ export class ContractComponent implements OnInit {
 
   form: FormGroup = this.fb.group({
     address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
-    contractName: [''],
-    compilerVersion: ['', Validators.required],
-    optimization: [false],
-    sourceCode: ['', Validators.required],
+    contract_name: [''],
+    compiler_version: ['', Validators.required],
+    optimization: [true, Validators.required],
+    source_code: ['', Validators.required],
     abi: [''],
   });
 
@@ -33,11 +33,11 @@ export class ContractComponent implements OnInit {
     this.contactService.getCompilersList().subscribe((value: any) => {
       this.compilers = value.builds.map((item: Compiler) => {
         if (item.prerelease && item.prerelease.length > 0) {
-          return item.version + '-' + item.prerelease;
+          return item.version + '-' + item.prerelease + '+' +  item.build;
         } else {
           return item.version;
         }
-      });
+      }).reverse();
     });
   }
 

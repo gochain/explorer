@@ -2,11 +2,11 @@ package models
 
 type Contract struct {
 	Address         string `json:"address" bson:"address"`
-	Bytecode        string `json:"byteCode" bson:"byteCode"`
+	Bytecode        string `json:"byte_code" bson:"byte_code"`
 	Valid           bool   `json:"valid" bson:"valid"`
-	ContractName    string `json:"contractName" bson:"contractName"`
-	CompilerVersion string `json:"compilerVersion" bson:"compilerVersion"`
+	ContractName    string `json:"contract_name" bson:"contract_name"`
+	CompilerVersion string `json:"compiler_version" bson:"compiler_version"`
 	Optimization    bool   `json:"optimization" bson:"optimization"`
-	SourceCode      string `json:"sourceCode" bson:"sourceCode"`
+	SourceCode      string `json:"source_code" bson:"source_code"`
 	Abi             string `json:"abi" bson:"abi"`
 }

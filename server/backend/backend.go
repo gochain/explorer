@@ -11,6 +11,7 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/ethclient"
 	"github.com/rs/zerolog/log"
+	"regexp"
 )
 
 type Backend struct {
@@ -94,18 +95,27 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
 }
 
-func (self *Backend) CompileContract(contractData *models.Contract) *models.Contract {
+func (self *Backend) VerifyContract(contractData *models.Contract) *models.Contract {
 	contract := self.GetContract(contractData.Address)
 	if contract == nil {
-		return contract
+		return nil
 	}
 	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
 	if err != nil {
 		return contract
 	}
-	if compileData[contractData.ContractName].Code == contract.Bytecode {
+	// compiler gives map with keys starting with <stdin>:
+	key := "<stdin>:" + contractData.ContractName
+	byteCodeFromSource := compileData[key].Code
+	// removing 0x
+	reg := regexp.MustCompile(`^0x`)
+	finalCode := reg.ReplaceAllString(byteCodeFromSource, "")
+	if finalCode == contract.Bytecode {
 		contract.Valid = true
-		self.mongo.updateContract(contract)
+		result := self.mongo.updateContract(contract)
+		if !result {
+			contract.Valid = false
+		}
 	}
 	return contract
 }

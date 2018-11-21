@@ -17,6 +17,7 @@ import (
 	"github.com/urfave/cli"
 
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -135,7 +136,7 @@ func main() {
 			r.Get("/{address}/contract", getContract)
 		})
 		r.Route("/api/verify", func(r chi.Router) {
-			r.Post("/", compileContract)
+			r.Post("/", verifyContract)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -264,15 +265,21 @@ func getContract(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, contract)
 }
 
-func compileContract(w http.ResponseWriter, r *http.Request) {
+func verifyContract(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var contractData *models.Contract
 	err := decoder.Decode(&contractData)
 	if err != nil {
+		errorResponse(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	result := backendInstance.CompileContract(contractData)
-	writeJSON(w, http.StatusCreated, result)
+	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
+		err := errors.New("required field is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	result := backendInstance.VerifyContract(contractData)
+	writeJSON(w, http.StatusAccepted, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

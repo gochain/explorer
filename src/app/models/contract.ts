@@ -1,10 +1,10 @@
 export class Contract {
   address: string;
-  byteCode: string;
+  byte_code: string;
   valid: boolean;
   contractName: string;
-  compilerVersion: string;
+  compile_version: string;
   optimization: boolean;
-  sourceCode: string;
+  source_code: string;
   abi: string;
 }
