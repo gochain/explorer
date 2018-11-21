@@ -36,7 +36,7 @@ type MongoBackend struct {
 }
 
 // New create new rpc client with given url
-func NewMongoClient(host, rpcUrl string) *MongoBackend {
+func NewMongoClient(host, rpcUrl, dbName string) *MongoBackend {
 	client, err := ethclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("main")
@@ -53,7 +53,7 @@ func NewMongoClient(host, rpcUrl string) *MongoBackend {
 
 	importer := new(MongoBackend)
 
-	importer.mongo = session.DB("blocks")
+	importer.mongo = session.DB(dbName)
 	importer.ethClient = client
 	importer.createIndexes()
 
@@ -509,4 +509,16 @@ func (self *MongoBackend) getStats() *models.Stats {
 		}
 	}
 	return s
+}
+
+func (self *MongoBackend) cleanUp() {
+	collectionNames, err := self.mongo.CollectionNames()
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot get list of collections")
+		return
+	}
+	for _, collectionName := range collectionNames {
+		log.Info().Str("collection name", collectionName).Msg("cleanUp")
+		self.mongo.C(collectionName).RemoveAll(nil)
+	}
 }
