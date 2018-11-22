@@ -5,31 +5,32 @@ import (
 	"math/big"
 	"time"
 
+	"errors"
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/common/compiler"
 	"github.com/gochain-io/gochain/core/types"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
 	"regexp"
 )
 
 type Backend struct {
 	mongo             *MongoBackend
-	ethClient         *ethclient.Client
+	goClient          *goclient.Client
 	extendedEthClient *EthRPC
 	tokenBalance      *TokenBalance
 }
 
 func NewBackend(mongoUrl, rpcUrl string) *Backend {
-	client, err := ethclient.Dial(rpcUrl)
+	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create eth client")
 	}
 	exClient := NewEthClient(rpcUrl)
 	mongoBackend := NewMongoClient(mongoUrl, rpcUrl)
 	importer := new(Backend)
-	importer.ethClient = client
+	importer.goClient = client
 	importer.extendedEthClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
@@ -81,7 +82,7 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
 	if block == nil {
 		log.Info().Int64("blockNumber", number).Msg("cannot get block from db, importing it")
-		blockEth, err := self.ethClient.BlockByNumber(context.Background(), big.NewInt(number))
+		blockEth, err := self.goClient.BlockByNumber(context.Background(), big.NewInt(number))
 		if err != nil {
 			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
 			return nil
@@ -95,17 +96,23 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
 }
 
-func (self *Backend) VerifyContract(contractData *models.Contract) *models.Contract {
+func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Contract, error) {
 	contract := self.GetContract(contractData.Address)
 	if contract == nil {
-		return nil
+		err := errors.New("contract with given address not found")
+		return nil, err
 	}
 	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
 	if err != nil {
-		return contract
+		err := errors.New("error occurred while compiling source code")
+		return nil, err
 	}
 	// compiler gives map with keys starting with <stdin>:
 	key := "<stdin>:" + contractData.ContractName
+	if _, ok := compileData[key]; !ok {
+		err := errors.New("invalid contract name")
+		return nil, err
+	}
 	byteCodeFromSource := compileData[key].Code
 	// removing 0x
 	reg := regexp.MustCompile(`^0x`)
@@ -114,10 +121,11 @@ func (self *Backend) VerifyContract(contractData *models.Contract) *models.Contr
 		contract.Valid = true
 		result := self.mongo.updateContract(contract)
 		if !result {
-			contract.Valid = false
+			err := errors.New("error occurred while processing data")
+			return nil, err
 		}
 	}
-	return contract
+	return contract, nil
 }
 
 //METHODS USED IN GRABBER

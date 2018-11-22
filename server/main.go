@@ -11,7 +11,7 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
@@ -23,7 +23,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-var ethClient *ethclient.Client
+var goClient *goclient.Client
 var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
@@ -270,7 +270,7 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 	var contractData *models.Contract
 	err := decoder.Decode(&contractData)
 	if err != nil {
-		errorResponse(w, http.StatusUnprocessableEntity, err)
+		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
 	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
@@ -278,7 +278,11 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	result := backendInstance.VerifyContract(contractData)
+	result, err := backendInstance.VerifyContract(contractData)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
 	writeJSON(w, http.StatusAccepted, result)
 }
 

@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/gochain-io/gochain"
-  version = "2.1.43"
+  version = "2.2.16"
 
 [[constraint]]
   name = "github.com/rs/zerolog"

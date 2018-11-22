@@ -11,13 +11,13 @@ import (
 	"github.com/gochain-io/gochain"
 	"github.com/gochain-io/gochain/accounts/abi"
 	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
 )
 
 type TokenBalance struct {
 	url     string
-	conn    *ethclient.Client
+	conn    *goclient.Client
 	config  *Config
 	VERSION string
 }
@@ -42,7 +42,7 @@ func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
 	if c.GethLocation == "" {
 		log.Fatal().Msg("geth endpoint has not been set")
 	}
-	ethConn, err := ethclient.Dial(c.GethLocation)
+	ethConn, err := goclient.Dial(c.GethLocation)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
@@ -87,7 +87,7 @@ func (tb *TokenDetails) BalanceString() string {
 	return BigIntString(tb.Balance, tb.Decimals)
 }
 
-func (tb *TokenDetails) query(conn *ethclient.Client) error {
+func (tb *TokenDetails) query(conn *goclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)

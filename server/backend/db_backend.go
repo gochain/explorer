@@ -15,7 +15,7 @@ import (
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 )
 
 var wei = big.NewInt(1000000000000000000)
@@ -30,14 +30,14 @@ func appendIfMissing(slice []string, i string) []string {
 }
 
 type MongoBackend struct {
-	host      string
-	mongo     *mgo.Database
-	ethClient *ethclient.Client
+	host     string
+	mongo    *mgo.Database
+	goClient *goclient.Client
 }
 
 // New create new rpc client with given url
 func NewMongoClient(host, rpcUrl string) *MongoBackend {
-	client, err := ethclient.Dial(rpcUrl)
+	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("main")
 	}
@@ -54,14 +54,14 @@ func NewMongoClient(host, rpcUrl string) *MongoBackend {
 	importer := new(MongoBackend)
 
 	importer.mongo = session.DB("blocks")
-	importer.ethClient = client
+	importer.goClient = client
 	importer.createIndexes()
 
 	return importer
 
 }
 func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
-	from, err := self.ethClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
+	from, err := self.goClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
@@ -435,7 +435,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		return nil
 	}
 	//lazy calculation for receipt
-	receipt, err := self.ethClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
+	receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 	if err != nil {
 		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
 	} else {
