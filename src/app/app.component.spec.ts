@@ -18,6 +18,7 @@ describe('AppComponent', () => {
   }));
   beforeEach(() => {
     fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
     comp = fixture.debugElement.componentInstance;
   });
   /**
