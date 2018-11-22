@@ -1,9 +1,12 @@
 /*CORE*/
-import {async, TestBed} from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 /*MODULES*/
-import {AppModule} from './app.module';
+import { AppModule } from './app.module';
 /*COMPONENTS*/
-import {AppComponent} from './app.component';
+import { AppComponent } from './app.component';
+
+let comp: AppComponent;
+let fixture: ComponentFixture<AppComponent>;
 
 describe('AppComponent', () => {
   beforeEach(async(() => {
@@ -13,14 +16,27 @@ describe('AppComponent', () => {
       ],
     }).compileComponents();
   }));
+  beforeEach(() => {
+    fixture = TestBed.createComponent(AppComponent);
+    comp = fixture.debugElement.componentInstance;
+  });
+  /**
+   * BEFORE INIT
+   */
+  it(`should be initialized`, () => {
+    expect(fixture).toBeDefined();
+    expect(comp).toBeDefined();
+  });
+  /**
+   * INIT
+   */
   it('should create the app', async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
+    expect(comp).toBeTruthy();
   }));
+  /**
+   * DEFAULT VALUES
+   */
   it(`should have as isPageLoading 'false'`, async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.isPageLoading).toEqual(false);
+    expect(comp.isPageLoading).toEqual(false);
   }));
 });
