@@ -142,8 +142,9 @@ func main() {
 			r.Get("/{address}/internal_transactions", getInternalTransactions)
 			r.Get("/{address}/contract", getContract)
 		})
-		r.Route("/api/verify", func(r chi.Router) {
-			r.Post("/", verifyContract)
+		r.Route("/api", func(r chi.Router) {
+			r.Post("/verify", verifyContract)
+			r.Get("/compiler", getCompilerVersion)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -156,7 +157,6 @@ func main() {
 		r.Route("/", func(r chi.Router) {
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
-
 			r.Get("/*", staticHandler)
 		})
 
@@ -280,7 +280,8 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
+	// contractData.CompilerVersion == ""
+	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
 		err := errors.New("required field is empty")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
@@ -291,6 +292,15 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusAccepted, result)
+}
+
+func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
+	result, err := backendInstance.GetCompilerVersion()
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

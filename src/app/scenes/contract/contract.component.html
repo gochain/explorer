@@ -3,18 +3,13 @@
   Verify and Publish Contract Source Code
 </p>
 <p>
-  Enter Contract Source Code below.
-</p>
-<p>
   If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published online.
 </p>
+<p>
+  Compiler version: {{compilerVersion$ | async}}
+</p>
 
-<div>
-  <p>Unable to Verify Code</p>
-  <p>The compiled result does not match the input creation bytecode located at 0x3b23f2485253c98303b8f9154e769345d83051fc.</p>
-</div>
-<form class="uk-form-horizontal uk-margin-large"  [formGroup]="form" (submit)="onSubmit()">
-
+<form class="uk-form-horizontal"  [formGroup]="form" (submit)="onSubmit()">
   <div class="uk-margin">
     <label class="uk-form-label" for="form-horizontal-text">Contract Address*</label>
     <div class="uk-form-controls">
@@ -27,7 +22,7 @@
       <input class="uk-input" type="text" placeholder="" formControlName="contract_name">
     </div>
   </div>
-  <div class="uk-margin">
+  <!--<div class="uk-margin">
     <label class="uk-form-label" for="form-horizontal-select">Compiler*</label>
     <div class="uk-form-controls">
       <select class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
@@ -35,30 +30,29 @@
         <option *ngFor="let compiler of compilers">{{compiler}}</option>
       </select>
     </div>
-  </div>
-  <div class="uk-margin">
+  </div>-->
+  <!--<div class="uk-margin">
     <div class="uk-form-label">Optimization*</div>
     <div class="uk-form-controls uk-form-controls-text">
       <label><input class="uk-radio" type="radio" name="optimization" formControlName="optimization" [value]="true"> Enabled</label><br>
       <label><input class="uk-radio" type="radio" name="optimization" formControlName="optimization" [value]="false"> Disabled</label>
     </div>
-  </div>
+  </div>-->
   <div class="uk-margin">
     <div class="uk-form-label">Contract Code*</div>
     <div class="uk-form-controls uk-form-controls-text">
-      <textarea class="uk-textarea" rows="10" placeholder="" formControlName="source_code"></textarea>
+      <textarea class="uk-textarea" rows="9" placeholder="" formControlName="source_code"></textarea>
     </div>
   </div>
-  <div class="uk-margin">
+  <!--<div class="uk-margin">
     <div class="uk-form-label">Constructor Arguments ABI-encoded (OPTIONAL - Required for certain contracts only):</div>
     <div class="uk-form-controls uk-form-controls-text">
       <input class="uk-input" id="form-horizontal-text" type="text" placeholder="" formControlName="abi">
     </div>
-  </div>
-  <div class="uk-margin-large">
+  </div>-->
+  <div class="uk-margin">
     <div class="uk-form-controls">
-      <button class="uk-button uk-button-primary" type="submit">Validate Code</button>
-      <button class="uk-button" type="reset">Reset</button>
+      <button class="uk-button uk-button-primary uk-button-small" type="submit">Validate Code</button>
     </div>
   </div>
 </form>

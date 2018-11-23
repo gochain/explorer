@@ -33,7 +33,7 @@ body {
 
   &.dark {
     background: #282a36;
-    *:not(a):not(input):not(select):not(option):not(textarea):not(.code) {
+    *:not(a):not(input):not(select):not(option):not(textarea):not(.code):not(button) {
       color: #eee !important;
     }
 
@@ -167,6 +167,24 @@ body {
 .fs {
   &-14 {
     font-size: 14px !important;
+  }
+}
+.m {
+  &-r {
+    &--10 {
+      margin-right: 10px;
+    }
+    &--20 {
+      margin-right: 20px;
+    }
+  }
+  &-l {
+    &--10 {
+      margin-left: 10px;
+    }
+    &--20 {
+      margin-left: 20px;
+    }
   }
 }
 

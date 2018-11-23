@@ -102,6 +102,10 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("contract with given address not found")
 		return nil, err
 	}
+	if contract.Valid == true {
+		err := errors.New("contract with given address is already verified")
+		return nil, err
+	}
 	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
 	if err != nil {
 		err := errors.New("error occurred while compiling source code")
@@ -119,13 +123,28 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 	finalCode := reg.ReplaceAllString(byteCodeFromSource, "")
 	if finalCode == contract.Bytecode {
 		contract.Valid = true
+		contract.Optimization = true
+		contract.SourceCode = compileData[key].Info.Source
+		contract.CompilerVersion = compileData[key].Info.CompilerVersion
 		result := self.mongo.updateContract(contract)
 		if !result {
 			err := errors.New("error occurred while processing data")
 			return nil, err
 		}
+		return contract, nil
+	} else {
+		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
+		return nil, err
 	}
-	return contract, nil
+}
+
+func (self *Backend) GetCompilerVersion() (string, error) {
+	result, err := compiler.SolidityVersion("solc")
+	if err != nil {
+		err := errors.New("error occurred while processing")
+		return "", err
+	}
+	return result.Version, nil
 }
 
 //METHODS USED IN GRABBER
