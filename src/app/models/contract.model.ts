@@ -7,4 +7,6 @@ export class Contract {
   optimization: boolean;
   source_code: string;
   abi: string;
+  created_at: Date;
+  updated_at: Date;
 }

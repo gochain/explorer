@@ -342,10 +342,11 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 
 func (self *MongoBackend) importContract(contractAddress string, byteCode string) *models.Contract {
 	contract := &models.Contract{
-		Address:  contractAddress,
-		Bytecode: byteCode,
+		Address:   contractAddress,
+		Bytecode:  byteCode,
+		CreatedAt: time.Now(),
 	}
-	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address, "code": contract.Bytecode}, contract)
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importContract")
 	}

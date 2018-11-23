@@ -12,7 +12,6 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
-	"regexp"
 )
 
 type Backend struct {
@@ -119,13 +118,12 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 	}
 	byteCodeFromSource := compileData[key].Code
 	// removing 0x
-	reg := regexp.MustCompile(`^0x`)
-	finalCode := reg.ReplaceAllString(byteCodeFromSource, "")
-	if finalCode == contract.Bytecode {
+	if byteCodeFromSource[2:] == contract.Bytecode {
 		contract.Valid = true
 		contract.Optimization = true
 		contract.SourceCode = compileData[key].Info.Source
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
+		contract.UpdatedAt = time.Now()
 		result := self.mongo.updateContract(contract)
 		if !result {
 			err := errors.New("error occurred while processing data")
