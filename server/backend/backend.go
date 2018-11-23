@@ -22,13 +22,13 @@ type Backend struct {
 	tokenBalance      *TokenBalance
 }
 
-func NewBackend(mongoUrl, rpcUrl string) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create eth client")
 	}
 	exClient := NewEthClient(rpcUrl)
-	mongoBackend := NewMongoClient(mongoUrl, rpcUrl)
+	mongoBackend := NewMongoClient(mongoUrl, rpcUrl, dbName)
 	importer := new(Backend)
 	importer.goClient = client
 	importer.extendedEthClient = exClient
@@ -171,4 +171,9 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
 	return self.mongo.importContract(contractAddress, byteCode)
+}
+
+//METHODS USED IN TESTS
+func (self *Backend) CleanUp() {
+	self.mongo.cleanUp()
 }
