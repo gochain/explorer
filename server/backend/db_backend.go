@@ -199,6 +199,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Contracts").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
