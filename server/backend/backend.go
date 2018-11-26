@@ -132,7 +132,7 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 	return self.mongo.importInternalTransaction(contractAddress, transferEvent)
 }
 
-//METHODS USED IN TESTS
-func (self *Backend) CleanUp() {
-	self.mongo.cleanUp()
-}
+// HeaderByNumber
+// BlockByNumber
+// BalanceAt
+// CodeAt
