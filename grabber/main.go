@@ -200,7 +200,6 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 func updateAddresses(url string, updateContracts bool, importer *backend.Backend) {
-	start := time.Now()
 	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := big.NewInt(0)
@@ -210,6 +209,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 	}
 	log.Info().Str("Genesis addresses", strings.Join(genesisAddressList[:], ",")).Msg("updateAddresses")
 	for {
+		start := time.Now()
 		currentBlock := getFirstBlockNumber(client)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
