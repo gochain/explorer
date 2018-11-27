@@ -1,10 +1,8 @@
 package backend
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -15,10 +13,25 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type TokenDetails struct {
+	Contract    common.Address
+	Name        string
+	Symbol      string
+	TotalSupply *big.Int
+	Decimals    int64
+	Block       int64
+}
+
+type TokenHolderDetails struct {
+	Contract    common.Address
+	TokenHolder common.Address
+	Balance     *big.Int
+	Block       int64
+}
+
 type TokenBalance struct {
 	url     string
 	conn    *ethclient.Client
-	config  *Config
 	VERSION string
 }
 
@@ -30,19 +43,13 @@ type TransferEvent struct {
 	TransactionHash string
 }
 
-var ()
-
 func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
-	c := &Config{
-		GethLocation: rpcUrl,
-		Logs:         true,
-	}
 	var err error
 
-	if c.GethLocation == "" {
+	if rpcUrl == "" {
 		log.Fatal().Msg("geth endpoint has not been set")
 	}
-	ethConn, err := ethclient.Dial(c.GethLocation)
+	ethConn, err := ethclient.Dial(rpcUrl)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
@@ -51,43 +58,57 @@ func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
 	if block == nil {
 		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
 	}
-	log.Info().Str("url", c.GethLocation).Msg("Connected to Geth at")
+	log.Info().Str("url", rpcUrl).Msg("Connected to Geth at")
 
 	return &TokenBalance{
-		url:    rpcUrl,
-		config: c,
-		conn:   ethConn,
+		url:  rpcUrl,
+		conn: ethConn,
 	}
 }
-func (rpc *TokenBalance) GetTokenBalance(contract, wallet string) (*TokenDetails, error) {
-	var err error
-	if rpc.config == nil || rpc.conn == nil {
+
+func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenHolderDetails, error) {
+	if rpc.conn == nil {
+		return nil, errors.New("geth server connection has not been created")
+	}
+	th := &TokenHolderDetails{
+		Contract:    common.HexToAddress(contract),
+		TokenHolder: common.HexToAddress(wallet),
+		Balance:     big.NewInt(0),
+	}
+	err := th.queryTokenHolderDetails(rpc.conn)
+	return th, err
+}
+
+func (rpc *TokenBalance) GetTokenDetails(contract string) (*TokenDetails, error) {
+	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
 	tb := &TokenDetails{
 		Contract:    common.HexToAddress(contract),
-		Wallet:      common.HexToAddress(wallet),
 		Decimals:    0,
 		TotalSupply: big.NewInt(0),
-		Balance:     big.NewInt(0),
-		ctx:         context.TODO(),
 	}
-	err = tb.query(rpc.conn)
+	err := tb.queryTokenDetails(rpc.conn)
 	return tb, err
 }
 
-func (tb *TokenDetails) ETHString() string {
-	return BigIntString(tb.ETH, 18)
-}
+func (th *TokenHolderDetails) queryTokenHolderDetails(conn *ethclient.Client) error {
+	var err error
 
-func (tb *TokenDetails) BalanceString() string {
-	if tb.Decimals == 0 {
-		return "0"
+	token, err := NewTokenCaller(th.Contract, conn)
+	if err != nil {
+		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
+		return err
 	}
-	return BigIntString(tb.Balance, tb.Decimals)
+	th.Balance, err = token.BalanceOf(nil, th.TokenHolder)
+	if err != nil {
+		log.Info().Err(err).Str("Wallet", th.Contract.String()).Msg("Failed to get balance from contract")
+		th.Balance = big.NewInt(0)
+	}
+	return err
 }
 
-func (tb *TokenDetails) query(conn *ethclient.Client) error {
+func (tb *TokenDetails) queryTokenDetails(conn *ethclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
@@ -95,12 +116,6 @@ func (tb *TokenDetails) query(conn *ethclient.Client) error {
 		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
 		return err
 	}
-
-	block, err := conn.BlockByNumber(tb.ctx, nil)
-	if err != nil {
-		log.Info().Err(err).Msg("Failed to get current block number")
-	}
-	tb.Block = block.Number().Int64()
 
 	decimals, err := token.Decimals(nil)
 	if err != nil {
@@ -117,21 +132,10 @@ func (tb *TokenDetails) query(conn *ethclient.Client) error {
 	}
 	tb.TotalSupply = totalSupply
 
-	tb.ETH, err = conn.BalanceAt(tb.ctx, tb.Wallet, nil)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Wallet.String()).Msg("Failed to get ethereum balance from address")
-	}
-
-	tb.Balance, err = token.BalanceOf(nil, tb.Wallet)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get balance from contract")
-		tb.Balance = big.NewInt(0)
-	}
-
 	tb.Symbol, err = token.Symbol(nil)
 	if err != nil {
 		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
-		tb.Symbol = symbolFix(tb.Contract.String())
+		tb.Symbol = "MISSING"
 	}
 
 	tb.Name, err = token.Name(nil)
@@ -141,50 +145,6 @@ func (tb *TokenDetails) query(conn *ethclient.Client) error {
 	}
 
 	return err
-}
-
-func symbolFix(contract string) string {
-	switch common.HexToAddress(contract).String() {
-	case "0x86Fa049857E0209aa7D9e616F7eb3b3B78ECfdb0":
-		return "EOS"
-	}
-	return "MISSING"
-}
-
-func BigIntString(balance *big.Int, decimals int64) string {
-	amount := BigIntFloat(balance, decimals)
-	deci := fmt.Sprintf("%%0.%vf", decimals)
-	return clean(fmt.Sprintf(deci, amount))
-}
-
-func BigIntFloat(balance *big.Int, decimals int64) *big.Float {
-	if balance.Sign() == 0 {
-		return big.NewFloat(0)
-	}
-	bal := big.NewFloat(0)
-	bal.SetInt(balance)
-	pow := bigPow(10, decimals)
-	p := big.NewFloat(0)
-	p.SetInt(pow)
-	bal.Quo(bal, p)
-	return bal
-}
-
-func bigPow(a, b int64) *big.Int {
-	r := big.NewInt(a)
-	return r.Exp(r, big.NewInt(b), nil)
-}
-
-func clean(newNum string) string {
-	stringBytes := bytes.TrimRight([]byte(newNum), "0")
-	newNum = string(stringBytes)
-	if stringBytes[len(stringBytes)-1] == 46 {
-		newNum += "0"
-	}
-	if stringBytes[0] == 46 {
-		newNum = "0" + newNum
-	}
-	return newNum
 }
 
 func (rpc *TokenBalance) getInternalTransactions(address string) []TransferEvent {
@@ -220,7 +180,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string) []TransferEvent
 		transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
 		transferEvent.BlockNumber = int64(event.BlockNumber)
 		transferEvent.TransactionHash = event.TxHash.String()
-		log.Info().Uint64("Block", event.BlockNumber).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
+		log.Debug().Uint64("Block", event.BlockNumber).Str("Contract", address).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
 		transferEvents = append(transferEvents, transferEvent)
 	}
 	return transferEvents

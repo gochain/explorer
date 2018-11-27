@@ -98,9 +98,14 @@ func (self *Backend) UpdateStats() {
 func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
 	return self.extendedEthClient.genesisAlloc()
 }
-func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenDetails, error) {
-	return self.tokenBalance.GetTokenBalance(contract, wallet)
+func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetails, error) {
+	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
 }
+
+func (self *Backend) GetTokenDetails(contract string) (*TokenDetails, error) {
+	return self.tokenBalance.GetTokenDetails(contract)
+}
+
 func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
 	return self.tokenBalance.getInternalTransactions(address)
 }
@@ -125,7 +130,7 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) [
 func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
 	return self.mongo.importAddress(address, balance, token, contract, go20)
 }
-func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenDetails) *models.TokenHolder {
+func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token)
 }
 func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
