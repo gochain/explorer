@@ -210,6 +210,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 	log.Info().Str("Genesis addresses", strings.Join(genesisAddressList[:], ",")).Msg("updateAddresses")
 	for {
 		start := time.Now()
+		currentTime := time.Now()
 		currentBlock := getFirstBlockNumber(client)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
@@ -266,7 +267,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 		elapsed := time.Since(start)
 		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt.Int64()).Msg("Performance measurement")
 		lastBlockUpdatedAt = currentBlock
-		lastUpdatedAt = time.Now()
+		lastUpdatedAt = currentTime
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
 	}
 }
