@@ -13,9 +13,9 @@ import {Transaction} from '../../models/transaction.model';
 import {Holder} from '../../models/holder.model';
 import {QueryParams} from '../../models/query_params';
 import {InternalTransaction} from '../../models/internal-transaction.model';
+import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import { Contract } from '../../models/contract';
 
 
 @Component({

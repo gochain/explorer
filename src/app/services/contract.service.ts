@@ -1,15 +1,16 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {ApiService} from './api.service';
 import {HttpClient} from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Contract } from '../models/contract';
+import {Observable} from 'rxjs';
+import {Contract} from '../models/contract.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContractService {
 
-  constructor(private _apiService: ApiService, private http: HttpClient) { }
+  constructor(private _apiService: ApiService, private http: HttpClient) {
+  }
 
   getContract(addrHash: string): Observable<Contract> {
     return this._apiService.get('/address/' + addrHash + '/contract');

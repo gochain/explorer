@@ -2,14 +2,15 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
-import { debounce, filter, flatMap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 /*SERVICES*/
 import { ContractService } from '../../services/contract.service';
+import { ToastrService } from '../../modules/toastr/toastr.service';
+/*MODELS*/
+import { Contract } from '../../models/contract.model';
 /*UTILS*/
 import { AutoUnsubscribe } from '../../decorators/auto-unsubscribe';
-import { Contract } from '../../models/contract';
-import { ToastrService } from '../../modules/toastr/toastr.service';
 
 // import {Compiler} from '../../models/compiler.model';
 
@@ -20,7 +21,7 @@ import { ToastrService } from '../../modules/toastr/toastr.service';
 })
 @AutoUnsubscribe('_subsArr$')
 export class ContractComponent implements OnInit {
-  compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
+  // compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
   contract: Contract;
 
   form: FormGroup = this.fb.group({
