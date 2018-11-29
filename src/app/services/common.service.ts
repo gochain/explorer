@@ -55,8 +55,8 @@ export class CommonService {
     return this._apiService.get('/address/' + addrHash + '/contract');
   }
 
-  getRichlist(skip: number, limit: number): Observable<RichList> {
-    return this._apiService.get('/richlist?skip=' + skip + '&limit=' + limit);
+  getRichlist(data?: any): Observable<RichList> {
+    return this._apiService.get('/richlist', data);
   }
 
   getStats(): Observable<Stats> {

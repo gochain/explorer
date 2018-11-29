@@ -1,5 +1,10 @@
 import {Subject} from 'rxjs';
 
+interface IParams {
+  limit: number;
+  skip: number;
+}
+
 export class QueryParams {
   private _limit: number;
   get limit(): number {
@@ -17,8 +22,7 @@ export class QueryParams {
   total: number;
   totalPage: number;
   currentTotal: number;
-  state: Subject<number> = new Subject();
-  private _state = 0;
+  state: Subject<IParams> = new Subject<IParams>();
 
   constructor(limit?: number) {
     this._limit = limit || 25;
@@ -36,38 +40,42 @@ export class QueryParams {
     this.totalPage = Math.ceil(this.total / this._limit);
   }
 
+  init() {
+    this.state.next(this.params);
+  }
+
   next() {
     this.page++;
     this.skip += this._limit;
     this.currentTotal = this.page * this._limit;
-    this.state.next(++this._state);
+    this.state.next(this.params);
   }
 
   previous() {
     this.page--;
     this.skip -= this._limit;
-    this.state.next(++this._state);
+    this.state.next(this.params);
   }
 
   toPage(page: number) {
     this.page = page;
     this.skip = (this.page - 1) * this._limit;
-    this.state.next(++this._state);
+    this.state.next(this.params);
   }
 
   toStart() {
     this.page = 1;
     this.skip = 0;
-    this.state.next(++this._state);
+    this.state.next(this.params);
   }
 
   toEnd() {
     this.page = this.totalPage;
     this.skip = (this.page - 1) * this._limit;
-    this.state.next(++this._state);
+    this.state.next(this.params);
   }
 
-  get params() {
+  get params(): IParams {
     return {limit: this._limit, skip: this.skip};
   }
 }

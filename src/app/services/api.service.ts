@@ -1,11 +1,11 @@
 /*CORE*/
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpErrorResponse, HttpParams, HttpRequest, HttpResponse} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
 /*UTILS*/
-import { environment } from '../../environments/environment';
-import { catchError, map, retry } from 'rxjs/operators';
-import { ToastrService } from '../modules/toastr/toastr.service';
+import {environment} from '../../environments/environment';
+import {catchError, map, retry} from 'rxjs/operators';
+import {ToastrService} from '../modules/toastr/toastr.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,18 +24,21 @@ export class ApiService {
   }
 
   get(url: string, params?: HttpParams): Observable<any> {
-    return this.request('GET', url, params);
-    /*return this.http.get<any>(this.apiURL + url, {
+    return this.http.get<any>(this.apiURL + url, {
       params
     }).pipe(
       retry(2),
       catchError(this._handleError)
-    );*/
+    );
+    // return this.request('GET', url, params);
   }
 
   post(url: string, data?: any): Observable<any> {
-    return this.request('POST', url, data);
-    //return this.http.post<any>(this.apiURL + url, data);
+    return this.http.post<any>(this.apiURL + url, data).pipe(
+      retry(2),
+      catchError(this._handleError)
+    );
+    // return this.request('POST', url, data);
   }
 
   request(method: string, url: string, data?: any) {

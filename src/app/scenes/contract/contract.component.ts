@@ -79,10 +79,10 @@ export class ContractComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.form.valid) {
+    /*if (!this.form.valid) {
       this.toastrService.danger('Some field is not correct');
       return;
-    }
+    }*/
     const data = this.form.getRawValue();
     this.contactService.compile(data).subscribe((contract: Contract) => {
       this.contract = contract;
