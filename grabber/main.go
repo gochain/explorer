@@ -67,6 +67,15 @@ func main() {
 	}
 }
 
+func appendIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
+
 func getClient(url string) ethclient.Client {
 	client, err := ethclient.Dial(url)
 	if err != nil {
@@ -193,12 +202,16 @@ func stringInSlice(a string, list []string) bool {
 func updateAddresses(url string, updateContracts bool, importer *backend.Backend) {
 	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
+	lastBlockUpdatedAt := big.NewInt(0)
 	_, genesisAddressList, err := importer.GenesisAlloc()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed response from GenesisAlloc")
 	}
 	log.Info().Str("Genesis addresses", strings.Join(genesisAddressList[:], ",")).Msg("updateAddresses")
 	for {
+		start := time.Now()
+		currentTime := time.Now()
+		currentBlock := getFirstBlockNumber(client)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for index, address := range addresses {
@@ -213,38 +226,48 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			}
 			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
 			contractData := string(contractDataArray[:])
-			var token = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 			go20 := false
+			var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 			contract := false
 			if contractData != "" {
 				contract = true
-				if updateContracts {
-					internalTxs := importer.GetInternalTransactions(normalizedAddress)
-					for _, itx := range internalTxs {
-						log.Info().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
-						importer.ImportInternalTransaction(normalizedAddress, itx)
-						token, err = importer.GetTokenBalance(normalizedAddress, itx.To.String())
-						if err != nil {
-							log.Info().Err(err).Str("Address", itx.To.String()).Msg("Cannot GetTokenBalance, in internal transaction")
-							go20 = false
-							continue
-						}
-						importer.ImportTokenHolder(normalizedAddress, itx.To.String(), token)
-						token, err = importer.GetTokenBalance(normalizedAddress, itx.From.String())
-						if err != nil {
-							log.Info().Err(err).Str("Address", itx.From.String()).Msg("Cannot GetTokenBalance, in internal transaction")
-							go20 = false
-							continue
-						}
-						importer.ImportTokenHolder(normalizedAddress, itx.From.String(), token)
+				tokenDetails, err = importer.GetTokenDetails(normalizedAddress)
+				if err != nil {
+					log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
+					go20 = false
+					continue
+				} else {
+					go20 = true
+				}
+				internalTxs := importer.GetInternalTransactions(normalizedAddress)
+				var tokenHoldersList []string
+				for _, itx := range internalTxs {
+					log.Debug().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
+					importer.ImportInternalTransaction(normalizedAddress, itx)
+					// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
+					log.Debug().Str("addr 1", itx.From.String()).Str("addr 2", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Updating following token holder addresses")
+					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
+					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
+					// }
+				}
+				for index, tokenHolderAddress := range tokenHoldersList {
+					tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
+					log.Debug().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
+					if err != nil {
+						log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
+						go20 = false
+						continue
 					}
-					go20 = len(internalTxs) > 0
+					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder)
 				}
 			}
 			log.Info().Str("Balance of the address:", normalizedAddress).Int("Index", index).Int("Total number", len(addresses)).Str("Balance", balance.String()).Msg("updateAddresses")
-			importer.ImportAddress(normalizedAddress, balance, token, contract, go20)
+			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, go20)
 		}
-		lastUpdatedAt = time.Now()
+		elapsed := time.Since(start)
+		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt.Int64()).Msg("Performance measurement")
+		lastBlockUpdatedAt = currentBlock
+		lastUpdatedAt = currentTime
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
 	}
 }
