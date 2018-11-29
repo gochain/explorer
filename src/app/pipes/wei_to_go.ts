@@ -6,13 +6,12 @@ import {PipeTransform, Pipe} from '@angular/core';
 
 export class WeiToGOPipe implements PipeTransform {
 
-  transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false): string {
-    const moveTo = 18;
+  transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18 ): string {    
     const parts = val.toString().split('.');
-    if (parts[0].length > moveTo) {
-      parts[0] = parts[0].slice(0, parts[0].length - moveTo) + '.' + parts[0].slice(parts[0].length - moveTo, parts[0].length);
+    if (parts[0].length > decimals) {
+      parts[0] = parts[0].slice(0, parts[0].length - decimals) + '.' + parts[0].slice(parts[0].length - decimals, parts[0].length);
     } else {
-      parts[0] = '0.' + '0'.repeat(moveTo - parts[0].length) + parts[0];
+      parts[0] = '0.' + '0'.repeat(decimals - parts[0].length) + parts[0];
     }
     let value: string = parts.join('').toString();
 
