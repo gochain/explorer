@@ -19,6 +19,7 @@ import (
 func main() {
 	var rpcUrl string
 	var mongoUrl string
+	var dbName string
 	var loglevel string
 	var startFrom int64
 	app := cli.NewApp()
@@ -37,6 +38,12 @@ func main() {
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
+			Name:        "mongo-dbname, db",
+			Value:       "blocks",
+			Usage:       "mongo database name, 'blocks'",
+			Destination: &dbName,
+		},
+		cli.StringFlag{
 			Name:        "log, l",
 			Value:       "info",
 			Usage:       "loglevel debug/info/warn/fatal, default is Info",
@@ -53,7 +60,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
-		importer := backend.NewBackend(mongoUrl, rpcUrl)
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)

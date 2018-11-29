@@ -63,6 +63,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 func main() {
 	var rpcUrl string
 	var mongoUrl string
+	var dbName string
 	var loglevel string
 	app := cli.NewApp()
 
@@ -78,6 +79,12 @@ func main() {
 			Value:       "127.0.0.1:27017",
 			Usage:       "mongo connection url, '127.0.0.1:27017'",
 			Destination: &mongoUrl,
+		},
+		cli.StringFlag{
+			Name:        "mongo-dbname, db",
+			Value:       "blocks",
+			Usage:       "mongo database name, 'blocks'",
+			Destination: &dbName,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
@@ -96,7 +103,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)

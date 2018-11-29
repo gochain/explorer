@@ -20,14 +20,13 @@
   version = "v1.7.0"
 
 [[projects]]
-  branch = "optimize"
+  branch = "master"
   name = "github.com/gochain-io/explorer"
   packages = [
     "server/backend",
     "server/models"
   ]
-  revision = ""
-
+  
 [[projects]]
   name = "github.com/gochain-io/gochain"
   packages = [
@@ -56,8 +55,8 @@
     "rpc",
     "trie"
   ]
-  revision = "4c63d0c572eeb8109f8cd82d2c513ee34dacda41"
-  version = "2.1.42"
+  revision = "162344e3a07faa2c6117d2f5ae23a56b947ecabe"
+  version = "2.1.43"
 
 [[projects]]
   branch = "master"
@@ -100,8 +99,8 @@
     "internal/json",
     "log"
   ]
-  revision = "77db4b4f350e31be66a57c332acb7721cf9ff9bb"
-  version = "v1.8.0"
+  revision = "8747b7b3a51b5d08ee7ac50eaf4869edaf9f714a"
+  version = "v1.11.0"
 
 [[projects]]
   branch = "master"
@@ -192,6 +191,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0a411f5e9d8888639c1c449c599f27c98b611e55ca863fe4ca82de10632dd7bf"
+  inputs-digest = "6664cd2575a0d69c458bac98422100558494a697b47fca26fc23ffc538f02ad0"
   solver-name = "gps-cdcl"
   solver-version = 1
