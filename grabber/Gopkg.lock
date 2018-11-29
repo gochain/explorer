@@ -20,6 +20,7 @@
   version = "v1.7.0"
 
 [[projects]]
+  branch = "optimize"
   name = "github.com/gochain-io/explorer"
   packages = [
     "server/backend",
