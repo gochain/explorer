@@ -199,7 +199,7 @@ func TestStats(t *testing.T) {
 func TestTokenHolder(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 
-	var token = &TokenDetails{TotalSupply: big.NewInt(1000000000000000000), Balance: big.NewInt(1000000000000000000)}
+	var token = &TokenHolderDetails{Balance: big.NewInt(1000000000000000000)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
