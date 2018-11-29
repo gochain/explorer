@@ -1,18 +1,17 @@
-package main
+package backend
 
 import (
 	"math/big"
 	"testing"
 	"time"
 
-	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/rlp"
 	"github.com/rs/zerolog/log"
 )
 
-var testBackend = backend.NewBackend("127.0.0.1:27017", "https://rpc.gochain.io", "testdb")
+var testBackend = NewBackend("127.0.0.1:27017", "https://rpc.gochain.io", "testdb")
 
 func createImportBlock() types.Block {
 	blockEnc := common.FromHex("0xf90425f90260a0ca12d831416f1fd29336c535ee814d228f638b10798b5cf437bef29415e63762a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d493479448c67d87cd7d716ec044dbe33a0152557bf86062c0c0b84105faed8a008cdb41757cfca7462e440f13f1369a9dc14aafbc1eca77575b6f4753d34458da828f3028fc075e3d6e7b944c3b6b8327dbbd702a1a3ee0c6f8663301a0df5891f347b7525b4369d81238f399a046fb94194e0785d42ba93446b1e27c19a013d863c4c708ff270b60de30faa63e49f073b5ac0e90cdcddb1b10c0736cc923a004deb4be6955e1a300123be48007597f67e4229f8ce70f4f10388de6fd3fa267b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e8314be5c840822d32083014820845b634071a0322e312e33362f6c696e75782d616d6436342f676f312e31302e330000000000a00000000000000000000000000000000000000000000000000000000000000000880000000000000000f901bef86d80847735940082520894bf47332f391f995e0e050bc0778a49c61bdd8fdf8911efc99828edb2600080819ca08f2579f5372bfadca519dfa96b9a7e16689632b65a469c8f96262034d306e104a051692d3de03154e5506afe4616304e6e70bcd7ba7c367b59226045eacd21a8ddf86d01847735940082520894bf47332f391f995e0e050bc0778a49c61bdd8fdf894add3970f31b5f600080819ca0e95246628a5c110356c23a176a97d9dc8a62069b75ef59b090b9074a69eedb63a07882befc79d5e2a5214e33fcc7f2beb45d85551bc4c63588817af2cb83df00b1f86e09847735940082520894bf47332f391f995e0e050bc0778a49c61bdd8fdf8a0b69448bfc2ed424600080819ca08e0645ff002bb43239c22d64cab5dd799b2bb9c56f92d90eb50be7860d4aadd4a00bf2701bb7e1df17921c598954621c724c6a7c50cd1583e117c10708d3c1a537f86e05847735940082520894bf47332f391f995e0e050bc0778a49c61bdd8fdf8a05b7ac452dab97cb600080819ba00a0cacc5f5c556c2435f3e6e43635eda857f71e2f95d73c450ea01a481018011a02cb5ec486060a6f53fd5afdb4f87c57842b7600f3790d66a7bda90fdf0135e93c0")
@@ -24,8 +23,8 @@ func createImportBlock() types.Block {
 	return block
 }
 func TestImportAddress(t *testing.T) {
-	defer testBackend.CleanUp()
-	var token = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
+	defer testBackend.mongo.cleanUp()
+	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
@@ -48,7 +47,7 @@ func TestImportAddress(t *testing.T) {
 }
 
 func TestImportBlockTransaction(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
 	blockFromDb := testBackend.GetBlockByNumber(block.Header().Number.Int64())
 
@@ -65,7 +64,7 @@ func TestImportBlockTransaction(t *testing.T) {
 	}
 }
 func TestTransactions(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
 
 	transactionsFromDb := testBackend.GetBlockTransactionsByNumber(block.Header().Number.Int64(), 0, 100)
@@ -93,9 +92,14 @@ func TestTransactions(t *testing.T) {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
 
+	transactionsToAddress = testBackend.GetTransactionList(transactionFromDB.To, 2, 100)
+	if len(transactionsToAddress) != 2 {
+		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 2)
+	}
+
 }
 func TestBlockByHash(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
 
 	blockFromDbByHash := testBackend.GetBlockByHash(block.Header().Hash().Hex())
@@ -105,7 +109,7 @@ func TestBlockByHash(t *testing.T) {
 	}
 }
 func TestLatestBlocks(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
 
 	latestBlocks := testBackend.GetLatestsBlocks(0, 100)
@@ -119,7 +123,7 @@ func TestLatestBlocks(t *testing.T) {
 	}
 }
 func TestActiveAddresses(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
 
 	activeNonContracts := testBackend.GetActiveAdresses(time.Unix(0, 0), false)
@@ -138,11 +142,16 @@ func TestActiveAddresses(t *testing.T) {
 		t.Errorf("activeContracts was incorrect, got: %d, want: %d.", len(activeContracts), 0)
 	}
 
+	activeNonContracts = testBackend.GetActiveAdresses(time.Now(), false)
+	if len(activeNonContracts) != 0 {
+		t.Errorf("activeNonContracts was incorrect, got: %d, want: %d.", len(activeNonContracts), 0)
+	}
+
 }
 
 func TestRichList(t *testing.T) {
-	defer testBackend.CleanUp()
-	var token = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
+	defer testBackend.mongo.cleanUp()
+	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
@@ -153,17 +162,23 @@ func TestRichList(t *testing.T) {
 	richList := testBackend.GetRichlist(0, 100)
 
 	if len(richList) != 2 {
-		t.Errorf("Richlist  was incorrect, got: %d, want: %d.", len(richList), 1)
+		t.Errorf("Richlist  was incorrect, got: %d, want: %d.", len(richList), 2)
 	}
 
 	if richList[0].Address != addrHash {
 		t.Errorf("Richlist  was incorrect, got: %s, want: %s.", richList[0].Address, addrHash)
 	}
 
+	richList = testBackend.GetRichlist(1, 100)
+
+	if len(richList) != 1 {
+		t.Errorf("Richlist  was incorrect, got: %d, want: %d.", len(richList), 1)
+	}
+
 }
 
 func TestStats(t *testing.T) {
-	defer testBackend.CleanUp()
+	defer testBackend.mongo.cleanUp()
 	_ = createImportBlock()
 
 	testBackend.UpdateStats()
@@ -181,11 +196,84 @@ func TestStats(t *testing.T) {
 
 }
 
-//TODO: cover all following methods:
-// func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
-// func (self *Backend) GetInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
-// func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
-// func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
-// func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
-// func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenDetails) *models.TokenHolder {
-// func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
+func TestTokenHolder(t *testing.T) {
+	defer testBackend.mongo.cleanUp()
+
+	var token = &TokenHolderDetails{Balance: big.NewInt(1000000000000000000)}
+
+	addrHash := "0x0000000000000000000000000000000000000000"
+	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
+	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
+	testBackend.ImportTokenHolder(addrHash, tokenHolderHash1, token)
+	testBackend.ImportTokenHolder(addrHash, tokenHolderHash2, token)
+	holders := testBackend.GetTokenHoldersList(addrHash, 0, 100)
+	if len(holders) != 2 {
+		t.Errorf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
+	}
+
+	if holders[0].TokenHolderAddress != tokenHolderHash1 {
+		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[0].TokenHolderAddress, tokenHolderHash1)
+	}
+
+	if holders[0].Balance != "1000000000000000000" {
+		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[0].Balance, "1000000000000000000")
+	}
+
+	if holders[0].BalanceInt != 1 { // 1 GO
+		t.Errorf("HolderList  was incorrect, got: %d, want: %s.", holders[0].BalanceInt, "1")
+	}
+
+	if holders[1].TokenHolderAddress != tokenHolderHash2 {
+		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[1].TokenHolderAddress, tokenHolderHash2)
+	}
+
+	holders = testBackend.GetTokenHoldersList(addrHash, 1, 100)
+	if len(holders) != 1 {
+		t.Errorf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 1)
+	}
+
+}
+
+func TestInternalTransactions(t *testing.T) {
+	defer testBackend.mongo.cleanUp()
+
+	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
+	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
+
+	var transaction1 = TransferEvent{BlockNumber: 0001, From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
+	var transaction2 = TransferEvent{BlockNumber: 0002, From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
+
+	addrHash := "0x0000000000000000000000000000000000000000"
+
+	testBackend.ImportInternalTransaction(addrHash, transaction1)
+	testBackend.ImportInternalTransaction(addrHash, transaction2)
+
+	transactions := testBackend.GetInternalTransactionsList(addrHash, 0, 100)
+	if len(transactions) != 2 {
+		t.Errorf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
+	}
+
+	if transactions[0].BlockNumber != transaction2.BlockNumber {
+		t.Errorf("InternalTransactionList was incorrect, got: %d, want: %d.", transactions[0].BlockNumber, transaction1.BlockNumber)
+	}
+
+	if transactions[1].Value != transaction1.Value.String() {
+		t.Errorf("InternalTransactionList was incorrect, got: %s, want: %s.", transactions[1].Value, transaction1.Value.String())
+	}
+
+}
+func TestReloadBlock(t *testing.T) {
+	defer testBackend.mongo.cleanUp()
+	block := createImportBlock()
+	if !testBackend.NeedReloadBlock(block.Header().Number.Int64()) {
+		t.Errorf("Block is wrong and should be reloaded")
+	}
+}
+
+func TestTransactionsConsistent(t *testing.T) {
+	defer testBackend.mongo.cleanUp()
+	block := createImportBlock()
+	if !testBackend.TransactionsConsistent(block.Header().Number.Int64()) {
+		t.Errorf("Number of transactions is not consistent")
+	}
+}

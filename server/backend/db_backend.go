@@ -20,15 +20,6 @@ import (
 
 var wei = big.NewInt(1000000000000000000)
 
-func appendIfMissing(slice []string, i string) []string {
-	for _, ele := range slice {
-		if ele == i {
-			return slice
-		}
-	}
-	return append(slice, i)
-}
-
 type MongoBackend struct {
 	host     string
 	mongo    *mgo.Database
@@ -276,7 +267,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
-	log.Info().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
+	log.Debug().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
@@ -310,9 +301,9 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenDetails) *models.TokenHolder {
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
 	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
-	log.Info().Str("contractAddress", contractAddress).Str("balance", token.Balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
+	log.Info().Str("contractAddress", contractAddress).Str("tokenAddress", tokenHolderAddress).Str("balance", token.Balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
 	tokenHolder := &models.TokenHolder{
 		ContractAddress:    contractAddress,
 		TokenHolderAddress: tokenHolderAddress,
