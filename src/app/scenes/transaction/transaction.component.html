@@ -16,7 +16,7 @@
         <div *ngIf="!tx.to">
           <div class="tr-title">Contract address:</div>
           <div><a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a></div>
-        </div>>
+        </div>
         <div class="tr-title">Value:</div>
         <div>{{tx.value | weiToGO | bigNumber}}</div>
         <div class="tr-title">Gas price:</div>

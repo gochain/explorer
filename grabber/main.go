@@ -61,6 +61,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)

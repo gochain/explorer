@@ -105,6 +105,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		r := chi.NewRouter()
 		// A good base middleware stack

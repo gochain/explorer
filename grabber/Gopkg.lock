@@ -26,6 +26,7 @@
     "server/backend",
     "server/models"
   ]
+  revision = "da172091caf4b21b8f607ea02cbb19d1c5c86318"
 
 [[projects]]
   name = "github.com/gochain-io/gochain"
