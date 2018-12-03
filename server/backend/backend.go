@@ -12,6 +12,7 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
+	"regexp"
 )
 
 type Backend struct {
@@ -116,9 +117,17 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("invalid contract name")
 		return nil, err
 	}
-	byteCodeFromSource := compileData[key].Code
-	// removing 0x
-	if byteCodeFromSource[2:] == contract.Bytecode {
+	if compileData[key].RuntimeCode == "" {
+		err := errors.New("contract binary is empty")
+		return nil, err
+	}
+	// removing '0x' from start
+	sourceBin := compileData[key].RuntimeCode[2:]
+	// removing metadata hash from binary
+	reg := regexp.MustCompile(`00a165627a7a72305820.*0029$`)
+	sourceBin = reg.ReplaceAllString(sourceBin, ``)
+	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
+	if sourceBin == contractBin {
 		contract.Valid = true
 		contract.Optimization = true
 		contract.SourceCode = compileData[key].Info.Source
@@ -142,7 +151,9 @@ func (self *Backend) GetCompilerVersion() (string, error) {
 		err := errors.New("error occurred while processing")
 		return "", err
 	}
-	return result.Version, nil
+	versionRegexp := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)\+commit\.[^.]*`)
+	longVersion := versionRegexp.FindStringSubmatch(result.FullVersion)
+	return longVersion[0], nil
 }
 
 //METHODS USED IN GRABBER
