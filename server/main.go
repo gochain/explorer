@@ -18,6 +18,7 @@ import (
 
 	"encoding/json"
 	"errors"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -281,7 +282,6 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	// contractData.CompilerVersion == ""
 	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
 		err := errors.New("required field is empty")
 		errorResponse(w, http.StatusBadRequest, err)

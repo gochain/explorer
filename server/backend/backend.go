@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"errors"
+	"regexp"
+
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/common/compiler"
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
-	"regexp"
 )
 
 type Backend struct {
@@ -130,6 +131,7 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 	if sourceBin == contractBin {
 		contract.Valid = true
 		contract.Optimization = true
+		contract.ContractName = contractData.ContractName
 		contract.SourceCode = compileData[key].Info.Source
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
 		contract.UpdatedAt = time.Now()

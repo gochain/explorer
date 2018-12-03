@@ -271,8 +271,8 @@
             <ng-container *ngIf="contract.valid">
               <h5 class="uk-margin uk-margin-top uk-heading-bullet"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
               <h5 class="uk-margin uk-margin-large-top uk-heading-bullet"><i class="fas fa-code"></i> Contract Source Code</h5>
-              <p>Contract Name: {{contract.contractName}}</p>
-              <p>Compiler Version: {{contract.compile_version}}</p>
+              <p>Contract Name: {{contract.contract_name}}</p>
+              <p>Compiler Version: {{contract.compiler_version}}</p>
               <p>Optimization: {{contract.optimization}}</p>
               <p>Verified: {{contract.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}} ({{contract.updated_at | timeAgo}})</p>
               <pre class="code">{{contract.source_code}}</pre>
