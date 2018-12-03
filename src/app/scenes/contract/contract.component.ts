@@ -1,6 +1,6 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, ParamMap} from '@angular/router';
+import {ActivatedRoute, ParamMap, Router} from '@angular/router';
 import {Observable, Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
@@ -11,6 +11,7 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {ROUTES} from '../../utils/routes';
 
 // import {Compiler} from '../../models/compiler.model';
 
@@ -38,7 +39,7 @@ export class ContractComponent implements OnInit {
   private _subsArr$: Subscription[] = [];
 
 
-  constructor(private _activatedRoute: ActivatedRoute, private fb: FormBuilder, private contactService: ContractService, private toastrService: ToastrService) {
+  constructor(private _activatedRoute: ActivatedRoute, private fb: FormBuilder, private contactService: ContractService, private toastrService: ToastrService, private _router: Router) {
     /*this.contactService.getCompilersList().subscribe((value: any) => {
       this.compilers = value.builds.map((item: Compiler) => {
         if (item.prerelease && item.prerelease.length > 0) {
@@ -89,6 +90,7 @@ export class ContractComponent implements OnInit {
       if (this.contract.valid) {
         this.toastrService.success('Contract has been successfully verified');
         this.form.reset();
+        this._router.navigate([`/${ROUTES.ADDRESS}/`, this.contract.address]);
       }
     });
   }

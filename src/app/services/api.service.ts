@@ -30,7 +30,6 @@ export class ApiService {
       retry(2),
       catchError(this._handleError)
     );
-    // return this.request('GET', url, params);
   }
 
   post(url: string, data?: any): Observable<any> {
@@ -38,7 +37,6 @@ export class ApiService {
       retry(2),
       catchError(this._handleError)
     );
-    // return this.request('POST', url, data);
   }
 
   request(method: string, url: string, data?: any) {

@@ -16,9 +16,20 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'fa fa-list-ul fa-fw'
   },
   {
+    title: 'Verify Contract',
+    link: '/verify',
+    icon: 'fa fa-check-square fa-fw'
+  },
+  {
     title: 'Wallet',
     link: 'https://wallet.gochain.io',
     icon: 'fa fa-wallet fa-fw',
+    external: true
+  },
+  {
+    title: 'Network Stats',
+    link: 'https://stats.gochain.io',
+    icon: 'fa fa-broadcast-tower fa-fw',
     external: true
   },
   /*{
