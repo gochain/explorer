@@ -223,8 +223,14 @@ func (self *Backend) VerifyReCaptcha(token string) error {
 		Secret:   self.reCaptchaSecret,
 		Response: token,
 	}
-	bytesRepresentation, err := json.Marshal(payload)
-	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", bytes.NewBuffer(bytesRepresentation))
+
+	var bytesRepresentation bytes.Buffer
+	if err := json.NewEncoder(&bytesRepresentation).Encode(payload); err != nil {
+		log.Fatal().Err(err).Msg("error occurred during encoding recaptcha payload")
+		err := errors.New("error occurred during processing your request. please try again")
+		return err
+	}
+	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", &bytesRepresentation)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error occurred during making recaptcha request")
 		err := errors.New("error occurred during processing your request. please try again")
