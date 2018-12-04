@@ -1,5 +1,5 @@
-import {AfterViewInit, Directive, ElementRef, Injector, Input, NgZone, OnInit} from '@angular/core';
-import {ControlValueAccessor, NgControl, Validators} from '@angular/forms';
+import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnInit} from '@angular/core';
+import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators} from '@angular/forms';
 import {AbstractControl} from '@angular/forms/src/model';
 
 /*export interface ReCaptchaConfig {
@@ -19,9 +19,16 @@ declare global {
 }
 
 @Directive({
-  selector: '[appRecaptcha]'
+  selector: '[appRecaptcha]',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ReCaptchaDirective),
+      multi: true
+    }
+  ],
 })
-export class RecaptchaDirective implements OnInit, AfterViewInit, ControlValueAccessor {
+export class ReCaptchaDirective implements OnInit, AfterViewInit, ControlValueAccessor {
   @Input() key: string;
   @Input() actionName: string;
 
@@ -40,7 +47,7 @@ export class RecaptchaDirective implements OnInit, AfterViewInit, ControlValueAc
 
   ngAfterViewInit() {
     this.control = this._injector.get(NgControl).control;
-    this.setValidator();
+    // this.setValidator();
   }
 
   writeValue(obj: any): void {

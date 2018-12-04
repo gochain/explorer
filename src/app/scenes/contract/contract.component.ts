@@ -32,7 +32,7 @@ export class ContractComponent implements OnInit {
     contract_name: ['', Validators.required],
     // optimization: [true, Validators.required],
     source_code: ['', Validators.required],
-    recaptcha_token: [''],
+    recaptcha_token: null,
   });
 
   // compiler_version: ['', Validators.required],
@@ -40,7 +40,6 @@ export class ContractComponent implements OnInit {
   // compilers: any[] = [];
 
   private _subsArr$: Subscription[] = [];
-
 
   constructor(private _activatedRoute: ActivatedRoute, private fb: FormBuilder, private contactService: ContractService, private toastrService: ToastrService, private _router: Router) {
     /*this.contactService.getCompilersList().subscribe((value: any) => {
