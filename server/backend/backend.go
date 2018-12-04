@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"math/big"
@@ -17,6 +16,7 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
+	"net/url"
 )
 
 const RECAPTCHA_URL = "https://www.google.com/recaptcha/api/siteverify"
@@ -219,19 +219,25 @@ func (self *Backend) VerifyReCaptcha(token string, action string, remoteIp strin
 	if self.reCaptchaSecret == "" {
 		return nil
 	}
-	payload := &models.ReCaptchaRequest{
+	/*payload := &models.ReCaptchaRequest{
 		Secret:   self.reCaptchaSecret,
 		Response: token,
 		RemoteIp: remoteIp,
 	}
-
 	var bytesRepresentation bytes.Buffer
 	if err := json.NewEncoder(&bytesRepresentation).Encode(payload); err != nil {
 		log.Fatal().Err(err).Msg("error occurred during encoding recaptcha payload")
 		err := errors.New("error occurred during processing your request. please try again")
 		return err
 	}
-	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", &bytesRepresentation)
+	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", &bytesRepresentation)*/
+	params := url.Values{}
+	params.Add("secret", self.reCaptchaSecret)
+	params.Add("response", token)
+	if remoteIp != "" {
+		params.Add("remoteip", remoteIp)
+	}
+	resp, err := http.PostForm(RECAPTCHA_URL, params)
 	if err != nil {
 		log.Fatal().Err(err).Msg("error occurred during making recaptcha request")
 		err := errors.New("error occurred during processing your request. please try again")
