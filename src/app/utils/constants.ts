@@ -38,3 +38,13 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'fa fa-cogs fa-fw',
   },*/
 ];
+
+export const ROUTES = {
+  HOME: 'home',
+  BLOCK: 'block',
+  ADDRESS: 'addr',
+  RICHLIST: 'richlist',
+  TRANSACTION: 'tx',
+  SETTINGS: 'settings',
+  VERIFY: 'verify',
+};

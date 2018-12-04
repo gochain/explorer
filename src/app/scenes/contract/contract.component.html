@@ -3,13 +3,14 @@
   Verify and Publish Contract Source Code
 </p>
 <p>
-  If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published online.
+  If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published
+  online.
 </p>
 <p>
   Compiler version: {{compilerVersion$ | async}}
 </p>
 
-<form class="uk-form-horizontal"  [formGroup]="form" (submit)="onSubmit()">
+<form class="uk-form-horizontal" [formGroup]="form" (submit)="onSubmit()">
   <div class="uk-margin">
     <label class="uk-form-label" for="form-horizontal-text">Contract Address*</label>
     <div class="uk-form-controls">
@@ -50,6 +51,7 @@
       <input class="uk-input" id="form-horizontal-text" type="text" placeholder="" formControlName="abi">
     </div>
   </div>-->
+  <div appRecaptcha key="{{recaptchaPublicKey}}" actionName="contractVerification" formControlName="recaptcha_token"></div>
   <div class="uk-margin">
     <div class="uk-form-controls">
       <button class="uk-button uk-button-primary uk-button-small" type="submit">Validate Code</button>

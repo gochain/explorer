@@ -215,13 +215,14 @@ func (self *Backend) ImportContract(contractAddress string, byteCode string) *mo
 	return self.mongo.importContract(contractAddress, byteCode)
 }
 
-func (self *Backend) VerifyReCaptcha(token string) error {
+func (self *Backend) VerifyReCaptcha(token string, action string, remoteIp string) error {
 	if self.reCaptchaSecret == "" {
 		return nil
 	}
 	payload := &models.ReCaptchaRequest{
 		Secret:   self.reCaptchaSecret,
 		Response: token,
+		RemoteIp: remoteIp,
 	}
 
 	var bytesRepresentation bytes.Buffer

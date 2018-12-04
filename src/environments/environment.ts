@@ -7,6 +7,7 @@ export const environment = {
   API_PROTOCOL: 'http',
   API_PORT: '8080',
   API_PATH: 'api',
+  RECAPTCHA_KEY: '6Lf5fX4UAAAAADRfdvZSyAgb6P1EU_K88hq6Ud6R'
 };
 
 /*

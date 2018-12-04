@@ -11,7 +11,8 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {ROUTES} from '../../utils/routes';
+import {environment} from '../../../environments/environment';
+import {ROUTES} from '../../utils/constants';
 
 // import {Compiler} from '../../models/compiler.model';
 
@@ -24,12 +25,14 @@ import {ROUTES} from '../../utils/routes';
 export class ContractComponent implements OnInit {
   compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
   contract: Contract;
+  recaptchaPublicKey = environment.RECAPTCHA_KEY;
 
   form: FormGroup = this.fb.group({
     address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
     contract_name: ['', Validators.required],
     // optimization: [true, Validators.required],
     source_code: ['', Validators.required],
+    recaptcha_token: [''],
   });
 
   // compiler_version: ['', Validators.required],

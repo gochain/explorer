@@ -299,7 +299,7 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	err = backendInstance.VerifyReCaptcha(contractData.RecaptchaToken)
+	err = backendInstance.VerifyReCaptcha(contractData.RecaptchaToken, "contractVerification", r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return

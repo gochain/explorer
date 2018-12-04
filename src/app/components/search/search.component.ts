@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {Router} from '@angular/router';
-import {ROUTES} from '../../utils/routes';
+import {ROUTES} from '../../utils/constants';
 import {LayoutService} from '../../services/layout.service';
 
 @Component({
