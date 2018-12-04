@@ -2,7 +2,7 @@
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {RouterModule} from '@angular/router';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 /*COMPONENTS*/
@@ -21,6 +21,8 @@ import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.componen
 import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
 import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
+import {InfoComponent} from './components/info/info.component';
+import {ContractComponent} from './scenes/contract/contract.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
@@ -32,13 +34,13 @@ import {PipesModule} from './modules/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
+import {ToastrModule} from './modules/toastr/toastr.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
-import {InfoComponent} from './components/info/info.component';
 
 
 @NgModule({
@@ -60,12 +62,14 @@ import {InfoComponent} from './components/info/info.component';
     MobileHeaderComponent,
     MobileMenuComponent,
     InfoComponent,
+    ContractComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     PipesModule,
     DirectiveModule,
@@ -78,6 +82,7 @@ import {InfoComponent} from './components/info/info.component';
       spinner: false
     }),
     NgProgressHttpModule.forRoot(),
+    ToastrModule.forRoot(),
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},

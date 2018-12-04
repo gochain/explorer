@@ -8,9 +8,10 @@ import (
 	"math/big"
 	"time"
 
+	"encoding/hex"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
@@ -84,8 +85,8 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func getClient(url string) ethclient.Client {
-	client, err := ethclient.Dial(url)
+func getClient(url string) goclient.Client {
+	client, err := goclient.Dial(url)
 	if err != nil {
 		log.Fatal().Err(err).Msg("main")
 	}
@@ -119,7 +120,7 @@ func listener(url string, importer *backend.Backend) {
 	}
 }
 
-func getFirstBlockNumber(client ethclient.Client) *big.Int {
+func getFirstBlockNumber(client goclient.Client) *big.Int {
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		log.Fatal().Err(err).Msg("backfill - HeaderByNumber")
@@ -158,7 +159,7 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 	}
 }
 
-func checkParentForBlock(client *ethclient.Client, importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
+func checkParentForBlock(client *goclient.Client, importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
 	if blockNumber == 0 {
 		return
@@ -183,7 +184,7 @@ func checkParentForBlock(client *ethclient.Client, importer *backend.Backend, bl
 	}
 }
 
-func checkTransactionsConsistency(client *ethclient.Client, importer *backend.Backend, blockNumber int64) {
+func checkTransactionsConsistency(client *goclient.Client, importer *backend.Backend, blockNumber int64) {
 	if !importer.TransactionsConsistent(blockNumber) {
 		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
 		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
@@ -239,6 +240,8 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			contract := false
 			if contractData != "" {
 				contract = true
+				byteCode := hex.EncodeToString(contractDataArray)
+				importer.ImportContract(normalizedAddress, byteCode)
 				tokenDetails, err = importer.GetTokenDetails(normalizedAddress)
 				if err != nil {
 					log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")

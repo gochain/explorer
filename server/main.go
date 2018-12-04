@@ -11,17 +11,20 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
+
+	"encoding/json"
+	"errors"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 )
 
-var ethClient *ethclient.Client
+var goClient *goclient.Client
 var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
@@ -65,6 +68,7 @@ func main() {
 	var mongoUrl string
 	var dbName string
 	var loglevel string
+	var reCaptchaSecret string
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag{
@@ -98,13 +102,19 @@ func main() {
 			Usage:       "folder that should be served",
 			Destination: &wwwRoot,
 		},
+		cli.StringFlag{
+			Name:        "recaptcha, r",
+			Value:       "",
+			Usage:       "secret key for google recaptcha v3",
+			Destination: &reCaptchaSecret,
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, reCaptchaSecret)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -139,6 +149,11 @@ func main() {
 			r.Get("/{address}/transactions", getAddressTransactions)
 			r.Get("/{address}/holders", getTokenHolders)
 			r.Get("/{address}/internal_transactions", getInternalTransactions)
+			r.Get("/{address}/contract", getContract)
+		})
+		r.Route("/api", func(r chi.Router) {
+			r.Post("/verify", verifyContract)
+			r.Get("/compiler", getCompilerVersion)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -151,7 +166,6 @@ func main() {
 		r.Route("/", func(r chi.Router) {
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
-
 			r.Get("/*", staticHandler)
 		})
 
@@ -259,6 +273,52 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, skip, limit)
 	writeJSON(w, http.StatusOK, internalTransactions)
+}
+
+func getContract(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	contract := backendInstance.GetContract(contractAddress)
+	writeJSON(w, http.StatusOK, contract)
+}
+
+func verifyContract(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var contractData *models.Contract
+	err := decoder.Decode(&contractData)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	if contractData.RecaptchaToken == "" {
+		err := errors.New("recaptcha token is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
+		err := errors.New("required field is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	err = backendInstance.VerifyReCaptcha(contractData.RecaptchaToken, "contractVerification", r.RemoteAddr)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	result, err := backendInstance.VerifyContract(contractData)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, result)
+}
+
+func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
+	result, err := backendInstance.GetCompilerVersion()
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

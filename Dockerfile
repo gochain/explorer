@@ -13,10 +13,13 @@ ADD . /explorer
 RUN npm install -g @angular/cli@7.0.3
 RUN make frontend
 
+FROM ethereum/solc:stable as solc
+
 FROM alpine:latest
 WORKDIR /explorer
 RUN apk add --no-cache ca-certificates
 COPY --from=backend_builder /tmp/gochain/* /usr/local/bin/
+COPY --from=solc /usr/bin/solc /usr/local/bin/
 COPY --from=frontend_builder /explorer/dist/* /explorer/
 
 EXPOSE 8080

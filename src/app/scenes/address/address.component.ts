@@ -13,6 +13,7 @@ import {Transaction} from '../../models/transaction.model';
 import {Holder} from '../../models/holder.model';
 import {QueryParams} from '../../models/query_params';
 import {InternalTransaction} from '../../models/internal-transaction.model';
+import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
@@ -28,6 +29,7 @@ export class AddressComponent implements OnInit {
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
   internal_transactions: InternalTransaction[] = [];
+  contract: Contract;
   transactionQueryParams: QueryParams = new QueryParams();
   internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
@@ -80,6 +82,9 @@ export class AddressComponent implements OnInit {
           this.getHolderData();
           this.getInternalTransactions();
         }
+        if (addr.contract) {
+          this.getContractData();
+        }
         this.getTransactionData();
       })
     );
@@ -122,6 +127,14 @@ export class AddressComponent implements OnInit {
       }
       this._dataLoading = false;
     });
+  }
+
+  getContractData() {
+    this._dataLoading = true;
+    this._commonService.getContract(this.addrHash).subscribe((data: Contract) => {
+      this.contract = data;
+    });
+    this._dataLoading = false;
   }
 
   onScroll(type: string) {

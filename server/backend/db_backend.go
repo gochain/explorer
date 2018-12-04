@@ -15,20 +15,20 @@ import (
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/common"
 	"github.com/gochain-io/gochain/core/types"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 )
 
 var wei = big.NewInt(1000000000000000000)
 
 type MongoBackend struct {
-	host      string
-	mongo     *mgo.Database
-	ethClient *ethclient.Client
+	host     string
+	mongo    *mgo.Database
+	goClient *goclient.Client
 }
 
 // New create new rpc client with given url
 func NewMongoClient(host, rpcUrl, dbName string) *MongoBackend {
-	client, err := ethclient.Dial(rpcUrl)
+	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("main")
 	}
@@ -45,14 +45,14 @@ func NewMongoClient(host, rpcUrl, dbName string) *MongoBackend {
 	importer := new(MongoBackend)
 
 	importer.mongo = session.DB(dbName)
-	importer.ethClient = client
+	importer.goClient = client
 	importer.createIndexes()
 
 	return importer
 
 }
 func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
-	from, err := self.ethClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
+	from, err := self.goClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
 	if err != nil {
 		log.Fatal().Err(err).Msg("parseTx")
 	}
@@ -190,6 +190,11 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = self.mongo.C("Contracts").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
@@ -217,19 +222,34 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
+
+	toAddress := transaction.To
+	if transaction.To == "" {
+		log.Info().Str("hash", transaction.TxHash).Msg("Hash doesn't have an address")
+		receipt, err := self.goClient.TransactionReceipt(context.Background(), tx.Hash())
+		if err == nil {
+			transaction.ContractAddress = receipt.ContractAddress.String()
+			toAddress = transaction.ContractAddress
+		} else {
+			log.Error().Err(err).Str("hash", transaction.TxHash).Msg("Cannot get a receipt in importTX")
+		}
+	}
+
 	_, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importTx")
 	}
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
+
+	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": toAddress}, &models.ActiveAddress{Address: toAddress, UpdatedAt: time.Now()})
 	if err != nil {
-		log.Fatal().Err(err).Msg("importBlock")
+		log.Fatal().Err(err).Msg("importTX")
 	}
 
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.To}, &models.ActiveAddress{Address: transaction.To, UpdatedAt: time.Now()})
+	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
 	if err != nil {
-		log.Fatal().Err(err).Msg("importBlock")
+		log.Fatal().Err(err).Msg("importTX")
 	}
+
 }
 func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
@@ -331,6 +351,20 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 	return internalTransaction
 }
 
+func (self *MongoBackend) importContract(contractAddress string, byteCode string) *models.Contract {
+	contract := &models.Contract{
+		Address:   contractAddress,
+		Bytecode:  byteCode,
+		CreatedAt: time.Now(),
+	}
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
+	if err != nil {
+		log.Fatal().Err(err).Msg("importContract")
+	}
+
+	return contract
+}
+
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
@@ -413,7 +447,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		return nil
 	}
 	//lazy calculation for receipt
-	receipt, err := self.ethClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
+	receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 	if err != nil {
 		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
 	} else {
@@ -454,6 +488,24 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, sk
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getInternalTransactionsList")
 	}
 	return internalTransactionsList
+}
+
+func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
+	var contract *models.Contract
+	err := self.mongo.C("Contracts").Find(bson.M{"address": contractAddress}).One(&contract)
+	if err != nil {
+		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getContract")
+	}
+	return contract
+}
+
+func (self *MongoBackend) updateContract(contract *models.Contract) bool {
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
+	if err != nil {
+		log.Fatal().Err(err).Msg("updateContract")
+		return false
+	}
+	return true
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {

@@ -27,7 +27,7 @@
     "server/models"
   ]
   revision = "da172091caf4b21b8f607ea02cbb19d1c5c86318"
-  
+
 [[projects]]
   name = "github.com/gochain-io/gochain"
   packages = [
@@ -46,7 +46,7 @@
     "crypto/randentropy",
     "crypto/secp256k1",
     "crypto/sha3",
-    "ethclient",
+    "goclient",
     "ethdb",
     "event",
     "log",
@@ -56,8 +56,8 @@
     "rpc",
     "trie"
   ]
-  revision = "162344e3a07faa2c6117d2f5ae23a56b947ecabe"
-  version = "2.1.43"
+  revision = "44d00108edbe07b3e9c32244835d5f57bcdc56a8"
+  version = "2.2.16"
 
 [[projects]]
   branch = "master"

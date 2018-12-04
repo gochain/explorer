@@ -258,6 +258,30 @@
           </ng-template>
         </tab-content>
       </tab>
+      <tab *ngIf="addr.contract" name="contract_source">
+        <tab-title>
+          Contract Source
+        </tab-title>
+        <tab-content>
+          <ng-container *ngIf="contract">
+            <ng-container *ngIf="!contract.valid">
+              <h5 class="uk-margin uk-margin-top uk-heading-bullet"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
+              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="uk-button uk-button-primary uk-button-small">Verify And Publish Source Code</a>
+            </ng-container>
+            <ng-container *ngIf="contract.valid">
+              <h5 class="uk-margin uk-margin-top uk-heading-bullet"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
+              <h5 class="uk-margin uk-margin-large-top uk-heading-bullet"><i class="fas fa-code"></i> Contract Source Code</h5>
+              <p>Contract Name: {{contract.contract_name}}</p>
+              <p>Compiler Version: {{contract.compiler_version}}</p>
+              <p>Optimization: {{contract.optimization}}</p>
+              <p>Verified: {{contract.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}} ({{contract.updated_at | timeAgo}})</p>
+              <pre class="code">{{contract.source_code}}</pre>
+            </ng-container>
+            <h5 class="uk-margin uk-margin-large-top uk-heading-bullet"><i class="fas fa-microchip"></i> Contract Bytecode</h5>
+            <pre class="code">{{contract.byte_code}}</pre>
+          </ng-container>
+        </tab-content>
+      </tab>
     </app-tabs>
   </div>
 </ng-container>

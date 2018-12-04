@@ -1,0 +1,35 @@
+.toastr {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 3;
+  &__item {
+    padding: 10px 30px;
+    color: #fff !important;
+    text-align: center;
+    text-transform: uppercase;
+    position: relative;
+    border-bottom: 1px solid #aaa;
+  }
+  &__close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    height: 21px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  &--success {
+    background: #20b2aa;
+  }
+  &--danger {
+    background: #ff0000;
+  }
+  &--warning {
+    background: #ff4500;
+  }
+  &--info {
+    background: #1e90ff;
+  }
+}

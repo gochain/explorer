@@ -1,10 +1,11 @@
 /*CORE*/
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpErrorResponse, HttpParams, HttpRequest, HttpResponse} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
 /*UTILS*/
-import { environment } from '../../environments/environment';
-import { catchError, retry } from 'rxjs/operators';
+import {environment} from '../../environments/environment';
+import {catchError, map, retry} from 'rxjs/operators';
+import {ToastrService} from '../modules/toastr/toastr.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ import { catchError, retry } from 'rxjs/operators';
 export class ApiService {
   apiURL: string;
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private toastrService: ToastrService) {
     this.apiURL = this.getApiURL();
   }
 
@@ -31,20 +32,29 @@ export class ApiService {
     );
   }
 
-  private _handleError(error: HttpErrorResponse) {
-    if (error.error instanceof ErrorEvent) {
-      // A client-side or network error occurred. Handle it accordingly.
-      console.error('An error occurred:', error.error.message);
-    } else {
-      // The backend returned an unsuccessful response code.
-      // The response body may contain clues as to what went wrong,
-      console.error(
-        `Backend returned code ${error.status}, ` +
-        `body was: ${error.error}`);
-    }
+  post(url: string, data?: any): Observable<any> {
+    return this.http.post<any>(this.apiURL + url, data).pipe(
+      retry(2),
+      catchError(this._handleError)
+    );
+  }
+
+  request(method: string, url: string, data?: any) {
+    const request = new HttpRequest(method, this.apiURL + url, data);
+    return this.http.request(request).pipe(
+      retry(2),
+      catchError(this._handleError),
+      map((response: HttpResponse<any>) => response.body),
+    );
+  }
+
+  private _handleError = (error: HttpErrorResponse) => {
+    console.error(
+      `Backend returned code ${error.status}, ` +
+      `body was: ${error.error}`);
+    this.toastrService.danger(error.error.error.message);
     // return an observable with a user-facing error message
-    return throwError(
-      'Something bad happened; please try again later.');
+    return throwError('Something bad happened; please try again later.');
   }
 }
 

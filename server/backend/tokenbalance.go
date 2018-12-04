@@ -9,7 +9,7 @@ import (
 	"github.com/gochain-io/gochain"
 	"github.com/gochain-io/gochain/accounts/abi"
 	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/ethclient"
+	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
 )
 
@@ -31,7 +31,7 @@ type TokenHolderDetails struct {
 
 type TokenBalance struct {
 	url     string
-	conn    *ethclient.Client
+	conn    *goclient.Client
 	VERSION string
 }
 
@@ -49,7 +49,7 @@ func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
 	if rpcUrl == "" {
 		log.Fatal().Msg("geth endpoint has not been set")
 	}
-	ethConn, err := ethclient.Dial(rpcUrl)
+	ethConn, err := goclient.Dial(rpcUrl)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
@@ -92,7 +92,7 @@ func (rpc *TokenBalance) GetTokenDetails(contract string) (*TokenDetails, error)
 	return tb, err
 }
 
-func (th *TokenHolderDetails) queryTokenHolderDetails(conn *ethclient.Client) error {
+func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(th.Contract, conn)
@@ -108,7 +108,7 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *ethclient.Client) er
 	return err
 }
 
-func (tb *TokenDetails) queryTokenDetails(conn *ethclient.Client) error {
+func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
