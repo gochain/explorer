@@ -68,6 +68,7 @@ func main() {
 	var mongoUrl string
 	var dbName string
 	var loglevel string
+	var reCaptchaSecret string
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag{
@@ -101,13 +102,19 @@ func main() {
 			Usage:       "folder that should be served",
 			Destination: &wwwRoot,
 		},
+		cli.StringFlag{
+			Name:        "recaptcha, r",
+			Value:       "",
+			Usage:       "secret key for google recaptcha v3",
+			Destination: &reCaptchaSecret,
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, reCaptchaSecret)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -282,8 +289,18 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
+	if contractData.RecaptchaToken == "" {
+		err := errors.New("recaptcha token is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
 	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
 		err := errors.New("required field is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	err = backendInstance.VerifyReCaptcha(contractData.RecaptchaToken)
+	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
