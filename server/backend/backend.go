@@ -132,7 +132,7 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 	// removing '0x' from start
 	sourceBin := compileData[key].RuntimeCode[2:]
 	// removing metadata hash from binary
-	reg := regexp.MustCompile(`00a165627a7a72305820.*0029$`)
+	reg := regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
 	sourceBin = reg.ReplaceAllString(sourceBin, ``)
 	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
 	if sourceBin == contractBin {
