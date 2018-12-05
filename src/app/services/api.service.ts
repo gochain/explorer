@@ -27,14 +27,12 @@ export class ApiService {
     return this.http.get<any>(this.apiURL + url, {
       params
     }).pipe(
-      retry(2),
       catchError(this._handleError)
     );
   }
 
   post(url: string, data?: any): Observable<any> {
     return this.http.post<any>(this.apiURL + url, data).pipe(
-      retry(2),
       catchError(this._handleError)
     );
   }
@@ -42,7 +40,6 @@ export class ApiService {
   request(method: string, url: string, data?: any) {
     const request = new HttpRequest(method, this.apiURL + url, data);
     return this.http.request(request).pipe(
-      retry(2),
       catchError(this._handleError),
       map((response: HttpResponse<any>) => response.body),
     );
