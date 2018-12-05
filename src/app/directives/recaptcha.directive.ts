@@ -1,6 +1,8 @@
-import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnInit} from '@angular/core';
+import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators} from '@angular/forms';
 import {AbstractControl} from '@angular/forms/src/model';
+import {interval, Subscription} from 'rxjs';
+import {startWith} from 'rxjs/operators';
 
 /*export interface ReCaptchaConfig {
   theme?: 'dark' | 'light';
@@ -28,7 +30,7 @@ declare global {
     }
   ],
 })
-export class ReCaptchaDirective implements OnInit, AfterViewInit, ControlValueAccessor {
+export class ReCaptchaDirective implements OnInit, OnDestroy, AfterViewInit, ControlValueAccessor {
   @Input() key: string;
   @Input() actionName: string;
 
@@ -37,12 +39,18 @@ export class ReCaptchaDirective implements OnInit, AfterViewInit, ControlValueAc
   private onChange: (value: string) => void;
   private onTouched: (value: string) => void;
 
+  private _sub: Subscription;
+
   constructor(private _element: ElementRef, private _ngZone: NgZone, private _injector: Injector) {
   }
 
   ngOnInit() {
     this.registerReCaptchaCallback();
     this.addScript();
+  }
+
+  ngOnDestroy() {
+    this._sub.unsubscribe();
   }
 
   ngAfterViewInit() {
@@ -63,10 +71,18 @@ export class ReCaptchaDirective implements OnInit, AfterViewInit, ControlValueAc
 
   registerReCaptchaCallback() {
     window.reCaptchaLoad = () => {
-      grecaptcha.execute(this.key, {action: this.actionName}).then((token: string) => {
-        this.onSuccess(token);
+      this._sub = interval(600000).pipe(
+        startWith(0),
+      ).subscribe(() => {
+        this.getToken();
       });
     };
+  }
+
+  getToken() {
+    grecaptcha.execute(this.key, {action: this.actionName}).then((token: string) => {
+      this.onSuccess(token);
+    });
   }
 
   addScript() {
