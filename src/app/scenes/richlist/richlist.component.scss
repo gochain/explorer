@@ -1,0 +1,26 @@
+@import '../../../assets/styles/mixins.scss';
+
+h3 {
+  font-size: 24px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #000;
+}
+
+.uk-table {
+  border-collapse: inherit;
+}
+
+.main-top__search {
+  padding-top: 110px;
+}
+
+@include respond-to(small) {
+  .main-top {
+    height: 200px;
+
+    &__search {
+      padding-top: 20px;
+    }
+  }
+}

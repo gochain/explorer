@@ -1,78 +1,62 @@
+<div class="main-top">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
 <ng-container *ngIf="(address | async) as addr; else addressNotFound">
-  <h3 class="uk-heading-bullet">Address</h3>
   <div class="uk-margin">
-    <ng-container *ifViewportSize="['small']">
-      <div class="tr-card">
-        <div class="tr-title">Address hash:</div>
-        <div>{{addr.address}}</div>
-        <div class="tr-title">Balance:</div>
-        <div>{{addr.balance_wei | weiToGO | bigNumber}}</div>
-        <ng-container *ngIf="addr.contract && addr.go20">
-          <div class="tr-title">Token name:</div>
-          <div>{{addr.token_name}}</div>
-          <div class="tr-title">Token symbol:</div>
-          <div>{{addr.token_symbol}}</div>
-          <div class="tr-title">Total supply:</div>
-          <div>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</div>
-          <div class="tr-title">Decimals:</div>
-          <div>{{addr.decimals}}</div>
-        </ng-container>
-        <div class="tr-title">Total transactions:</div>
-        <div>{{addr.number_of_transactions | bigNumber}}</div>
-        <ng-container *ngIf="addr.contract && addr.go20">
-          <div class="tr-title">Total internal transactions:</div>
-          <div>{{addr.number_of_internal_transactions | bigNumber}}</div>
-          <div class="tr-title">Total holders:</div>
-          <div>{{addr.number_of_token_holders | bigNumber}}</div>
-        </ng-container>
+      <div class="uk-overflow-auto list-holder">
+        <ul>
+          <li>
+            <p>Address hash:</p>
+            <b>{{addr.address}}</b>
+          </li>
+          <li>
+          <li *ngIf="addr.contract && addr.go20">
+            <p>Total supply:</p>
+            <b>{{addr.total_supply}}</b>
+          </li>
+          <li *ngIf="addr.contract && addr.go20">
+            <ul>
+              <li>
+                <p>Token name:</p>
+                <b>{{addr.token_name}}</b>
+              </li>
+              <li>
+                <p>Token symbol:</p>
+                <b>{{addr.token_symbol}}</b>
+              </li>
+              <li>
+                <p>Decimals:</p>
+                <b>{{addr.decimals}}</b>
+              </li>
+            </ul>
+          </li>
+          <li *ngIf="addr.contract && addr.go20">
+            <ul>
+              <li>
+                <p>Total transactions:</p>
+                <b>{{addr.number_of_transactions}}</b>
+              </li>
+              <li>
+                <p>Total internal transactions:</p>
+                <b>{{addr.number_of_internal_transactions}}</b>
+              </li>
+              <li>
+                <p>Total holders:</p>
+                <b>{{addr.number_of_token_holders}}</b>
+              </li>
+            </ul>
+          </li>
+        </ul>
       </div>
-    </ng-container>
-    <ng-container *ifViewportSize="['medium', 'large']">
-      <div class="uk-overflow-auto table__holder">
-        <table class="uk-table uk-table-small fs-14 table--sm">
-          <tr>
-            <td class="uk-text-nowrap uk-table-shrink">Address hash:</td>
-            <td>{{addr.address}}</td>
-          </tr>
-          <tr>
-            <td class="uk-text-nowrap">Balance:</td>
-            <td>{{addr.balance_wei | weiToGO | bigNumber}}</td>
-          </tr>
-          <ng-container *ngIf="addr.contract && addr.go20">
-            <tr>
-              <td class="uk-text-nowrap">Token name:</td>
-              <td>{{addr.token_name}}</td>
-            </tr>
-            <tr>
-              <td class="uk-text-nowrap">Token symbol:</td>
-              <td>{{addr.token_symbol}}</td>
-            </tr>
-            <tr>
-              <td class="uk-text-nowrap">Total supply:</td>
-              <td>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</td>
-            </tr>
-            <tr>
-              <td class="uk-text-nowrap">Decimals:</td>
-              <td>{{addr.decimals}}</td>
-            </tr>
-          </ng-container>
-          <tr>
-            <td class="uk-text-nowrap">Total transactions:</td>
-            <td>{{addr.number_of_transactions | bigNumber}}</td>
-          </tr>
-          <ng-container *ngIf="addr.contract && addr.go20">
-            <tr>
-              <td class="uk-text-nowrap">Total internal transactions:</td>
-              <td>{{addr.number_of_internal_transactions | bigNumber}}</td>
-            </tr>
-            <tr>
-              <td class="uk-text-nowrap">Total holders:</td>
-              <td>{{addr.number_of_token_holders | bigNumber}}</td>
-            </tr>
-          </ng-container>
-        </table>
+      <div *ngIf="addr.contract && addr.go20" class="list-holder__footer">
+        <div>
+          <p>Balance:</p>
+          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
+        </div>
       </div>
-    </ng-container>
   </div>
   <div class="uk-margin">
     <app-tabs name="addr_tab">
@@ -104,7 +88,7 @@
                 </div>
               </div>
             </ng-container>
-            <ng-container *ifViewportSize="['medium', 'large']">
+            <ng-container *ifViewportSize="['large']">
               <div class="uk-overflow-auto">
                 <table class="uk-table uk-table-small uk-table-striped">
                   <thead>
@@ -191,7 +175,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr *ngFor="let tx of internal_transactions">                      
+                    <tr *ngFor="let tx of internal_transactions">
                       <td class="uk-text-truncate">{{tx.transaction_hash}}</td>
                       <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
                       <td class="uk-text-truncate">{{tx.from_address}}</td>
@@ -224,7 +208,7 @@
                 <div class="uk-text-truncate">Token holder: {{holder.token_holder_address}}
                 </div>
                 <div class="uk-text-truncate">Balance ({{addr.token_symbol}}): {{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}
-                </div>                
+                </div>
               </div>
             </ng-container>
             <ng-container *ifViewportSize="['medium', 'large']">
@@ -233,7 +217,7 @@
                   <thead>
                     <tr>
                       <th class="uk-width-1-2">Token holder</th>
-                      <th class="uk-width-1-2">Balance ({{addr.token_symbol}})</th>                      
+                      <th class="uk-width-1-2">Balance ({{addr.token_symbol}})</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -241,7 +225,7 @@
                       <td class="uk-text-truncate">
                         {{holder.token_holder_address}}
                       </td>
-                      <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}</td>                      
+                      <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -265,19 +249,19 @@
         <tab-content>
           <ng-container *ngIf="contract">
             <ng-container *ngIf="!contract.valid">
-              <h5 class="uk-margin uk-margin-top uk-heading-bullet"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
+              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
               <a routerLink="/verify" [queryParams]="{address: addr.address}" class="uk-button uk-button-primary uk-button-small">Verify And Publish Source Code</a>
             </ng-container>
             <ng-container *ngIf="contract.valid">
-              <h5 class="uk-margin uk-margin-top uk-heading-bullet"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
-              <h5 class="uk-margin uk-margin-large-top uk-heading-bullet"><i class="fas fa-code"></i> Contract Source Code</h5>
+              <h5 class="uk-margin uk-margin-top"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
+              <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-code"></i> Contract Source Code</h5>
               <p>Contract Name: {{contract.contract_name}}</p>
               <p>Compiler Version: {{contract.compiler_version}}</p>
               <p>Optimization: {{contract.optimization}}</p>
               <p>Verified: {{contract.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}} ({{contract.updated_at | timeAgo}})</p>
               <pre class="code">{{contract.source_code}}</pre>
             </ng-container>
-            <h5 class="uk-margin uk-margin-large-top uk-heading-bullet"><i class="fas fa-microchip"></i> Contract Bytecode</h5>
+            <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-microchip"></i> Contract Bytecode</h5>
             <pre class="code">{{contract.byte_code}}</pre>
           </ng-container>
         </tab-content>

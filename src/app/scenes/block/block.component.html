@@ -1,90 +1,77 @@
+<div class="main-top">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
 <ng-container *ngIf="!!block; else blockNotFound">
-  <h3 class="uk-heading-bullet">Block</h3>
   <div class="uk-margin">
-    <ng-container *ifViewportSize="['small']">
-      <div class="tr-card">
-        <div class="tr-title">Block Number:</div>
-        <div>{{block.number}}</div>
-        <div class="tr-title">Block Hash:</div>
-        <div>{{block.hash}}</div>
-        <div class="tr-title">Created At:</div>
-        <div>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</div>
-        <div class="tr-title">Gas Limit:</div>
-        <div>{{block.gas_limit | bigNumber}}</div>
-        <div class="tr-title">Parent block hash:</div>
-        <div><a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a></div>
-        <div class="tr-title">Gas Used:</div>
-        <div>{{block.gas_used | bigNumber}}</div>
-        <div class="tr-title">Nonce:</div>
-        <div>{{block.nonce}}</div>
-        <div class="tr-title">Signer:</div>
-        <div><a routerLink="/addr/{{block.miner}}">{{block.miner}}</a></div>
-        <div class="tr-title">Transactions Count:</div>
-        <div>{{block.tx_count}}</div>
-        <div class="tr-title">Difficulty:</div>
-        <div>{{block.difficulty}}</div>
-        <div class="tr-title">Extra Data:</div>
-        <div>{{block.extra_data}}</div>
-      </div>
-    </ng-container>
-    <ng-container *ifViewportSize="['medium', 'large']">
-      <div class="uk-overflow-auto table__holder">
-        <table class="uk-table uk-table-small fs-14 table--sm">
-          <tr>
-            <td>Block Number</td>
-            <td>{{block.number}}</td>
-          </tr>
-          <tr>
-            <td>Block Hash</td>
-            <td>{{block.hash }}</td>
-          </tr>
-          <tr>
-            <td>Created At</td>
-            <td>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</td>
-          </tr>
-          <tr>
-            <td>Gas Limit</td>
-            <td>{{block.gas_limit | bigNumber}}</td>
-          </tr>
-          <tr>
-            <td>Parent block hash</td>
-            <td>
+      <div class="list-holder">
+        <ul>
+          <li>
+            <p>Parent block hash</p>
+            <b>
               <a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Gas Used</td>
-            <td>{{block.gas_used | bigNumber}}</td>
-          </tr>
-          <tr>
-            <td>Nonce</td>
-            <td>{{block.nonce }}</td>
-          </tr>
-          <tr>
-            <td>Signer</td>
-            <td>
+            </b>
+          </li>
+          <li>
+            <p>Signer</p>
+            <b>
               <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-            </td>
-          </tr>
-          <tr>
-            <td>Transactions Count</td>
-            <td>{{block.tx_count }}</td>
-          </tr>
-          <tr>
-            <td>Difficulty</td>
-            <td>{{block.difficulty }}</td>
-          </tr>
-          <tr>
-            <td>Extra Data</td>
-            <td>{{block.extra_data }}</td>
-          </tr>
-        </table>
+            </b>
+          </li>
+          <li>
+            <p>Created At</p>
+            <b>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</b>
+          </li>
+          <li>
+            <ul>
+              <li>
+                <p>Gas Limit</p>
+                <b>{{block.gas_limit | bigNumber}}</b>
+              </li>
+              <li>
+                <p>Gas Used</p>
+                <b>{{block.gas_used | bigNumber}}</b>
+              </li>
+              <li>
+                <p>Nonce</p>
+                <b>{{block.nonce }}</b>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <ul>
+              <li>
+                <p>Block Number</p>
+                <b>{{block.number}}</b>
+              </li>
+              <li>
+                <p>Transactions Count</p>
+                <b>{{block.tx_count }}</b>
+              </li>
+              <li>
+                <p>Difficulty</p>
+                <b>{{block.difficulty }}</b>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <p>Extra Data</p>
+            <b>{{block.extra_data }}</b>
+          </li>
+        </ul>
       </div>
-    </ng-container>
+    <div class="list-holder__footer">
+      <div>
+        <p>Block Hash</p>
+        <b>{{block.hash }}</b>
+      </div>
+    </div>
   </div>
   <div class="uk-margin">
     <div class="uk-flex uk-flex-between">
-      <h4 class="uk-heading-bullet">Transactions:</h4>
+      <h3>Transactions:</h3>
       <div class="uk-form-width-small" *ngIf="transactions.length">
         <select class="uk-select" [(ngModel)]="transactionQueryParams.limit">
           <option [ngValue]="10">10</option>

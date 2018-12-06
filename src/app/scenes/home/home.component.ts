@@ -8,6 +8,7 @@ import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';
 import {Stats} from '../../models/stats.model';
+import {ISliderOptions} from '../../modules/slider/slider.component';
 
 @Component({
   selector: 'app-home',
@@ -27,6 +28,13 @@ export class HomeComponent implements OnInit {
     }),
     mergeMap(() => this._commonService.getRecentBlocks()),
   );
+
+  private _sliderTitles: string[] = ['Total', 'Last 7 days', 'Last 24 hours'];
+  private _sliderOptions: ISliderOptions = {
+      start: 50,
+      step: 50,
+      sensitivity: 20
+  };
 
   constructor(private _commonService: CommonService, private _layoutService: LayoutService) {
   }

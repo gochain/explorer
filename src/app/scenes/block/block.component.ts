@@ -17,7 +17,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @Component({
   selector: 'app-block',
   templateUrl: './block.component.html',
-  styleUrls: ['./block.component.css']
+  styleUrls: ['./block.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
 export class BlockComponent implements OnInit {

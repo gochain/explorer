@@ -1,4 +1,6 @@
+/*CORE*/
 import {Component, OnInit} from '@angular/core';
+/*SERVICES*/
 import {LayoutService} from '../../services/layout.service';
 
 @Component({
@@ -7,6 +9,7 @@ import {LayoutService} from '../../services/layout.service';
   styleUrls: ['./mobile-header.component.scss']
 })
 export class MobileHeaderComponent implements OnInit {
+
   themeColor: string;
 
   constructor(public layoutService: LayoutService) {
@@ -19,10 +22,12 @@ export class MobileHeaderComponent implements OnInit {
   }
 
   toggleMenu() {
-    this.layoutService.mobileMenuState.next(true);
+    this.layoutService.mobileMenuState.next(!this.layoutService.mobileMenuState.value);
+    this.layoutService.mobileSearchState.next(false);
   }
 
   toggleSearch() {
     this.layoutService.mobileSearchState.next(!this.layoutService.mobileSearchState.value);
+    this.layoutService.mobileMenuState.next(false);
   }
 }

@@ -1,4 +1,4 @@
 export interface IConfig {
-  medium: number;
+  small: number;
   large: number;
 }

@@ -34,6 +34,7 @@ import {PipesModule} from './modules/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
+import {SliderModule} from './modules/slider/slider.module';
 import {ToastrModule} from './modules/toastr/toastr.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
@@ -41,7 +42,6 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
-
 
 @NgModule({
   declarations: [
@@ -75,6 +75,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     DirectiveModule,
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     TabsModule,
+    SliderModule,
     NgProgressModule.forRoot({
       trickleSpeed: 200,
       min: 20,
