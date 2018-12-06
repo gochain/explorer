@@ -43,6 +43,11 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 func (self *Backend) BalanceAt(address, block string) (*big.Int, error) {
 	return self.extendedEthClient.ethGetBalance(address, block)
 }
+
+func (self *Backend) CodeAt(address, block string) ([]byte, error) {
+	return self.extendedEthClient.codeAt(address, block)
+}
+
 func (self *Backend) TotalSupply() (*big.Int, error) {
 	return self.extendedEthClient.ethTotalSupply()
 }
@@ -209,7 +214,9 @@ func (self *Backend) ImportContract(contractAddress string, byteCode string) *mo
 	return self.mongo.importContract(contractAddress, byteCode)
 }
 
-// HeaderByNumber
-// BlockByNumber
-// BalanceAt
-// CodeAt
+// func (self *Backend) blockByNumber(blockNumber int64) (*types.Block, error) {
+// return
+// }
+func (self *Backend) GetFirstBlockNumber() (int64, error) {
+	return self.extendedEthClient.ethBlockNumber()
+}
