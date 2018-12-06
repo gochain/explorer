@@ -63,7 +63,7 @@ func main() {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, "")
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)

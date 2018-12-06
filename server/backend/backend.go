@@ -2,9 +2,7 @@ package backend
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
-	"net/http"
 	"time"
 
 	"errors"
@@ -16,10 +14,7 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
-	"net/url"
 )
-
-const RECAPTCHA_URL = "https://www.google.com/recaptcha/api/siteverify"
 
 type Backend struct {
 	mongo             *MongoBackend
@@ -29,7 +24,7 @@ type Backend struct {
 	reCaptchaSecret   string
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, reCaptchaSecret string) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create eth client")
@@ -41,7 +36,6 @@ func NewBackend(mongoUrl, rpcUrl, dbName string, reCaptchaSecret string) *Backen
 	importer.extendedEthClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
-	importer.reCaptchaSecret = reCaptchaSecret
 	return importer
 }
 
@@ -213,48 +207,6 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
 	return self.mongo.importContract(contractAddress, byteCode)
-}
-
-func (self *Backend) VerifyReCaptcha(token string, action string, remoteIp string) error {
-	if self.reCaptchaSecret == "" {
-		return nil
-	}
-	/*payload := &models.ReCaptchaRequest{
-		Secret:   self.reCaptchaSecret,
-		Response: token,
-		RemoteIp: remoteIp,
-	}
-	var bytesRepresentation bytes.Buffer
-	if err := json.NewEncoder(&bytesRepresentation).Encode(payload); err != nil {
-		log.Fatal().Err(err).Msg("error occurred during encoding recaptcha payload")
-		err := errors.New("error occurred during processing your request. please try again")
-		return err
-	}
-	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", &bytesRepresentation)*/
-	params := url.Values{}
-	params.Add("secret", self.reCaptchaSecret)
-	params.Add("response", token)
-	if remoteIp != "" {
-		params.Add("remoteip", remoteIp)
-	}
-	resp, err := http.PostForm(RECAPTCHA_URL, params)
-	if err != nil {
-		log.Fatal().Err(err).Msg("error occurred during making recaptcha request")
-		err := errors.New("error occurred during processing your request. please try again")
-		return err
-	}
-	var result *models.ReCaptchaResponse
-	json.NewDecoder(resp.Body).Decode(&result)
-	// resp.Body.Close()
-	if result.Success == false {
-		err := errors.New("error occurred during anti-bot checking. please try again")
-		return err
-	}
-	if result.Score < 0.5 {
-		err := errors.New("not handling bot request")
-		return err
-	}
-	return nil
 }
 
 // HeaderByNumber
