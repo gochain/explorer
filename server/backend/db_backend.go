@@ -100,15 +100,7 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 }
 
 func (self *MongoBackend) createIndexes() {
-	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true})
+	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +110,12 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "to", "-block_number"}, Background: true})
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "-block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "-block_number"}, Background: true})
 	if err != nil {
 		panic(err)
 	}

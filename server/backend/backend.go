@@ -2,9 +2,8 @@ package backend
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"math/big"
-	"net/http"
 	"time"
 
 	"errors"
@@ -16,44 +15,80 @@ import (
 	"github.com/gochain-io/gochain/core/types"
 	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog/log"
-	"net/url"
 )
 
-const RECAPTCHA_URL = "https://www.google.com/recaptcha/api/siteverify"
-
 type Backend struct {
-	mongo             *MongoBackend
-	goClient          *goclient.Client
-	extendedEthClient *EthRPC
-	tokenBalance      *TokenBalance
-	reCaptchaSecret   string
+	mongo                 *MongoBackend
+	goClient              *goclient.Client
+	extendedGochainClient *EthRPC
+	tokenBalance          *TokenBalance
+	reCaptchaSecret       string
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, reCaptchaSecret string) *Backend {
+func retry(attempts int, sleep time.Duration, f func() error) (err error) {
+	for i := 0; ; i++ {
+		err = f()
+		if err == nil {
+			return
+		}
+		if i >= (attempts - 1) {
+			break
+		}
+		time.Sleep(sleep)
+		log.Info().Err(err).Msg("retrying after error")
+	}
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
+}
+
+func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create eth client")
+		log.Fatal().Err(err).Msg("cannot connect to gochain network")
 	}
 	exClient := NewEthClient(rpcUrl)
 	mongoBackend := NewMongoClient(mongoUrl, rpcUrl, dbName)
 	importer := new(Backend)
 	importer.goClient = client
-	importer.extendedEthClient = exClient
+	importer.extendedGochainClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
-	importer.reCaptchaSecret = reCaptchaSecret
 	return importer
 }
 
 //METHODS USED IN API
 func (self *Backend) BalanceAt(address, block string) (*big.Int, error) {
-	return self.extendedEthClient.ethGetBalance(address, block)
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethGetBalance(address, block)
+		return err
+	})
+	return value, err
 }
+
+func (self *Backend) CodeAt(address string) ([]byte, error) {
+	var value []byte
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.CodeAt(context.Background(), common.HexToAddress(address), nil)
+		return err
+	})
+	return value, err
+}
+
 func (self *Backend) TotalSupply() (*big.Int, error) {
-	return self.extendedEthClient.ethTotalSupply()
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethTotalSupply()
+		return err
+	})
+	return value, err
 }
 func (self *Backend) CirculatingSupply() (*big.Int, error) {
-	return self.extendedEthClient.circulatingSupply()
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.circulatingSupply()
+		return err
+	})
+	return value, err
 }
 func (self *Backend) GetStats() *models.Stats {
 	return self.mongo.getStats()
@@ -171,7 +206,13 @@ func (self *Backend) UpdateStats() {
 	self.mongo.updateStats()
 }
 func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
-	return self.extendedEthClient.genesisAlloc()
+	var value *big.Int
+	var list []string
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, list, err = self.extendedGochainClient.genesisAlloc()
+		return err
+	})
+	return value, list, err
 }
 func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetails, error) {
 	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
@@ -215,49 +256,19 @@ func (self *Backend) ImportContract(contractAddress string, byteCode string) *mo
 	return self.mongo.importContract(contractAddress, byteCode)
 }
 
-func (self *Backend) VerifyReCaptcha(token string, action string, remoteIp string) error {
-	if self.reCaptchaSecret == "" {
-		return nil
-	}
-	/*payload := &models.ReCaptchaRequest{
-		Secret:   self.reCaptchaSecret,
-		Response: token,
-		RemoteIp: remoteIp,
-	}
-	var bytesRepresentation bytes.Buffer
-	if err := json.NewEncoder(&bytesRepresentation).Encode(payload); err != nil {
-		log.Fatal().Err(err).Msg("error occurred during encoding recaptcha payload")
-		err := errors.New("error occurred during processing your request. please try again")
+func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {
+	var value *types.Block
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.BlockByNumber(context.Background(), big.NewInt(blockNumber))
 		return err
-	}
-	resp, err := http.Post(RECAPTCHA_URL, "application/json; charset=utf-8", &bytesRepresentation)*/
-	params := url.Values{}
-	params.Add("secret", self.reCaptchaSecret)
-	params.Add("response", token)
-	if remoteIp != "" {
-		params.Add("remoteip", remoteIp)
-	}
-	resp, err := http.PostForm(RECAPTCHA_URL, params)
-	if err != nil {
-		log.Fatal().Err(err).Msg("error occurred during making recaptcha request")
-		err := errors.New("error occurred during processing your request. please try again")
-		return err
-	}
-	var result *models.ReCaptchaResponse
-	json.NewDecoder(resp.Body).Decode(&result)
-	// resp.Body.Close()
-	if result.Success == false {
-		err := errors.New("error occurred during anti-bot checking. please try again")
-		return err
-	}
-	if result.Score < 0.5 {
-		err := errors.New("not handling bot request")
-		return err
-	}
-	return nil
+	})
+	return value, err
 }
-
-// HeaderByNumber
-// BlockByNumber
-// BalanceAt
-// CodeAt
+func (self *Backend) GetFirstBlockNumber() (int64, error) {
+	var value int64
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethBlockNumber()
+		return err
+	})
+	return value, err
+}

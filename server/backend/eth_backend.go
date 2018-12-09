@@ -8,8 +8,11 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gochain-io/gochain/common"
+	"github.com/gochain-io/gochain/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
 
@@ -118,6 +121,24 @@ func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
 	return balance, err
 }
 
+// func (rpc *EthRPC) ethGetBlockByNumber(number int64, withTransactions bool) (types.Block, error) {
+// 	return rpc.getBlock("eth_getBlockByNumber", withTransactions, IntToHex(number), withTransactions)
+// }
+
+func (rpc *EthRPC) ethBlockNumber() (int64, error) {
+	var response string
+	if err := rpc.call("eth_blockNumber", &response); err != nil {
+		return 0, err
+	}
+	return parseInt(response)
+}
+
+func (rpc *EthRPC) codeAt(address, block string) ([]byte, error) {
+	var result hexutil.Bytes
+	err := rpc.call("eth_getCode", &result, address, block)
+	return result, err
+}
+
 func (rpc *EthRPC) ethTotalSupply() (*big.Int, error) {
 	var response string
 	if err := rpc.call("eth_totalSupply", &response, "latest"); err != nil {
@@ -173,4 +194,13 @@ func parseBigInt(value string) (*big.Int, error) {
 	_, err := fmt.Sscan(value, &i)
 
 	return &i, err
+}
+
+func parseInt(value string) (int64, error) {
+	i, err := strconv.ParseInt(strings.TrimPrefix(value, "0x"), 16, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(i), nil
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"os"
 	"strings"
 
@@ -12,7 +11,6 @@ import (
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
@@ -63,7 +61,7 @@ func main() {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, "")
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)
@@ -86,63 +84,50 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func getClient(url string) goclient.Client {
-	client, err := goclient.Dial(url)
-	if err != nil {
-		log.Fatal().Err(err).Msg("main")
-	}
-	return *client
-}
 func listener(url string, importer *backend.Backend) {
-	client := getClient(url)
-	var prevHeader string
+	var prevHeader int64
 	ticker := time.NewTicker(time.Second * 1).C
 	for {
 		select {
 		case <-ticker:
-			header, err := client.HeaderByNumber(context.Background(), nil)
-			if err != nil {
-				log.Fatal().Err(err).Msg("HeaderByNumber")
-			}
-			log.Debug().Int64("Block", header.Number.Int64()).Msg("Gettting block in listener")
-			if prevHeader != header.Number.String() {
-				log.Info().Str("Listener is downloading the block:", header.Number.String()).Msg("Gettting block in listener")
-				block, err := client.BlockByNumber(context.Background(), header.Number)
+			latestBlocknumber := getFirstBlockNumber(importer)
+			log.Debug().Int64("Block", latestBlocknumber).Msg("Gettting block in listener")
+			if prevHeader != latestBlocknumber {
+				log.Info().Int64("Listener is downloading the block:", latestBlocknumber).Msg("Gettting block in listener")
+				block, err := importer.BlockByNumber(latestBlocknumber)
 				if block != nil {
 					importer.ImportBlock(block)
 					if err != nil {
 						log.Fatal().Err(err).Msg("listener")
 					}
-					checkParentForBlock(&client, importer, block.Number().Int64(), 100)
-					prevHeader = header.Number.String()
+					checkParentForBlock(importer, block.Number().Int64(), 100)
+					prevHeader = latestBlocknumber
 				}
 			}
 		}
 	}
 }
 
-func getFirstBlockNumber(client goclient.Client) *big.Int {
-	header, err := client.HeaderByNumber(context.Background(), nil)
+func getFirstBlockNumber(importer *backend.Backend) int64 {
+	number, err := importer.GetFirstBlockNumber()
 	if err != nil {
-		log.Fatal().Err(err).Msg("backfill - HeaderByNumber")
+		log.Fatal().Err(err).Msg("getFirstBlockNumber")
 	}
-	log.Info().Msg(header.Number.String())
-	return header.Number
+	return number
 }
 func backfill(url string, importer *backend.Backend, startFrom int64) {
-	client := getClient(url)
-	blockNumber := getFirstBlockNumber(client)
+	blockNumber := getFirstBlockNumber(importer)
 	if startFrom > 0 {
-		blockNumber = big.NewInt(startFrom)
+		blockNumber = startFrom
 	}
 	for {
-		if (blockNumber.Int64() % 1000) == 0 {
-			log.Info().Int64("Block", blockNumber.Int64()).Msg("Checking block in backfill")
+		if (blockNumber % 1000) == 0 {
+			log.Info().Int64("Block", blockNumber).Msg("Checking block in backfill")
 		}
-		blocksFromDB := importer.GetBlockByNumber(blockNumber.Int64())
+		blocksFromDB := importer.GetBlockByNumber(blockNumber)
 		if blocksFromDB == nil {
-			log.Info().Str("Backfilling the block:", blockNumber.String()).Msg("Gettting block in backfill")
-			block, err := client.BlockByNumber(context.Background(), blockNumber)
+			log.Info().Int64("Backfilling the block:", blockNumber).Msg("Gettting block in backfill")
+			block, err := importer.BlockByNumber(blockNumber)
 			if block != nil {
 				importer.ImportBlock(block)
 				if err != nil {
@@ -150,17 +135,17 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 				}
 			}
 		}
-		checkParentForBlock(&client, importer, blockNumber.Int64(), 5)
-		checkTransactionsConsistency(&client, importer, blockNumber.Int64())
-		if blockNumber.Int64() > 0 {
-			blockNumber = big.NewInt(0).Sub(blockNumber, big.NewInt(1))
+		checkParentForBlock(importer, blockNumber, 5)
+		checkTransactionsConsistency(importer, blockNumber)
+		if blockNumber > 0 {
+			blockNumber = blockNumber - 1
 		} else {
-			blockNumber = getFirstBlockNumber(client)
+			blockNumber = getFirstBlockNumber(importer)
 		}
 	}
 }
 
-func checkParentForBlock(client *goclient.Client, importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
+func checkParentForBlock(importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
 	numBlocksToCheck--
 	if blockNumber == 0 {
 		return
@@ -168,7 +153,7 @@ func checkParentForBlock(client *goclient.Client, importer *backend.Backend, blo
 	if importer.NeedReloadBlock(blockNumber) {
 		blockNumber--
 		log.Info().Int64("Redownloading the block because it's corrupted or missing:", blockNumber).Msg("checkParentForBlock")
-		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
+		block, err := importer.BlockByNumber(blockNumber)
 		if block != nil {
 			importer.ImportBlock(block)
 			if err != nil {
@@ -177,26 +162,23 @@ func checkParentForBlock(client *goclient.Client, importer *backend.Backend, blo
 		}
 		if err != nil {
 			log.Info().Err(err).Msg("BlockByNumber - checkParentForBlock")
-			checkParentForBlock(client, importer, blockNumber+1, numBlocksToCheck)
+			checkParentForBlock(importer, blockNumber+1, numBlocksToCheck)
 		}
 		if numBlocksToCheck > 0 && block != nil {
-			checkParentForBlock(client, importer, block.Number().Int64(), numBlocksToCheck)
+			checkParentForBlock(importer, block.Number().Int64(), numBlocksToCheck)
 		}
 	}
 }
 
-func checkTransactionsConsistency(client *goclient.Client, importer *backend.Backend, blockNumber int64) {
+func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) {
 	if !importer.TransactionsConsistent(blockNumber) {
 		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
-		block, err := client.BlockByNumber(context.Background(), big.NewInt(blockNumber))
+		block, err := importer.BlockByNumber(blockNumber)
+		if err != nil {
+			log.Fatal().Err(err).Msg("checkTransactionsConsistency")
+		}
 		if block != nil {
 			importer.ImportBlock(block)
-			if err != nil {
-				log.Fatal().Err(err).Msg("importBlock - checkParentForBlock")
-			}
-		}
-		if err != nil {
-			log.Fatal().Err(err).Msg("BlockByNumber - checkParentForBlock")
 		}
 	}
 }
@@ -210,9 +192,8 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 func updateAddresses(url string, updateContracts bool, importer *backend.Backend) {
-	client := getClient(url)
 	lastUpdatedAt := time.Unix(0, 0)
-	lastBlockUpdatedAt := big.NewInt(0)
+	lastBlockUpdatedAt := int64(0)
 	_, genesisAddressList, err := importer.GenesisAlloc()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed response from GenesisAlloc")
@@ -221,7 +202,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 	for {
 		start := time.Now()
 		currentTime := time.Now()
-		currentBlock := getFirstBlockNumber(client)
+		currentBlock := getFirstBlockNumber(importer)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for index, address := range addresses {
@@ -230,11 +211,11 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				log.Info().Str("Following address is in the list of genesis addresses", normalizedAddress).Msg("updateAddresses")
 				continue
 			}
-			balance, err := client.BalanceAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
+			balance, err := importer.BalanceAt(normalizedAddress, "pending")
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")
 			}
-			contractDataArray, err := client.CodeAt(context.Background(), common.HexToAddress(normalizedAddress), nil)
+			contractDataArray, err := importer.CodeAt(normalizedAddress)
 			contractData := string(contractDataArray[:])
 			go20 := false
 			var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
@@ -277,7 +258,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, go20)
 		}
 		elapsed := time.Since(start)
-		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt.Int64()).Msg("Performance measurement")
+		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")
 		lastBlockUpdatedAt = currentBlock
 		lastUpdatedAt = currentTime
 		time.Sleep(300 * time.Second) //sleep for 5 minutes

@@ -11,7 +11,6 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/gochain-io/gochain/goclient"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
@@ -24,10 +23,10 @@ import (
 	"github.com/go-chi/cors"
 )
 
-var goClient *goclient.Client
 var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
+var reCaptchaSecret string
 
 const defaultFetchLimit = 500
 
@@ -68,7 +67,7 @@ func main() {
 	var mongoUrl string
 	var dbName string
 	var loglevel string
-	var reCaptchaSecret string
+
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag{
@@ -114,7 +113,7 @@ func main() {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, reCaptchaSecret)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -299,7 +298,7 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	err = backendInstance.VerifyReCaptcha(contractData.RecaptchaToken, "contractVerification", r.RemoteAddr)
+	err = verifyReCaptcha(contractData.RecaptchaToken, reCaptchaSecret, "contractVerification", r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
