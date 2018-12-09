@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -17,23 +18,38 @@ import (
 )
 
 type Backend struct {
-	mongo             *MongoBackend
-	goClient          *goclient.Client
-	extendedEthClient *EthRPC
-	tokenBalance      *TokenBalance
-	reCaptchaSecret   string
+	mongo                 *MongoBackend
+	goClient              *goclient.Client
+	extendedGochainClient *EthRPC
+	tokenBalance          *TokenBalance
+	reCaptchaSecret       string
+}
+
+func retry(attempts int, sleep time.Duration, f func() error) (err error) {
+	for i := 0; ; i++ {
+		err = f()
+		if err == nil {
+			return
+		}
+		if i >= (attempts - 1) {
+			break
+		}
+		time.Sleep(sleep)
+		log.Info().Err(err).Msg("retrying after error")
+	}
+	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
 func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot create eth client")
+		log.Fatal().Err(err).Msg("cannot connect to gochain network")
 	}
 	exClient := NewEthClient(rpcUrl)
 	mongoBackend := NewMongoClient(mongoUrl, rpcUrl, dbName)
 	importer := new(Backend)
 	importer.goClient = client
-	importer.extendedEthClient = exClient
+	importer.extendedGochainClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
 	return importer
@@ -41,18 +57,38 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 
 //METHODS USED IN API
 func (self *Backend) BalanceAt(address, block string) (*big.Int, error) {
-	return self.extendedEthClient.ethGetBalance(address, block)
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethGetBalance(address, block)
+		return err
+	})
+	return value, err
 }
 
-func (self *Backend) CodeAt(address, block string) ([]byte, error) {
-	return self.extendedEthClient.codeAt(address, block)
+func (self *Backend) CodeAt(address string) ([]byte, error) {
+	var value []byte
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.CodeAt(context.Background(), common.HexToAddress(address), nil)
+		return err
+	})
+	return value, err
 }
 
 func (self *Backend) TotalSupply() (*big.Int, error) {
-	return self.extendedEthClient.ethTotalSupply()
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethTotalSupply()
+		return err
+	})
+	return value, err
 }
 func (self *Backend) CirculatingSupply() (*big.Int, error) {
-	return self.extendedEthClient.circulatingSupply()
+	var value *big.Int
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.circulatingSupply()
+		return err
+	})
+	return value, err
 }
 func (self *Backend) GetStats() *models.Stats {
 	return self.mongo.getStats()
@@ -170,7 +206,13 @@ func (self *Backend) UpdateStats() {
 	self.mongo.updateStats()
 }
 func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
-	return self.extendedEthClient.genesisAlloc()
+	var value *big.Int
+	var list []string
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, list, err = self.extendedGochainClient.genesisAlloc()
+		return err
+	})
+	return value, list, err
 }
 func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetails, error) {
 	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
@@ -214,9 +256,19 @@ func (self *Backend) ImportContract(contractAddress string, byteCode string) *mo
 	return self.mongo.importContract(contractAddress, byteCode)
 }
 
-// func (self *Backend) blockByNumber(blockNumber int64) (*types.Block, error) {
-// return
-// }
+func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {
+	var value *types.Block
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.BlockByNumber(context.Background(), big.NewInt(blockNumber))
+		return err
+	})
+	return value, err
+}
 func (self *Backend) GetFirstBlockNumber() (int64, error) {
-	return self.extendedEthClient.ethBlockNumber()
+	var value int64
+	err := retry(5, 2*time.Second, func() (err error) {
+		value, err = self.extendedGochainClient.ethBlockNumber()
+		return err
+	})
+	return value, err
 }
