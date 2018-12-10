@@ -393,7 +393,7 @@ func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, 
 
 func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock {
 	var blocks []*models.LightBlock
-	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1}).Skip(skip).Limit(limit).All(&blocks)
+	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).Skip(skip).Limit(limit).All(&blocks)
 	if err != nil {
 		log.Debug().Int("Block", limit).Err(err).Msg("GetLatestsBlocks")
 		return nil

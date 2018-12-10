@@ -27,6 +27,7 @@ type LightBlock struct {
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	Miner     string    `json:"miner" bson:"miner"`
 	TxCount   int       `json:"tx_count" bson:"tx_count"`
+	ExtraData string    `json:"extra_data" bson:"extra_data"`
 }
 
 type LightBlockList struct {
