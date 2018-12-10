@@ -6,57 +6,57 @@
 </div>
 <ng-container *ngIf="(address | async) as addr; else addressNotFound">
   <div class="uk-margin">
-      <div class="uk-overflow-auto list-holder">
-        <ul>
-          <li>
-            <p>Address hash:</p>
-            <b>{{addr.address}}</b>
-          </li>
-          <li>
-          <li *ngIf="addr.contract && addr.go20">
-            <p>Total supply:</p>
-            <b>{{addr.total_supply}}</b>
-          </li>
-          <li *ngIf="addr.contract && addr.go20">
-            <ul>
-              <li>
-                <p>Token name:</p>
-                <b>{{addr.token_name}}</b>
-              </li>
-              <li>
-                <p>Token symbol:</p>
-                <b>{{addr.token_symbol}}</b>
-              </li>
-              <li>
-                <p>Decimals:</p>
-                <b>{{addr.decimals}}</b>
-              </li>
-            </ul>
-          </li>
-          <li *ngIf="addr.contract && addr.go20">
-            <ul>
-              <li>
-                <p>Total transactions:</p>
-                <b>{{addr.number_of_transactions}}</b>
-              </li>
-              <li>
-                <p>Total internal transactions:</p>
-                <b>{{addr.number_of_internal_transactions}}</b>
-              </li>
-              <li>
-                <p>Total holders:</p>
-                <b>{{addr.number_of_token_holders}}</b>
-              </li>
-            </ul>
-          </li>
-        </ul>
+    <div class="uk-overflow-auto list-holder">
+      <ul>
+        <li>
+          <p>Address hash:</p>
+          <b>{{addr.address}}</b>
+        </li>
+        <li>
+        <li *ngIf="addr.contract && addr.go20">
+          <p>Total supply:</p>
+          <b>{{addr.total_supply}}</b>
+        </li>
+        <li *ngIf="addr.contract && addr.go20">
+          <ul>
+            <li>
+              <p>Token name:</p>
+              <b>{{addr.token_name}}</b>
+            </li>
+            <li>
+              <p>Token symbol:</p>
+              <b>{{addr.token_symbol}}</b>
+            </li>
+            <li>
+              <p>Decimals:</p>
+              <b>{{addr.decimals}}</b>
+            </li>
+          </ul>
+        </li>
+        <li *ngIf="addr.contract && addr.go20">
+          <ul>
+            <li>
+              <p>Total transactions:</p>
+              <b>{{addr.number_of_transactions}}</b>
+            </li>
+            <li>
+              <p>Total internal transactions:</p>
+              <b>{{addr.number_of_internal_transactions}}</b>
+            </li>
+            <li>
+              <p>Total holders:</p>
+              <b>{{addr.number_of_token_holders}}</b>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div *ngIf="addr.contract && addr.go20" class="list-holder__footer">
+      <div>
+        <p>Balance:</p>
+        <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
       </div>
-      <div *ngIf="addr.contract && addr.go20" class="list-holder__footer">
-        <div>
-          <p>Balance:</p>
-          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
-        </div>
-      </div>
+    </div>
   </div>
   <div class="uk-margin">
     <app-tabs name="addr_tab">
@@ -149,14 +149,12 @@
           <ng-container *ngIf="internal_transactions.length; else emptyInternal">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of internal_transactions">
-                <div class="uk-text-truncate">Tx hash: {{tx.transaction_hash}}
-                </div>
+                <div class="uk-text-truncate"> <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></div>
                 <div class="uk-text-truncate">Created: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at
                   |
                   timeAgo }})
                 </div>
-                <div class="uk-text-truncate">From: {{tx.from_address}}
-                </div>
+                <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
                 <div class="uk-text-truncate">To: {{tx.to_address}}</div>
                 <div>Value ({{addr.token_symbol}}): {{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}</div>
               </div>
@@ -176,11 +174,12 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let tx of internal_transactions">
-                      <td class="uk-text-truncate">{{tx.transaction_hash}}</td>
+                      <td class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
                       <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
-                      <td class="uk-text-truncate">{{tx.from_address}}</td>
-                      <td class="uk-text-truncate">{{tx.to_address}}</td>
-                      <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}</td>
+                      <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
+                      <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
+                      <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
+                        bigNumber}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -205,9 +204,10 @@
           <ng-container *ngIf="token_holders.length; else emptyHolders">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let holder of token_holders">
-                <div class="uk-text-truncate">Token holder: {{holder.token_holder_address}}
+                <div class="uk-text-truncate">Token holder: <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
                 </div>
-                <div class="uk-text-truncate">Balance ({{addr.token_symbol}}): {{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}
+                <div class="uk-text-truncate">Balance ({{addr.token_symbol}}): {{holder.balance | weiToGO: false : true
+                  : addr.decimals | bigNumber}}
                 </div>
               </div>
             </ng-container>
@@ -223,9 +223,10 @@
                   <tbody>
                     <tr *ngFor="let holder of token_holders">
                       <td class="uk-text-truncate">
-                        {{holder.token_holder_address}}
+                        <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
                       </td>
-                      <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}</td>
+                      <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals |
+                        bigNumber}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -249,8 +250,10 @@
         <tab-content>
           <ng-container *ngIf="contract">
             <ng-container *ngIf="!contract.valid">
-              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
-              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="uk-button uk-button-primary uk-button-small">Verify And Publish Source Code</a>
+              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code
+                Unverified</h5>
+              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="uk-button uk-button-primary uk-button-small">Verify
+                And Publish Source Code</a>
             </ng-container>
             <ng-container *ngIf="contract.valid">
               <h5 class="uk-margin uk-margin-top"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
