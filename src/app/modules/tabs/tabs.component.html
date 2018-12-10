@@ -2,7 +2,9 @@
   <div class="tabs__titles">
     <div class="tabs__title"
          *ngFor="let tab of tabs"
-         [ngClass]="{'tabs__title--active': tab === activeTab}"
+         [ngClass]="{'tabs__title--active': tab === activeTab,
+                     'single': tabs.length === 1}"
+         [ngStyle]="{'border-radius': tabs.length === 1  ? '100px' : ''}"
          (click)="onTabSelect(tab)"
          [innerHTML]="tab.title.element.nativeElement.innerHTML"
     >

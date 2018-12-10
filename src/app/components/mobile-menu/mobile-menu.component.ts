@@ -22,7 +22,7 @@ export class MobileMenuComponent implements OnInit {
   ngOnInit() {
   }
 
-  toggleMenu() {
+  hideMenu() {
     this.layoutService.mobileMenuState.next(false);
   }
 }

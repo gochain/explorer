@@ -1,21 +1,14 @@
 @import "../assets/styles/mixins";
 
 .app-container {
-  display: flex;
-  margin-top: 64px;
-
-  @include respond-to(small) {
-    margin-top: 0;
-  }
+  height: 100%;
+  padding-top: 70px;
 
   .app-content {
-    flex: 1;
-    padding: 15px 20px 0;
-    height: calc(100vh - 64px - 15px);
-    overflow-y: scroll;
+    padding: 0 40px;
 
     @include respond-to(small) {
-      padding: 15px 10px;
+      padding: 0 10px;
     }
 
     .loader {
@@ -50,6 +43,8 @@
     }
 
     &--loading {
+      height: 100vh;
+
       .loader {
         display: block;
       }
@@ -57,6 +52,12 @@
         display: none;
       }
     }
+
+    .content {
+      min-height: 100vh;
+      height: 100%;
+    }
+
   }
 }
 

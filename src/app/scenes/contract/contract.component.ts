@@ -19,7 +19,7 @@ import {ROUTES} from '../../utils/constants';
 @Component({
   selector: 'app-contract',
   templateUrl: './contract.component.html',
-  styleUrls: ['./contract.component.css']
+  styleUrls: ['./contract.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
 export class ContractComponent implements OnInit {

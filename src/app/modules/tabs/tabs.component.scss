@@ -1,46 +1,79 @@
+@import '../../../assets/styles/mixins';
+
+h3 {
+  font-size: 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
 .tabs {
   &__titles {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    justify-content: center;
     padding: 0;
     list-style: none;
     position: relative;
-    border-bottom: 1px solid rgba(0,0,0,.12);
     user-select: none;
-    /*background: lavender;*/
+    margin: 100px auto;
+    max-width: 660px;
+    -webkit-tap-highlight-color: transparent;
+
+    @include respond-to(small) {
+      margin: 60px auto 30px;
+    }
   }
+
+  &__content {
+    margin-bottom: 60px;
+  }
+
   &__title {
     flex: none;
-    /*padding-left: 20px;*/
     position: relative;
     display: block;
     text-align: center;
-    padding: 9px 20px;
-    color: #999;
-    border-bottom: 2px solid transparent;
-    font-size: 12px;
+    padding: 15px 40px;
     text-transform: uppercase;
     transition: color .1s ease-in-out;
-    line-height: 20px;
     user-select: none;
     cursor: pointer;
+    font-weight: 300;
+    font-size: 14px;
+
+    @include respond-to(small) {
+      font-size: 12px;
+      padding: 15px 10px;
+    }
+
+    &:first-child {
+      border-radius: 100px 0 0 100px;
+    }
+
+    &:last-child {
+      border-radius: 0 100px 100px 0;
+    }
 
     &--active {
-      color: #222;
-      border-color: #1e87f0;
+      color: #fff;
+      background: #06A5FF;
     }
   }
 }
 
+.single {
+  @include respond-to(small) {
+    padding: 15px 40px;
+  }
+}
 
 :host-context(body.dark) {
   .tabs {
-    &__titles {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    }
     &__title {
+      background: #1e1340;
       &--active {
-        border-color: #fff;
+        background: #140d28;
+        box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.1);
       }
     }
   }
