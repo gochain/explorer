@@ -14,7 +14,7 @@ export class ApiService {
   apiURL: string;
 
   constructor(private http: HttpClient, private toastrService: ToastrService) {
-    this.apiURL = 'https://testnet-explorer.gochain.io/api';
+    this.apiURL = this.getApiURL();
   }
 
   getApiURL() {
