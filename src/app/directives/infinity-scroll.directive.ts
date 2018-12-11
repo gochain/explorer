@@ -18,7 +18,7 @@ export class InfinityScrollDirective implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this._target = document.getElementsByClassName('app-content')[0];
+    this._target = window.document;
     this.initTracker();
   }
 
@@ -40,7 +40,7 @@ export class InfinityScrollDirective implements OnChanges, AfterViewInit {
             return false;
           }
           const targetTop = this._templateRef.elementRef.nativeElement.nextSibling.offsetTop;
-          const containerBottom = this._target.scrollTop + this._target.offsetHeight + 300;
+          const containerBottom = this._target.scrollingElement.scrollTop + this._target.scrollingElement.offsetHeight + 300;
           return containerBottom > targetTop;
         }),
       ).subscribe((e: any) => {

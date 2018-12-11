@@ -1,5 +1,11 @@
+<div class="main-top main-top--sm">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
 <ng-container *ngIf="richList">
-  <h3 class="uk-heading-bullet">Richlist</h3>
+  <h3>Richlist</h3>
   <div class="uk-margin">
     <ng-container *ifViewportSize="['small']">
       <div class="tr-card" *ngFor="let address of richList.rankings; let rankI = index;">
@@ -9,7 +15,7 @@
         <div>Supply owned: {{address.supplyOwned}}%</div>
       </div>
     </ng-container>
-    <ng-container *ifViewportSize="['medium', 'large']">
+    <ng-container *ifViewportSize="['large']">
       <div class="uk-overflow-auto">
         <table class="uk-table uk-table-small uk-table-divider uk-table-striped uk-table-middle">
           <thead>
@@ -34,7 +40,7 @@
   </div>
 </ng-container>
 <div class="center">
-  <button type="button" class="uk-button uk-button-default uk-button-small uk-margin" [disabled]="isMoreDisabled"
+  <button type="button" class="btn btn--sm btn--round m--b--20" [disabled]="isMoreDisabled"
           (click)="richListQueryParams.next()">More
   </button>
 </div>

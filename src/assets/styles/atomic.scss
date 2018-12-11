@@ -1,0 +1,80 @@
+// atomic modifiers
+
+.center {
+  text-align: center;
+}
+
+.ta {
+  &-r {
+    text-align: right !important;
+  }
+  &-l {
+    text-align: left !important;
+  }
+}
+
+.ws {
+  &-p {
+    white-space: pre;
+    font-family: monospace;
+  }
+}
+
+.fs {
+  &-14 {
+    font-size: 14px !important;
+  }
+}
+.m {
+  &-r {
+    &--10 {
+      margin-right: 10px;
+    }
+    &--20 {
+      margin-right: 20px;
+    }
+  }
+  &-l {
+    &--10 {
+      margin-left: 10px;
+    }
+    &--20 {
+      margin-left: 20px;
+    }
+  }
+  &--t {
+    &--10 {
+      margin-top: 10px;
+    }
+    &--20 {
+      margin-top: 20px;
+    }
+  }
+  &--b {
+    &--10 {
+      margin-bottom: 10px;
+    }
+    &--20 {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+.p {
+  &-r {
+    &--10 {
+      padding-right: 10px;
+    }
+    &--20 {
+      padding-right: 20px;
+    }
+  }
+  &-l {
+    &--10 {
+      padding-left: 10px;
+    }
+    &--20 {
+      padding-left: 20px;
+    }
+  }
+}

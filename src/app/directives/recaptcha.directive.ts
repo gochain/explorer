@@ -1,8 +1,11 @@
-import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnDestroy, OnInit} from '@angular/core';
+/*CORE*/
+import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnInit} from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators} from '@angular/forms';
 import {AbstractControl} from '@angular/forms/src/model';
 import {interval, Subscription} from 'rxjs';
 import {startWith} from 'rxjs/operators';
+/*UTILS*/
+import {AutoUnsubscribe} from '../decorators/auto-unsubscribe';
 
 /*export interface ReCaptchaConfig {
   theme?: 'dark' | 'light';
@@ -30,7 +33,8 @@ declare global {
     }
   ],
 })
-export class ReCaptchaDirective implements OnInit, OnDestroy, AfterViewInit, ControlValueAccessor {
+@AutoUnsubscribe('_subsArr$')
+export class ReCaptchaDirective implements OnInit, AfterViewInit, ControlValueAccessor {
   @Input() key: string;
   @Input() actionName: string;
 
@@ -39,7 +43,7 @@ export class ReCaptchaDirective implements OnInit, OnDestroy, AfterViewInit, Con
   private onChange: (value: string) => void;
   private onTouched: (value: string) => void;
 
-  private _sub: Subscription;
+  private _subsArr$: Subscription[] = [];
 
   constructor(private _element: ElementRef, private _ngZone: NgZone, private _injector: Injector) {
   }
@@ -47,10 +51,6 @@ export class ReCaptchaDirective implements OnInit, OnDestroy, AfterViewInit, Con
   ngOnInit() {
     this.registerReCaptchaCallback();
     this.addScript();
-  }
-
-  ngOnDestroy() {
-    this._sub.unsubscribe();
   }
 
   ngAfterViewInit() {
@@ -71,11 +71,11 @@ export class ReCaptchaDirective implements OnInit, OnDestroy, AfterViewInit, Con
 
   registerReCaptchaCallback() {
     window.reCaptchaLoad = () => {
-      this._sub = interval(600000).pipe(
+      this._subsArr$.push(interval(600000).pipe(
         startWith(0),
       ).subscribe(() => {
         this.getToken();
-      });
+      }));
     };
   }
 

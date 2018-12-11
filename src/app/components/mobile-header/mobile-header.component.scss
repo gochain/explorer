@@ -1,36 +1,104 @@
+@import '../../../assets/styles/mixins';
+
 .topbar {
-  height: 60px;
+  position: fixed;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  padding: 0 15px;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
+  z-index: 10;
+  width: 100%;
+  overflow: hidden;
+
+  &.--active {
+    box-shadow: none;
+  }
+
+  &__search {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -110%);
+    padding: 15px 0;
+    justify-content: center;
+    width: 100%;
+    z-index: 3;
+    margin: 0 auto;
+    transition: .5s;
+    background: #fff;
+
+    div {
+      @include respond-to(small) {
+        width: 95%;
+        margin: 0 auto;
+      }
+    }
+
+    &.--active {
+      transform: translate(-50%, 77%);
+    }
+  }
+
+  &__main {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+  }
+
+  .checked div {
+
+    &:first-child {
+      transform: translateY(10px) rotate(45deg);
+    }
+
+    &:nth-child(2) {
+      transform: translateX(-200%);
+    }
+
+    &:last-child {
+      transform: translateY(-10px) rotate(135deg);
+    }
+  }
 
   &__menu {
     font-size: 20px;
+    width: 30px;
+    padding: 20px 20px 20px 0;
+
+    div {
+      transition: .3s;
+      height: 2px;
+      background: #000;
+      margin-bottom: 8px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
   }
 
   &__icon {
+
     img, svg {
       height: 30px;
     }
   }
 
-  &__search {
+  &__search-btn {
     font-size: 20px;
+    width: 8%;
   }
 }
-.search-bar {
-  border-top: 1px solid #44475a;
-  box-shadow: 0 2px 5px 0 rgba(0,0,0,.3);
-  padding: 15px 0;
-  justify-content: center;
-  position: fixed;
-  width: 100%;
-  display: none;
-  z-index: 2;
-  
-  &.--active {
-    display: block;
+
+:host-context(body.dark) {
+  .topbar {
+    &__menu div {
+      background: #fff;
+    }
+
+    &__search {
+        background: #140d28;
+    }
   }
 }

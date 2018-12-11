@@ -2,29 +2,28 @@
 
 .search {
   display: flex;
+  height: 60px;
 
-  @include respond-to(small) {
-    justify-content: center;
-    padding: 0 15px;
+  svg path {
+    fill: #fff;
   }
 
   input {
     border: none;
-    border-radius: 20px;
     padding: 5px 16px;
-    width: 350px;
-    max-width: 350px;
+    width: 100%;
     -webkit-appearance: none;
     transition: width .4s ease-in-out;
-    font-size: 12px;
-    line-height: 24px;
+    font-weight: 300;
+    font-size: 18px;
     letter-spacing: .3px;
-    font-weight: 400;
+    background: #fff;
+    color: #666;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 
-    @include respond-to(small) {
-      border-radius: 20px 0 0 20px;
-      flex: 1;
-      max-width: none;
+    
+    &::placeholder {
+      color: #666;
     }
 
     &:focus {
@@ -35,19 +34,16 @@
   }
 
   button {
-    display: none;
     border: none;
-    border-left: #666 solid 1px;
-    background: #fff;
     padding: 5px 15px;
-    border-radius: 0 20px 20px 0;
     font-size: 14px;
     line-height: 24px;
-    border-left: #666 solid 1px;
+    background: #06A5FF;
+    width: 60px;
+    cursor: pointer;
 
-
-    @include respond-to(small) {
-      display: initial;
+    &:hover {
+      background: lighten(#06A5FF, 5%);
     }
 
     &:focus {
@@ -55,23 +51,29 @@
       border: none;
       outline: none;
     }
-
-    i {
-      color: #666 !important;
-    }
   }
 }
 
-:host-context(body.light) {
+:host-context(body.dark) {
   .search {
+
+    button {
+      background: #7500f5;
+
+      &:hover {
+        background: lighten(#7500f5, 5%);
+      }
+    }
+
     input {
-      border: #666 solid 1px;
+      background: #2d224d;
+      color: #fff;
       @include respond-to(small) {
         border-right: none;
       }
-    }
-    button {
-      border: #666 solid 1px;
+      &::placeholder {
+        color: #fff;
+      }
     }
   }
 }

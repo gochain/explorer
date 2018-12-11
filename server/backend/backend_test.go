@@ -184,8 +184,8 @@ func TestStats(t *testing.T) {
 	testBackend.UpdateStats()
 	stats := testBackend.GetStats()
 
-	if stats.NumberOf24HoursTransactions != 0 {
-		t.Errorf("Wrong number of transactions for 24 hours , got: %d, want: %d.", stats.NumberOf24HoursTransactions, 0)
+	if stats.NumberOfLastDayTransactions != 0 {
+		t.Errorf("Wrong number of transactions for 24 hours , got: %d, want: %d.", stats.NumberOfLastDayTransactions, 0)
 	}
 	if stats.NumberOfLastWeekTransactions != 0 {
 		t.Errorf("Wrong number of transactions for last week , got: %d, want: %d.", stats.NumberOfLastWeekTransactions, 0)

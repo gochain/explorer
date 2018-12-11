@@ -1,0 +1,38 @@
+$btn_color: #06A5FF;
+
+.btn {
+  background: #06A5FF;
+  color: #fff !important;
+  border-radius: 6px;
+  padding: 0 20px;
+  box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+  text-transform: uppercase;
+  transition: .1s ease-in-out;
+  transition-property: color,background-color,border-color;
+  display: inline-block;
+  box-sizing: border-box;
+  font-size: .875rem;
+  line-height: 38px;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+
+  &:hover {
+    background: darken($btn_color, 5);
+  }
+
+  &--sm {
+    line-height: 28px;
+  }
+
+  &--round {
+    box-shadow: 0 5px 10px rgba(6, 165, 255, 0.2);
+    padding: 7px 40px;
+    border-radius: 100px;
+  }
+}

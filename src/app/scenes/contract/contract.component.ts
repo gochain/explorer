@@ -19,7 +19,7 @@ import {ROUTES} from '../../utils/constants';
 @Component({
   selector: 'app-contract',
   templateUrl: './contract.component.html',
-  styleUrls: ['./contract.component.css']
+  styleUrls: ['./contract.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
 export class ContractComponent implements OnInit {
@@ -41,7 +41,11 @@ export class ContractComponent implements OnInit {
 
   private _subsArr$: Subscription[] = [];
 
-  constructor(private _activatedRoute: ActivatedRoute, private fb: FormBuilder, private contactService: ContractService, private toastrService: ToastrService, private _router: Router) {
+  constructor(private _activatedRoute: ActivatedRoute,
+              private fb: FormBuilder,
+              private contactService: ContractService,
+              private toastrService: ToastrService,
+              private _router: Router) {
     /*this.contactService.getCompilersList().subscribe((value: any) => {
       this.compilers = value.builds.map((item: Compiler) => {
         if (item.prerelease && item.prerelease.length > 0) {

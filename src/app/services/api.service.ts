@@ -1,11 +1,13 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse, HttpParams, HttpRequest, HttpResponse} from '@angular/common/http';
-import {Observable, throwError} from 'rxjs';
+import {Observable, of} from 'rxjs';
+import {catchError, map} from 'rxjs/operators';
+/*SERVICES*/
+import {ToastrService} from '../modules/toastr/toastr.service';
 /*UTILS*/
 import {environment} from '../../environments/environment';
-import {catchError, map, retry} from 'rxjs/operators';
-import {ToastrService} from '../modules/toastr/toastr.service';
+import {objHas} from '../utils/functions';
 
 @Injectable({
   providedIn: 'root'
@@ -49,9 +51,14 @@ export class ApiService {
     console.error(
       `Backend returned code ${error.status}, ` +
       `body was: ${error.error}`);
-    this.toastrService.danger(error.error.error.message);
+    if (objHas(error, 'error.error.message')) {
+      this.toastrService.danger(error.error.error.message);
+    } else {
+      this.toastrService.danger('Something bad happened during request; please try again later.');
+    }
     // return an observable with a user-facing error message
-    return throwError('Something bad happened; please try again later.');
+    // return throwError('Something bad happened; please try again later.');
+    return of(null);
   }
 }
 

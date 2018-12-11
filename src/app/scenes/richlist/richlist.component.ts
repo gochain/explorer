@@ -15,7 +15,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @Component({
   selector: 'app-richlist',
   templateUrl: './richlist.component.html',
-  styleUrls: ['./richlist.component.css']
+  styleUrls: ['./richlist.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
 export class RichlistComponent implements OnInit {

@@ -1,0 +1,13 @@
+<div class="slider" (touchstart)="touchStart($event)" (touchend)="touchEnd($event)">
+  <div class="slider__row" [ngStyle]="{'transform':'translateX('+ slidePosition +'%)'}">
+    <div>Total<b>{{stats?.total_transactions_count | bigNumber}}</b></div>
+    <div>Last 7 days<b>{{stats?.last_week_transactions_count | bigNumber}}</b></div>
+    <div>Last 24 hours<b>{{stats?.last_day_transactions_count | bigNumber}}</b></div>
+  </div>
+</div>
+<ul class="slider__dots">
+  <li *ngFor="let slide of slides; index as i"
+      [ngClass]="{'--active': slidePosition === this.options.start - this.options.step * i}"
+      (click)="onClickDot(i)">
+  </li>
+</ul>
