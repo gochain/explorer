@@ -522,14 +522,14 @@ func (self *MongoBackend) updateStats() {
 	if err != nil {
 		log.Debug().Err(err).Msg("GetStats num of Last week Transactions")
 	}
-	numOf24HoursTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -1)}}).Count()
+	numOfLastDayTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -1)}}).Count()
 	if err != nil {
 		log.Debug().Err(err).Msg("GetStats num of 24H Transactions")
 	}
 	stats := &models.Stats{
 		NumberOfTotalTransactions:    int64(numOfTotalTransactions),
 		NumberOfLastWeekTransactions: int64(numOfLastWeekTransactions),
-		NumberOf24HoursTransactions:  int64(numOf24HoursTransactions),
+		NumberOfLastDayTransactions:  int64(numOfLastDayTransactions),
 		UpdatedAt:                    time.Now(),
 	}
 	err = self.mongo.C("Stats").Insert(stats)
@@ -545,7 +545,7 @@ func (self *MongoBackend) getStats() *models.Stats {
 		s = &models.Stats{
 			NumberOfTotalTransactions:    0,
 			NumberOfLastWeekTransactions: 0,
-			NumberOf24HoursTransactions:  0,
+			NumberOfLastDayTransactions:  0,
 		}
 	}
 	return s
