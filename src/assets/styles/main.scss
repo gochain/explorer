@@ -310,7 +310,7 @@ body {
 
     li {
       display: block;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
 
       &:last-child {
         margin-bottom: 0;
@@ -320,6 +320,7 @@ body {
     ul {
       padding: 0;
       display: flex;
+      margin-bottom: -15px;
 
       @include respond-to(small) {
         flex-direction: column;
@@ -338,12 +339,12 @@ body {
   p {
     margin: 0;
     font-weight: 300;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   b {
     color: #06A5FF;
-    font-size: 18px;
+    font-size: 16px;
   }
 
   &__footer {

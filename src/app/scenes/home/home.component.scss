@@ -58,9 +58,9 @@ h1 {
 
   &__updated {
     text-align: center;
-    margin-top: 120px;
+    margin: 30px 0 70px;
     font-weight: 300;
-    font-size: 16px;
+    font-size: 14px;
 
     @include respond-to(small) {
       margin-top: 0;

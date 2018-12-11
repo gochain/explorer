@@ -9,7 +9,7 @@
   z-index: 10;
   height: 70px;
   padding: 0 35px;
-  box-shadow: 0 2px 5px 0 rgba(0,0,0,.1);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .1);
 
   &__left {
     display: flex;
@@ -23,7 +23,7 @@
   &__icon {
     display: flex;
     img, svg {
-      height:30px;
+      height: 30px;
     }
   }
   &__menu {
@@ -36,7 +36,7 @@
   &__item {
     display: flex;
     align-items: center;
-    margin:  0 3px;
+    margin: 0 3px;
     padding: 7px 40px;
     border-radius: 100px;
     text-decoration: none;
@@ -69,8 +69,8 @@
   .menu {
     &__item {
 
-      div {
-        &:hover {
+      &:hover {
+        div {
           color: lighten(#7500f5, 25%) !important;
         }
       }
@@ -79,8 +79,8 @@
         background: #7500f5;
         box-shadow: 0 5px 10px rgba(117, 0, 245, 0.2);
 
-        div {
-          &:hover {
+        &:hover {
+          div {
             color: #eee !important;
           }
         }
