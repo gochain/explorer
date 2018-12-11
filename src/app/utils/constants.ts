@@ -15,11 +15,11 @@ export const MENU_ITEMS: MenuItem[] = [
     link: '/richlist',
     icon: 'fa fa-list-ul fa-fw'
   },
-  {
+  /*{
     title: 'Verify Contract',
     link: '/verify',
     icon: 'fa fa-check-square fa-fw'
-  },
+  },*/
   {
     title: 'Wallet',
     link: 'https://wallet.gochain.io',
