@@ -6,7 +6,7 @@
 </div>
 <ng-container *ngIf="stats$ | async as stats">
   <div class="home__slider" *ifViewportSize="['small']">
-    <app-slider [stats]="stats" [titles]="_sliderTitles" [options]="_sliderOptions"></app-slider>
+    <app-slider [stats]="stats" [options]="sliderOptions"></app-slider>
   </div>
   <div class="stat" *ifViewportSize="['large']">
     <div class="stat__item">
@@ -72,7 +72,7 @@
         <span>{{block.tx_count}}</span>
       </div>
       <div>
-        <div>          
+        <div>
           <b>Extra Data</b>
         </div>
         <span>{{block.extra_data | trimExtra}}</span>
@@ -118,6 +118,19 @@
             <span>Signer</span>
           </th>
           <th class="uk-text-nowrap uk-width-1-4 uk-width-1-6@l">
+            <svg width="14" height="14" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.323,13.381c6.418,0,12.834,0,19.252,0c1.613,0,1.613-2.5,0-2.5c-6.418,0-12.834,0-19.252,0
+				C11.711,10.881,11.711,13.381,13.323,13.381z"/>
+              <path d="M32.577,16.798c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
+				C34.188,19.298,34.188,16.798,32.577,16.798z"/>
+              <path d="M32.577,22.281c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
+				C34.188,24.781,34.188,22.281,32.577,22.281z"/>
+              <path d="M32.577,28.197c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
+				C34.188,30.697,34.188,28.197,32.577,28.197z"/>
+              <path d="M32.204,33.781c-6.418,0-12.834,0-19.252,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.834,0,19.252,0
+				C33.817,36.281,33.817,33.781,32.204,33.781z"/>
+              <path d="M33.431,0H5.179v45.057h34.699V6.251L33.431,0z M36.878,42.056H8.179V3h23.707v4.76h4.992V42.056z"/>
+            </svg>
             <span>Extra data</span>
           </th>
           <th class="uk-text-nowrap uk-width-1-4 uk-width-2-6@l">

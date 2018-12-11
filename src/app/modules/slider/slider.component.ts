@@ -16,17 +16,24 @@ export interface ISliderOptions {
 export class SliderComponent implements OnInit {
 
   @Input() stats: any;
-  @Input() titles: string[];
-  @Input() options: ISliderOptions;
+  @Input() options: ISliderOptions = {
+    start: 50,
+    step: 50,
+    sensitivity: 20
+  };
+
+  slidePosition: number;
+
+  slides = [1, 2, 3];
+
   private _initialPoint: any;
   private _finalPoint: any;
   private _touchOffsetX: number;
-  private _slidePosition: number;
 
   constructor() { }
 
   ngOnInit(): void {
-    this._slidePosition = this.options.start;
+    this.slidePosition = this.options.start;
   }
 
   touchStart(event: TouchEvent): void {
@@ -37,16 +44,16 @@ export class SliderComponent implements OnInit {
   touchEnd(event: TouchEvent): void {
     this._finalPoint = event.changedTouches[0];
     if (this._finalPoint.pageX - this._initialPoint.pageX < -this.options.sensitivity) {
-        if (-this.options.step !== this._slidePosition) {
-            this._slidePosition = this._slidePosition - this.options.step;
+        if (-this.options.step !== this.slidePosition) {
+            this.slidePosition = this.slidePosition - this.options.step;
         }
     } else if ((this._finalPoint.pageX - this._initialPoint.pageX) > this.options.sensitivity) {
-        if (this.options.step !== this._slidePosition) {
-            this._slidePosition = this._slidePosition + this.options.step;
+        if (this.options.step !== this.slidePosition) {
+            this.slidePosition = this.slidePosition + this.options.step;
         }
     }
   }
   onClickDot(index: number) {
-    this._slidePosition = this.options.start - this.options.step * index;
+    this.slidePosition = this.options.start - this.options.step * index;
   }
 }

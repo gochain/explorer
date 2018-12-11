@@ -5,7 +5,7 @@
   min-height: calc(100vh - 70px);
 
   @include respond-to(small) {
-    padding: 0 10px;
+    padding: 70px 10px 0;
   }
 
   .loader {

@@ -18,7 +18,7 @@ export class InfinityScrollDirective implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this._target = document.getElementsByClassName('app-content')[0];
+    this._target = document.getElementsByClassName('content')[0];
     this.initTracker();
   }
 

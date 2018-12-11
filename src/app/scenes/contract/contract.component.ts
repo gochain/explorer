@@ -41,7 +41,11 @@ export class ContractComponent implements OnInit {
 
   private _subsArr$: Subscription[] = [];
 
-  constructor(private _activatedRoute: ActivatedRoute, private fb: FormBuilder, private contactService: ContractService, private toastrService: ToastrService, private _router: Router) {
+  constructor(private _activatedRoute: ActivatedRoute,
+              private fb: FormBuilder,
+              private contactService: ContractService,
+              private toastrService: ToastrService,
+              private _router: Router) {
     /*this.contactService.getCompilersList().subscribe((value: any) => {
       this.compilers = value.builds.map((item: Compiler) => {
         if (item.prerelease && item.prerelease.length > 0) {

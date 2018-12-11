@@ -29,11 +29,10 @@ export class HomeComponent implements OnInit {
     mergeMap(() => this._commonService.getRecentBlocks()),
   );
 
-  private _sliderTitles: string[] = ['Total', 'Last 7 days', 'Last 24 hours'];
-  private _sliderOptions: ISliderOptions = {
-      start: 50,
-      step: 50,
-      sensitivity: 20
+  sliderOptions: ISliderOptions = {
+    start: 50,
+    step: 50,
+    sensitivity: 20
   };
 
   constructor(private _commonService: CommonService, private _layoutService: LayoutService) {
