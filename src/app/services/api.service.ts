@@ -51,9 +51,10 @@ export class ApiService {
     console.error(
       `Backend returned code ${error.status}, ` +
       `body was: ${error.error}`);
-    this.toastrService.danger('Something bad happened; please try again later.');
     if (objHas(error, 'error.error.message')) {
       this.toastrService.danger(error.error.error.message);
+    } else {
+      this.toastrService.danger('Something bad happened during request; please try again later.');
     }
     // return an observable with a user-facing error message
     // return throwError('Something bad happened; please try again later.');
