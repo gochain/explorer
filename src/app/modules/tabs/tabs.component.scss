@@ -11,12 +11,7 @@ h3 {
     display: flex;
     flex-wrap: nowrap;
     justify-content: center;
-    padding: 0;
-    list-style: none;
-    position: relative;
-    user-select: none;
-    margin: 100px auto;
-    max-width: 660px;
+    margin: 60px auto;
     -webkit-tap-highlight-color: transparent;
 
     @include respond-to(small) {
@@ -25,13 +20,10 @@ h3 {
   }
 
   &__content {
-    margin-bottom: 60px;
+    padding-bottom: 40px;
   }
 
   &__title {
-    flex: none;
-    position: relative;
-    display: block;
     text-align: center;
     padding: 15px 40px;
     text-transform: uppercase;
@@ -40,6 +32,7 @@ h3 {
     cursor: pointer;
     font-weight: 300;
     font-size: 14px;
+    box-shadow: 0px 5px 25px rgba(0, 0, 0, 0.1);
 
     @include respond-to(small) {
       font-size: 12px;

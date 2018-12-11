@@ -6,67 +6,65 @@
 </div>
 <ng-container *ngIf="!!block; else blockNotFound">
   <div class="uk-margin">
-      <div class="list-holder">
-        <ul>
-          <li>
-            <p>Parent block hash</p>
-            <b>
-              <a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a>
-            </b>
-          </li>
-          <li>
-            <p>Signer</p>
-            <b>
-              <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-            </b>
-          </li>
-          <li>
-            <p>Created At</p>
-            <b>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</b>
-          </li>
-          <li>
-            <ul>
-              <li>
-                <p>Gas Limit</p>
-                <b>{{block.gas_limit | bigNumber}}</b>
-              </li>
-              <li>
-                <p>Gas Used</p>
-                <b>{{block.gas_used | bigNumber}}</b>
-              </li>
-              <li>
-                <p>Nonce</p>
-                <b>{{block.nonce }}</b>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <ul>
-              <li>
-                <p>Block Number</p>
-                <b>{{block.number}}</b>
-              </li>
-              <li>
-                <p>Transactions Count</p>
-                <b>{{block.tx_count }}</b>
-              </li>
-              <li>
-                <p>Difficulty</p>
-                <b>{{block.difficulty }}</b>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <p>Extra Data</p>
-            <b>{{block.extra_data }}</b>
-          </li>
-        </ul>
-      </div>
-    <div class="list-holder__footer">
-      <div>
-        <p>Block Hash</p>
-        <b>{{block.hash }}</b>
-      </div>
+    <div class="list-holder">
+      <ul>
+        <li>
+          <p>Block Number</p>
+          <b>{{block.number}}</b>
+        </li>
+        <li>
+          <p>Block Hash</p>
+          <b>{{block.hash }}</b>
+        </li>
+        <li>
+          <p>Created At</p>
+          <b>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</b>
+        </li>
+        <li>
+          <p>Parent block hash</p>
+          <b>
+            <a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a>
+          </b>
+        </li>
+        <li>
+          <p>Signer</p>
+          <b>
+            <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
+          </b>
+        </li>
+        <li>
+          <ul>
+            <li>
+              <p>Gas Limit</p>
+              <b>{{block.gas_limit | bigNumber}}</b>
+            </li>
+            <li>
+              <p>Gas Used</p>
+              <b>{{block.gas_used | bigNumber}}</b>
+            </li>
+            <li>
+              <p>Nonce</p>
+              <b>{{block.nonce }}</b>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <ul>
+            <li>
+              <p>Transactions Count</p>
+              <b>{{block.tx_count }}</b>
+            </li>
+            <li>
+              <p>Difficulty</p>
+              <b>{{block.difficulty }}</b>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p>Extra Data</p>
+          <b>{{block.extra_data }}</b>
+        </li>
+      </ul>
     </div>
   </div>
   <div class="uk-margin">

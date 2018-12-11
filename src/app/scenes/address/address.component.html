@@ -13,49 +13,50 @@
           <b>{{addr.address}}</b>
         </li>
         <li>
-        <li *ngIf="addr.contract && addr.go20">
-          <p>Total supply:</p>
-          <b>{{addr.total_supply}}</b>
+          <p>Balance:</p>
+          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
         </li>
-        <li *ngIf="addr.contract && addr.go20">
-          <ul>
-            <li>
-              <p>Token name:</p>
-              <b>{{addr.token_name}}</b>
-            </li>
-            <li>
-              <p>Token symbol:</p>
-              <b>{{addr.token_symbol}}</b>
-            </li>
-            <li>
-              <p>Decimals:</p>
-              <b>{{addr.decimals}}</b>
-            </li>
-          </ul>
-        </li>
-        <li *ngIf="addr.contract && addr.go20">
+        <ng-container *ngIf="addr.contract && addr.go20">
+          <li>
+            <ul>
+              <li>
+                <p>Token name:</p>
+                <b>{{addr.token_name}}</b>
+              </li>
+              <li>
+                <p>Token symbol:</p>
+                <b>{{addr.token_symbol}}</b>
+              </li>
+              <li>
+                <p>Total supply:</p>
+                <b>{{addr.total_supply}}</b>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <p>Decimals:</p>
+            <b>{{addr.decimals}}</b>
+          </li>
+        </ng-container>
+        <li>
           <ul>
             <li>
               <p>Total transactions:</p>
               <b>{{addr.number_of_transactions}}</b>
             </li>
-            <li>
-              <p>Total internal transactions:</p>
-              <b>{{addr.number_of_internal_transactions}}</b>
-            </li>
-            <li>
-              <p>Total holders:</p>
-              <b>{{addr.number_of_token_holders}}</b>
-            </li>
+            <ng-container *ngIf="addr.contract && addr.go20">
+              <li>
+                <p>Total internal transactions:</p>
+                <b>{{addr.number_of_internal_transactions}}</b>
+              </li>
+              <li>
+                <p>Total holders:</p>
+                <b>{{addr.number_of_token_holders}}</b>
+              </li>
+            </ng-container>
           </ul>
         </li>
       </ul>
-    </div>
-    <div *ngIf="addr.contract && addr.go20" class="list-holder__footer">
-      <div>
-        <p>Balance:</p>
-        <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
-      </div>
     </div>
   </div>
   <div class="uk-margin">
@@ -250,10 +251,8 @@
         <tab-content>
           <ng-container *ngIf="contract">
             <ng-container *ngIf="!contract.valid">
-              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code
-                Unverified</h5>
-              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="uk-button uk-button-primary uk-button-small">Verify
-                And Publish Source Code</a>
+              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
+              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="btn">Verify And Publish Source Code</a>
             </ng-container>
             <ng-container *ngIf="contract.valid">
               <h5 class="uk-margin uk-margin-top"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>

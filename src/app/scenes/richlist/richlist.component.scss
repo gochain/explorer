@@ -10,17 +10,3 @@ h3 {
 .uk-table {
   border-collapse: inherit;
 }
-
-.main-top__search {
-  padding-top: 110px;
-}
-
-@include respond-to(small) {
-  .main-top {
-    height: 200px;
-
-    &__search {
-      padding-top: 20px;
-    }
-  }
-}

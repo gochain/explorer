@@ -12,6 +12,10 @@
           <p>Transaction hash</p>
           <b>{{tx.tx_hash}}</b>
         </li>
+        <li>
+          <p>Created at</p>
+          <b>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
+        </li>
         <li *ngIf="!tx.to">
           <p>Contract address</p>
           <b>
@@ -31,16 +35,8 @@
           </b>
         </li>
         <li>
-          <ul>
-            <li>
-              <p>Created at</p>
-              <b>{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
-            </li>
-            <li>
-              <p>Gas fee</p>
-              <b>{{tx.gas_fee | weiToGO | bigNumber}}</b>
-            </li>
-          </ul>
+          <p>Value</p>
+          <b>{{tx.value | weiToGO | bigNumber}}</b>
         </li>
         <li>
           <ul>
@@ -56,14 +52,14 @@
               <p>Gas used</p>
               <b>{{tx.gas_fee/tx.gas_price | bigNumber}}</b>
             </li>
+            <li>
+              <p>Gas fee</p>
+              <b>{{tx.gas_fee | weiToGO | bigNumber}}</b>
+            </li>
           </ul>
         </li>
         <li>
           <ul>
-            <li>
-              <p>Value</p>
-              <b>{{tx.value | weiToGO | bigNumber}}</b>
-            </li>
             <li>
               <p>Block number</p>
               <b>
