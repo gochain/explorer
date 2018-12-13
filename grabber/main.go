@@ -232,25 +232,29 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				} else {
 					go20 = true
 					internalTxs := importer.GetInternalTransactions(normalizedAddress)
-					var tokenHoldersList []string
-					for _, itx := range internalTxs {
-						log.Debug().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
-						importer.ImportInternalTransaction(normalizedAddress, itx)
-						// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
-						log.Debug().Str("addr 1", itx.From.String()).Str("addr 2", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Updating following token holder addresses")
-						tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
-						tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
-						// }
-					}
-					for index, tokenHolderAddress := range tokenHoldersList {
-						tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
-						log.Debug().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
-						if err != nil {
-							log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
-							go20 = false
-							continue
+					internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
+					log.Info().Str("Address", normalizedAddress).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
+					if len(internalTxs) != internalTxsFromDb {
+						var tokenHoldersList []string
+						for _, itx := range internalTxs {
+							log.Debug().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
+							importer.ImportInternalTransaction(normalizedAddress, itx)
+							// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
+							log.Debug().Str("addr 1", itx.From.String()).Str("addr 2", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Updating following token holder addresses")
+							tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
+							tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
+							// }
 						}
-						importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder)
+						for index, tokenHolderAddress := range tokenHoldersList {
+							tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
+							log.Debug().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
+							if err != nil {
+								log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
+								go20 = false
+								continue
+							}
+							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder)
+						}
 					}
 				}
 			}

@@ -225,6 +225,16 @@ func (self *Backend) GetTokenDetails(contract string) (*TokenDetails, error) {
 func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
 	return self.tokenBalance.getInternalTransactions(address)
 }
+
+func (self *Backend) CountInternalTransactions(address string) int {
+	addr := self.mongo.getAddressByHash(address)
+	if addr != nil {
+		return addr.NumberOfInternalTransactions
+	}
+	return 0
+
+}
+
 func (self *Backend) ImportBlock(block *types.Block) *models.Block {
 	return self.mongo.importBlock(block)
 }
