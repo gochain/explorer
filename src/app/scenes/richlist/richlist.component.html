@@ -29,7 +29,7 @@
           <tbody>
           <tr *ngFor="let address of richList.rankings; let rankI = index;">
             <td>{{rankI + 1}}</td>
-            <td class="uk-text-nowrap"><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
+            <td class="uk-text-nowrap"><a class="ws-p" routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
             <td class="uk-text-nowrap ta-r ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
             <td class="uk-text-nowrap">{{address.supplyOwned}}%</td>
           </tr>

@@ -94,16 +94,16 @@
                 <table class="uk-table uk-table-small uk-table-striped">
                   <thead>
                     <tr>
-                      <th class="uk-width-1-3">Transaction hash</th>
+                      <th class="w_2_6">Transaction hash</th>
                       <th class="uk-text-nowrap uk-table-shrink">Created at</th>
                       <th class="uk-table-shrink"></th>
-                      <th class="uk-width-1-3">Associate</th>
+                      <th class="w_2_6">Associate</th>
                       <th class="uk-text-nowrap uk-table-shrink">Value (GO)</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngFor="let tx of transactions">
-                      <td class="uk-text-truncate"><a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
+                      <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
                       <td class="uk-text-nowrap">
                         {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
                       </td>
@@ -112,7 +112,7 @@
                           <i class="fas fa-arrow-left fa-fw"></i>
                         </td>
                         <td class="uk-text-truncate">
-                          <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+                          <a class="ws-p" routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
                         </td>
                       </ng-container>
                       <ng-template #out>
@@ -175,10 +175,10 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let tx of internal_transactions">
-                      <td class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
+                      <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
                       <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
-                      <td class="uk-text-truncate"><a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
-                      <td class="uk-text-truncate"><a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
+                      <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
+                      <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
                       <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
                         bigNumber}}</td>
                     </tr>
@@ -224,7 +224,7 @@
                   <tbody>
                     <tr *ngFor="let holder of token_holders">
                       <td class="uk-text-truncate">
-                        <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
+                        <a class="ws-p" routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
                       </td>
                       <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals |
                         bigNumber}}</td>

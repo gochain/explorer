@@ -9,6 +9,10 @@
   display: flex;
   justify-content: center;
 
+  @include respond-to(small) {
+    height: 250px;
+  }
+
   &__row {
     display: flex;
     flex-wrap: nowrap;
@@ -34,6 +38,10 @@
       margin: 0;
       box-shadow: 0 43.4826px 60.8756px rgba(11, 5, 35, 0.2);
       transform: translateX(-50%);
+
+      @include respond-to(small) {
+        height: 190px;
+      }
 
       &:nth-child(2) {
         margin: 0 400px;
@@ -70,12 +78,20 @@
       transition: .3s;
       background: #283346;
 
+      @include respond-to(small) {
+        width: 10px;
+        height: 10px;
+      }
+
       &.--active {
         background: #06A5FF;
       }
 
       &:nth-child(2) {
         margin: 0 20px;
+        @include respond-to(small) {
+          margin: 0 15px;
+        }
       }
     }
   }
