@@ -231,9 +231,10 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 					// continue
 				} else {
 					go20 = true
-					internalTxs := importer.GetInternalTransactions(normalizedAddress)
+					contractBlock := importer.GetContractBlock(normalizedAddress)
+					internalTxs := importer.GetInternalTransactions(normalizedAddress, contractBlock)
 					internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
-					log.Info().Str("Address", normalizedAddress).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
+					log.Info().Str("Address", normalizedAddress).Int64("Contract block", contractBlock).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
 					if len(internalTxs) != internalTxsFromDb {
 						var tokenHoldersList []string
 						for _, itx := range internalTxs {

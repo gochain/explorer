@@ -125,6 +125,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"contract_address"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -494,6 +499,16 @@ func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getContract")
 	}
 	return contract
+}
+
+func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
+	var transaction *models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"address": contractAddress}).One(&transaction)
+	if err != nil {
+		log.Debug().Str("address", contractAddress).Err(err).Msg("getContractBlock")
+		return 0
+	}
+	return transaction.BlockNumber
 }
 
 func (self *MongoBackend) updateContract(contract *models.Contract) bool {

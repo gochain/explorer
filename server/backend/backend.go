@@ -222,8 +222,8 @@ func (self *Backend) GetTokenDetails(contract string) (*TokenDetails, error) {
 	return self.tokenBalance.GetTokenDetails(contract)
 }
 
-func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
-	return self.tokenBalance.getInternalTransactions(address)
+func (self *Backend) GetInternalTransactions(address string, contractBlock int64) []TransferEvent {
+	return self.tokenBalance.getInternalTransactions(address, contractBlock)
 }
 
 func (self *Backend) CountInternalTransactions(address string) int {
@@ -264,6 +264,10 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
 	return self.mongo.importContract(contractAddress, byteCode)
+}
+
+func (self *Backend) GetContractBlock(contractAddress string) int64 {
+	return self.mongo.getContractBlock(contractAddress)
 }
 
 func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {

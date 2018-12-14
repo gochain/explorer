@@ -147,10 +147,11 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client) error {
 	return err
 }
 
-func (rpc *TokenBalance) getInternalTransactions(address string) []TransferEvent {
+func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock int64) []TransferEvent {
 	contractAddress := common.HexToAddress(address)
 	transferOperation := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
 	query := gochain.FilterQuery{
+		FromBlock: big.NewInt(contractBlock),
 		Addresses: []common.Address{contractAddress},
 		Topics:    [][]common.Hash{[]common.Hash{transferOperation}},
 	}
