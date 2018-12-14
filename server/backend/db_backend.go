@@ -506,7 +506,11 @@ func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
 	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
 	if err != nil {
 		log.Debug().Str("address", contractAddress).Err(err).Msg("getContractBlock")
-		return 0
+		err1 := self.mongo.C("Transactions").Find(bson.M{"to": contractAddress}).Sort("block_number").One(&transaction)
+		if err1 != nil {
+			return 0
+		}
+		return transaction.BlockNumber - 1 // block of the first incoming transact -1
 	}
 	return transaction.BlockNumber
 }
