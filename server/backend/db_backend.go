@@ -503,7 +503,7 @@ func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
 
 func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
 	var transaction *models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"address": contractAddress}).One(&transaction)
+	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
 	if err != nil {
 		log.Debug().Str("address", contractAddress).Err(err).Msg("getContractBlock")
 		return 0
