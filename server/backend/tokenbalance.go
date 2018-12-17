@@ -30,9 +30,9 @@ type TokenHolderDetails struct {
 }
 
 type TokenBalance struct {
-	url     string
-	conn    *goclient.Client
-	VERSION string
+	url                string
+	conn               *goclient.Client
+	initialBlockNumber int64
 }
 
 type TransferEvent struct {
@@ -61,8 +61,9 @@ func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
 	log.Info().Str("url", rpcUrl).Msg("Connected to Geth at")
 
 	return &TokenBalance{
-		url:  rpcUrl,
-		conn: ethConn,
+		url:                rpcUrl,
+		conn:               ethConn,
+		initialBlockNumber: block.Number().Int64(),
 	}
 }
 
@@ -148,41 +149,54 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client) error {
 }
 
 func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock int64) []TransferEvent {
+	const numOfBlocksPerRequest = 100000
+	latestBlockNumber := rpc.initialBlockNumber
+	block, err := rpc.conn.BlockByNumber(context.Background(), nil)
+	if block == nil {
+		log.Error().Err(err).Msg("getInternalTransactions")
+	} else {
+		latestBlockNumber = block.Number().Int64()
+	}
+	contractBlock -= numOfBlocksPerRequest
+	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
 	contractAddress := common.HexToAddress(address)
 	transferOperation := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
-	query := gochain.FilterQuery{
-		FromBlock: big.NewInt(contractBlock),
-		Addresses: []common.Address{contractAddress},
-		Topics:    [][]common.Hash{[]common.Hash{transferOperation}},
-	}
-
-	ctx := context.Background()
-
-	events, err := rpc.conn.FilterLogs(ctx, query)
-
-	if err != nil {
-		log.Info().Err(err)
-	}
-
-	tokenAbi, err := abi.JSON(strings.NewReader(string(TokenABI)))
-
-	if err != nil {
-		log.Info().Err(err)
-	}
 	var transferEvents []TransferEvent
-	for _, event := range events {
-		var transferEvent TransferEvent
-		err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
-		if err != nil {
-			log.Info().Str("Address", address).Msg("Failed to unpack event")
-			continue
+	for i := 0; i <= numOfCycles; i++ {
+		fromBlock := contractBlock + int64(i)*numOfBlocksPerRequest
+		log.Info().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
+		query := gochain.FilterQuery{
+			FromBlock: big.NewInt(fromBlock),
+			ToBlock:   big.NewInt(fromBlock + numOfBlocksPerRequest),
+			Addresses: []common.Address{contractAddress},
+			Topics:    [][]common.Hash{[]common.Hash{transferOperation}},
 		}
-		transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
-		transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
-		transferEvent.BlockNumber = int64(event.BlockNumber)
-		transferEvent.TransactionHash = event.TxHash.String()
-		log.Debug().Uint64("Block", event.BlockNumber).Str("Contract", address).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
-		transferEvents = append(transferEvents, transferEvent)
+		ctx := context.Background()
+
+		events, err := rpc.conn.FilterLogs(ctx, query)
+
+		if err != nil {
+			log.Info().Err(err)
+		}
+		tokenAbi, err := abi.JSON(strings.NewReader(string(TokenABI)))
+
+		if err != nil {
+			log.Info().Err(err)
+		}
+		for _, event := range events {
+			var transferEvent TransferEvent
+			err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
+			if err != nil {
+				log.Info().Str("Address", address).Msg("Failed to unpack event")
+				continue
+			}
+			transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
+			transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
+			transferEvent.BlockNumber = int64(event.BlockNumber)
+			transferEvent.TransactionHash = event.TxHash.String()
+			log.Debug().Uint64("Block", event.BlockNumber).Str("Contract", address).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
+			transferEvents = append(transferEvents, transferEvent)
+		}
 	}
 	return transferEvents
 }

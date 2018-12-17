@@ -65,8 +65,8 @@ func main() {
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)
-		go updateAddresses(rpcUrl, true, importer) // update contracts
-		updateAddresses(rpcUrl, false, importer)   // update only addresses
+		go updateAddresses(rpcUrl, false, importer) // update only addresses
+		updateAddresses(rpcUrl, true, importer)     // update contracts
 		return nil
 	}
 	err := app.Run(os.Args)
