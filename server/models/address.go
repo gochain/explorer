@@ -9,6 +9,7 @@ type Address struct {
 	BalanceString                string    `json:"balance" bson:"balance_string"` //high precise balance for API
 	BalanceWei                   string    `json:"balance_wei" bson:"balance_wei"`
 	UpdatedAt                    time.Time `json:"updated_at" bson:"updated_at"`
+	UpdatedAtBlock               int64     `json:"-" bson:"updated_at_block"`
 	TokenName                    string    `json:"token_name,omitempty" bson:"token_name"`
 	TokenSymbol                  string    `json:"token_symbol,omitempty" bson:"token_symbol"`
 	Decimals                     int64     `json:"decimals,omitempty" bson:"decimals"`

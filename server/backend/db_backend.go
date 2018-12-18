@@ -281,7 +281,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	log.Debug().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
@@ -296,16 +296,17 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 
 	addressM := &models.Address{Address: address,
-		BalanceWei:    balance.String(),
-		UpdatedAt:     time.Now(),
-		TokenName:     token.Name,
-		TokenSymbol:   token.Symbol,
-		Decimals:      token.Decimals,
-		TotalSupply:   token.TotalSupply.String(),
-		Contract:      contract,
-		GO20:          go20,
-		BalanceFloat:  balanceGoFloat,
-		BalanceString: balanceGoString,
+		BalanceWei:     balance.String(),
+		UpdatedAt:      time.Now(),
+		UpdatedAtBlock: updatedAtBlock,
+		TokenName:      token.Name,
+		TokenSymbol:    token.Symbol,
+		Decimals:       token.Decimals,
+		TotalSupply:    token.TotalSupply.String(),
+		Contract:       contract,
+		GO20:           go20,
+		BalanceFloat:   balanceGoFloat,
+		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
@@ -506,13 +507,13 @@ func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
 	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
 	if err != nil {
 		log.Debug().Str("address", contractAddress).Err(err).Msg("getContractBlock")
-		err1 := self.mongo.C("Transactions").Find(bson.M{"to": contractAddress}).Sort("block_number").One(&transaction)
-		if err1 != nil {
-			return 0
-		}
-		return transaction.BlockNumber - 1 // block of the first incoming transact -1
 	}
-	return transaction.BlockNumber
+	if transaction != nil {
+		return transaction.BlockNumber
+	} else {
+		return 0
+	}
+
 }
 
 func (self *MongoBackend) updateContract(contract *models.Contract) bool {

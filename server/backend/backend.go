@@ -253,8 +253,8 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) [
 	}
 	return selectedAddresses
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
-	return self.mongo.importAddress(address, balance, token, contract, go20)
+func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
+	return self.mongo.importAddress(address, balance, token, contract, go20, updatedAtBlock)
 }
 func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token)

@@ -231,10 +231,16 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 					// continue
 				} else {
 					go20 = true
-					contractBlock := importer.GetContractBlock(normalizedAddress)
-					internalTxs := importer.GetInternalTransactions(normalizedAddress, contractBlock)
+					var fromBlock int64
+					contractFromDB := importer.GetAddressByHash(normalizedAddress)
+					if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
+						fromBlock = contractFromDB.UpdatedAtBlock
+					} else {
+						fromBlock = importer.GetContractBlock(normalizedAddress)
+					}
+					internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock)
 					internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
-					log.Info().Str("Address", normalizedAddress).Int64("Contract block", contractBlock).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
+					log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
 					if len(internalTxs) != internalTxsFromDb {
 						var tokenHoldersList []string
 						for _, itx := range internalTxs {
@@ -260,13 +266,13 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				}
 			}
 			log.Info().Str("Balance of the address:", normalizedAddress).Int("Index", index).Int("Total number", len(addresses)).Str("Balance", balance.String()).Msg("updateAddresses")
-			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, go20)
+			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, go20, currentBlock)
 		}
 		elapsed := time.Since(start)
 		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")
 		lastBlockUpdatedAt = currentBlock
 		lastUpdatedAt = currentTime
-		time.Sleep(300 * time.Second) //sleep for 5 minutes
+		time.Sleep(180 * time.Second) //sleep for 3 minutes
 	}
 }
 func updateStats(importer *backend.Backend) {

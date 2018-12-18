@@ -112,11 +112,11 @@ func (rpc *EthRPC) call(method string, target interface{}, params ...interface{}
 }
 func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
 	var response string
-	log.Info().Str("checking balance", address).Msg("response from eth_getBalance")
+	log.Debug().Str("checking balance", address).Msg("response from eth_getBalance")
 	if err := rpc.call("eth_getBalance", &response, address, block); err != nil {
 		return new(big.Int), err
 	}
-	log.Info().Str("checking balance response", response).Msg("response from eth_getBalance")
+	log.Debug().Str("checking balance response", response).Msg("response from eth_getBalance")
 	balance, err := parseBigInt(response)
 	return balance, err
 }
