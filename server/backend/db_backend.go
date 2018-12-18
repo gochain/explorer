@@ -125,6 +125,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"contract_address"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -276,7 +281,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	log.Debug().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
@@ -291,16 +296,17 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 
 	addressM := &models.Address{Address: address,
-		BalanceWei:    balance.String(),
-		LastUpdatedAt: time.Now(),
-		TokenName:     token.Name,
-		TokenSymbol:   token.Symbol,
-		Decimals:      token.Decimals,
-		TotalSupply:   token.TotalSupply.String(),
-		Contract:      contract,
-		GO20:          go20,
-		BalanceFloat:  balanceGoFloat,
-		BalanceString: balanceGoString,
+		BalanceWei:     balance.String(),
+		UpdatedAt:      time.Now(),
+		UpdatedAtBlock: updatedAtBlock,
+		TokenName:      token.Name,
+		TokenSymbol:    token.Symbol,
+		Decimals:       token.Decimals,
+		TotalSupply:    token.TotalSupply.String(),
+		Contract:       contract,
+		GO20:           go20,
+		BalanceFloat:   balanceGoFloat,
+		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
@@ -403,7 +409,7 @@ func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock
 
 func (self *MongoBackend) getActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
 	var addresses []*models.ActiveAddress
-	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).All(&addresses)
+	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetActiveAdresses")
 	}
@@ -494,6 +500,20 @@ func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getContract")
 	}
 	return contract
+}
+
+func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
+	var transaction *models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
+	if err != nil {
+		log.Debug().Str("address", contractAddress).Err(err).Msg("getContractBlock")
+	}
+	if transaction != nil {
+		return transaction.BlockNumber
+	} else {
+		return 0
+	}
+
 }
 
 func (self *MongoBackend) updateContract(contract *models.Contract) bool {

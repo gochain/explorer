@@ -222,9 +222,19 @@ func (self *Backend) GetTokenDetails(contract string) (*TokenDetails, error) {
 	return self.tokenBalance.GetTokenDetails(contract)
 }
 
-func (self *Backend) GetInternalTransactions(address string) []TransferEvent {
-	return self.tokenBalance.getInternalTransactions(address)
+func (self *Backend) GetInternalTransactions(address string, contractBlock int64) []TransferEvent {
+	return self.tokenBalance.getInternalTransactions(address, contractBlock)
 }
+
+func (self *Backend) CountInternalTransactions(address string) int {
+	addr := self.mongo.getAddressByHash(address)
+	if addr != nil {
+		return addr.NumberOfInternalTransactions
+	}
+	return 0
+
+}
+
 func (self *Backend) ImportBlock(block *types.Block) *models.Block {
 	return self.mongo.importBlock(block)
 }
@@ -243,8 +253,8 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) [
 	}
 	return selectedAddresses
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool) *models.Address {
-	return self.mongo.importAddress(address, balance, token, contract, go20)
+func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
+	return self.mongo.importAddress(address, balance, token, contract, go20, updatedAtBlock)
 }
 func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token)
@@ -254,6 +264,10 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
 	return self.mongo.importContract(contractAddress, byteCode)
+}
+
+func (self *Backend) GetContractBlock(contractAddress string) int64 {
+	return self.mongo.getContractBlock(contractAddress)
 }
 
 func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {

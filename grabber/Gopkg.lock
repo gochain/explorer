@@ -20,13 +20,12 @@
   version = "v1.7.0"
 
 [[projects]]
-  branch = "master"
+  branch = "optimize-holders"
   name = "github.com/gochain-io/explorer"
   packages = [
     "server/backend",
     "server/models"
-  ]
-  revision = "ac2df8e07586e36f8c7ed40bfbf69a8b1718846d"
+  ]  
 
 [[projects]]
   name = "github.com/gochain-io/gochain"
