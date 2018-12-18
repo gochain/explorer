@@ -44,8 +44,8 @@ body {
     }
 
     .logo {
-      fill:#fff;
-      stroke:#fff;
+      fill: #fff;
+      stroke: #fff;
     }
 
     .bg-gradient {
@@ -99,8 +99,8 @@ body {
     }
 
     .logo {
-      fill:#333;
-      stroke:#333;
+      fill: #333;
+      stroke: #333;
     }
 
     .bg-gradient {
@@ -124,7 +124,7 @@ body {
 }
 
 .logo {
-  stroke-miterlimit:10;
+  stroke-miterlimit: 10;
 
   .cls-1, .cls-2, .cls-3 {
     stroke-miterlimit: 10;
@@ -166,13 +166,29 @@ body {
   color: #333;
 }
 
-*+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
+* + .uk-h1, * + .uk-h2, * + .uk-h3, * + .uk-h4, * + .uk-h5, * + .uk-h6, * + h1, * + h2, * + h3, * + h4, * + h5, * + h6 {
   margin-top: 25px;
+}
+
+.w {
+  &_1 {
+    &_1 {
+       width: 100%;
+    }
+    &_6 {
+      width: calc(100% * 1 / 6.001);
+    }
+  }
+  &_2 {
+    &_6 {
+      width: calc(100% * 2 / 6.001);
+    }
+  }
 }
 
 // media
 @include respond-to(small) {
-  *+.uk-h1, *+.uk-h2, *+.uk-h3, *+.uk-h4, *+.uk-h5, *+.uk-h6, *+h1, *+h2, *+h3, *+h4, *+h5, *+h6 {
+  * + .uk-h1, * + .uk-h2, * + .uk-h3, * + .uk-h4, * + .uk-h5, * + .uk-h6, * + h1, * + h2, * + h3, * + h4, * + h5, * + h6 {
     margin-top: 20px;
   }
   .uk-h3, h3 {
@@ -188,15 +204,15 @@ body {
 }
 
 .tr-card {
-  padding: 20px;
+  padding: 20px 0;
   margin-bottom: 20px;
   font-size: 14px;
   background: #F5F5F5;
   color: #0B0F15;
+  overflow-x: scroll;
 
   & > div {
-    margin-bottom: 20px;
-    overflow: hidden;
+    margin: 0 20px 10px;
     white-space: nowrap;
 
     a {
@@ -239,6 +255,7 @@ body {
 
   @include respond-to(small) {
     margin: 0 -10px;
+    height: 300px;
   }
 
   &:before {
@@ -283,6 +300,9 @@ body {
       font-weight: bold;
       color: #0B0F15;
       text-align: center;
+      @include respond-to(small) {
+        font-size: 25px;
+      }
     }
   }
 }
@@ -304,13 +324,21 @@ body {
     margin-top: -110px;
   }
 
-  ul, div {
+  & > ul, div {
     padding: 30px;
     margin-bottom: 0;
+
+    @include respond-to(small) {
+      padding: 20px 0;
+    }
 
     li {
       display: block;
       margin-bottom: 15px;
+
+      @include respond-to(small) {
+        margin: 0 20px 15px;
+      }
 
       &:last-child {
         margin-bottom: 0;
@@ -324,6 +352,7 @@ body {
 
       @include respond-to(small) {
         flex-direction: column;
+        margin-bottom: 0;
       }
 
       li {
@@ -331,6 +360,7 @@ body {
 
         @include respond-to(small) {
           width: 100%;
+          margin: 0 0 15px;
         }
       }
     }
