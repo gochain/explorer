@@ -297,7 +297,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 
 	addressM := &models.Address{Address: address,
 		BalanceWei:    balance.String(),
-		LastUpdatedAt: time.Now(),
+		UpdatedAt:     time.Now(),
 		TokenName:     token.Name,
 		TokenSymbol:   token.Symbol,
 		Decimals:      token.Decimals,
