@@ -151,9 +151,10 @@
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of internal_transactions">
                 <div class="uk-text-truncate"> <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></div>
-                <div class="uk-text-truncate">Created: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at
-                  |
-                  timeAgo }})
+                <div class="uk-text-truncate">
+                  <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+                    Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</ng-container>
+                  <ng-template #updated_at>Created: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
                 </div>
                 <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
                 <div class="uk-text-truncate">To: {{tx.to_address}}</div>
@@ -176,7 +177,13 @@
                   <tbody>
                     <tr *ngFor="let tx of internal_transactions">
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
-                      <td>{{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</td>
+                      <td>
+                        <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+                          {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+                        </ng-container>
+                        <ng-template #updated_at>
+                          {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
+                      </td>
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
                       <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
@@ -251,8 +258,10 @@
         <tab-content>
           <ng-container *ngIf="contract">
             <ng-container *ngIf="!contract.valid">
-              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code Unverified</h5>
-              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="btn">Verify And Publish Source Code</a>
+              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code
+                Unverified</h5>
+              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="btn">Verify And Publish Source
+                Code</a>
             </ng-container>
             <ng-container *ngIf="contract.valid">
               <h5 class="uk-margin uk-margin-top"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>

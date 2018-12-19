@@ -10,6 +10,7 @@ type InternalTransaction struct {
 	BlockNumber     int64     `json:"block_number" bson:"block_number"`
 	TransactionHash string    `json:"transaction_hash" bson:"transaction_hash"`
 	UpdatedAt       time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
 }
 
 type InternalTransactionsList struct {

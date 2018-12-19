@@ -6,4 +6,5 @@ export class InternalTransaction {
   block_number: number;
   transaction_hash: string;
   updated_at: Date;
+  created_at: Date;
 }

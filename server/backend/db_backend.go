@@ -336,7 +336,7 @@ func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress 
 
 }
 
-func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
+func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent, createdAt time.Time) *models.InternalTransaction {
 
 	internalTransaction := &models.InternalTransaction{
 		Contract:        contractAddress,
@@ -345,6 +345,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 		Value:           transferEvent.Value.String(),
 		BlockNumber:     transferEvent.BlockNumber,
 		TransactionHash: transferEvent.TransactionHash,
+		CreatedAt:       createdAt,
 		UpdatedAt:       time.Now(),
 	}
 	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"contract_address": contractAddress, "from_address": internalTransaction.From, "to_address": internalTransaction.To}, internalTransaction)
