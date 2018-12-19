@@ -260,7 +260,12 @@ func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress strin
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token)
 }
 func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
-	return self.mongo.importInternalTransaction(contractAddress, transferEvent)
+	createdAt := time.Now()
+	block := self.GetBlockByNumber(transferEvent.BlockNumber)
+	if block != nil {
+		createdAt = block.CreatedAt
+	}
+	return self.mongo.importInternalTransaction(contractAddress, transferEvent, createdAt)
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
 	return self.mongo.importContract(contractAddress, byteCode)
