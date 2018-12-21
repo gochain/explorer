@@ -79,8 +79,8 @@
       <div>
         <p>Input data
           <span class="pull-r btn-group">
-            <button class="btn btn--sm" [ngClass]="{'btn--active': !showUtf8}" (click)="showUtf8 = !showUtf8">HEX</button>
-            <button class="btn btn--sm" [ngClass]="{'btn--active': showUtf8}" (click)="showUtf8 = !showUtf8">UTF-8</button>
+            <button class="btn btn--sm" [ngClass]="{'btn--active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
+            <button class="btn btn--sm" [ngClass]="{'btn--active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
           </span>
         </p>
         <b>
