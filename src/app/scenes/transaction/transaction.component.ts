@@ -15,7 +15,7 @@ import { Transaction } from '../../models/transaction.model';
 })
 export class TransactionComponent implements OnInit {
 
-  public toggle: boolean;
+  showUtf8 = false;
   private _txHash: string;
   transaction: Observable<Transaction>;
 

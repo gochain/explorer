@@ -78,13 +78,14 @@
 
       <div>
         <p>Input data
-          <button (click)="toggle=!toggle">
-            <span *ngIf="toggle">HEX</span>
-            <span *ngIf="!toggle">UTF8</span>
-          </button>
+          <span class="pull-r btn-group">
+            <button class="btn btn--sm" [ngClass]="{'btn--active': !showUtf8}" (click)="showUtf8 = !showUtf8">HEX</button>
+            <button class="btn btn--sm" [ngClass]="{'btn--active': showUtf8}" (click)="showUtf8 = !showUtf8">UTF-8</button>
+          </span>
         </p>
         <b>
-          <pre class="code">{{tx.input_data | hex2str: toggle}}</pre></b>
+          <pre class="code">{{tx.input_data | hex2str: showUtf8}}</pre>
+        </b>
       </div>
     </div>
   </div>
