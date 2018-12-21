@@ -35,4 +35,22 @@ $btn_color: #06A5FF;
     padding: 7px 40px;
     border-radius: 100px;
   }
+
+  &--active {
+    background-color: darken($btn_color, 15);
+  }
+}
+
+.btn-group {
+  .btn {
+    border-radius: 0;
+    &:first-child {
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    &:last-child {
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+  }
 }

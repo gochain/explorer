@@ -1,14 +1,13 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, ParamMap} from '@angular/router';
-import {Observable} from 'rxjs';
-import {switchMap, tap} from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, ParamMap } from '@angular/router';
+import { Observable } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 /*SERVICES*/
-import {CommonService} from '../../services/common.service';
-import {LayoutService} from '../../services/layout.service';
+import { CommonService } from '../../services/common.service';
+import { LayoutService } from '../../services/layout.service';
 /*MODELS*/
-import {Transaction} from '../../models/transaction.model';
-
+import { Transaction } from '../../models/transaction.model';
 @Component({
   selector: 'app-transaction',
   templateUrl: './transaction.component.html',
@@ -16,12 +15,12 @@ import {Transaction} from '../../models/transaction.model';
 })
 export class TransactionComponent implements OnInit {
 
+  showUtf8 = false;
   private _txHash: string;
   transaction: Observable<Transaction>;
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
   }
-
   ngOnInit() {
     this._layoutService.isPageLoading.next(true);
     this.transaction = this._route.paramMap.pipe(
@@ -35,5 +34,6 @@ export class TransactionComponent implements OnInit {
       })
     );
   }
+
 
 }

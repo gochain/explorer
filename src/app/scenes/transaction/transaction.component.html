@@ -75,9 +75,17 @@
       </ul>
     </div>
     <div class="list-holder__footer">
+
       <div>
-        <p>Input data</p>
-        <b><pre class="code">{{tx.input_data}}</pre></b>
+        <p>Input data
+          <span class="pull-r btn-group">
+            <button class="btn btn--sm" [ngClass]="{'btn--active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
+            <button class="btn btn--sm" [ngClass]="{'btn--active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
+          </span>
+        </p>
+        <b>
+          <pre class="code">{{tx.input_data | hex2str: showUtf8}}</pre>
+        </b>
       </div>
     </div>
   </div>
