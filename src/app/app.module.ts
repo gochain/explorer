@@ -20,6 +20,9 @@ import {PaginationComponent} from './components/pagination/pagination.component'
 import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.component';
 import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
 import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
+import { WalletComponent } from './scenes/wallet/wallet.component';
+import { CreateWalletComponent } from './scenes/create-wallet/create-wallet.component';
+import { SendTxComponent } from './scenes/send-tx/send-tx.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
@@ -63,6 +66,9 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     MobileMenuComponent,
     InfoComponent,
     ContractComponent,
+    WalletComponent,
+    CreateWalletComponent,
+    SendTxComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),

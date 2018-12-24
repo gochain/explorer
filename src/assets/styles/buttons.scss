@@ -23,7 +23,7 @@ $btn_color: #06A5FF;
   outline: none;
 
   &:hover {
-    background: darken($btn_color, 5);
+    background: darken($btn_color, 8);
   }
 
   &--sm {

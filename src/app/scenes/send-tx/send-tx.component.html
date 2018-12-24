@@ -1,0 +1,157 @@
+<div class="main-top main-top--sm">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
+<div class="uk-margin">
+  <div class="list-holder">
+    <div>
+      <form [formGroup]="addrOrKeyForm">
+        <div class="uk-margin">
+          <label class="uk-form-label">Enter your private key to perform operations or address to see balance.</label>
+          <div class="uk-form-controls">
+            <!--<div class="uk-inline">
+              <span class="uk-form-icon uk-form-icon-flip"><i class="fas fa-eye"></i></span>-->
+            <input class="uk-input" type="password" placeholder="Private Key or Address" formControlName="privateKey">
+            <!--</div>-->
+          </div>
+        </div>
+      </form>
+      <div class="uk-margin">
+        <div *ngIf="balance != null && balance !=''">
+          <div *ngIf="address != null">
+            Address for key: {{address}}
+          </div>
+          Your current balance is: <span style="font-weight: bold; color: greenyellow;">{{balance | number}}</span>
+          <br/><br/>
+          <a routerLink="/addr/{{address}}">View in explorer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="uk-margin">
+  <app-tabs name="send_tx_tab">
+    <tab name="send_go" title="Send GO">
+      <tab-content>
+        <h5>Perform a regular transaction, send GO to another account</h5>
+        <form class="uk-form-horizontal" [formGroup]="sendGoForm">
+          <div class="uk-margin">
+            <label class="uk-form-label">To*:</label>
+            <div class="uk-form-controls">
+              <input class="uk-input" type="text" placeholder="To" formControlName="to">
+            </div>
+          </div>
+          <div class="uk-margin">
+            <label class="uk-form-label">Amount*:</label>
+            <div class="uk-form-controls">
+              <input class="uk-input" type="text" placeholder="Amount" formControlName="amount">
+            </div>
+          </div>
+          <div class="uk-margin">
+            <button class="btn pull-r" type="submit" (click)="sendGo()">Send</button>
+          </div>
+        </form>
+      </tab-content>
+    </tab>
+    <tab name="deploy_contract" title="Deploy Contract">
+      <tab-content>
+        <h5>Deploy a Smart Contract to GoChain</h5>
+        <form class="uk-form-horizontal" [formGroup]="deployContractForm">
+          <div class="uk-margin">
+            <label class="uk-form-label">Bytecode*:</label>
+            <div class="uk-form-controls">
+              <textarea class="uk-textarea" rows="5" formControlName="byteCode"
+                        placeholder="Bytecode"></textarea>
+              <p>Must start with 0x!</p>
+            </div>
+          </div>
+          <div class="uk-margin">
+            <label class="uk-form-label">Gas Limit*:</label>
+            <div class="uk-form-controls">
+              <input class="uk-input" placeholder="Gas Limit" formControlName="gasLimit" type="number">
+            </div>
+          </div>
+          <div class="uk-margin">
+            <button class="btn pull-r" type="submit" (click)="deployContract()">
+              Deploy
+            </button>
+          </div>
+        </form>
+      </tab-content>
+    </tab>
+    <tab name="use_contract" title="Use Contract">
+      <tab-content>
+        <h5>Interact with a Smart Contract on GoChain</h5>
+        <form class="uk-form-horizontal" [formGroup]="useContractForm">
+          <div class="uk-margin">
+            <label class="uk-form-label">Contract Address*:</label>
+            <div class="uk-form-controls">
+              <input class="uk-input" placeholder="Contract Address" formControlName="contractAddress">
+            </div>
+          </div>
+          <div class="uk-margin">
+            <label class="uk-form-label">ABI / JSON Interface:</label>
+            <div class="uk-form-controls">
+              <textarea class="uk-textarea" placeholder="ABI / JSON Interface" formControlName="contractABI"
+                        rows="5"></textarea>
+            </div>
+          </div>
+          <div *ngIf="contract != null">
+            <div class="uk-margin">
+              <label class="uk-form-label">Choose Contract Function</label>
+              <div class="uk-form-controls">
+                <select class="uk-select" formControlName="contractFunction">
+                  <option *ngFor="let func of funcsToSelect()" [value]="func.name">{{func.name}}</option>
+                </select>
+              </div>
+            </div>
+            <div *ngIf="functionParameters.controls.length != null">
+              <div formArrayName="functionParameters" *ngFor="let control of functionParameters.controls; let i=index">
+                <div class="uk-margin">
+                  <div class="uk-form-controls">
+                    <input class="uk-input" placeholder="{{functionName(i)}}" formControlName="{{i}}">
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="functionPayable()">
+                <div class="uk-margin">
+                  <div class="uk-form-controls">
+                    <input class="uk-input" placeholder="Amount" formControlName="contractAmount">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="functionResult != null">
+            <h3>Response</h3>
+            <div *ngFor="let k of functionResult">
+              {{k[0]}}: <span style="font-weight: bold;">{{k[1]}}</span>
+            </div>
+          </div>
+          <div *ngIf="funcUnsupported != null">
+            {{funcUnsupported}}
+          </div>
+          <div class="uk-margin">
+            <button class="btn pull-r" type="submit" (click)="useContract()">
+              Send
+            </button>
+          </div>
+        </form>
+      </tab-content>
+    </tab>
+  </app-tabs>
+</div>
+<ng-container *ngIf="sending || receipt != null">
+  <div *ngIf="sending">
+    <span>Transaction submitted, waiting for receipt...</span>
+  </div>
+  <div *ngIf="receipt != null">
+    Transaction complete!<br/>
+    TxHash: <a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash }}</a>
+    <div *ngIf="receipt.contractAddress !== null">
+      <b>Contract Address: {{ receipt.contractAddress }}</b>
+    </div>
+  </div>
+</ng-container>

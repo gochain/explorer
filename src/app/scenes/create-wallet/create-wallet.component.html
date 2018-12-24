@@ -1,0 +1,27 @@
+<div class="main-top">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
+<div class="uk-margin">
+  <div class="list-holder">
+    <div class="p-b--60">
+      <h3 class="center m-b--40 t--upp font-w--500">Create Account</h3>
+      <ng-container *ngIf="!newAccount; else newAccountBlock">
+      <div class="center">
+        <button class="btn btn--round" (click)="createAccount()">Create</button>
+      </div>
+      </ng-container>
+      <ng-template #newAccountBlock>
+        <p class="m-b--30">
+          NOTE: Once you leave this page, you cannot recover the address or private key. Please copy this somewhere safe!
+        </p>
+        <p>Private Key</p>
+        <pre class="code">{{newAccount.privateKey}}</pre>
+        <p>Address</p>
+        <pre class="code">{{newAccount.address}}</pre>
+      </ng-template>
+    </div>
+  </div>
+</div>

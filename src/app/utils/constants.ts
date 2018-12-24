@@ -4,15 +4,28 @@ export const THEME_SETTINGS = {
   color: 'dark',
 };
 
+export const ROUTES = {
+  HOME: 'home',
+  BLOCK: 'block',
+  ADDRESS: 'addr',
+  RICHLIST: 'richlist',
+  TRANSACTION: 'tx',
+  SETTINGS: 'settings',
+  VERIFY: 'verify',
+  WALLET: 'wallet',
+  CREATE_WALLET: 'create-account',
+  SEND_TX: 'send-tx',
+};
+
 export const MENU_ITEMS: MenuItem[] = [
   {
     title: 'Blocks',
-    link: '/home',
+    link: ROUTES.HOME,
     icon: 'fa fa-link fa-fw'
   },
   {
     title: 'Rich List',
-    link: '/richlist',
+    link: ROUTES.RICHLIST,
     icon: 'fa fa-list-ul fa-fw'
   },
   /*{
@@ -22,7 +35,7 @@ export const MENU_ITEMS: MenuItem[] = [
   },*/
   {
     title: 'Wallet',
-    link: 'https://wallet.gochain.io',
+    link: ROUTES.WALLET,
     icon: 'fa fa-wallet fa-fw',
     external: true
   },
@@ -38,13 +51,3 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'fa fa-cogs fa-fw',
   },*/
 ];
-
-export const ROUTES = {
-  HOME: 'home',
-  BLOCK: 'block',
-  ADDRESS: 'addr',
-  RICHLIST: 'richlist',
-  TRANSACTION: 'tx',
-  SETTINGS: 'settings',
-  VERIFY: 'verify',
-};
