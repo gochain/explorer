@@ -57,7 +57,11 @@ export class TabsComponent implements OnInit, AfterContentInit {
   }
 
   onTabSelect(tab: TabComponent) {
+    if (this.activeTab) {
+      this.activeTab.content.active = false;
+    }
     this.activeTab = tab;
+    this.activeTab.content.active = true;
     this._router.navigate([], {
       relativeTo: this._activatedRoute,
       queryParams: {

@@ -6,14 +6,11 @@
                      'single': tabs.length === 1}"
          [ngStyle]="{'border-radius': tabs.length === 1  ? '100px' : ''}"
          (click)="onTabSelect(tab)"
-         [innerHTML]="tab.title.element.nativeElement.innerHTML"
+         [innerHTML]="tab.title"
     >
     </div>
   </div>
-  <div
-      *ngIf="activeTab"
-      class="tabs__content"
-      [innerHTML]="activeTab.content.element.nativeElement.innerHTML"
-  >
+  <div class="tabs__content">
+    <ng-content></ng-content>
   </div>
 </div>

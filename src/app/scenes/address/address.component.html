@@ -61,10 +61,7 @@
   </div>
   <div class="uk-margin">
     <app-tabs name="addr_tab">
-      <tab name="transactions">
-        <tab-title>
-          Transactions
-        </tab-title>
+      <tab name="transactions" title="Transactions">
         <tab-content>
           <ng-container *ngIf="transactions.length; else emptyTransactions">
             <ng-container *ifViewportSize="['small']">
@@ -142,10 +139,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions">
-        <tab-title>
-          Internal Transactions
-        </tab-title>
+      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" title="Internal Transactions">
         <tab-content>
           <ng-container *ngIf="internal_transactions.length; else emptyInternal">
             <ng-container *ifViewportSize="['small']">
@@ -204,10 +198,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20" name="holders">
-        <tab-title>
-          Holders
-        </tab-title>
+      <tab *ngIf="addr.contract && addr.go20" name="holders" title="Holders">
         <tab-content>
           <ng-container *ngIf="token_holders.length; else emptyHolders">
             <ng-container *ifViewportSize="['small']">
@@ -251,10 +242,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract" name="contract_source">
-        <tab-title>
-          Contract Source
-        </tab-title>
+      <tab *ngIf="addr.contract" name="contract_source" title="Contract Source">
         <tab-content>
           <ng-container *ngIf="contract">
             <ng-container *ngIf="!contract.valid">
