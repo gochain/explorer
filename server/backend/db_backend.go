@@ -110,12 +110,12 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "-block_number"}, Background: true})
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "created_at"}, Background: true})
 	if err != nil {
 		panic(err)
 	}
 
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "-block_number"}, Background: true})
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "created_at"}, Background: true})
 	if err != nil {
 		panic(err)
 	}
@@ -467,9 +467,9 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 	return &c
 }
 
-func (self *MongoBackend) getTransactionList(address string, skip, limit int) []*models.Transaction {
+func (self *MongoBackend) getTransactionList(address string, skip, limit int, fromTime, toTime time.Time) []*models.Transaction {
 	var transactions []*models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "block_number": bson.M{"$gte": 0}}).Sort("-block_number").Skip(skip).Limit(limit).All(&transactions)
+	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
 	if err != nil {
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}

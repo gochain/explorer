@@ -30,6 +30,27 @@ var reCaptchaSecret string
 
 const defaultFetchLimit = 500
 
+func parseTime(r *http.Request) (time.Time, time.Time, error) {
+	var err error
+	fromTime := time.Unix(0, 0)
+	toTime := time.Now()
+	fromTimeStr := r.URL.Query().Get("from_time")
+	toTimeStr := r.URL.Query().Get("to_time")
+	if fromTimeStr != "" {
+		fromTime, err = time.Parse(time.RFC3339, fromTimeStr)
+		if err != nil {
+			return fromTime, toTime, err
+		}
+	}
+	if toTimeStr != "" {
+		toTime, err = time.Parse(time.RFC3339, toTimeStr)
+		if err != nil {
+			return fromTime, toTime, err
+		}
+	}
+	return fromTime, toTime, nil
+}
+
 func parseSkipLimit(r *http.Request) (int, int) {
 	limitS := r.URL.Query().Get("limit")
 	skipS := r.URL.Query().Get("skip")
@@ -247,11 +268,17 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
 	skip, limit := parseSkipLimit(r)
-	transactions := &models.TransactionList{
-		Transactions: []*models.Transaction{},
+	fromTime, toTime, err := parseTime(r)
+	if err == nil {
+		transactions := &models.TransactionList{
+			Transactions: []*models.Transaction{},
+		}
+		transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime)
+		writeJSON(w, http.StatusOK, transactions)
+	} else {
+		log.Info().Err(err).Msg("getAddressTransactions")
+		errorResponse(w, http.StatusBadRequest, err)
 	}
-	transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit)
-	writeJSON(w, http.StatusOK, transactions)
 }
 
 func getTokenHolders(w http.ResponseWriter, r *http.Request) {
