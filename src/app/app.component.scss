@@ -1,8 +1,8 @@
 @import "../assets/styles/mixins";
 
 .app-container {
-  padding: 70px 40px 30px;
-  min-height: calc(100vh - 100px);
+  padding: 70px 40px 0;
+  min-height: calc(100vh - 70px);
 
   @include respond-to(small) {
     padding: 70px 10px 0;

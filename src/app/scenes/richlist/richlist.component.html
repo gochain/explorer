@@ -29,7 +29,8 @@
           <tbody>
           <tr *ngFor="let address of richList.rankings; let rankI = index;">
             <td>{{rankI + 1}}</td>
-            <td class="uk-text-nowrap"><a class="ws-p" routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
+            <td class="uk-text-nowrap"><a class="ws-p" routerLink="/addr/{{address.address}}">{{address.address}}</a>
+            </td>
             <td class="uk-text-nowrap ta-r ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
             <td class="uk-text-nowrap">{{address.supplyOwned}}%</td>
           </tr>
@@ -39,8 +40,14 @@
     </ng-container>
   </div>
 </ng-container>
-<div class="center">
-  <button type="button" class="btn btn--sm btn--round m-b--20" [disabled]="isMoreDisabled"
-          (click)="richListQueryParams.next()">More
+<div class="center p-b--60">
+  <button type="button" class="btn btn--sm btn--round" [disabled]="isMoreDisabled"
+          (click)="richListQueryParams.next()">
+    <ng-container *ngIf="!isLoading; else loading;">
+      More
+    </ng-container>
+    <ng-template #loading>
+      Loading <i class="fas fa-spinner fa-spin m-l--10"></i>
+    </ng-template>
   </button>
 </div>

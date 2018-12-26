@@ -2,7 +2,7 @@ import {Inject, Injectable} from '@angular/core';
 import {ToastrService} from '../modules/toastr/toastr.service';
 import Web3 from 'web3';
 import {fromPromise} from 'rxjs/internal-compatibility';
-import {concatMap} from 'rxjs/operators';
+import {concatMap, map} from 'rxjs/operators';
 import {Observable, of, throwError} from 'rxjs';
 import {WEB3} from './web3';
 
@@ -25,7 +25,6 @@ export class WalletService {
   }
 
   constructor(@Inject(WEB3) public _web3: Web3, private _toastrService: ToastrService) {
-    console.log(this._web3);
     this.rpcHost = WalletService.getHost();
   }
 
@@ -67,25 +66,19 @@ export class WalletService {
     return fromPromise(this._web3.eth.sendSignedTransaction(tx.signed.rawTransaction));
   }
 
-  /*
-  reset(): void {
-    this._web3 = null;
-  }
   getBalance(address: string): Observable<string> {
     let source1 = null;
     try {
-      const p = this.w3().eth.getBalance(address);
+      const p = this._web3.eth.getBalance(address);
       source1 = fromPromise(p);
       return source1.pipe(
-        map(balance => {
-          console.log('converting balance:', balance);
-          balance = this.w3().utils.fromWei(balance, 'ether');
+        map((balance: string | number) => {
+          balance = this._web3.utils.fromWei(balance, 'ether');
           return balance;
-        })
+        }),
       );
     } catch (e) {
-      /!*this.messageService.add('ERROR: ' + e);*!/
       return throwError(e);
     }
-  }*/
+  }
 }

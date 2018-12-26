@@ -1,27 +1,29 @@
-<div class="main-top">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
-  </div>
-</div>
-<div class="uk-margin">
-  <div class="list-holder">
-    <div class="p-b--60">
-      <h3 class="center m-b--40 t--upp font-w--500">Create Account</h3>
-      <ng-container *ngIf="!newAccount; else newAccountBlock">
+<div class="wal f f-j--c">
+  <div class="card m-t--60">
+    <h3 class="center m-b--40 t--upp font-w--500">Create Account</h3>
+    <ng-container *ngIf="!newAccount; else newAccountBlock">
       <div class="center">
         <button class="btn btn--round" (click)="createAccount()">Create</button>
       </div>
-      </ng-container>
-      <ng-template #newAccountBlock>
-        <p class="m-b--30">
-          NOTE: Once you leave this page, you cannot recover the address or private key. Please copy this somewhere safe!
-        </p>
-        <p>Private Key</p>
-        <pre class="code">{{newAccount.privateKey}}</pre>
-        <p>Address</p>
-        <pre class="code">{{newAccount.address}}</pre>
-      </ng-template>
-    </div>
+    </ng-container>
+    <ng-template #newAccountBlock>
+      <p class="m-b--30">
+        NOTE: Once you leave this page, you cannot recover the address or private key.
+      </p>
+      <p>Please copy this somewhere safe!</p>
+      <p>Private Key</p>
+      <pre class="code">{{newAccount.privateKey}}</pre>
+      <p>Address</p>
+      <pre class="code">{{newAccount.address}}</pre>
+      <div class="center m-t--20">
+        <a routerLink="/wallet" class="btn btn--sm btn--round">Back</a>
+      </div>
+    </ng-template>
   </div>
+</div>
+<div class="wallet-warning">
+  <p>Please use this wallet in <a href="https://support.google.com/chrome/answer/95464?co=GENIE.Platform%3DDesktop&hl=en"
+                                  target="_blank">Chrome Incognito Mode</a> or <a href="https://support.mozilla.org/en-US/kb/private-browsing-use-firefox-without-history" target="_blank">Firefox
+    Private Window</a>. This will disable
+    any extensions that could read your private key.</p>
 </div>

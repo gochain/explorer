@@ -1,37 +1,39 @@
-<div class="main-top main-top--sm">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
-  </div>
-</div>
-<div class="uk-margin">
-  <div class="list-holder">
-    <div>
-      <form [formGroup]="addrOrKeyForm">
+<div class="wal" [ngClass]="{'wal--sm': balance != null && balance !=''}">
+  <div class="f f-j--c p-b--20">
+    <div class="card">
+      <form [formGroup]="privateKeyForm" (submit)="onPrivateKeySubmit()">
         <div class="uk-margin">
-          <label class="uk-form-label">Enter your private key to perform operations or address to see balance.</label>
+          <label class="uk-form-label">Enter your private key to perform operations.</label>
           <div class="uk-form-controls">
             <!--<div class="uk-inline">
               <span class="uk-form-icon uk-form-icon-flip"><i class="fas fa-eye"></i></span>-->
-            <input class="uk-input" type="password" placeholder="Private Key or Address" formControlName="privateKey">
+            <input class="uk-input" type="password" placeholder="Private Key" formControlName="privateKey">
             <!--</div>-->
           </div>
         </div>
-      </form>
-      <div class="uk-margin">
-        <div *ngIf="balance != null && balance !=''">
-          <div *ngIf="address != null">
-            Address for key: {{address}}
+        <div class="uk-margin" *ngIf="balance == null || balance ==''">
+          <div class="center p-b--60">
+            <button type="submit" class="btn btn--sm btn--round">
+              <ng-container *ngIf="!isOpening; else opening;">
+                Open
+              </ng-container>
+              <ng-template #opening>
+                Opening <i class="fas fa-spinner fa-spin m-l--10"></i>
+              </ng-template>
+            </button>
           </div>
-          Your current balance is: <span style="font-weight: bold; color: greenyellow;">{{balance | number}}</span>
-          <br/><br/>
-          <a routerLink="/addr/{{address}}">View in explorer</a>
         </div>
+      </form>
+      <div class="m-t--20" *ngIf="balance != null && balance !=''">
+        <p>Address for key: {{address}}</p>
+        <p>Your current balance is: <span style="font-weight: bold; color: greenyellow;">{{balance | number}}</span></p>
+        <p><a routerLink="/addr/{{address}}">View address</a></p>
+        <button type="button" class="btn btn--sm btn--round" (click)="closeWallet()">Close wallet</button>
       </div>
     </div>
   </div>
 </div>
-<div class="uk-margin">
+<div class="p-b--60" *ngIf="balance != null && balance !=''">
   <app-tabs name="send_tx_tab">
     <tab name="send_go" title="Send GO">
       <tab-content>
@@ -155,3 +157,11 @@
     </div>
   </div>
 </ng-container>
+<div class="wallet-warning">
+  <p>Please use this wallet in <a
+      href="https://support.google.com/chrome/answer/95464?co=GENIE.Platform%3DDesktop&hl=en"
+      target="_blank">Chrome Incognito Mode</a> or <a
+      href="https://support.mozilla.org/en-US/kb/private-browsing-use-firefox-without-history" target="_blank">Firefox
+    Private Window</a>. This will disable
+    any extensions that could read your private key.</p>
+</div>

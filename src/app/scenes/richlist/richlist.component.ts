@@ -1,7 +1,7 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
-import {flatMap} from 'rxjs/operators';
+import {flatMap, tap} from 'rxjs/operators';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
@@ -23,6 +23,7 @@ export class RichlistComponent implements OnInit {
   richList: RichList = new RichList();
   richListQueryParams: QueryParams = new QueryParams(50);
   isMoreDisabled = false;
+  isLoading = false;
 
   private _subsArr$: Subscription[] = [];
 
@@ -43,6 +44,7 @@ export class RichlistComponent implements OnInit {
 
   initSub() {
     this._subsArr$.push(this.richListQueryParams.state.pipe(
+      tap(() => this.isLoading = true),
       flatMap(params => this._commonService.getRichlist(params)),
     ).subscribe((data: RichList) => {
       RichlistComponent.calcSupplyOwned(data.rankings, data.circulating_supply);
@@ -52,6 +54,7 @@ export class RichlistComponent implements OnInit {
       if (data.rankings.length < this.richListQueryParams.limit) {
         this.isMoreDisabled = true;
       }
+      this.isLoading = false;
       this._layoutService.isPageLoading.next(false);
     }));
   }

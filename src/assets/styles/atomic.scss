@@ -49,6 +49,12 @@
     &--20 {
       margin-top: 20px;
     }
+    &--40 {
+      margin-top: 40px;
+    }
+    &--60 {
+      margin-top: 60px;
+    }
   }
   &-b {
     &--10 {
@@ -98,13 +104,24 @@
   }
   &-b {
     &--10 {
-      padding-left: 10px;
+      padding-bottom: 10px;
     }
     &--20 {
-      padding-left: 20px;
+      padding-bottom: 20px;
     }
     &--60 {
       padding-bottom: 60px !important;
+    }
+  }
+  &-t {
+    &--10 {
+      padding-top: 10px;
+    }
+    &--20 {
+      padding-top: 20px;
+    }
+    &--60 {
+      padding-top: 60px !important;
     }
   }
 }
@@ -118,6 +135,27 @@
 
 .f {
   display: flex;
+  &--equal {
+    & > * {
+      flex-grow: 1;
+      flex-basis: 0;
+    }
+  }
+  &-a {
+    &--c {
+      align-items: center;
+    }
+  }
+  &-j {
+    &--c {
+      justify-content: center;
+    }
+  }
+  &-w {
+    &--w {
+      flex-wrap: wrap;
+    }
+  }
 }
 
 a {

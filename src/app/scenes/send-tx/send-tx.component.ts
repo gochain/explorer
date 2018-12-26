@@ -10,7 +10,7 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 })
 export class SendTxComponent implements OnInit {
 
-  addrOrKeyForm: FormGroup = this._fb.group({
+  privateKeyForm: FormGroup = this._fb.group({
     privateKey: ['', Validators.compose([Validators.required, SendTxComponent.checkKeys])],
   });
 
@@ -45,6 +45,8 @@ export class SendTxComponent implements OnInit {
   functionResult: any;
   funcUnsupported: string;
 
+  isOpening = false;
+
   static checkKeys(fc: FormControl) {
     const address_or_key = fc.value.toLowerCase();
     if (/^(0x)?[0-9a-f]{40}$/i.test(address_or_key)
@@ -60,11 +62,6 @@ export class SendTxComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.addrOrKeyForm.get('privateKey').valueChanges.subscribe(val => {
-      this.fromAccount = null;
-      /*this.balance.reset();*/
-      this.updateBalance(val);
-    });
     this.useContractForm.get('contractAddress').valueChanges.subscribe(val => {
       this.updateContractInfo();
     });
@@ -162,18 +159,54 @@ export class SendTxComponent implements OnInit {
     return ret;
   }
 
-  updateBalance(val: string) {
+  reset() {
+    this.balance = null;
+    this.fromAccount = null;
+    this.address = null;
+  }
+
+  closeWallet() {
+    this.reset();
+    this.privateKeyForm.reset();
+  }
+
+  onPrivateKeySubmit() {
+    this.reset();
+    this.isOpening = true;
+    let val: string = this.privateKeyForm.get('privateKey').value;
+
     if (val.length === 64 && val.indexOf('0x') !== 0) {
       val = '0x' + val;
-      this.addrOrKeyForm.get('privateKey').setValue(val);
+      this.privateKeyForm.get('privateKey').setValue(val);
     }
+
     if (val.length === 66) {
       try {
         this.fromAccount = this._walletService.w3.eth.accounts.privateKeyToAccount(val);
+        this.address = this.fromAccount.address;
+        this.updateBalance();
       } catch (e) {
         this._toastrService.danger('ERROR: ' + e);
-        return;
+        this.isOpening = false;
       }
+      return;
+    }
+
+    this._toastrService.danger('Given private key is not valid');
+    this.isOpening = false;
+  }
+
+  updateBalance() {
+    if (this._walletService.isAddress(this.address)) {
+      this._walletService.getBalance(this.address).subscribe(balance => {
+          this._toastrService.info('Updated balance.');
+          this.balance = balance;
+        },
+        err => {
+          this._toastrService.danger('ERROR: ' + err);
+          this.reset();
+        },
+        () => this.isOpening = false);
     }
   }
 
@@ -223,7 +256,7 @@ export class SendTxComponent implements OnInit {
     }
 
     const tx = {to: to, value: amount, gas: '2000000'};
-    const privateKey = this.addrOrKeyForm.get('privateKey').value;
+    const privateKey = this.privateKeyForm.get('privateKey').value;
 
     this.sendAndWait(privateKey, tx);
   }
@@ -236,7 +269,7 @@ export class SendTxComponent implements OnInit {
       byteCode = '0x' + byteCode;
     }
     const tx = {data: byteCode, gas: '2000000'};
-    const privateKey = this.addrOrKeyForm.get('privateKey').value;
+    const privateKey = this.privateKeyForm.get('privateKey').value;
     this.sendAndWait(privateKey, tx);
   }
 
