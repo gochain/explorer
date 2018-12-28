@@ -16,6 +16,7 @@ type Transaction struct {
 	BlockHash       string    `json:"block_hash" bson:"hash"`
 	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
 	InputData       string    `json:"input_data" bson:"input_data"`
+	InputDataEmpty  bool      `json:"-" bson:"input_data_empty"`
 }
 
 type TransactionList struct {

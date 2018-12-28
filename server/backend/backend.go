@@ -102,8 +102,8 @@ func (self *Backend) GetAddressByHash(hash string) *models.Address {
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
 }
-func (self *Backend) GetTransactionList(address string, skip, limit int, fromTime, toTime time.Time) []*models.Transaction {
-	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), skip, limit, fromTime, toTime)
+func (self *Backend) GetTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) []*models.Transaction {
+	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), skip, limit, fromTime, toTime, inputDataEmpty)
 }
 func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
 	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), skip, limit)

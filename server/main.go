@@ -51,6 +51,20 @@ func parseTime(r *http.Request) (time.Time, time.Time, error) {
 	return fromTime, toTime, nil
 }
 
+func parseBool(r *http.Request, name string) (boolean *bool) {
+	valStr := r.URL.Query().Get(name)
+	var val bool
+	if valStr != "" {
+		if valStr == "true" {
+			val = true
+		} else {
+			val = false
+		}
+		return &val
+	}
+	return nil
+}
+
 func parseSkipLimit(r *http.Request) (int, int) {
 	limitS := r.URL.Query().Get("limit")
 	skipS := r.URL.Query().Get("skip")
@@ -267,13 +281,14 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
+	inputDataEmpty := parseBool(r, "input_data_empty")
 	skip, limit := parseSkipLimit(r)
 	fromTime, toTime, err := parseTime(r)
 	if err == nil {
 		transactions := &models.TransactionList{
 			Transactions: []*models.Transaction{},
 		}
-		transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime)
+		transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime, inputDataEmpty)
 		writeJSON(w, http.StatusOK, transactions)
 	} else {
 		log.Info().Err(err).Msg("getAddressTransactions")
