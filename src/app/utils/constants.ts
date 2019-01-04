@@ -37,7 +37,6 @@ export const MENU_ITEMS: MenuItem[] = [
     title: 'Wallet',
     link: ROUTES.WALLET,
     icon: 'fa fa-wallet fa-fw',
-    external: true
   },
   {
     title: 'Network Stats',
