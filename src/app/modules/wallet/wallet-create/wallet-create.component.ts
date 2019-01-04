@@ -1,12 +1,12 @@
 import {Component} from '@angular/core';
-import {WalletService} from '../../services/wallet.service';
+import {WalletService} from '../wallet.service';
 
 @Component({
-  selector: 'app-create-wallet',
-  templateUrl: './create-wallet.component.html',
-  styleUrls: ['./create-wallet.component.css']
+  selector: 'app-wallet-create',
+  templateUrl: './wallet-create.component.html',
+  styleUrls: ['./wallet-create.component.css']
 })
-export class CreateWalletComponent {
+export class WalletCreateComponent {
 
   newAccount: any;
 

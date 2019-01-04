@@ -1,17 +1,17 @@
 import {Component, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {WalletService} from '../../services/wallet.service';
-import {ToastrService} from '../../modules/toastr/toastr.service';
+import {WalletService} from '../wallet.service';
+import {ToastrService} from '../../toastr/toastr.service';
 
 @Component({
-  selector: 'app-sent-tx',
-  templateUrl: './send-tx.component.html',
-  styleUrls: ['./send-tx.component.css']
+  selector: 'app-wallet-send',
+  templateUrl: './wallet-send.component.html',
+  styleUrls: ['./wallet-send.component.css']
 })
-export class SendTxComponent implements OnInit {
+export class WalletSendComponent implements OnInit {
 
   privateKeyForm: FormGroup = this._fb.group({
-    privateKey: ['', Validators.compose([Validators.required, SendTxComponent.checkKeys])],
+    privateKey: ['', Validators.compose([Validators.required, WalletSendComponent.checkKeys])],
   });
 
   sendGoForm: FormGroup = this._fb.group({

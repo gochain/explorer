@@ -428,22 +428,3 @@ body {
   width: 700px;
   display: inline-block;
 }
-
-.wallet-warning {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #7f00f6;
-  height: 40px;
-  padding: 0 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-
-  p {
-    margin: 0;
-    color: #fff !important;
-  }
-}
