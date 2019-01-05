@@ -28,7 +28,9 @@
         <p>Address for key: {{address}}</p>
         <p>Your current balance is: <span style="font-weight: bold; color: greenyellow;">{{balance | number}}</span></p>
         <p><a routerLink="/addr/{{address}}">View address</a></p>
-        <button type="button" class="btn btn--sm btn--round" (click)="closeWallet()">Close wallet</button>
+        <div class="center">
+          <button type="button" class="btn btn--sm btn--round" (click)="closeWallet()">Close wallet</button>
+        </div>
       </div>
     </div>
   </div>
@@ -52,7 +54,14 @@
             </div>
           </div>
           <div class="uk-margin">
-            <button class="btn pull-r" type="submit" (click)="sendGo()">Send</button>
+            <button class="btn pull-r" type="submit" (click)="sendGo()" [disabled]="isSending">
+              <ng-container *ngIf="!isSending; else sending;">
+                Send
+              </ng-container>
+              <ng-template #sending>
+                Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
+              </ng-template>
+            </button>
           </div>
         </form>
       </tab-content>
@@ -76,8 +85,13 @@
             </div>
           </div>
           <div class="uk-margin">
-            <button class="btn pull-r" type="submit" (click)="deployContract()">
-              Deploy
+            <button class="btn pull-r" type="submit" (click)="deployContract()" [disabled]="isSending">
+              <ng-container *ngIf="!isSending; else deploying;">
+                Deploy
+              </ng-container>
+              <ng-template #deploying>
+                Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
+              </ng-template>
             </button>
           </div>
         </form>
@@ -136,24 +150,29 @@
             {{funcUnsupported}}
           </div>
           <div class="uk-margin">
-            <button class="btn pull-r" type="submit" (click)="useContract()">
-              Send
+            <button class="btn pull-r" type="submit" (click)="useContract()" [disabled]="isSending">
+              <ng-container *ngIf="!isSending; else interacting;">
+                Submit
+              </ng-container>
+              <ng-template #interacting>
+                Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
+              </ng-template>
             </button>
           </div>
         </form>
       </tab-content>
     </tab>
   </app-tabs>
-</div>
-<ng-container *ngIf="sending || receipt != null">
-  <div *ngIf="sending">
-    <span>Transaction submitted, waiting for receipt...</span>
-  </div>
-  <div *ngIf="receipt != null">
-    Transaction complete!<br/>
-    TxHash: <a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash }}</a>
-    <div *ngIf="receipt.contractAddress !== null">
-      <b>Contract Address: {{ receipt.contractAddress }}</b>
+  <ng-container *ngIf="isSending || receipt != null">
+    <div *ngIf="isSending">
+      <span>Transaction submitted, waiting for receipt...</span>
     </div>
-  </div>
-</ng-container>
+    <div *ngIf="receipt != null">
+      Transaction complete!<br/>
+      TxHash: <a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash }}</a>
+      <div *ngIf="receipt.contractAddress !== null">
+        <b>Contract Address: {{ receipt.contractAddress }}</b>
+      </div>
+    </div>
+  </ng-container>
+</div>

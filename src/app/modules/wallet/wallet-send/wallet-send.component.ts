@@ -37,7 +37,7 @@ export class WalletSendComponent implements OnInit {
   fromAccount: any;
   address: string; // this is if it's not a private key being used
   receipt: Map<string, any>;
-  sending = false;
+  isSending = false;
 
   // Contract stuff
   contract: any;
@@ -229,11 +229,15 @@ export class WalletSendComponent implements OnInit {
   }
 
   sendGo() {
-    this.sending = true;
+    if (this.isSending) {
+      return;
+    }
+
+    this.isSending = true;
 
     if (!this.sendGoForm.valid) {
       this._toastrService.warning('Some field is wrong');
-      this.sending = false;
+      this.isSending = false;
       return;
     }
 
@@ -241,7 +245,7 @@ export class WalletSendComponent implements OnInit {
 
     if (to.length !== 42 || !this._walletService.isAddress(to)) {
       this._toastrService.danger('ERROR: Invalid TO address.');
-      this.sending = false;
+      this.isSending = false;
       return;
     }
 
@@ -251,7 +255,7 @@ export class WalletSendComponent implements OnInit {
       amount = this._walletService.w3.utils.toWei(amount, 'ether');
     } catch (e) {
       this._toastrService.danger('ERROR: ' + e);
-      this.sending = false;
+      this.isSending = false;
       return;
     }
 
@@ -262,7 +266,10 @@ export class WalletSendComponent implements OnInit {
   }
 
   deployContract() {
-    this.sending = true;
+    if (this.isSending) {
+      return;
+    }
+    this.isSending = true;
 
     let byteCode = this.deployContractForm.get('byteCode').value;
     if (!byteCode.startsWith('0x')) {
@@ -282,7 +289,10 @@ export class WalletSendComponent implements OnInit {
   }
 
   useContract() {
-    this.sending = true;
+    if (this.isSending) {
+      return;
+    }
+    this.isSending = true;
 
     const params: string[] = [];
     if (this.func.inputs.length > 0) {
@@ -300,7 +310,7 @@ export class WalletSendComponent implements OnInit {
         amount = this._walletService.w3.utils.toWei(amount, 'ether');
       } catch (e) {
         this._toastrService.danger('Cannot convert amount, ERROR: ' + e);
-        this.sending = false;
+        this.isSending = false;
         return;
       }
       tx = {value: amount};
@@ -318,7 +328,7 @@ export class WalletSendComponent implements OnInit {
       });
     } else {
       this.callABIFunction(this.func, params);
-      this.sending = false;
+      this.isSending = false;
       return;
     }
   }
@@ -333,10 +343,10 @@ export class WalletSendComponent implements OnInit {
       },
       err => {
         this._toastrService.danger('ERROR! ' + err);
-        this.sending = false;
+        this.isSending = false;
       },
       () => {
-        this.sending = false;
+        this.isSending = false;
       });
   }
 }
