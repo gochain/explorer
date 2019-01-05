@@ -85,8 +85,9 @@ GET /api/blocks
 ```
 
 **Parameters:**
-limit - amount of items in the response
-skip - number of items to skip
+
+- limit - amount of items in the response
+- skip - number of items to skip
 
 
 **Response:**
@@ -100,7 +101,8 @@ GET /api/blocks/{block_number}
 ```
 
 **Parameters:**
-block_number
+
+- block_number
 
 **Response:**
 ```javascript
@@ -113,9 +115,10 @@ GET /api/blocks/{block_number}/transactions
 ```
 
 **Parameters:**
-block_number
-limit - amount of items in the response
-skip - number of items to skip
+
+- block_number
+- limit - amount of items in the response
+- skip - number of items to skip
 
 
 **Response:**
@@ -129,7 +132,8 @@ GET /api/address/{address_hash}
 ```
 
 **Parameters:**
-address_hash
+
+- address_hash
 
 **Response:**
 ```javascript
@@ -142,11 +146,13 @@ GET /api/address/{address_hash}/transactions
 ```
 
 **Parameters:**
-address_hash
-limit - amount of items in the response
-skip - number of items to skip
-input_data_empty - true/false
-from_time/to_time - filter for the transaction list (by created_at time)
+
+- address_hash
+- limit - amount of items in the response
+- skip - number of items to skip
+- input_data_empty - true/false
+- from_time/to_time - filter for the transaction list (by created_at time)
+
 **Response:**
 ```javascript
 {"transactions":[{"tx_hash":"0x9e5580ba859c11a4be5f62907d54063b23ccf5a9ca996b4d2a49f34005ff06dd","to":"0x44D63da717F5Cb2f74B3CFa9e02d633479CB1100","from":"0xB93901B9413a08DA4E90a2264d12B3eadB8dCA82","contract_address":"","value":"13","gas_price":"3970867867","gas_fee":"988825516240340","gas_limit":249020,"block_number":3265579,"nonce":"180319","block_hash":"0x5c08a62b590c597713dcc8c68a1647ba086330c8bdf208543533367378622f38","created_at":"2019-01-04T16:23:34Z","input_data":""}]}
@@ -159,9 +165,10 @@ GET /api/address/{address_hash}/holders
 ```
 
 **Parameters:**
-address_hash
-limit - amount of items in the response
-skip - number of items to skip
+
+- address_hash
+- limit - amount of items in the response
+- skip - number of items to skip
 
 
 **Response:**
@@ -175,9 +182,10 @@ GET /api/address/{address_hash}/internal_transactions
 ```
 
 **Parameters:**
-address_hash
-limit - amount of items in the response
-skip - number of items to skip
+
+- address_hash
+- limit - amount of items in the response
+- skip - number of items to skip
 
 
 **Response:**
@@ -191,7 +199,8 @@ GET /api/address/{address_hash}/contract
 ```
 
 **Parameters:**
-address_hash
+
+- address_hash
 
 **Response:**
 ```javascript
@@ -204,7 +213,8 @@ GET /api/transaction/{tx_hash}
 ```
 
 **Parameters:**
-tx_hash
+
+- tx_hash
 
 **Response:**
 ```javascript
@@ -217,8 +227,9 @@ GET /api/richlist
 ```
 
 **Parameters:**
-limit - amount of items in the response
-skip - number of items to skip
+
+- limit - amount of items in the response
+- skip - number of items to skip
 
 **Response:**
 ```javascript
