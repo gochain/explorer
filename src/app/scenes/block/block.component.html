@@ -86,7 +86,7 @@
             Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
           </div>
           <div class="uk-text-truncate">
-            Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+            Processed: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
           </div>
           <div class="uk-text-truncate">
             From: <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
@@ -105,7 +105,7 @@
             <thead>
             <tr>
               <th class="uk-width-1-4">Transaction hash</th>
-              <th class="uk-text-nowrap uk-table-shrink">Created at</th>
+              <th class="uk-text-nowrap uk-table-shrink">Processed at</th>
               <th class="uk-width-1-5">From</th>
               <th class="uk-width-1-5">To</th>
               <th class="uk-table-shrink">Value (GO)</th>

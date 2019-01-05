@@ -71,7 +71,7 @@
               <div class="tr-card" *ngFor="let tx of transactions">
                 <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
                 </div>
-                <div class="uk-text-truncate">Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}}
+                <div class="uk-text-truncate">Processed: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}}
                   ({{tx.created_at | timeAgo}})
                 </div>
                 <div class="uk-text-truncate">Associate:
@@ -95,7 +95,7 @@
                   <thead>
                     <tr>
                       <th class="w_2_6">Transaction hash</th>
-                      <th class="uk-text-nowrap uk-table-shrink">Created at</th>
+                      <th class="uk-text-nowrap uk-table-shrink">Processed at</th>
                       <th class="uk-table-shrink"></th>
                       <th class="w_2_6">Associate</th>
                       <th class="uk-text-nowrap uk-table-shrink">Value (GO)</th>
@@ -153,8 +153,8 @@
                 <div class="uk-text-truncate"> <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></div>
                 <div class="uk-text-truncate">
                   <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                    Created: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</ng-container>
-                  <ng-template #updated_at>Created: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
+                    Processed: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})</ng-container>
+                  <ng-template #updated_at>Processed: {{tx.updated_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
                 </div>
                 <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
                 <div class="uk-text-truncate">To: {{tx.to_address}}</div>
@@ -168,7 +168,7 @@
                     <tr>
                       <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
                       <th class="uk-width-1-5">Transaction hash</th>
-                      <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Created at</th>
+                      <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Processed at</th>
                       <th class="uk-width-1-5">From</th>
                       <th class="uk-width-1-5">To</th>
                       <th class="uk-width-1-5 uk-text-nowrap">Value ({{addr.token_symbol}})</th>
