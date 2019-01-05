@@ -30,7 +30,7 @@
               <li>
                 <p>Total supply:</p>
                 <b>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</b>
-              </li>
+              </li>              
             </ul>
           </li>
           <li>
@@ -54,7 +54,11 @@
                 <b>{{addr.number_of_token_holders}}</b>
               </li>
             </ng-container>
-          </ul>
+          </ul>          
+        </li>
+        <li>
+          <p>Updated at:</p>
+          <b>{{addr.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}}</b>
         </li>
       </ul>
     </div>
