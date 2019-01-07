@@ -19,7 +19,7 @@ import {WalletService} from './wallet.service';
     TabsModule,
     WalletRoutingModule,
   ],
-  providers: [WalletService]
+  providers: [WalletService],
 })
 export class WalletModule {
 }

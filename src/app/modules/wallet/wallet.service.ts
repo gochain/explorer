@@ -4,11 +4,9 @@ import Web3 from 'web3';
 import {fromPromise} from 'rxjs/internal-compatibility';
 import {concatMap, map} from 'rxjs/operators';
 import {Observable, of, throwError} from 'rxjs';
-import {WEB3} from '../../services/web3';
+import {WEB3} from './web3';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class WalletService {
 
   rpcHost: string;

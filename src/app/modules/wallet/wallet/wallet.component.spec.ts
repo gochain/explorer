@@ -2,6 +2,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { WalletComponent } from './wallet.component';
 import {WalletModule} from '../wallet.module';
+import {AppModule} from '../../../app.module';
 
 describe('WalletComponent', () => {
   let component: WalletComponent;
@@ -9,7 +10,7 @@ describe('WalletComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [ WalletModule ]
+      imports: [ AppModule, WalletModule ],
     })
     .compileComponents();
   }));

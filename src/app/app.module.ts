@@ -30,7 +30,7 @@ import {LayoutService} from './services/layout.service';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
-import {PipesModule} from './modules/pipes.module';
+import {PipesModule} from './modules/pipes/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';

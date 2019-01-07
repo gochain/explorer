@@ -147,7 +147,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let block of recentBlocks.blocks">
+        <tr *ngFor="let block of recentBlocks?.blocks">
           <td class="uk-text-nowrap">
             <a routerLink="/block/{{block.number}}">{{block.number}}</a>
           </td>
@@ -159,7 +159,6 @@
           <td class="uk-text-truncate">
             {{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})
           </td>
-
         </tr>
       </tbody>
     </table>
