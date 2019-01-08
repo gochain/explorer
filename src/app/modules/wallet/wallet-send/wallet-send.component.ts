@@ -6,7 +6,7 @@ import {ToastrService} from '../../toastr/toastr.service';
 @Component({
   selector: 'app-wallet-send',
   templateUrl: './wallet-send.component.html',
-  styleUrls: ['./wallet-send.component.css']
+  styleUrls: ['./wallet-send.component.scss']
 })
 export class WalletSendComponent implements OnInit {
 
@@ -339,7 +339,7 @@ export class WalletSendComponent implements OnInit {
       tx
     ).subscribe(receipt => {
         this.receipt = receipt;
-        /*this.balance.update(pk);*/
+        this.updateBalance();
       },
       err => {
         this._toastrService.danger('ERROR! ' + err);
@@ -347,6 +347,18 @@ export class WalletSendComponent implements OnInit {
       },
       () => {
         this.isSending = false;
+        this.resetForms();
       });
+  }
+
+  onTabChange() {
+    this.receipt = null;
+    this.resetForms();
+  }
+
+  resetForms() {
+    this.sendGoForm.reset();
+    this.deployContractForm.reset();
+    this.useContractForm.reset();
   }
 }

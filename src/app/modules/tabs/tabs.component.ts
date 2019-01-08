@@ -1,5 +1,5 @@
 /*CORE*/
-import {AfterContentInit, Component, ContentChildren, Input, OnInit, QueryList} from '@angular/core';
+import {AfterContentInit, Component, ContentChildren, EventEmitter, Input, OnInit, Output, QueryList} from '@angular/core';
 import {ActivatedRoute, ParamMap, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 /*COMPONENTS*/
@@ -15,6 +15,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements OnInit, AfterContentInit {
   @Input() name: string;
+  @Output() onChangeEmitter = new EventEmitter<void>();
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
 
@@ -57,6 +58,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
   }
 
   onTabSelect(tab: TabComponent) {
+    if (this.onChangeEmitter) {
+      this.onChangeEmitter.emit();
+    }
     if (this.activeTab) {
       this.activeTab.content.active = false;
     }
