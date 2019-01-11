@@ -37,7 +37,7 @@
   </div>
 </div>
 <div class="p-b--60" *ngIf="balance != null && balance !=''">
-  <app-tabs name="send_tx_tab" (onChangeEmitter)="onTabChange()">
+  <app-tabs name="send_tx_tab" (onChangeEmitter)="onTabChange($event)">
     <tab name="send_go" title="Send GO">
       <tab-content>
         <div class="form-card">

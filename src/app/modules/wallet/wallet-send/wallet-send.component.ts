@@ -2,12 +2,16 @@ import {Component, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-wallet-send',
   templateUrl: './wallet-send.component.html',
   styleUrls: ['./wallet-send.component.scss']
 })
+@AutoUnsubscribe('_subsArr$')
 export class WalletSendComponent implements OnInit {
 
   privateKeyForm: FormGroup = this._fb.group({
@@ -47,7 +51,12 @@ export class WalletSendComponent implements OnInit {
 
   isOpening = false;
 
+  private _subsArr$: Subscription[] = [];
+
   static checkKeys(fc: FormControl) {
+    if (!fc.value) {
+      return;
+    }
     const address_or_key = fc.value.toLowerCase();
     if (/^(0x)?[0-9a-f]{40}$/i.test(address_or_key)
       || /^[0-9a-f]{40}$/i.test(address_or_key)
@@ -62,15 +71,24 @@ export class WalletSendComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.useContractForm.get('contractAddress').valueChanges.subscribe(val => {
+    this._subsArr$.push(this.useContractForm.get('contractAddress').valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+    ).subscribe(val => {
       this.updateContractInfo();
-    });
-    this.useContractForm.get('contractABI').valueChanges.subscribe(val => {
+    }));
+    this._subsArr$.push(this.useContractForm.get('contractABI').valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+    ).subscribe(val => {
       this.updateContractInfo();
-    });
-    this.useContractForm.get('contractFunction').valueChanges.subscribe(val => {
+    }));
+    this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged(),
+    ).subscribe(val => {
       this.loadFunction();
-    });
+    }));
   }
 
   loadFunction(): void {
@@ -79,6 +97,9 @@ export class WalletSendComponent implements OnInit {
     this.funcUnsupported = null;
     this.resetFunctionParameter();
     const functionName = this.useContractForm.get('contractFunction').value;
+    if (!functionName) {
+      return;
+    }
     const abi = this.contract.options.jsonInterface;
     for (let i = 0; i < abi.length; i++) {
       const func = abi[i];
@@ -149,7 +170,6 @@ export class WalletSendComponent implements OnInit {
   funcsToSelect(): string[] {
     const ret: string[] = [];
     const abi = this.contract.options.jsonInterface;
-    // console.log("abi:", abi);
     for (let i = 0; i < abi.length; i++) {
       const func = abi[i];
       if (func.type === 'function') {
@@ -211,7 +231,11 @@ export class WalletSendComponent implements OnInit {
   }
 
   updateContractInfo(): void {
+    this.contract = null;
     const addr: string = this.useContractForm.get('contractAddress').value;
+    if (!addr) {
+      return;
+    }
     if (addr.length === 42) {
       // parse the abi
       let abi = this.useContractForm.get('contractABI').value;
@@ -347,11 +371,11 @@ export class WalletSendComponent implements OnInit {
       },
       () => {
         this.isSending = false;
-        this.resetForms();
+        // this.resetForms();
       });
   }
 
-  onTabChange() {
+  onTabChange(tabName: string) {
     this.receipt = null;
     this.resetForms();
   }

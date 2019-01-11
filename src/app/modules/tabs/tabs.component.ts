@@ -15,7 +15,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements OnInit, AfterContentInit {
   @Input() name: string;
-  @Output() onChangeEmitter = new EventEmitter<void>();
+  @Output() onChangeEmitter = new EventEmitter<any>();
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
 
@@ -39,9 +39,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
     setTimeout(() => {
       if (this._initialTabName) {
         const activeTab = this.tabs.find((tab: TabComponent) => tab.name === this._initialTabName) || this.tabs.first;
-        this.onTabSelect(activeTab);
+        this.onTabSelect(activeTab, false);
       } else {
-        this.onTabSelect(this.tabs.first);
+        this.onTabSelect(this.tabs.first, false);
       }
     });
   }
@@ -57,9 +57,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
     }
   }
 
-  onTabSelect(tab: TabComponent) {
-    if (this.onChangeEmitter) {
-      this.onChangeEmitter.emit();
+  onTabSelect(tab: TabComponent, emit = true) {
+    if (emit && this.onChangeEmitter) {
+      this.onChangeEmitter.emit(this.activeTab.name);
     }
     if (this.activeTab) {
       this.activeTab.content.active = false;
