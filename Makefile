@@ -20,11 +20,10 @@ build: backend frontend
 
 backend:
 	dep ensure -v --vendor-only
-	cd server &&  go build -v 
-	cd grabber && go build -v	
+	cd server &&  go build -v
+	cd grabber && go build -v
 
 frontend:
 	npm i
 	rm -rf dist/explorer
-	npm rebuild node-sass
 	ng build --prod
