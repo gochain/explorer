@@ -10,7 +10,7 @@ FROM node:8-alpine  as frontend_builder
 WORKDIR /explorer
 RUN apk add --no-cache make
 ADD . /explorer
-RUN npm install -g @angular/cli@7.0.3
+RUN npm install -g @angular/cli@7.2.1
 RUN make frontend
 
 FROM ethereum/solc:stable as solc
