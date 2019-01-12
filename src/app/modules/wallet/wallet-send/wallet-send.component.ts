@@ -101,6 +101,9 @@ export class WalletSendComponent implements OnInit {
       return;
     }
     const abi = this.contract.options.jsonInterface;
+    if (!abi) {
+      return;
+    }
     for (let i = 0; i < abi.length; i++) {
       const func = abi[i];
       if (func.name === functionName) {
@@ -233,13 +236,13 @@ export class WalletSendComponent implements OnInit {
   updateContractInfo(): void {
     this.contract = null;
     const addr: string = this.useContractForm.get('contractAddress').value;
-    if (!addr) {
+    let abi = this.useContractForm.get('contractABI').value;
+    if (!addr || !abi) {
       return;
     }
     if (addr.length === 42) {
       // parse the abi
-      let abi = this.useContractForm.get('contractABI').value;
-      if (abi.length > 0) {
+      if (abi && abi.length > 0) {
         try {
           abi = JSON.parse(abi);
         } catch (e) {
@@ -249,6 +252,8 @@ export class WalletSendComponent implements OnInit {
         console.log('contract', this.contract);
         console.log('jsonint', this.contract.options.jsonInterface);
       }
+    } else {
+      this._toastrService.warning('Wrong contract address');
     }
   }
 
