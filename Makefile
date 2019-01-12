@@ -26,4 +26,5 @@ backend:
 frontend:
 	npm i
 	rm -rf dist/explorer
+	npm rebuild node-sass
 	ng build --prod
