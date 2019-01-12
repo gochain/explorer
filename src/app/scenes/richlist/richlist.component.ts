@@ -1,7 +1,7 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
-import {flatMap, tap} from 'rxjs/operators';
+import {filter, flatMap, tap} from 'rxjs/operators';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
@@ -46,6 +46,7 @@ export class RichlistComponent implements OnInit {
     this._subsArr$.push(this.richListQueryParams.state.pipe(
       tap(() => this.isLoading = true),
       flatMap(params => this._commonService.getRichlist(params)),
+      filter((data: RichList) => !!data),
     ).subscribe((data: RichList) => {
       RichlistComponent.calcSupplyOwned(data.rankings, data.circulating_supply);
       this.richList.rankings = [...this.richList.rankings, ...data.rankings];
