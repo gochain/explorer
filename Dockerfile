@@ -6,7 +6,7 @@ RUN go get -u github.com/golang/dep/cmd/dep
 ADD . $D
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
 
-FROM node:8-alpine  as frontend_builder
+FROM node:11.6.0-alpine  as frontend_builder
 WORKDIR /explorer
 RUN apk add --no-cache make git
 ADD . /explorer
