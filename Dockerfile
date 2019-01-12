@@ -1,5 +1,5 @@
 # Build GoChain in a stock Go builder container
-FROM golang:1.10-alpine as backend_builder
+FROM golang:alpine as backend_builder
 RUN apk --no-cache add build-base git bzr mercurial gcc linux-headers g++ make
 ENV D=/go/src/github.com/gochain-io/explorer
 RUN go get -u github.com/golang/dep/cmd/dep

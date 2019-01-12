@@ -62,18 +62,20 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		to = tx.To().Hex()
 	}
 	log.Debug().Interface("TX:", tx).Msg("parseTx")
+	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
-		To:          to,
-		From:        from.Hex(),
-		Value:       tx.Value().String(),
-		GasPrice:    tx.GasPrice().String(),
-		GasLimit:    tx.Gas(),
-		BlockNumber: block.Number().Int64(),
-		GasFee:      new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:       strconv.Itoa(int(tx.Nonce())),
-		BlockHash:   block.Hash().Hex(),
-		CreatedAt:   time.Unix(block.Time().Int64(), 0),
-		InputData:   hex.EncodeToString(tx.Data()[:]),
+		To:             to,
+		From:           from.Hex(),
+		Value:          tx.Value().String(),
+		GasPrice:       tx.GasPrice().String(),
+		GasLimit:       tx.Gas(),
+		BlockNumber:    block.Number().Int64(),
+		GasFee:         new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
+		Nonce:          strconv.Itoa(int(tx.Nonce())),
+		BlockHash:      block.Hash().Hex(),
+		CreatedAt:      time.Unix(block.Time().Int64(), 0),
+		InputData:      hex.EncodeToString(tx.Data()[:]),
+		InputDataEmpty: InputDataEmpty,
 	}
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
@@ -110,12 +112,12 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "-block_number"}, Background: true})
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "created_at", "input_data_empty"}, Background: true})
 	if err != nil {
 		panic(err)
 	}
 
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "-block_number"}, Background: true})
+	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "created_at", "input_data_empty"}, Background: true})
 	if err != nil {
 		panic(err)
 	}
@@ -467,9 +469,14 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 	return &c
 }
 
-func (self *MongoBackend) getTransactionList(address string, skip, limit int) []*models.Transaction {
+func (self *MongoBackend) getTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) []*models.Transaction {
 	var transactions []*models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "block_number": bson.M{"$gte": 0}}).Sort("-block_number").Skip(skip).Limit(limit).All(&transactions)
+	var err error
+	if inputDataEmpty != nil {
+		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}, "input_data_empty": *inputDataEmpty}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
+	} else {
+		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
+	}
 	if err != nil {
 		log.Debug().Str("address", address).Err(err).Msg("getAddressTransactions")
 	}

@@ -49,6 +49,7 @@ export class AddressComponent implements OnInit {
       this._route.params.pipe(
         filter((params: Params) => !!params.id),
       ).subscribe((params: Params) => {
+        this.transactions = [];
         this.addrHash = params.id;
         this._layoutService.isPageLoading.next(true);
         this.getAddress();

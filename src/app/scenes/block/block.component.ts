@@ -36,6 +36,7 @@ export class BlockComponent implements OnInit {
     this._subsArr$.push(this._route.params.pipe(
       filter((params: Params) => !!params.id),
     ).subscribe((params: Params) => {
+      this.transactions = [];
       this._blockIdentifier = params.id;
       this._layoutService.isPageLoading.next(true);
       this.getData();
