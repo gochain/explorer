@@ -226,8 +226,9 @@ export class WalletSendComponent implements OnInit {
           this.balance = balance;
         },
         err => {
-          this._toastrService.danger('ERROR: ' + err);
+          this._toastrService.danger( err);
           this.reset();
+          this.isOpening = false;
         },
         () => this.isOpening = false);
     }
