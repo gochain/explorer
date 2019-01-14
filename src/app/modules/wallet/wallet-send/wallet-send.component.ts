@@ -5,6 +5,8 @@ import {ToastrService} from '../../toastr/toastr.service';
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {Subscription} from 'rxjs';
+import Contract from 'web3/eth/contract';
+import {ABIDefinition} from 'web3/eth/abi';
 
 @Component({
   selector: 'app-wallet-send',
@@ -44,9 +46,9 @@ export class WalletSendComponent implements OnInit {
   isSending = false;
 
   // Contract stuff
-  contract: any;
-  func: any;
-  functionResult: any;
+  contract: Contract;
+  func: ABIDefinition;
+  functionResult: any[][];
   funcUnsupported: string;
 
   isOpening = false;
@@ -137,21 +139,20 @@ export class WalletSendComponent implements OnInit {
   }
 
   callABIFunction(func: any, params: string[]): void {
-    const m = this.contract.methods[func.name](...params);
-    const funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    const funcABI: string = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
     this._walletService.w3.eth.call({
       to: this.contract.options.address,
-      data: '' + funcABI
-    }).then(result => {
-      const decoded = this._walletService.w3.eth.abi.decodeLog(func.outputs, result, []);
+      data: funcABI,
+    }).then((result: string) => {
+      const decoded: object = this._walletService.w3.eth.abi.decodeLog(func.outputs, result, []);
       // This Result object is frikin stupid, it's literaly an empty object that they add fields too
       // convert to something iterable
-      const arrR: Array<Array<any>> = new Array<Array<any>>();
+      const arrR: any[][] = [];
       // let mapR: Map<any,any> = new Map<any,any>();
       // for (let j = 0; j < decoded.__length__; j++){
       //   mapR.push([decoded[0], decoded[1]])
       // }
-      Object.keys(decoded).forEach(function (key, index) {
+      Object.keys(decoded).forEach((key) => {
         // mapR[key] = decoded[key];
         if (key.startsWith('__')) {
           return;
@@ -170,8 +171,8 @@ export class WalletSendComponent implements OnInit {
     }
   }
 
-  funcsToSelect(): string[] {
-    const ret: string[] = [];
+  funcsToSelect(): ABIDefinition[] {
+    const ret: ABIDefinition[] = [];
     const abi = this.contract.options.jsonInterface;
     for (let i = 0; i < abi.length; i++) {
       const func = abi[i];
@@ -343,24 +344,28 @@ export class WalletSendComponent implements OnInit {
         this.isSending = false;
         return;
       }
-      tx = {value: amount};
-      Object.assign(tx, tx, {
+      tx = {
         to: this.useContractForm.get('contractAddress').value,
+        value: amount,
         data: m.encodeABI(),
-        gas: '2000000'
-      });
-    } else if (this.func.constant === false) {
-      Object.assign(tx, tx, {
+        gas: '2000000',
+      };
+    } else if (!this.func.constant) {
+      tx = {
         to: this.useContractForm.get('contractAddress').value,
         amount: 0,
         data: m.encodeABI(),
         gas: '2000000'
-      });
+      };
     } else {
       this.callABIFunction(this.func, params);
       this.isSending = false;
       return;
     }
+
+    const privateKey = this.privateKeyForm.get('privateKey').value;
+
+    this.sendAndWait(privateKey, tx);
   }
 
   sendAndWait(pk: string, tx: any) {

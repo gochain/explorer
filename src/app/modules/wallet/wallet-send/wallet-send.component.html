@@ -56,6 +56,7 @@
               </div>
             </div>
             <div class="uk-margin">
+              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
               <button class="btn pull-r" type="submit" (click)="sendGo()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else sending;">
                   Send
@@ -89,6 +90,7 @@
               </div>
             </div>
             <div class="uk-margin">
+              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
               <button class="btn pull-r" type="submit" (click)="deployContract()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else deploying;">
                   Deploy
@@ -157,6 +159,7 @@
               {{funcUnsupported}}
             </div>
             <div class="uk-margin">
+              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
               <button class="btn pull-r" type="submit" (click)="useContract()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else interacting;">
                   Submit
