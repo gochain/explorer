@@ -25,6 +25,8 @@ backend:
 
 frontend:
 	npm i
+	# npm postintall not working in root user
+	node patch.js
 	rm -rf dist/explorer
 	npm rebuild node-sass
 	ng build --prod
