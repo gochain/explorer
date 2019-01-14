@@ -5,6 +5,7 @@ import {fromPromise} from 'rxjs/internal-compatibility';
 import {concatMap, map} from 'rxjs/operators';
 import {Observable, of, throwError} from 'rxjs';
 import {WEB3} from './web3';
+import {Tx} from 'web3/eth/types';
 
 @Injectable()
 export class WalletService {
@@ -34,7 +35,7 @@ export class WalletService {
     return this._web3.utils.isAddress(address);
   }
 
-  sendTx(privateKey: string, tx: any): any {
+  sendTx(privateKey: string, tx: Tx): any {
     let from = null;
     try {
       from = this._web3.eth.accounts.privateKeyToAccount(privateKey);

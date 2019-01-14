@@ -7,6 +7,7 @@ import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {Subscription} from 'rxjs';
 import Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
+import {Tx} from 'web3/eth/types';
 
 @Component({
   selector: 'app-wallet-send',
@@ -23,6 +24,7 @@ export class WalletSendComponent implements OnInit {
   sendGoForm: FormGroup = this._fb.group({
     to: ['', Validators.required],
     amount: ['', Validators.required],
+    gasLimit: ['300000', Validators.required],
   });
 
   deployContractForm: FormGroup = this._fb.group({
@@ -36,6 +38,7 @@ export class WalletSendComponent implements OnInit {
     contractABI: ['', []],
     contractFunction: [''],
     functionParameters: this._fb.array([]),
+    gasLimit: ['300000', Validators.required],
   });
 
 
@@ -227,7 +230,7 @@ export class WalletSendComponent implements OnInit {
           this.balance = balance;
         },
         err => {
-          this._toastrService.danger( err);
+          this._toastrService.danger(err);
           this.reset();
           this.isOpening = false;
         },
@@ -280,20 +283,25 @@ export class WalletSendComponent implements OnInit {
       return;
     }
 
-    let amount = this.sendGoForm.get('amount').value;
+    let value = this.sendGoForm.get('amount').value;
 
     try {
-      amount = this._walletService.w3.utils.toWei(amount, 'ether');
+      value = this._walletService.w3.utils.toWei(value, 'ether');
     } catch (e) {
       this._toastrService.danger('ERROR: ' + e);
       this.isSending = false;
       return;
     }
 
-    const tx = {to: to, value: amount, gas: '2000000'};
-    const privateKey = this.privateKeyForm.get('privateKey').value;
+    const gas = this.sendGoForm.get('gasLimit').value;
 
-    this.sendAndWait(privateKey, tx);
+    const tx: Tx = {
+      to,
+      value,
+      gas
+    };
+
+    this.sendAndWait(tx);
   }
 
   deployContract() {
@@ -306,9 +314,15 @@ export class WalletSendComponent implements OnInit {
     if (!byteCode.startsWith('0x')) {
       byteCode = '0x' + byteCode;
     }
-    const tx = {data: byteCode, gas: '2000000'};
-    const privateKey = this.privateKeyForm.get('privateKey').value;
-    this.sendAndWait(privateKey, tx);
+
+    const gas = this.sendGoForm.get('gasLimit').value;
+
+    const tx: Tx = {
+      data: byteCode,
+      gas
+    };
+
+    this.sendAndWait(tx);
   }
 
   functionName(index) {
@@ -332,7 +346,7 @@ export class WalletSendComponent implements OnInit {
       }
     }
 
-    let tx = {};
+    let tx: Tx;
 
     const m = this.contract.methods[this.func.name](...params);
     if (this.func.payable) {
@@ -353,7 +367,6 @@ export class WalletSendComponent implements OnInit {
     } else if (!this.func.constant) {
       tx = {
         to: this.useContractForm.get('contractAddress').value,
-        amount: 0,
         data: m.encodeABI(),
         gas: '2000000'
       };
@@ -363,14 +376,14 @@ export class WalletSendComponent implements OnInit {
       return;
     }
 
-    const privateKey = this.privateKeyForm.get('privateKey').value;
-
-    this.sendAndWait(privateKey, tx);
+    this.sendAndWait(tx);
   }
 
-  sendAndWait(pk: string, tx: any) {
+  sendAndWait(tx: Tx) {
+    const privateKey: string = this.privateKeyForm.get('privateKey').value;
+
     this._walletService.sendTx(
-      pk,
+      privateKey,
       tx
     ).subscribe(receipt => {
         this.receipt = receipt;

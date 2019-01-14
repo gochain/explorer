@@ -56,6 +56,12 @@
               </div>
             </div>
             <div class="uk-margin">
+              <label class="uk-form-label">Gas Limit*:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
+              </div>
+            </div>
+            <div class="uk-margin">
               <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
               <button class="btn pull-r" type="submit" (click)="sendGo()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else sending;">
@@ -157,6 +163,12 @@
             </div>
             <div *ngIf="funcUnsupported != null">
               {{funcUnsupported}}
+            </div>
+            <div class="uk-margin">
+              <label class="uk-form-label">Gas Limit*:</label>
+              <div class="uk-form-controls">
+                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
+              </div>
             </div>
             <div class="uk-margin">
               <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
