@@ -8,7 +8,7 @@ RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/g
 
 FROM node:8-alpine  as frontend_builder
 WORKDIR /explorer
-RUN apk add --no-cache make git
+RUN apk add --no-cache make git build-essential
 ADD . /explorer
 RUN npm install -g @angular/cli@7.2.1
 RUN make frontend
