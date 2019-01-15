@@ -7,12 +7,13 @@
           <div class="uk-form-controls">
             <!--<div class="uk-inline">
               <span class="uk-form-icon uk-form-icon-flip"><i class="fas fa-eye"></i></span>-->
-            <input class="uk-input" type="password" placeholder="Private Key" formControlName="privateKey">
+            <input class="uk-input" type="password" placeholder="Private Key" formControlName="privateKey" autofocus>
             <!--</div>-->
           </div>
         </div>
         <div class="uk-margin" *ngIf="balance == null || balance ==''">
           <div class="center p-b--60">
+            <button routerLink="/wallet" class="btn btn--sm btn--round btn--light m-r--20">Back</button>
             <button type="submit" class="btn btn--sm btn--round">
               <ng-container *ngIf="!isOpening; else opening;">
                 Open
@@ -21,7 +22,6 @@
                 Opening <i class="fas fa-spinner fa-spin m-l--10"></i>
               </ng-template>
             </button>
-            <button routerLink="/wallet" class="btn btn--sm btn--round m-l--20">Back</button>
           </div>
         </div>
       </form>
@@ -61,9 +61,9 @@
                 <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
               </div>
             </div>
-            <div class="uk-margin">
-              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn pull-r" type="submit" (click)="sendGo()" [disabled]="isSending">
+            <div class="uk-margin ta-r">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
+              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else sending;">
                   Send
                 </ng-container>
@@ -95,9 +95,9 @@
                 <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
               </div>
             </div>
-            <div class="uk-margin">
-              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn pull-r" type="submit" (click)="deployContract()" [disabled]="isSending">
+            <div class="uk-margin ta-r">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
+              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else deploying;">
                   Deploy
                 </ng-container>
@@ -170,9 +170,9 @@
                 <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
               </div>
             </div>
-            <div class="uk-margin">
-              <button class="btn btn--default pull-r m-l--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn pull-r" type="submit" (click)="useContract()" [disabled]="isSending">
+            <div class="uk-margin ta-r">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
+              <button class="btn" type="submit" (click)="useContract()" [disabled]="isSending">
                 <ng-container *ngIf="!isSending; else interacting;">
                   Submit
                 </ng-container>

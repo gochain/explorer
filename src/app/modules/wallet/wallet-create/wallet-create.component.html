@@ -3,8 +3,8 @@
     <h3 class="center m-b--40 t--upp font-w--500">Create Account</h3>
     <ng-container *ngIf="!newAccount; else newAccountBlock">
       <div class="center">
+        <button routerLink="/wallet" class="btn btn--round btn--sm m-r--20 btn--light">Back</button>
         <button class="btn btn--round btn--sm" (click)="createAccount()">Create</button>
-        <button routerLink="/wallet" class="btn btn--round btn--sm m-l--20">Back</button>
       </div>
     </ng-container>
     <ng-template #newAccountBlock>
@@ -17,7 +17,7 @@
       <p>Address</p>
       <pre class="code">{{newAccount.address}}</pre>
       <div class="center m-t--20">
-        <a routerLink="/wallet" class="btn btn--sm btn--round">Back</a>
+        <button routerLink="/wallet" class="btn btn--sm btn--round">Back</button>
       </div>
     </ng-template>
   </div>

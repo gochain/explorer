@@ -49,6 +49,16 @@ $btn_color: #06A5FF;
       border-color: #545b62;
     }
   }
+
+  &--light {
+    color: #212529 !important;
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+    &:hover {
+      background-color: #e2e6ea;
+      border-color: #dae0e5;
+    }
+  }
 }
 
 .btn-group {

@@ -401,7 +401,17 @@ export class WalletSendComponent implements OnInit {
 
   onTabChange(tabName: string) {
     this.receipt = null;
-    this.resetForms();
+    /*switch (tabName) {
+      case 'send_go':
+        this.sendGoForm.reset();
+        break;
+      case 'deploy_contract':
+        this.deployContractForm.reset();
+        break;
+      case 'use_contract':
+        this.useContractForm.reset();
+        break;
+    }*/
   }
 
   resetForms() {

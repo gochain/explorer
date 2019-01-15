@@ -36,7 +36,7 @@ body {
 
   &.dark {
     background: #2d224d;
-    *:not(a):not(input):not(select):not(option):not(textarea):not(.code):not(.switch__icon):not(b) {
+    *:not(a):not(input):not(select):not(option):not(textarea):not(.code):not(.switch__icon):not(b):not(button) {
       color: #eee !important;
     }
 

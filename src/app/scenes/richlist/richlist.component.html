@@ -41,7 +41,7 @@
   </div>
 </ng-container>
 <div class="center p-b--60">
-  <button type="button" class="btn btn--sm btn--round" [disabled]="isMoreDisabled"
+  <button type="button" class="btn btn--sm btn--round" [disabled]="isMoreDisabled || isLoading"
           (click)="richListQueryParams.next()">
     <ng-container *ngIf="!isLoading; else loading;">
       More
