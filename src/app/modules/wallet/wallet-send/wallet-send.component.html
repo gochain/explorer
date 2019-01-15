@@ -13,7 +13,7 @@
         </div>
         <div class="uk-margin" *ngIf="balance == null || balance ==''">
           <div class="center p-b--60">
-            <button routerLink="/wallet" class="btn btn--sm btn--round btn--light m-r--20">Back</button>
+            <button routerLink="/wallet" type="button" class="btn btn--sm btn--round btn--light m-r--20">Back</button>
             <button type="submit" class="btn btn--sm btn--round">
               <ng-container *ngIf="!isOpening; else opening;">
                 Open
