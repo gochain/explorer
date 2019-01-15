@@ -37,4 +37,12 @@ export class LayoutService {
   toggleLoading() {
     this.isPageLoading.next(!this.isPageLoading.value);
   }
+
+  onLoading() {
+    this.isPageLoading.next(true);
+  }
+
+  offLoading() {
+    this.isPageLoading.next(false);
+  }
 }

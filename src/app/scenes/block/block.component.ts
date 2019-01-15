@@ -1,5 +1,5 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {ActivatedRoute} from '@angular/router';
@@ -20,7 +20,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
   styleUrls: ['./block.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class BlockComponent implements OnInit {
+export class BlockComponent implements OnInit, OnDestroy {
   block: Block;
   transactions: Transaction[] = [];
   transactionQueryParams: QueryParams = new QueryParams();
@@ -38,7 +38,7 @@ export class BlockComponent implements OnInit {
     ).subscribe((params: Params) => {
       this.transactions = [];
       this._blockIdentifier = params.id;
-      this._layoutService.isPageLoading.next(true);
+      this._layoutService.onLoading();
       this.getData();
     }));
     this._subsArr$.push(this.transactionQueryParams.state.subscribe(() => {
@@ -46,10 +46,14 @@ export class BlockComponent implements OnInit {
     }));
   }
 
+  ngOnDestroy(): void {
+    this._layoutService.offLoading();
+  }
+
   getData() {
     this._commonService.getBlock(this._blockIdentifier, this.transactionQueryParams.params).subscribe((data: Block) => {
       if (!data) {
-        this._layoutService.isPageLoading.next(false);
+        this._layoutService.offLoading();
         return;
       }
       this.block = data;
@@ -60,7 +64,7 @@ export class BlockComponent implements OnInit {
       } else {
         this.transactions = [];
       }
-      this._layoutService.isPageLoading.next(false);
+      this._layoutService.offLoading();
     });
   }
 

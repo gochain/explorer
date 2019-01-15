@@ -1,5 +1,5 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {Observable, Subscription} from 'rxjs';
 import {filter, tap} from 'rxjs/operators';
@@ -24,7 +24,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
   styleUrls: ['./address.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class AddressComponent implements OnInit {
+export class AddressComponent implements OnInit, OnDestroy {
   address: Observable<Address>;
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
@@ -51,7 +51,7 @@ export class AddressComponent implements OnInit {
       ).subscribe((params: Params) => {
         this.transactions = [];
         this.addrHash = params.id;
-        this._layoutService.isPageLoading.next(true);
+        this._layoutService.onLoading();
         this.getAddress();
       })
     );
@@ -66,11 +66,15 @@ export class AddressComponent implements OnInit {
     }));
   }
 
+  ngOnDestroy(): void {
+    this._layoutService.offLoading();
+  }
+
   getAddress() {
     this.address = this._commonService.getAddress(this.addrHash).pipe(
       filter(value => {
         if (!value) {
-          this._layoutService.isPageLoading.next(false);
+          this._layoutService.offLoading();
           return false;
         }
 
@@ -78,7 +82,7 @@ export class AddressComponent implements OnInit {
       }),
       // getting token holder data if address is contract
       tap((addr: Address) => {
-        this._layoutService.isPageLoading.next(false);
+        this._layoutService.offLoading();
         if (addr.contract && addr.go20) {
           this.getHolderData();
           this.getInternalTransactions();

@@ -1,5 +1,5 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {filter, flatMap, tap} from 'rxjs/operators';
 /*SERVICES*/
@@ -18,7 +18,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
   styleUrls: ['./richlist.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class RichlistComponent implements OnInit {
+export class RichlistComponent implements OnInit, OnDestroy {
 
   richList: RichList = new RichList();
   richListQueryParams: QueryParams = new QueryParams(50);
@@ -37,9 +37,13 @@ export class RichlistComponent implements OnInit {
     this.initSub();
   }
 
-  ngOnInit() {
-    this._layoutService.isPageLoading.next(true);
+  ngOnInit(): void {
+    this._layoutService.onLoading();
     this.richListQueryParams.init();
+  }
+
+  ngOnDestroy(): void {
+    this._layoutService.offLoading();
   }
 
   initSub() {
@@ -56,7 +60,7 @@ export class RichlistComponent implements OnInit {
         this.isMoreDisabled = true;
       }
       this.isLoading = false;
-      this._layoutService.isPageLoading.next(false);
+      this._layoutService.offLoading();
     }));
   }
 }
