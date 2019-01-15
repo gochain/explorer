@@ -43,6 +43,7 @@ export const ROUTES = {
   HOME: 'home',
   BLOCK: 'block',
   ADDRESS: 'addr',
+  ADDRESS_FULL: 'address',
   RICHLIST: 'richlist',
   TRANSACTION: 'tx',
   SETTINGS: 'settings',
