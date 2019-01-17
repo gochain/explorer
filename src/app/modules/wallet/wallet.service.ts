@@ -1,11 +1,15 @@
+/*CORE*/
 import {Inject, Injectable} from '@angular/core';
-import {ToastrService} from '../toastr/toastr.service';
-import Web3 from 'web3';
-import {fromPromise} from 'rxjs/internal-compatibility';
-import {concatMap, map} from 'rxjs/operators';
 import {Observable, of, throwError} from 'rxjs';
+import {concatMap, map} from 'rxjs/operators';
+import {fromPromise} from 'rxjs/internal-compatibility';
+/*WEB3*/
+import Web3 from 'web3';
 import {WEB3} from './web3';
 import {Tx} from 'web3/eth/types';
+/*SERVICES*/
+import {ToastrService} from '../toastr/toastr.service';
+import BigNumber from 'bn.js';
 
 @Injectable()
 export class WalletService {
@@ -36,7 +40,7 @@ export class WalletService {
   }
 
   sendTx(privateKey: string, tx: Tx): any {
-    let from = null;
+    let from;
     try {
       from = this._web3.eth.accounts.privateKeyToAccount(privateKey);
     } catch (e) {
@@ -65,16 +69,11 @@ export class WalletService {
     return fromPromise(this._web3.eth.sendSignedTransaction(tx.signed.rawTransaction));
   }
 
-  getBalance(address: string): Observable<string> {
-    let source1 = null;
+  getBalance(address: string): Observable<BigNumber> {
     try {
       const p = this._web3.eth.getBalance(address);
-      source1 = fromPromise(p);
-      return source1.pipe(
-        map((balance: string | number) => {
-          balance = this._web3.utils.fromWei(balance, 'ether');
-          return balance;
-        }),
+      return fromPromise(p).pipe(
+        map((balance: BigNumber) => this._web3.utils.fromWei(balance, 'ether')),
       );
     } catch (e) {
       return throwError(e);

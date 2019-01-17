@@ -39,7 +39,7 @@
 <div class="p-b--60" *ngIf="balance != null && balance !=''">
   <app-tabs name="send_tx_tab" (onChangeEmitter)="onTabChange($event)">
     <tab name="send_go" title="Send GO">
-      <tab-content>
+      <tab-content [hidden]="isProcessing">
         <div class="form-card">
           <h5>Perform a regular transaction, send GO to another account</h5>
           <form class="uk-form-horizontal" [formGroup]="sendGoForm">
@@ -58,18 +58,20 @@
             <div class="uk-margin">
               <label class="uk-form-label">Gas Limit*:</label>
               <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
+                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
+                       type="number">
               </div>
             </div>
             <div class="uk-margin ta-r">
-              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isSending">
-                <ng-container *ngIf="!isSending; else sending;">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
+              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isProcessing">
+                Send
+                <!--<ng-container *ngIf="!isProcessing; else sending;">
                   Send
                 </ng-container>
                 <ng-template #sending>
-                  Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
-                </ng-template>
+                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
+                </ng-template>-->
               </button>
             </div>
           </form>
@@ -77,7 +79,7 @@
       </tab-content>
     </tab>
     <tab name="deploy_contract" title="Deploy Contract">
-      <tab-content>
+      <tab-content [hidden]="isProcessing">
         <div class="form-card">
           <h5>Deploy a Smart Contract to GoChain</h5>
           <form class="uk-form-horizontal" [formGroup]="deployContractForm">
@@ -92,18 +94,20 @@
             <div class="uk-margin">
               <label class="uk-form-label">Gas Limit*:</label>
               <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
+                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
+                       type="number">
               </div>
             </div>
             <div class="uk-margin ta-r">
-              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isSending">
-                <ng-container *ngIf="!isSending; else deploying;">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
+              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isProcessing">
+                Deploy
+                <!--<ng-container *ngIf="!isProcessing; else deploying;">
                   Deploy
                 </ng-container>
                 <ng-template #deploying>
-                  Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
-                </ng-template>
+                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
+                </ng-template>-->
               </button>
             </div>
           </form>
@@ -111,7 +115,7 @@
       </tab-content>
     </tab>
     <tab name="use_contract" title="Use Contract">
-      <tab-content>
+      <tab-content [hidden]="isProcessing">
         <div class="form-card">
           <h5>Interact with a Smart Contract on GoChain</h5>
           <form class="uk-form-horizontal" [formGroup]="useContractForm">
@@ -128,57 +132,56 @@
                         rows="5"></textarea>
               </div>
             </div>
-            <div *ngIf="contract != null">
+            <ng-container *ngIf="contract != null">
               <div class="uk-margin">
                 <label class="uk-form-label">Choose Contract Function</label>
                 <div class="uk-form-controls">
                   <select class="uk-select" formControlName="contractFunction">
-                    <option *ngFor="let func of funcsToSelect()" [value]="func.name">{{func.name}}</option>
+                    <option *ngFor="let selectableFunction of funcsToSelect(); let index = index;" [value]="index">
+                      {{selectableFunction.name}}
+                      - {{selectableFunction.payable || !selectableFunction.constant ? '$' : 'free'}}
+                    </option>
                   </select>
                 </div>
               </div>
-              <div *ngIf="functionParameters.controls.length != null">
+              <ng-container *ngIf="selectedFunction">
                 <div formArrayName="functionParameters"
-                     *ngFor="let control of functionParameters.controls; let i=index">
-                  <div class="uk-margin">
-                    <div class="uk-form-controls">
-                      <input class="uk-input" placeholder="{{functionName(i)}}" formControlName="{{i}}">
-                    </div>
+                     *ngFor="let functionInput of selectedFunction.inputs; let i=index"
+                     class="uk-margin">
+                  <div class="uk-form-controls">
+                    <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
                   </div>
                 </div>
-                <div *ngIf="functionPayable()">
-                  <div class="uk-margin">
-                    <div class="uk-form-controls">
-                      <input class="uk-input" placeholder="Amount" formControlName="contractAmount">
-                    </div>
+                <div *ngIf="selectedFunction.payable" class="uk-margin">
+                  <div class="uk-form-controls">
+                    <input class="uk-input" placeholder="Amount" formControlName="contractAmount">
                   </div>
                 </div>
-              </div>
-            </div>
-            <div *ngIf="functionResult != null">
-              <h3>Response</h3>
+                <div *ngIf="!selectedFunction.constant || selectedFunction.payable" class="uk-margin">
+                  <label class="uk-form-label">Gas Limit*:</label>
+                  <div class="uk-form-controls">
+                    <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
+                           type="number">
+                  </div>
+                </div>
+              </ng-container>
+            </ng-container>
+            <div *ngIf="functionResult">
+              <h4>Response</h4>
               <div *ngFor="let k of functionResult">
                 {{k[0]}}: <span style="font-weight: bold;">{{k[1]}}</span>
               </div>
             </div>
-            <div *ngIf="funcUnsupported != null">
-              {{funcUnsupported}}
-            </div>
-            <div class="uk-margin">
-              <label class="uk-form-label">Gas Limit*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit" type="number">
-              </div>
-            </div>
             <div class="uk-margin ta-r">
-              <button class="btn btn--default m-r--10" type="reset" [disabled]="isSending">Reset</button>
-              <button class="btn" type="submit" (click)="useContract()" [disabled]="isSending">
-                <ng-container *ngIf="!isSending; else interacting;">
+              <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
+              <button class="btn" type="submit" (click)="useContract()" [disabled]="isProcessing">
+                Submit
+                <!--<ng-container *ngIf="!isProcessing; else interacting;">
                   Submit
                 </ng-container>
                 <ng-template #interacting>
-                  Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
-                </ng-template>
+                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
+                </ng-template>-->
               </button>
             </div>
           </form>
@@ -186,16 +189,44 @@
       </tab-content>
     </tab>
   </app-tabs>
-  <div class="form-card" *ngIf="isSending || receipt != null">
-    <div *ngIf="isSending">
-      <span>Transaction submitted, waiting for receipt...</span>
-    </div>
-    <div *ngIf="receipt != null">
-      Transaction complete!<br/>
-      TxHash: <a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash }}</a>
-      <div *ngIf="receipt.contractAddress !== null">
-        <b>Contract Address: {{ receipt.contractAddress }}</b>
+  <ng-container *ngIf="isProcessing">
+    <div *ngIf="!receipt; else result;" class="processing">
+      <div class="processing__icon">
+        <i class="fas fa-spinner fa-spin"></i>
+      </div>
+      <div class="processing__content">
+        Transaction submitted, waiting for receipt...
       </div>
     </div>
-  </div>
+    <ng-template #result>
+      <div class="receipt">
+        <div class="receipt__header">
+          Transaction complete!
+        </div>
+        <div class="receipt__content">
+          <ul>
+            <li>
+              <p>Transaction Hash:</p>
+              <b><a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash}}</a></b>
+            </li>
+            <li>
+              <p>Block Hash:</p>
+              <b><a routerLink="/block/{{receipt.blockHash}}" target="_blank">{{receipt.blockHash}}</a></b>
+            </li>
+            <li *ngIf="receipt.contractAddress">
+              <p>Contract Address:</p>
+              <b><a routerLink="/address/{{ receipt.contractAddress}}" target="_blank">{{ receipt.contractAddress }}</a></b>
+            </li>
+            <li>
+              <p>Gas Used:</p>
+              <b>{{receipt.gasUsed}}</b>
+            </li>
+          </ul>
+        </div>
+        <div class="receipt__footer">
+          <button (click)="resetProcessing()" class="btn btn--sm btn--round">Cancel</button>
+        </div>
+      </div>
+    </ng-template>
+  </ng-container>
 </div>

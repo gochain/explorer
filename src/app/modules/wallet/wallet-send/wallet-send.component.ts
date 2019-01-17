@@ -1,13 +1,20 @@
+/*CORE*/
 import {Component, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
+import {Subscription} from 'rxjs';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+/*SERVICES*/
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
-import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
-import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {Subscription} from 'rxjs';
+/*MODELS*/
 import Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
 import {Tx} from 'web3/eth/types';
+import {TransactionReceipt} from 'web3/types';
+/*UTILS*/
+import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
+
+const DEFAULT_GAS_LIMIT = 21000;
 
 @Component({
   selector: 'app-wallet-send',
@@ -24,12 +31,12 @@ export class WalletSendComponent implements OnInit {
   sendGoForm: FormGroup = this._fb.group({
     to: ['', Validators.required],
     amount: ['', Validators.required],
-    gasLimit: ['300000', Validators.required],
+    gasLimit: [DEFAULT_GAS_LIMIT, Validators.required],
   });
 
   deployContractForm: FormGroup = this._fb.group({
     byteCode: ['', Validators.required],
-    gasLimit: ['300000', Validators.required],
+    gasLimit: [DEFAULT_GAS_LIMIT, Validators.required],
   });
 
   useContractForm: FormGroup = this._fb.group({
@@ -38,21 +45,20 @@ export class WalletSendComponent implements OnInit {
     contractABI: ['', []],
     contractFunction: [''],
     functionParameters: this._fb.array([]),
-    gasLimit: ['300000', Validators.required],
+    gasLimit: [DEFAULT_GAS_LIMIT, Validators.required],
   });
 
 
   balance: string;
   fromAccount: any;
   address: string; // this is if it's not a private key being used
-  receipt: Map<string, any>;
-  isSending = false;
+  receipt: TransactionReceipt;
+  isProcessing = false;
 
   // Contract stuff
   contract: Contract;
-  func: ABIDefinition;
+  selectedFunction: ABIDefinition;
   functionResult: any[][];
-  funcUnsupported: string;
 
   isOpening = false;
 
@@ -88,48 +94,29 @@ export class WalletSendComponent implements OnInit {
     ).subscribe(val => {
       this.updateContractInfo();
     }));
-    this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.pipe(
-      debounceTime(500),
-      distinctUntilChanged(),
-    ).subscribe(val => {
-      this.loadFunction();
+    this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.subscribe(value => {
+      this.loadFunction(value);
     }));
   }
 
-  loadFunction(): void {
-    this.func = null;
+  loadFunction(functionIndex: number): void {
+    this.selectedFunction = null;
     this.functionResult = null;
-    this.funcUnsupported = null;
     this.resetFunctionParameter();
-    const functionName = this.useContractForm.get('contractFunction').value;
-    if (!functionName) {
-      return;
-    }
     const abi = this.contract.options.jsonInterface;
-    if (!abi) {
-      return;
-    }
-    for (let i = 0; i < abi.length; i++) {
-      const func = abi[i];
-      if (func.name === functionName) {
-        this.func = func;
-        // TODO: IF ANY INPUTS, add a sub formgroup
-        if (func.constant && func.inputs.length === 0) { // if constant, just show value immediately
-          // There's a bug in the response here: https://github.com/ethereum/web3.js/issues/1566
-          // So doing it myself... :frowning:
-          this.callABIFunction(func, []);
-        } else {
-          // must write a tx to get do this
-          if (func.inputs.length > 0) {
-            for (const input of func.inputs) {
-              this.addFunctionParameter();
-            }
-            return;
-          }
-
-        }
-        break;
-      }
+    const func = abi[functionIndex];ø
+    this.selectedFunction = func;
+    // TODO: IF ANY INPUTS, add a sub formgroup
+    // if constant, just show value immediately
+    if (func.constant && !func.inputs.length) {
+      // There's a bug in the response here: https://github.com/ethereum/web3.js/issues/1566
+      // So doing it myself... :frowning:
+      this.callABIFunction(func, []);
+    } else {
+      // must write a tx to get do this
+      func.inputs.forEach(() => {
+        this.addFunctionParameter();
+      });
     }
   }
 
@@ -164,7 +151,7 @@ export class WalletSendComponent implements OnInit {
       });
       this.functionResult = arrR;
     }).catch(err => {
-      this._toastrService.danger('ERROR: ' + err);
+      this._toastrService.danger(err);
     });
   }
 
@@ -175,25 +162,20 @@ export class WalletSendComponent implements OnInit {
   }
 
   funcsToSelect(): ABIDefinition[] {
-    const ret: ABIDefinition[] = [];
-    const abi = this.contract.options.jsonInterface;
-    for (let i = 0; i < abi.length; i++) {
-      const func = abi[i];
-      if (func.type === 'function') {
-        ret.push(func);
-      }
-    }
-    return ret;
+    const abi: ABIDefinition[] = this.contract.options.jsonInterface;
+    return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function');
   }
 
   reset() {
     this.balance = null;
     this.fromAccount = null;
     this.address = null;
+    this.selectedFunction = null;
   }
 
   closeWallet() {
     this.reset();
+    this.resetForms();
     this.privateKeyForm.reset();
   }
 
@@ -213,7 +195,7 @@ export class WalletSendComponent implements OnInit {
         this.address = this.fromAccount.address;
         this.updateBalance();
       } catch (e) {
-        this._toastrService.danger('ERROR: ' + e);
+        this._toastrService.danger(e);
         this.isOpening = false;
       }
       return;
@@ -227,11 +209,10 @@ export class WalletSendComponent implements OnInit {
     if (this._walletService.isAddress(this.address)) {
       this._walletService.getBalance(this.address).subscribe(balance => {
           this._toastrService.info('Updated balance.');
-          this.balance = balance;
+          this.balance = balance.toString();
         },
         err => {
           this._toastrService.danger(err);
-          this.reset();
           this.isOpening = false;
         },
         () => this.isOpening = false);
@@ -245,33 +226,33 @@ export class WalletSendComponent implements OnInit {
     if (!addr || !abi) {
       return;
     }
-    if (addr.length === 42) {
-      // parse the abi
-      if (abi && abi.length > 0) {
-        try {
-          abi = JSON.parse(abi);
-        } catch (e) {
-          return;
-        }
-        this.contract = new this._walletService.w3.eth.Contract(abi, addr);
-        console.log('contract', this.contract);
-        console.log('jsonint', this.contract.options.jsonInterface);
+    if (addr.length !== 42) {
+      this._toastrService.danger('Wrong contract address');
+    }
+
+    if (abi && abi.length > 0) {
+      try {
+        abi = JSON.parse(abi);
+      } catch (e) {
+        this._toastrService.danger('Can\'t parse contract abi');
+        return;
       }
-    } else {
-      this._toastrService.warning('Wrong contract address');
+      try {
+        this.contract = new this._walletService.w3.eth.Contract(abi, addr);
+      } catch (e) {
+        this._toastrService.danger('Can]\'t initiate contract, check entered data');
+        return;
+      }
     }
   }
 
   sendGo() {
-    if (this.isSending) {
+    if (this.isProcessing) {
       return;
     }
 
-    this.isSending = true;
-
     if (!this.sendGoForm.valid) {
       this._toastrService.warning('Some field is wrong');
-      this.isSending = false;
       return;
     }
 
@@ -279,7 +260,6 @@ export class WalletSendComponent implements OnInit {
 
     if (to.length !== 42 || !this._walletService.isAddress(to)) {
       this._toastrService.danger('ERROR: Invalid TO address.');
-      this.isSending = false;
       return;
     }
 
@@ -288,8 +268,7 @@ export class WalletSendComponent implements OnInit {
     try {
       value = this._walletService.w3.utils.toWei(value, 'ether');
     } catch (e) {
-      this._toastrService.danger('ERROR: ' + e);
-      this.isSending = false;
+      this._toastrService.danger(e);
       return;
     }
 
@@ -305,12 +284,17 @@ export class WalletSendComponent implements OnInit {
   }
 
   deployContract() {
-    if (this.isSending) {
+    if (this.isProcessing) {
       return;
     }
-    this.isSending = true;
 
     let byteCode = this.deployContractForm.get('byteCode').value;
+
+    if (!byteCode) {
+      this._toastrService.danger('ERROR: Invalid data provided.');
+      return;
+    }
+
     if (!byteCode.startsWith('0x')) {
       byteCode = '0x' + byteCode;
     }
@@ -325,83 +309,71 @@ export class WalletSendComponent implements OnInit {
     this.sendAndWait(tx);
   }
 
-  functionName(index) {
-    return this.func.inputs[index].name;
-  }
-
-  functionPayable(): boolean {
-    return this.func && this.func.payable;
-  }
-
   useContract() {
-    if (this.isSending) {
+    if (this.isProcessing) {
       return;
     }
-    this.isSending = true;
 
     const params: string[] = [];
-    if (this.func.inputs.length > 0) {
-      for (const control of this.functionParameters.controls) {
+
+    if (this.selectedFunction.inputs.length) {
+      this.functionParameters.controls.forEach(control => {
         params.push(control.value);
-      }
+      });
     }
 
     let tx: Tx;
 
-    const m = this.contract.methods[this.func.name](...params);
-    if (this.func.payable) {
+    const m = this.contract.methods[this.selectedFunction.name](...params);
+    if (this.selectedFunction.payable) {
       let amount = this.useContractForm.get('contractAmount').value;
       try {
         amount = this._walletService.w3.utils.toWei(amount, 'ether');
       } catch (e) {
-        this._toastrService.danger('Cannot convert amount, ERROR: ' + e);
-        this.isSending = false;
+        this._toastrService.danger('Cannot convert amount,' + e);
         return;
       }
       tx = {
         to: this.useContractForm.get('contractAddress').value,
         value: amount,
         data: m.encodeABI(),
-        gas: '2000000',
       };
-    } else if (!this.func.constant) {
+    } else if (!this.selectedFunction.constant) {
       tx = {
         to: this.useContractForm.get('contractAddress').value,
         data: m.encodeABI(),
-        gas: '2000000'
       };
     } else {
-      this.callABIFunction(this.func, params);
-      this.isSending = false;
+      this.callABIFunction(this.selectedFunction, params);
       return;
     }
+
+    tx.gas = this.sendGoForm.get('gasLimit').value;
 
     this.sendAndWait(tx);
   }
 
   sendAndWait(tx: Tx) {
+    this.isProcessing = true;
+
     const privateKey: string = this.privateKeyForm.get('privateKey').value;
 
     this._walletService.sendTx(
       privateKey,
       tx
-    ).subscribe(receipt => {
+    ).subscribe((receipt: TransactionReceipt) => {
         this.receipt = receipt;
         this.updateBalance();
       },
       err => {
-        this._toastrService.danger('ERROR! ' + err);
-        this.isSending = false;
-      },
-      () => {
-        this.isSending = false;
-        // this.resetForms();
+        this._toastrService.danger(err);
+        this.isProcessing = false;
       });
   }
 
   onTabChange(tabName: string) {
-    this.receipt = null;
-    /*switch (tabName) {
+    /*this.receipt = null;
+    switch (tabName) {
       case 'send_go':
         this.sendGoForm.reset();
         break;
@@ -416,7 +388,15 @@ export class WalletSendComponent implements OnInit {
 
   resetForms() {
     this.sendGoForm.reset();
+    this.sendGoForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
     this.deployContractForm.reset();
+    this.deployContractForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
     this.useContractForm.reset();
+    this.useContractForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
+  }
+
+  resetProcessing() {
+    this.isProcessing = false;
+    this.receipt = null;
   }
 }
