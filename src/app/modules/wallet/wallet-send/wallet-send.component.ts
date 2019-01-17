@@ -64,6 +64,10 @@ export class WalletSendComponent implements OnInit {
 
   private _subsArr$: Subscription[] = [];
 
+  /**
+   *
+   * @param fc
+   */
   static checkKeys(fc: FormControl) {
     if (!fc.value) {
       return;
@@ -76,6 +80,10 @@ export class WalletSendComponent implements OnInit {
       return null;
     }
     return ({checkKeys: true});
+  }
+
+  get functionParameters() {
+    return this.useContractForm.get('functionParameters') as FormArray;
   }
 
   constructor(private _walletService: WalletService, private _fb: FormBuilder, private _toastrService: ToastrService) {
@@ -99,6 +107,10 @@ export class WalletSendComponent implements OnInit {
     }));
   }
 
+  /**
+   *
+   * @param functionIndex
+   */
   loadFunction(functionIndex: number): void {
     this.selectedFunction = null;
     this.functionResult = null;
@@ -120,14 +132,15 @@ export class WalletSendComponent implements OnInit {
     }
   }
 
-  get functionParameters() {
-    return this.useContractForm.get('functionParameters') as FormArray;
-  }
-
   addFunctionParameter() {
     this.functionParameters.push(this._fb.control(''));
   }
 
+  /**
+   *
+   * @param func
+   * @param params
+   */
   callABIFunction(func: any, params: string[]): void {
     const funcABI: string = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
     this._walletService.w3.eth.call({
@@ -171,6 +184,7 @@ export class WalletSendComponent implements OnInit {
     this.fromAccount = null;
     this.address = null;
     this.selectedFunction = null;
+    this.receipt = null;
   }
 
   closeWallet() {
