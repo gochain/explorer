@@ -104,7 +104,7 @@ export class WalletSendComponent implements OnInit {
     this.functionResult = null;
     this.resetFunctionParameter();
     const abi = this.contract.options.jsonInterface;
-    const func = abi[functionIndex];ø
+    const func = abi[functionIndex];
     this.selectedFunction = func;
     // TODO: IF ANY INPUTS, add a sub formgroup
     // if constant, just show value immediately
