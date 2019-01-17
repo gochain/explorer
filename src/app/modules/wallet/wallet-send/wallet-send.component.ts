@@ -299,7 +299,7 @@ export class WalletSendComponent implements OnInit {
       byteCode = '0x' + byteCode;
     }
 
-    const gas = this.sendGoForm.get('gasLimit').value;
+    const gas = this.deployContractForm.get('gasLimit').value;
 
     const tx: Tx = {
       data: byteCode,
@@ -348,7 +348,7 @@ export class WalletSendComponent implements OnInit {
       return;
     }
 
-    tx.gas = this.sendGoForm.get('gasLimit').value;
+    tx.gas = this.useContractForm.get('gasLimit').value;
 
     this.sendAndWait(tx);
   }
