@@ -7,6 +7,7 @@ export const THEME_SETTINGS = {
 export const ROUTES = {
   HOME: 'home',
   BLOCK: 'block',
+  ADDRESS_FULL: 'address',
   ADDRESS: 'addr',
   RICHLIST: 'richlist',
   TRANSACTION: 'tx',
