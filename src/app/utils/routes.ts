@@ -19,6 +19,7 @@ export const APP_ROUTES: Routes = [
   },
   {path: ROUTES.BLOCK + '/:id', component: BlockComponent},
   {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
+  {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},
   {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
   {path: ROUTES.VERIFY, component: ContractComponent},
   {path: ROUTES.RICHLIST, component: RichlistComponent},
