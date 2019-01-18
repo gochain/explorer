@@ -65,7 +65,7 @@ func TestClient_CirculatingSupplyWei(t *testing.T) {
 }
 
 func TestClient_RichList(t *testing.T) {
-	if richlist, err := c.RichList(5, 10); err != nil {
+	if richlist, err := c.RichList(client.NewSkipLimit().Skip(5).Limit(10)); err != nil {
 		t.Error("Failed to get rich list:", err)
 	} else {
 		b, err := json.Marshal(&richlist)
@@ -91,7 +91,7 @@ func TestClient_Address(t *testing.T) {
 }
 
 func TestClient_AddressTransactions(t *testing.T) {
-	if txs, err := c.AddressTransactions(testAddr, 1, 5); err != nil {
+	if txs, err := c.AddressTransactions(testAddr, client.NewTxParams().Skip(1).Limit(5)); err != nil {
 		t.Error("Failed to get transactions:", err)
 	} else {
 		b, err := json.Marshal(&txs)
@@ -104,7 +104,7 @@ func TestClient_AddressTransactions(t *testing.T) {
 }
 
 func TestClient_AddressHolders(t *testing.T) {
-	if txs, err := c.AddressHolders(testAddr, 1, 5); err != nil {
+	if txs, err := c.AddressHolders(testAddr, client.NewSkipLimit().Skip(1).Limit(5)); err != nil {
 		t.Error("Failed to get holders:", err)
 	} else {
 		b, err := json.Marshal(&txs)
@@ -117,7 +117,7 @@ func TestClient_AddressHolders(t *testing.T) {
 }
 
 func TestClient_AddressInternalTransactions(t *testing.T) {
-	if txs, err := c.AddressInternalTransactions(testAddr, 1, 5); err != nil {
+	if txs, err := c.AddressInternalTransactions(testAddr, client.NewSkipLimit().Skip(1).Limit(5)); err != nil {
 		t.Error("Failed to get holders:", err)
 	} else {
 		b, err := json.Marshal(&txs)

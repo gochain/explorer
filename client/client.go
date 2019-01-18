@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/gochain-io/explorer/server/models"
 )
@@ -40,36 +41,27 @@ func (c *Client) Address(addr string) (*models.Address, error) {
 	return &data, nil
 }
 
-func (c *Client) AddressTransactions(addr string, skip, limit int) (*models.TransactionList, error) {
-	vals := make(url.Values)
-	vals.Add("skip", strconv.Itoa(skip))
-	vals.Add("limit", strconv.Itoa(limit))
+func (c *Client) AddressTransactions(addr string, txParams *TxParams) (*models.TransactionList, error) {
 	var data models.TransactionList
-	err := c.get(fmt.Sprintf("/api/address/%s/transactions", addr), vals, &data)
+	err := c.get(fmt.Sprintf("/api/address/%s/transactions", addr), txParams.sl.vals, &data)
 	if err != nil {
 		return nil, err
 	}
 	return &data, nil
 }
 
-func (c *Client) AddressHolders(addr string, skip, limit int) (*models.TokenHolderList, error) {
-	vals := make(url.Values)
-	vals.Add("skip", strconv.Itoa(skip))
-	vals.Add("limit", strconv.Itoa(limit))
+func (c *Client) AddressHolders(addr string, sl *SkipLimit) (*models.TokenHolderList, error) {
 	var data models.TokenHolderList
-	err := c.get(fmt.Sprintf("/api/address/%s/holders", addr), vals, &data)
+	err := c.get(fmt.Sprintf("/api/address/%s/holders", addr), sl.vals, &data)
 	if err != nil {
 		return nil, err
 	}
 	return &data, nil
 }
 
-func (c *Client) AddressInternalTransactions(addr string, skip, limit int) (*models.TokenHolderList, error) {
-	vals := make(url.Values)
-	vals.Add("skip", strconv.Itoa(skip))
-	vals.Add("limit", strconv.Itoa(limit))
+func (c *Client) AddressInternalTransactions(addr string, sl *SkipLimit) (*models.TokenHolderList, error) {
 	var data models.TokenHolderList
-	err := c.get(fmt.Sprintf("/api/address/%s/internal_transactions", addr), vals, &data)
+	err := c.get(fmt.Sprintf("/api/address/%s/internal_transactions", addr), sl.vals, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -116,12 +108,54 @@ func (c *Client) TotalSupplyWei() (*big.Int, error) {
 	return r.Num(), nil
 }
 
-func (c *Client) RichList(skip, limit int) (*models.Richlist, error) {
-	vals := make(url.Values)
-	vals.Add("skip", strconv.Itoa(skip))
-	vals.Add("limit", strconv.Itoa(limit))
+func (c *Client) RichList(sl *SkipLimit) (*models.Richlist, error) {
 	var data models.Richlist
-	err := c.get("/api/richlist", vals, &data)
+	err := c.get("/api/richlist", sl.vals, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (c *Client) Stats() (*models.Stats, error) {
+	var data models.Stats
+	err := c.get("/api/stats", nil, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (c *Client) Blocks(sl *SkipLimit) (*models.BlockList, error) {
+	var data models.BlockList
+	err := c.get("/api/blocks", sl.vals, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (c *Client) Block(number uint64) (*models.Block, error) {
+	var data models.Block
+	err := c.get(fmt.Sprintf("/api/blocks/%d",number), nil, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (c *Client) BlockTransactions(number uint64, sl *SkipLimit) (*models.TransactionList, error) {
+	var data models.TransactionList
+	err := c.get(fmt.Sprintf("/api/blocks/%d/transactions",number), sl.vals, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (c *Client) Transaction(hash string) (*models.Transaction, error) {
+	var data models.Transaction
+	err := c.get(fmt.Sprintf("/api/transaction/%s",hash), nil, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -148,4 +182,57 @@ func (c *Client) getStr(servicePath string) (string, error) {
 	defer resp.Body.Close()
 	b, err := ioutil.ReadAll(resp.Body)
 	return string(b), err
+}
+
+type SkipLimit struct {
+	vals url.Values
+}
+
+func NewSkipLimit() *SkipLimit {
+	return &SkipLimit{vals: make(url.Values)}
+}
+
+func (sl *SkipLimit) Skip(s int) *SkipLimit {
+	sl.vals.Add("skip", strconv.Itoa(s))
+	return sl
+}
+
+func (sl *SkipLimit) Limit(l int) *SkipLimit {
+	sl.vals.Add("limit", strconv.Itoa(l))
+	return sl
+}
+
+type TxParams struct {
+	sl SkipLimit
+}
+
+func NewTxParams() *TxParams {
+	tx := &TxParams{}
+	tx.sl.vals = make(url.Values)
+	return tx
+}
+
+func (tx *TxParams) Skip(s int) *TxParams {
+	tx.sl.Skip(s)
+	return tx
+}
+
+func (tx *TxParams) Limit(l int) *TxParams {
+	tx.sl.Limit(l)
+	return tx
+}
+
+func (tx *TxParams) InputDataEmpty(b bool) *TxParams {
+	tx.sl.vals.Add("input_data_empty", strconv.FormatBool(b))
+	return tx
+}
+
+func (tx *TxParams) FromTime(from time.Time) *TxParams {
+	tx.sl.vals.Add("from_time", from.Format(time.RFC3339))
+	return tx
+}
+
+func (tx *TxParams) ToTime(to time.Time) *TxParams {
+	tx.sl.vals.Add("to_time", to.Format(time.RFC3339))
+	return tx
 }
