@@ -67,7 +67,7 @@
       </ul>
     </div>
   </div>
-  <div class="uk-margin">
+  <div class="p-b--20 p-t--20">
     <div class="uk-flex uk-flex-between">
       <h3>Transactions:</h3>
       <div class="uk-form-width-small" *ngIf="transactions.length">
@@ -124,7 +124,7 @@
           </table>
         </div>
       </ng-container>
-      <div class="uk-margin-medium">
+      <div class="p-b--40 p-t--40">
         <app-pagination [total]="transactionQueryParams.totalPage"
                         (onSelect)="onTransactionPageSelect($event)"></app-pagination>
       </div>

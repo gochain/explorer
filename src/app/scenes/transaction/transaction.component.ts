@@ -1,5 +1,5 @@
 /*CORE*/
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Observable } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { Transaction } from '../../models/transaction.model';
   templateUrl: './transaction.component.html',
   styleUrls: ['./transaction.component.scss']
 })
-export class TransactionComponent implements OnInit {
+export class TransactionComponent implements OnInit, OnDestroy {
 
   showUtf8 = false;
   private _txHash: string;
@@ -22,18 +22,20 @@ export class TransactionComponent implements OnInit {
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
   }
   ngOnInit() {
-    this._layoutService.isPageLoading.next(true);
+    this._layoutService.onLoading();
     this.transaction = this._route.paramMap.pipe(
       switchMap((params: ParamMap) => {
         this._txHash = params.get('id');
         return this._commonService.getTransaction(this._txHash).pipe(
           tap(() => {
-            this._layoutService.isPageLoading.next(false);
+            this._layoutService.offLoading();
           })
         );
       })
     );
   }
 
-
+  ngOnDestroy(): void {
+    this._layoutService.offLoading();
+  }
 }

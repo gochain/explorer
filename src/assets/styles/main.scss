@@ -32,10 +32,11 @@ h1, h2, h3, h4, h5, h6 {
 body {
   margin: 0;
   font-size: 14px;
+  overflow-y: scroll;
 
   &.dark {
     background: #2d224d;
-    *:not(a):not(input):not(select):not(option):not(textarea):not(.code):not(.switch__icon):not(b) {
+    *:not(a):not(input):not(select):not(option):not(textarea):not(.code):not(.switch__icon):not(b):not(button) {
       color: #eee !important;
     }
 
@@ -119,6 +120,17 @@ body {
 
     .uk-table-striped, svg path {
       fill: #000;
+    }
+    .wal {
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, .8);
+      }
     }
   }
 }
@@ -324,7 +336,7 @@ body {
     margin-top: -110px;
   }
 
-  & > ul, div {
+  & > ul, > div {
     padding: 30px;
     margin-bottom: 0;
 
@@ -393,4 +405,26 @@ body {
       }
     }
   }
+}
+
+
+.wal {
+  background: url("../images/main.png") no-repeat center;
+  min-height: calc(100vh - 70px);
+  background-size: cover;
+  margin: 0 -40px;
+  position: relative;
+  & * {
+    position: relative;
+    z-index: 2;
+  }
+  &--sm {
+    min-height: initial;
+  }
+}
+
+.card {
+  padding: 50px;
+  width: 700px;
+  display: inline-block;
 }

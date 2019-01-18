@@ -1,5 +1,5 @@
 /*CORE*/
-import {AfterContentInit, Component, ContentChildren, Input, OnInit, QueryList} from '@angular/core';
+import {AfterContentInit, Component, ContentChildren, EventEmitter, Input, OnInit, Output, QueryList} from '@angular/core';
 import {ActivatedRoute, ParamMap, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 /*COMPONENTS*/
@@ -15,6 +15,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements OnInit, AfterContentInit {
   @Input() name: string;
+  @Output() onChangeEmitter = new EventEmitter<any>();
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
 
@@ -38,9 +39,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
     setTimeout(() => {
       if (this._initialTabName) {
         const activeTab = this.tabs.find((tab: TabComponent) => tab.name === this._initialTabName) || this.tabs.first;
-        this.onTabSelect(activeTab);
+        this.onTabSelect(activeTab, false);
       } else {
-        this.onTabSelect(this.tabs.first);
+        this.onTabSelect(this.tabs.first, false);
       }
     });
   }
@@ -56,8 +57,15 @@ export class TabsComponent implements OnInit, AfterContentInit {
     }
   }
 
-  onTabSelect(tab: TabComponent) {
+  onTabSelect(tab: TabComponent, emit = true) {
+    if (emit && this.onChangeEmitter) {
+      this.onChangeEmitter.emit(this.activeTab.name);
+    }
+    if (this.activeTab) {
+      this.activeTab.content.active = false;
+    }
     this.activeTab = tab;
+    this.activeTab.content.active = true;
     this._router.navigate([], {
       relativeTo: this._activatedRoute,
       queryParams: {

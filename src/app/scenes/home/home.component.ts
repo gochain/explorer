@@ -1,5 +1,5 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {interval, Observable} from 'rxjs';
 import {mergeMap, startWith, tap} from 'rxjs/operators';
 /*SERVICES*/
@@ -15,7 +15,7 @@ import {ISliderOptions} from '../../modules/slider/slider.component';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   stats$: Observable<Stats> = interval(300000).pipe(
     startWith(0),
     mergeMap(() => this._commonService.getStats())
@@ -24,7 +24,7 @@ export class HomeComponent implements OnInit {
   recentBlocks$: Observable<BlockList> = interval(5000).pipe(
     startWith(0),
     tap(() => {
-      this._layoutService.isPageLoading.next(false);
+      this._layoutService.offLoading();
     }),
     mergeMap(() => this._commonService.getRecentBlocks()),
   );
@@ -39,6 +39,10 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._layoutService.isPageLoading.next(true);
+    this._layoutService.onLoading();
+  }
+
+  ngOnDestroy(): void {
+    this._layoutService.offLoading();
   }
 }

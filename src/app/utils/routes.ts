@@ -13,6 +13,10 @@ import {ContractComponent} from '../scenes/contract/contract.component';
 import {ROUTES} from './constants';
 
 export const APP_ROUTES: Routes = [
+  {
+    path: 'wallet',
+    loadChildren: './modules/wallet/wallet.module#WalletModule',
+  },
   {path: ROUTES.BLOCK + '/:id', component: BlockComponent},
   {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
   {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},

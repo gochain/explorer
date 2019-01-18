@@ -23,7 +23,7 @@ $btn_color: #06A5FF;
   outline: none;
 
   &:hover {
-    background: darken($btn_color, 5);
+    background: darken($btn_color, 8);
   }
 
   &--sm {
@@ -39,6 +39,26 @@ $btn_color: #06A5FF;
   &--active {
     background-color: darken($btn_color, 15);
   }
+
+  &--default {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    &:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+  }
+
+  &--light {
+    color: #212529 !important;
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+    &:hover {
+      background-color: #e2e6ea;
+      border-color: #dae0e5;
+    }
+  }
 }
 
 .btn-group {
@@ -53,4 +73,8 @@ $btn_color: #06A5FF;
       border-bottom-right-radius: 6px;
     }
   }
+}
+
+button:disabled {
+  cursor: not-allowed;
 }

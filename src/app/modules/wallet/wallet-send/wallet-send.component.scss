@@ -1,0 +1,86 @@
+@import "../../../../assets/styles/mixins";
+
+.form-card {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.processing {
+  text-align: center;
+  margin-bottom: 120px;
+
+  &__icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+  }
+
+  &__content {
+    font-size: 18px;
+  }
+}
+
+.receipt {
+  overflow: auto;
+  background: #FDFDFD;
+  max-width: 900px;
+  margin: 0 auto 120px;
+  box-shadow: 0px 0px 45px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+
+  ul {
+    margin-bottom: 0;
+
+    @include respond-to(small) {
+      padding: 20px 0;
+    }
+
+    li {
+      display: block;
+      margin-bottom: 15px;
+
+      @include respond-to(small) {
+        margin: 0 20px 15px;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  p {
+    margin: 0;
+    font-weight: 300;
+    font-size: 14px;
+  }
+
+  b {
+    color: #06A5FF;
+    font-size: 16px;
+  }
+
+  &__header {
+    font-size: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  &__content {
+    font-size: 16px;
+    margin-bottom: 20px;
+  }
+
+  &__footer {
+    text-align: center;
+  }
+}
+
+:host-context(body.dark) {
+  .receipt {
+    background: #140d28;
+
+    b {
+      color: #02F48E !important;
+    }
+  }
+}

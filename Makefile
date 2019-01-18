@@ -20,11 +20,13 @@ build: backend frontend
 
 backend:
 	dep ensure -v --vendor-only
-	cd server &&  go build -v 
-	cd grabber && go build -v	
+	cd server &&  go build -v
+	cd grabber && go build -v
 
 frontend:
 	npm i
+	# npm postintall not working in root user
+	node patch.js
 	rm -rf dist/explorer
 	npm rebuild node-sass
 	ng build --prod
