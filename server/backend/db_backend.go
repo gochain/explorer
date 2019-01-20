@@ -185,6 +185,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -350,7 +355,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 		CreatedAt:       createdAt,
 		UpdatedAt:       time.Now(),
 	}
-	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"contract_address": contractAddress, "from_address": internalTransaction.From, "to_address": internalTransaction.To}, internalTransaction)
+	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"transaction_hash": transferEvent.TransactionHash}, internalTransaction)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importInternalTransaction")
 	}
@@ -492,9 +497,19 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 	return tokenHoldersList
 }
 
-func (self *MongoBackend) getInternalTransactionsList(contractAddress string, skip, limit int) []*models.InternalTransaction {
+func (self *MongoBackend) getInternalTransactionsList(contractAddress, fromAddress, toAddress string, skip, limit int) []*models.InternalTransaction {
 	var internalTransactionsList []*models.InternalTransaction
-	err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": contractAddress}).Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+	var query bson.M
+	if fromAddress != "" && toAddress != "" {
+		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress, "to_address": toAddress}
+	} else if fromAddress == "" && toAddress != "" {
+		query = bson.M{"contract_address": contractAddress, "to_address": toAddress}
+	} else if fromAddress != "" && toAddress == "" {
+		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress}
+	} else {
+		query = bson.M{"contract_address": contractAddress}
+	}
+	err := self.mongo.C("InternalTransactions").Find(query).Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
 	if err != nil {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getInternalTransactionsList")
 	}
