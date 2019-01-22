@@ -33,12 +33,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   transactionQueryParams: QueryParams = new QueryParams();
   internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
-  transactionScrollState = true;
-  internalTransactionScrollState = true;
-  holderScrollState = true;
   addrHash: string;
-
-  private _dataLoading = false;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -83,7 +78,10 @@ export class AddressComponent implements OnInit, OnDestroy {
       // getting token holder data if address is contract
       tap((addr: Address) => {
         this._layoutService.offLoading();
+        this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
         if (addr.contract && addr.go20) {
+          this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
+          this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
           this.getHolderData();
           this.getInternalTransactions();
         }
@@ -96,65 +94,26 @@ export class AddressComponent implements OnInit, OnDestroy {
   }
 
   getTransactionData() {
-    this._dataLoading = true;
     this._commonService.getAddressTransactions(this.addrHash, this.transactionQueryParams.params).subscribe((data: any) => {
-      if (data.transactions && data.transactions.length) {
-        this.transactions = this.transactions.concat(data.transactions);
-        if (data.transactions.length < this.transactionQueryParams.limit) {
-          this.transactionScrollState = false;
-        }
-      }
-      this._dataLoading = false;
+      this.transactions = data.transactions;
     });
   }
 
   getHolderData() {
-    this._dataLoading = true;
     this._commonService.getAddressHolders(this.addrHash, this.holderQueryParams.params).subscribe((data: any) => {
-      if (data.token_holders && data.token_holders.length) {
-        this.token_holders = this.token_holders.concat(data.token_holders);
-        if (data.token_holders.length < this.holderQueryParams.limit) {
-          this.holderScrollState = false;
-        }
-      }
-      this._dataLoading = false;
+      this.token_holders = data.token_holders;
     });
   }
 
   getInternalTransactions() {
-    this._dataLoading = true;
     this._commonService.getAddressInternalTransaction(this.addrHash, this.internalTransactionQueryParams.params).subscribe((data: any) => {
-      if (data.internal_transactions && data.internal_transactions.length) {
-        this.internal_transactions = this.internal_transactions.concat(data.internal_transactions);
-        if (data.internal_transactions.length < this.internalTransactionQueryParams.limit) {
-          this.internalTransactionScrollState = false;
-        }
-      }
-      this._dataLoading = false;
+      this.internal_transactions = data.internal_transactions;
     });
   }
 
   getContractData() {
-    this._dataLoading = true;
     this._commonService.getContract(this.addrHash).subscribe((data: Contract) => {
       this.contract = data;
     });
-    this._dataLoading = false;
-  }
-
-  onScroll(type: string) {
-    if (!this._dataLoading) {
-      switch (type) {
-        case 'transaction':
-          this.transactionQueryParams.next();
-          break;
-        case 'internalTransaction':
-          this.internalTransactionQueryParams.next();
-          break;
-        case 'holder':
-          this.holderQueryParams.next();
-          break;
-      }
-    }
   }
 }

@@ -30,7 +30,7 @@
               <li>
                 <p>Total supply:</p>
                 <b>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</b>
-              </li>              
+              </li>
             </ul>
           </li>
           <li>
@@ -54,7 +54,7 @@
                 <b>{{addr.number_of_token_holders}}</b>
               </li>
             </ng-container>
-          </ul>          
+          </ul>
         </li>
         <li>
           <p>Updated at:</p>
@@ -132,10 +132,9 @@
                 </table>
               </div>
             </ng-container>
-            <div class="uk-margin">
-              <ng-template [appInfinityScroll]="transactionScrollState" (onView)="onScroll('transaction')">
-                <app-loader></app-loader>
-              </ng-template>
+            <div class="p-b--40 p-t--40">
+              <app-pagination [total]="transactionQueryParams.totalPage"
+                              (onSelect)="transactionQueryParams.toPage($event)"></app-pagination>
             </div>
           </ng-container>
           <ng-template #emptyTransactions>
@@ -191,10 +190,9 @@
                 </table>
               </div>
             </ng-container>
-            <div class="uk-margin">
-              <ng-template [appInfinityScroll]="internalTransactionScrollState" (onView)="onScroll('internalTransaction')">
-                <app-loader></app-loader>
-              </ng-template>
+            <div class="p-b--40 p-t--40">
+              <app-pagination [total]="internalTransactionQueryParams.totalPage"
+                              (onSelect)="internalTransactionQueryParams.toPage($event)"></app-pagination>
             </div>
           </ng-container>
           <ng-template #emptyInternal>
@@ -235,10 +233,9 @@
                 </table>
               </div>
             </ng-container>
-            <div class="uk-margin">
-              <ng-template [appInfinityScroll]="holderScrollState" (onView)="onScroll('holder')">
-                <app-loader></app-loader>
-              </ng-template>
+            <div class="p-b--40 p-t--40">
+              <app-pagination [total]="holderQueryParams.totalPage"
+                              (onSelect)="holderQueryParams.toPage($event)"></app-pagination>
             </div>
           </ng-container>
           <ng-template #emptyHolders>
