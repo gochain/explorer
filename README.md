@@ -186,6 +186,8 @@ GET /api/address/{address_hash}/internal_transactions
 - address_hash
 - limit - amount of items in the response
 - skip - number of items to skip
+- from_address - the transaction source address
+- to_address - the transaction destination address
 
 
 **Response:**

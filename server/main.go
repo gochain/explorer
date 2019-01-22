@@ -308,11 +308,13 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	fromAddr := r.URL.Query().Get("from_address")
+	toAddr := r.URL.Query().Get("to_address")
 	skip, limit := parseSkipLimit(r)
 	internalTransactions := &models.InternalTransactionsList{
 		Transactions: []*models.InternalTransaction{},
 	}
-	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, skip, limit)
+	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, fromAddr, toAddr, skip, limit)
 	writeJSON(w, http.StatusOK, internalTransactions)
 }
 
