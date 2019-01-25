@@ -76,13 +76,13 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     TabsModule,
     SliderModule,
-    NgProgressModule.forRoot({
+    NgProgressModule.withConfig({
       trickleSpeed: 200,
       min: 20,
       meteor: false,
       spinner: false
     }),
-    NgProgressHttpModule.forRoot(),
+    NgProgressHttpModule,
     ToastrModule.forRoot(),
   ],
   providers: [

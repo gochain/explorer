@@ -66,11 +66,11 @@ export class WalletService {
     return fromPromise(this._web3.eth.sendSignedTransaction(signed.rawTransaction));
   }
 
-  getBalance(address: string): Observable<BigNumber> {
+  getBalance(address: string): Observable<string> {
     try {
       const p = this._web3.eth.getBalance(address);
       return fromPromise(p).pipe(
-        map((balance: BigNumber) => this._web3.utils.fromWei(balance, 'ether')),
+        map((balance: string) => this._web3.utils.fromWei(balance, 'ether')),
       );
     } catch (e) {
       return throwError(e);
