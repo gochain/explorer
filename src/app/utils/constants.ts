@@ -51,3 +51,5 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'fa fa-cogs fa-fw',
   },*/
 ];
+
+export const DEFAULT_GAS_LIMIT = 21000;

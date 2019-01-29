@@ -1,0 +1,75 @@
+<div class="form-card m-t--60">
+  <h4>Interact with a Smart Contract on GoChain</h4>
+  <form class="uk-form-horizontal" [formGroup]="useContractForm">
+    <div class="uk-margin">
+      <label class="uk-form-label">Contract Address*:</label>
+      <div class="uk-form-controls">
+        <input class="uk-input" placeholder="Contract Address" formControlName="contractAddress">
+      </div>
+    </div>
+    <div class="uk-margin">
+      <label class="uk-form-label">ABI / JSON Interface:</label>
+      <div class="uk-form-controls">
+              <textarea class="uk-textarea" placeholder="ABI / JSON Interface" formControlName="contractABI"
+                        rows="5"></textarea>
+      </div>
+    </div>
+    <ng-container *ngIf="contract != null">
+      <div class="uk-margin">
+        <label class="uk-form-label">Choose Contract Function</label>
+        <div class="uk-form-controls">
+          <select class="uk-select" formControlName="contractFunction">
+            <option *ngFor="let selectableFunction of funcsToSelect(); let index = index;" [value]="index">
+              {{selectableFunction.name}}
+              - {{selectableFunction.payable || !selectableFunction.constant ? '$' : 'free'}}
+            </option>
+          </select>
+        </div>
+      </div>
+      <ng-container *ngIf="selectedFunction">
+        <div formArrayName="functionParameters"
+             *ngFor="let functionInput of selectedFunction.inputs; let i=index"
+             class="uk-margin">
+          <div class="uk-form-controls">
+            <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
+          </div>
+        </div>
+        <div *ngIf="selectedFunction.payable" class="uk-margin">
+          <div class="uk-form-controls">
+            <input class="uk-input" placeholder="Amount" formControlName="contractAmount">
+          </div>
+        </div>
+        <div *ngIf="!selectedFunction.constant || selectedFunction.payable" class="uk-margin">
+          <label class="uk-form-label">Gas Limit*:</label>
+          <div class="uk-form-controls">
+            <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
+                   type="number">
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+    <div *ngIf="functionResult">
+      <h4>Response</h4>
+      <div *ngFor="let k of functionResult">
+        {{k[0]}}: <span style="font-weight: bold;">{{k[1]}}</span>
+      </div>
+    </div>
+    <div class="uk-margin ta-r">
+      <button routerLink="/wallet" class="btn btn--default m-r--10" type="button">Back</button>
+      <button class="btn btn--default m-r--10" type="reset">Reset</button>
+      <button
+          class="btn"
+          type="submit"
+          [disabled]="isProcessing"
+          (click)="useContract()"
+      >
+        <ng-container *ngIf="!isProcessing; else interacting;">
+          Submit
+        </ng-container>
+        <ng-template #interacting>
+          Processing <i class="fas fa-spinner fa-spin m-l--10"></i>
+        </ng-template>
+      </button>
+    </div>
+  </form>
+</div>

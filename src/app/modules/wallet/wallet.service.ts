@@ -1,6 +1,6 @@
 /*CORE*/
 import {Inject, Injectable} from '@angular/core';
-import {Observable, of, throwError} from 'rxjs';
+import {Observable, throwError} from 'rxjs';
 import {concatMap, map} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
@@ -12,7 +12,7 @@ import {TransactionReceipt} from 'web3/types';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
 /*MODELS*/
-import BigNumber from 'bn.js';
+
 @Injectable()
 export class WalletService {
 
@@ -34,7 +34,7 @@ export class WalletService {
   }
 
   createAccount(): Account {
-    return this._web3.eth.accounts.create();
+    return !!this._web3 ? this._web3.eth.accounts.create() : null;
   }
 
   isAddress(address: string) {

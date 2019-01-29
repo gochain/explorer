@@ -64,15 +64,7 @@
             </div>
             <div class="uk-margin ta-r">
               <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isProcessing">
-                Send
-                <!--<ng-container *ngIf="!isProcessing; else sending;">
-                  Send
-                </ng-container>
-                <ng-template #sending>
-                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
-                </ng-template>-->
-              </button>
+              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isProcessing">Send</button>
             </div>
           </form>
         </div>
@@ -100,15 +92,7 @@
             </div>
             <div class="uk-margin ta-r">
               <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isProcessing">
-                Deploy
-                <!--<ng-container *ngIf="!isProcessing; else deploying;">
-                  Deploy
-                </ng-container>
-                <ng-template #deploying>
-                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
-                </ng-template>-->
-              </button>
+              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isProcessing">Deploy</button>
             </div>
           </form>
         </div>
@@ -174,15 +158,7 @@
             </div>
             <div class="uk-margin ta-r">
               <button class="btn btn--default m-r--10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="useContract()" [disabled]="isProcessing">
-                Submit
-                <!--<ng-container *ngIf="!isProcessing; else interacting;">
-                  Submit
-                </ng-container>
-                <ng-template #interacting>
-                  Processing <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
-                </ng-template>-->
-              </button>
+              <button class="btn" type="submit" (click)="useContract()" [disabled]="isProcessing">Submit</button>
             </div>
           </form>
         </div>
