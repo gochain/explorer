@@ -145,7 +145,14 @@ export class WalletSendComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: any, params: string[]): void {
-    const funcABI: string = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    let funcABI: string;
+    try {
+      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    } catch (err) {
+      this._toastrService.danger(err);
+      return;
+    }
+
     this._walletService.w3.eth.call({
       to: this.contract.options.address,
       data: funcABI,

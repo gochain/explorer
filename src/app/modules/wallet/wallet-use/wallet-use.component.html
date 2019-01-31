@@ -19,9 +19,8 @@
         <label class="uk-form-label">Choose Contract Function (only free functions are available)</label>
         <div class="uk-form-controls">
           <select class="uk-select" formControlName="contractFunction">
-            <option *ngFor="let selectableFunction of funcsToSelect(); let index = index;" [value]="index">
-              {{selectableFunction.name}}
-              - {{selectableFunction.payable || !selectableFunction.constant ? '$' : 'free'}}
+            <option *ngFor="let selectableFunction of functions; let index = index;" [value]="index">
+              {{selectableFunction.name}} - 'free'
             </option>
           </select>
         </div>

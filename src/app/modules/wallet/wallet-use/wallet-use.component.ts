@@ -29,6 +29,7 @@ export class WalletUseComponent implements OnInit {
   contract: Contract;
   selectedFunction: ABIDefinition;
   functionResult: any[][];
+  functions: ABIDefinition[] = [];
 
   isProcessing = false;
 
@@ -71,12 +72,11 @@ export class WalletUseComponent implements OnInit {
     this.selectedFunction = null;
     this.functionResult = null;
     this.resetFunctionParameter();
-    const abi = this.contract.options.jsonInterface;
-    const func = abi[functionIndex];
+    const func = this.functions[functionIndex];
     this.selectedFunction = func;
     // TODO: IF ANY INPUTS, add a sub formgroup
     // if constant, just show value immediately
-    if (func.inputs.length) {
+    if (func.inputs && func.inputs.length) {
       func.inputs.forEach(() => {
         this.addFunctionParameter();
       });
@@ -94,7 +94,14 @@ export class WalletUseComponent implements OnInit {
    */
   callABIFunction(func: any, params: string[]): void {
     this.isProcessing = true;
-    const funcABI: string = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    let funcABI: string;
+    try {
+      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    } catch (err) {
+      this._toastrService.danger(err);
+      this.isProcessing = false;
+      return;
+    }
     this._walletService.w3.eth.call({
       to: this.contract.options.address,
       data: funcABI,
@@ -130,17 +137,13 @@ export class WalletUseComponent implements OnInit {
     }
   }
 
-  funcsToSelect(): ABIDefinition[] {
-    const abi: ABIDefinition[] = this.contract.options.jsonInterface;
-    return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function' && !abiDef.payable && abiDef.constant);
-  }
-
   reset() {
     this.selectedFunction = null;
   }
 
   updateContractInfo(): void {
     this.contract = null;
+    this.functions = [];
     const addr: string = this.useContractForm.get('contractAddress').value;
     let abi = this.useContractForm.get('contractABI').value;
     if (!addr || !abi) {
@@ -159,6 +162,8 @@ export class WalletUseComponent implements OnInit {
       }
       try {
         this.contract = new this._walletService.w3.eth.Contract(abi, addr);
+        this.functions = this.contract.options.jsonInterface
+          .filter((abiDef: ABIDefinition) => abiDef.type === 'function' && !abiDef.payable && abiDef.constant);
       } catch (e) {
         this._toastrService.danger('Can]\'t initiate contract, check entered data');
         return;
