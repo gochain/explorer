@@ -5,13 +5,14 @@ import {BehaviorSubject} from 'rxjs';
 import {ThemeSettings} from '../models/theme_settings.model';
 /*UTILS*/
 import {THEME_SETTINGS} from '../utils/constants';
+import {ThemeColor} from '../utils/enums';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LayoutService {
   isPageLoading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  themeColor: BehaviorSubject<string>;
+  themeColor: BehaviorSubject<ThemeColor>;
   themeSettings: ThemeSettings;
   mobileMenuState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   mobileSearchState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -24,10 +25,11 @@ export class LayoutService {
       localStorage.setItem('THEME_SETTINGS', JSON.stringify(THEME_SETTINGS));
       this.themeSettings = THEME_SETTINGS;
     }
-    this.themeColor = new BehaviorSubject<string>(this.themeSettings.color);
 
-    this.themeColor.subscribe(value => {
-      document.body.classList.remove('dark', 'light');
+    this.themeColor = new BehaviorSubject<ThemeColor>(this.themeSettings.color);
+
+    this.themeColor.subscribe((value: ThemeColor) => {
+      document.body.classList.remove(ThemeColor.DARK, ThemeColor.LIGHT);
       document.body.classList.add(value);
       this.themeSettings.color = value;
       localStorage.setItem('THEME_SETTINGS', JSON.stringify(this.themeSettings));

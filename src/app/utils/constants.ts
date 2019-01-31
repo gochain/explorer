@@ -1,7 +1,8 @@
 import {MenuItem} from '../models/menu_item.model';
+import {ThemeColor} from './enums';
 
 export const THEME_SETTINGS = {
-  color: 'dark',
+  color: ThemeColor.DARK,
 };
 
 export const ROUTES = {

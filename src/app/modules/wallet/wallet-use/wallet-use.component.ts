@@ -112,7 +112,9 @@ export class WalletUseComponent implements OnInit {
         if (key.startsWith('__')) {
           return;
         }
-        arrR.push([key, decoded[key]]);
+        if (!decoded[key].payable || decoded[key].constant) {
+          arrR.push([key, decoded[key]]);
+        }
       });
       this.functionResult = arrR;
       this.isProcessing = false;
@@ -130,7 +132,7 @@ export class WalletUseComponent implements OnInit {
 
   funcsToSelect(): ABIDefinition[] {
     const abi: ABIDefinition[] = this.contract.options.jsonInterface;
-    return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function');
+    return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function' && !abiDef.payable && abiDef.constant);
   }
 
   reset() {
@@ -172,8 +174,6 @@ export class WalletUseComponent implements OnInit {
         params.push(control.value);
       });
     }
-
-    // const m = this.contract.methods[this.selectedFunction.name](...params);
 
     this.callABIFunction(this.selectedFunction, params);
   }

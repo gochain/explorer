@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {filter} from 'rxjs/operators';
 import {LayoutService} from '../../services/layout.service';
+import {ThemeColor} from '../../utils/enums';
 
 @Component({
   selector: 'app-toggle-switch',
@@ -8,7 +9,7 @@ import {LayoutService} from '../../services/layout.service';
   styleUrls: ['./toggle-switch.component.scss']
 })
 export class ToggleSwitchComponent implements OnInit {
-  themeColor: string;
+  themeColor: ThemeColor;
 
   constructor(private _layoutService: LayoutService) {
   }
@@ -22,7 +23,7 @@ export class ToggleSwitchComponent implements OnInit {
   }
 
   onChange() {
-    const color = this.themeColor === 'dark' ? 'light' : 'dark';
+    const color = this.themeColor === ThemeColor.DARK ? ThemeColor.LIGHT : ThemeColor.DARK;
     this._layoutService.themeColor.next(color);
   }
 }
