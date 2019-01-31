@@ -1,7 +1,8 @@
 import {MenuItem} from '../models/menu_item.model';
+import {ThemeColor} from './enums';
 
 export const THEME_SETTINGS = {
-  color: 'dark',
+  color: ThemeColor.DARK,
 };
 
 export const ROUTES = {
@@ -51,3 +52,5 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'fa fa-cogs fa-fw',
   },*/
 ];
+
+export const DEFAULT_GAS_LIMIT = 21000;

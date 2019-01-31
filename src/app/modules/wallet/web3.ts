@@ -12,6 +12,7 @@ export const WEB3 = new InjectionToken<Web3>('web3', {
         return new Web3(provider);
       } else {
         console.log('No web3? You should consider trying MetaMask!');
+        return null;
       }
     } catch (err) {
       throw new Error(err);

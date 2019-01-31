@@ -13,8 +13,7 @@ import {Tx} from 'web3/eth/types';
 import {TransactionReceipt} from 'web3/types';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-
-const DEFAULT_GAS_LIMIT = 21000;
+import {DEFAULT_GAS_LIMIT} from '../../../utils/constants';
 
 @Component({
   selector: 'app-wallet-send',
@@ -86,7 +85,11 @@ export class WalletSendComponent implements OnInit {
     return this.useContractForm.get('functionParameters') as FormArray;
   }
 
-  constructor(private _walletService: WalletService, private _fb: FormBuilder, private _toastrService: ToastrService) {
+  constructor(
+    private _walletService: WalletService,
+    private _fb: FormBuilder,
+    private _toastrService: ToastrService,
+  ) {
   }
 
   ngOnInit() {
@@ -142,7 +145,14 @@ export class WalletSendComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: any, params: string[]): void {
-    const funcABI: string = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    let funcABI: string;
+    try {
+      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
+    } catch (err) {
+      this._toastrService.danger(err);
+      return;
+    }
+
     this._walletService.w3.eth.call({
       to: this.contract.options.address,
       data: funcABI,
