@@ -10,7 +10,7 @@ import {ThemeColor} from '../../utils/enums';
 
 const LOGO_NAME = {
   [ThemeColor.LIGHT]: 'logo_fullcolor.png',
-  [ThemeColor.DARK]: 'logo_whitecolor.png',
+  [ThemeColor.DARK]: 'logo_allwhite.png',
 }
 
 @Component({
