@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"strings"
 
 	"math/big"
 	"time"
@@ -183,22 +182,9 @@ func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) 
 	}
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if strings.ToLower(b) == strings.ToLower(a) {
-			return true
-		}
-	}
-	return false
-}
 func updateAddresses(url string, updateContracts bool, importer *backend.Backend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := int64(0)
-	_, genesisAddressList, err := importer.GenesisAlloc()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed response from GenesisAlloc")
-	}
-	log.Info().Str("Genesis addresses", strings.Join(genesisAddressList[:], ",")).Msg("updateAddresses")
 	for {
 		start := time.Now()
 		currentTime := time.Now()
@@ -207,10 +193,6 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for index, address := range addresses {
 			normalizedAddress := common.HexToAddress(address.Address).Hex()
-			if stringInSlice(normalizedAddress, genesisAddressList) {
-				log.Info().Str("Following address is in the list of genesis addresses", normalizedAddress).Msg("updateAddresses")
-				continue
-			}
 			balance, err := importer.BalanceAt(normalizedAddress, "pending")
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")

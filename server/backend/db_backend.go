@@ -165,7 +165,7 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
-	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"-balance_float"}, Background: true, Sparse: true})
+	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"-balance_float", "address"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
 	}
@@ -548,9 +548,9 @@ func (self *MongoBackend) updateContract(contract *models.Contract) bool {
 	return true
 }
 
-func (self *MongoBackend) getRichlist(skip, limit int) []*models.Address {
+func (self *MongoBackend) getRichlist(skip, limit int, genesisAddressList []string) []*models.Address {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
+	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": genesisAddressList}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}
