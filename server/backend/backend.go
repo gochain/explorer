@@ -23,6 +23,7 @@ type Backend struct {
 	extendedGochainClient *EthRPC
 	tokenBalance          *TokenBalance
 	reCaptchaSecret       string
+	genesisAddressList    []string
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -94,7 +95,15 @@ func (self *Backend) GetStats() *models.Stats {
 	return self.mongo.getStats()
 }
 func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
-	return self.mongo.getRichlist(skip, limit)
+	if len(self.genesisAddressList) == 0 {
+		var err error
+		_, self.genesisAddressList, err = self.GenesisAlloc()
+		if err != nil {
+			log.Info().Err(err).Msg("failed response from GenesisAlloc")
+		}
+	}
+	return self.mongo.getRichlist(skip, limit, self.genesisAddressList)
+
 }
 func (self *Backend) GetAddressByHash(hash string) *models.Address {
 	return self.mongo.getAddressByHash(common.HexToAddress(hash).Hex())
