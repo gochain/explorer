@@ -25,14 +25,14 @@ import {ROUTES} from '../../utils/constants';
 export class ContractComponent implements OnInit {
   compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
   contract: Contract;
-  recaptchaPublicKey = environment.RECAPTCHA_KEY;
+  /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 
-  form: FormGroup = this.fb.group({
+  form: FormGroup = this._fb.group({
     address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
     contract_name: ['', Validators.required],
     // optimization: [true, Validators.required],
     source_code: ['', Validators.required],
-    recaptcha_token: null,
+    /*recaptcha_token: null,*/
   });
 
   // compiler_version: ['', Validators.required],
@@ -42,7 +42,7 @@ export class ContractComponent implements OnInit {
   private _subsArr$: Subscription[] = [];
 
   constructor(private _activatedRoute: ActivatedRoute,
-              private fb: FormBuilder,
+              private _fb: FormBuilder,
               private contactService: ContractService,
               private toastrService: ToastrService,
               private _router: Router) {
