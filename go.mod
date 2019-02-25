@@ -1,4 +1,4 @@
-github.com/gochain-io/explorer/server
+github.com/gochain-io/explorer
 
 go 1.12
 
