@@ -12,8 +12,6 @@ require (
 	github.com/go-chi/cors v1.0.0
 	github.com/go-ini/ini v1.42.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/gochain-io/explorer v0.0.0-20190206052706-dcd60caec158
-	github.com/gochain-io/gochain v2.2.26+incompatible // indirect
 	github.com/gochain-io/gochain/v3 v3.1.3
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.0.0 // indirect
@@ -34,5 +32,5 @@ require (
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 )
