@@ -18,8 +18,7 @@ grabber: buildback
 
 build: backend frontend
 
-backend:
-	dep ensure -v --vendor-only
+backend:	
 	cd server &&  go build -v
 	cd grabber && go build -v
 
