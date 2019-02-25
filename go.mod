@@ -1,4 +1,4 @@
-module grabber
+github.com/gochain-io/explorer/server
 
 go 1.12
 
