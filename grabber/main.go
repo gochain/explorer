@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 
 	"github.com/gochain-io/explorer/server/backend"
-	"github.com/gochain-io/gochain/common"
+	"github.com/gochain-io/gochain/v3/common"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"

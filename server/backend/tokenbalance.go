@@ -6,10 +6,10 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain-io/gochain"
-	"github.com/gochain-io/gochain/accounts/abi"
-	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/goclient"
+	"github.com/gochain-io/gochain/v3"
+	"github.com/gochain-io/gochain/v3/accounts/abi"
+	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
 )
 
