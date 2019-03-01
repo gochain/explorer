@@ -332,21 +332,21 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	if contractData.RecaptchaToken == "" {
+	/*if contractData.RecaptchaToken == "" {
 		err := errors.New("recaptcha token is empty")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
-	}
+	}*/
 	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
 		err := errors.New("required field is empty")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	err = verifyReCaptcha(contractData.RecaptchaToken, reCaptchaSecret, "contractVerification", r.RemoteAddr)
+	/*err = verifyReCaptcha(contractData.RecaptchaToken, reCaptchaSecret, "contractVerification", r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
-	}
+	}*/
 	result, err := backendInstance.VerifyContract(contractData)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
