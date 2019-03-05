@@ -13,9 +13,9 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
-	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/core/types"
-	"github.com/gochain-io/gochain/goclient"
+	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/core/types"
+	"github.com/gochain-io/gochain/v3/goclient"
 )
 
 var wei = big.NewInt(1000000000000000000)

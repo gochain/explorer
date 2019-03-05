@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/common/hexutil"
+	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
 

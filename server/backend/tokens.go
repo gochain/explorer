@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain-io/gochain/accounts/abi"
-	"github.com/gochain-io/gochain/accounts/abi/bind"
-	"github.com/gochain-io/gochain/common"
+	"github.com/gochain-io/gochain/v3/accounts/abi"
+	"github.com/gochain-io/gochain/v3/accounts/abi/bind"
+	"github.com/gochain-io/gochain/v3/common"
 )
 
 // TokenABI is the input ABI used to generate the binding from.

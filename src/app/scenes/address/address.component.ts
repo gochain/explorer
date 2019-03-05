@@ -95,7 +95,11 @@ export class AddressComponent implements OnInit, OnDestroy {
 
   getTransactionData() {
     this._commonService.getAddressTransactions(this.addrHash, this.transactionQueryParams.params).subscribe((data: any) => {
-      this.transactions = data.transactions;
+      if (data.transactions && data.transactions.length) {
+        this.transactions = data.transactions;
+      } else {
+        this.transactions = [];
+      }
     });
   }
 

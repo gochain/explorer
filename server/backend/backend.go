@@ -10,10 +10,10 @@ import (
 	"regexp"
 
 	"github.com/gochain-io/explorer/server/models"
-	"github.com/gochain-io/gochain/common"
-	"github.com/gochain-io/gochain/common/compiler"
-	"github.com/gochain-io/gochain/core/types"
-	"github.com/gochain-io/gochain/goclient"
+	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/common/compiler"
+	"github.com/gochain-io/gochain/v3/core/types"
+	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
 )
 
