@@ -59,7 +59,7 @@
           </svg>
           <b>Created</b>
         </div>
-        <span>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})</span>
+        <span>{{block.created_at}} ({{block.created_at | timeAgo}})</span>
       </div>
       <div>
         <div>
@@ -157,7 +157,7 @@
           </td>
           <td>{{block.extra_data | trimExtra}}</td>
           <td class="uk-text-truncate">
-            {{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo}})
+            {{block.created_at}} ({{block.created_at | timeAgo}})
           </td>
         </tr>
       </tbody>
