@@ -1,5 +1,3 @@
-# Set to "on" to run tests
-ARG TEST
 # Build GoChain in a stock Go builder container
 FROM golang:alpine as backend_builder
 RUN apk --no-cache add build-base git bzr mercurial gcc linux-headers g++ make
@@ -12,6 +10,7 @@ RUN go mod download
 ADD . $D
 # maybe test
 # todo restore -tags=integration after they are fixed
+ARG TEST
 RUN if [ "$TEST" = "on" ] ; then go test ./... ; else echo "skipping tests"; fi
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
