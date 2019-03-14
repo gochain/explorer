@@ -101,9 +101,12 @@ GET /api/stats
 NONE
 
 **Response:**
-```javascript
-{
-    "updated_at":"2019-01-04T16:17:18.457Z","total_transactions_count":828310654,"last_week_transactions_count":19939999,"last_day_transactions_count":2856095
+```json
+{  
+   "updated_at":"2019-01-04T16:17:18.457Z",
+   "total_transactions_count":828310654,
+   "last_week_transactions_count":19939999,
+   "last_day_transactions_count":2856095
 }
 ```
 
