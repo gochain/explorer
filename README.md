@@ -85,7 +85,8 @@ Build:
 
 Run:
 
- `docker run --net=host gochain/explorer [flags]`
+ `docker run --net=host gochain/explorer grabber [flags]`
+ `docker run --net=host gochain/explorer server [flags]`
 
 * take in account that mongo should be running on same host (--net=host)
 
