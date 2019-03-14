@@ -12,7 +12,7 @@ server:
 grabber:
 	cd grabber && go build -v
 
-backend: test-backend server grabber
+backend: server grabber
 
 frontend:
 	npm i
