@@ -1,3 +1,5 @@
+// +build integration
+
 package backend
 
 import (
@@ -82,17 +84,17 @@ func TestTransactions(t *testing.T) {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
 
-	transactionsFromAddress := testBackend.GetTransactionList(transactionFromDB.From, 0, 100)
+	transactionsFromAddress := testBackend.GetTransactionList(transactionFromDB.From, 0, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsFromAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsFromAddress), 4)
 	}
 
-	transactionsToAddress := testBackend.GetTransactionList(transactionFromDB.To, 0, 100)
+	transactionsToAddress := testBackend.GetTransactionList(transactionFromDB.To, 0, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsToAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
 
-	transactionsToAddress = testBackend.GetTransactionList(transactionFromDB.To, 2, 100)
+	transactionsToAddress = testBackend.GetTransactionList(transactionFromDB.To, 2, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsToAddress) != 2 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 2)
 	}
@@ -208,7 +210,7 @@ func TestTokenHolder(t *testing.T) {
 	testBackend.ImportTokenHolder(addrHash, tokenHolderHash2, token)
 	holders := testBackend.GetTokenHoldersList(addrHash, 0, 100)
 	if len(holders) != 2 {
-		t.Errorf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
+		t.Fatalf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
 	}
 
 	if holders[0].TokenHolderAddress != tokenHolderHash1 {
@@ -248,9 +250,9 @@ func TestInternalTransactions(t *testing.T) {
 	testBackend.ImportInternalTransaction(addrHash, transaction1)
 	testBackend.ImportInternalTransaction(addrHash, transaction2)
 
-	transactions := testBackend.GetInternalTransactionsList(addrHash, 0, 100)
+	transactions := testBackend.GetInternalTransactionsList(addrHash, "", "", 0, 100)
 	if len(transactions) != 2 {
-		t.Errorf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
+		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
 	}
 
 	if transactions[0].BlockNumber != transaction2.BlockNumber {

@@ -104,24 +104,25 @@ func main() {
 	var loglevel string
 
 	app := cli.NewApp()
+	app.Usage = "Server serves the explorer web interface, backed by a mongo database."
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
-			Usage:       "rpc api url, 'https://rpc.gochain.io'",
+			Usage:       "rpc api url",
 			Destination: &rpcUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
-			Usage:       "mongo connection url, '127.0.0.1:27017'",
+			Usage:       "mongo connection url",
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
 			Value:       "blocks",
-			Usage:       "mongo database name, 'blocks'",
+			Usage:       "mongo database name",
 			Destination: &dbName,
 		},
 		cli.StringFlag{
