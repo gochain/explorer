@@ -8,18 +8,13 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run: ./run_tests.sh
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
   release:
     docker:
       - image: google/cloud-sdk      
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
-      - attach_workspace:
-          at: .
+      - checkout
       - run:
           name: "Build and push the image"
           command: |
