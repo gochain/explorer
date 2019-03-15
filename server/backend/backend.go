@@ -227,8 +227,8 @@ func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetai
 	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
 }
 
-func (self *Backend) GetTokenDetails(contract string) (*TokenDetails, error) {
-	return self.tokenBalance.GetTokenDetails(contract)
+func (self *Backend) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
+	return self.tokenBalance.GetTokenDetails(contractAddress, byteCode)
 }
 
 func (self *Backend) GetInternalTransactions(address string, contractBlock int64) []TransferEvent {

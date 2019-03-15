@@ -20,6 +20,7 @@ type TokenDetails struct {
 	TotalSupply *big.Int
 	Decimals    int64
 	Block       int64
+	Types       []string
 }
 
 type TokenHolderDetails struct {
@@ -80,16 +81,16 @@ func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenH
 	return th, err
 }
 
-func (rpc *TokenBalance) GetTokenDetails(contract string) (*TokenDetails, error) {
+func (rpc *TokenBalance) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
 	tb := &TokenDetails{
-		Contract:    common.HexToAddress(contract),
+		Contract:    common.HexToAddress(contractAddress),
 		Decimals:    0,
 		TotalSupply: big.NewInt(0),
 	}
-	err := tb.queryTokenDetails(rpc.conn)
+	err := tb.queryTokenDetails(rpc.conn, byteCode)
 	return tb, err
 }
 
@@ -109,14 +110,17 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client) err
 	return err
 }
 
-func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client) error {
+func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
+
 	if err != nil {
 		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
 		return err
 	}
+
+	tb.Types = token.Types(byteCode)
 
 	decimals, err := token.Decimals(nil)
 	if err != nil {
