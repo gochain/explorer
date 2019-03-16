@@ -20,7 +20,7 @@ type TokenDetails struct {
 	TotalSupply *big.Int
 	Decimals    int64
 	Block       int64
-	Types       []string
+	Types       []ErcName
 }
 
 type TokenHolderDetails struct {
@@ -120,33 +120,41 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 		return err
 	}
 
-	tb.Types = token.Types(byteCode)
-
-	decimals, err := token.Decimals(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
-		return err
-	}
-	tb.Decimals = decimals.Int64()
-
-	totalSupply, err := token.TotalSupply(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
-		tb.TotalSupply = big.NewInt(0)
-		return err
-	}
-	tb.TotalSupply = totalSupply
-
-	tb.Symbol, err = token.Symbol(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
-		tb.Symbol = "MISSING"
-	}
-
-	tb.Name, err = token.Name(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
-		tb.Name = "MISSING"
+	var interfaces []InterfaceName
+	tb.Types, interfaces = token.GetInfo(byteCode)
+Loop:
+	for _, interfaceName := range interfaces {
+		if INTERFACE_IDENTIFIERS[interfaceName].Callable {
+			switch interfaceName {
+			case DECIMALS:
+				decimals, err := token.Decimals(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
+					continue Loop
+				}
+				tb.Decimals = decimals.Int64()
+			case TOTAL_SUPPLY:
+				totalSupply, err := token.TotalSupply(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
+					tb.TotalSupply = big.NewInt(0)
+					continue Loop
+				}
+				tb.TotalSupply = totalSupply
+			case SYMBOL:
+				tb.Symbol, err = token.Symbol(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
+					tb.Symbol = "MISSING"
+				}
+			case NAME:
+				tb.Name, err = token.Name(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
+					tb.Name = "MISSING"
+				}
+			}
+		}
 	}
 
 	return err

@@ -12,180 +12,206 @@ import (
 // TokenABI is the input ABI used to generate the binding from.
 const TokenABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"mintingFinished\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"unpause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mint\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"finishMinting\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"pause\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_amount\",\"type\":\"uint256\"},{\"name\":\"_releaseTime\",\"type\":\"uint256\"}],\"name\":\"mintTimelocked\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"},{\"name\":\"_spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"remaining\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Mint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"MintFinished\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Pause\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Unpause\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"}]"
 
-var INTERFACE_IDENTIFIERS = map[string]string{
-	"dd62ed3e": "allowance(address,address)",
-	"095ea7b3": "approve(address,uint256)",
-	"70a08231": "balanceOf(address)",
-	"18160ddd": "totalSupply()",
-	"a9059cbb": "transfer(address,uint256)",
-	"23b872dd": "transferFrom(address,address,uint256)",
-	"081812fc": "getApproved(uint256)",
-	"e985e9c5": "isApprovedForAll(address,address)",
-	"6352211e": "ownerOf(uint256)",
-	"42842e0e": "safeTransferFrom(address,address,uint256)",
-	"b88d4fde": "safeTransferFrom(address,address,uint256,bytes)",
-	"a22cb465": "setApprovalForAll(address,bool)",
-	"01ffc9a7": "supportsInterface(bytes4)",
-	"249cb3fa": "canImplementInterfaceForAddress(bytes32,address)",
-	"00fdd58e": "balanceOf(address,uint256)",
-	"4e1273f4": "balanceOfBatch(address[],uint256[])",
-	"2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
-	"f242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)",
-	"bc197c81": "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)",
-	"f23a6e61": "onERC1155Received(address,address,uint256,uint256,bytes)",
-	"0e89341c": "uri(uint256)",
-	"150b7a02": "onERC721Received(address,address,uint256,bytes)",
-	"06fdde03": "name()",
-	"95d89b41": "symbol()",
-	"c87b56dd": "tokenURI(uint256)",
-	"4f6ccce7": "tokenByIndex(uint256)",
-	"2f745c59": "tokenOfOwnerByIndex(address,uint256)",
-	"313ce567": "decimals()",
-	"be45fd62": "transfer(address,uint256,bytes)",
-	"f6368f8a": "transfer(address,uint256,bytes,string)",
-	"869e0e60": "decreaseSupply(uint256,address)",
-	"124fc7e0": "increaseSupply(uint256,address)",
-	"0023de29": "tokensReceived(address,address,address,uint256,bytes,bytes)",
-	"75ab9782": "tokensToSend(address,address,address,uint256,bytes,bytes)",
-	"959b8c3f": "authorizeOperator(address)",
-	"fe9d9303": "burn(uint256,bytes)",
-	"06e48538": "defaultOperators()",
-	"556f0dc7": "granularity()",
-	"d95b6371": "isOperatorFor(address,address)",
-	"fc673c4f": "operatorBurn(address,uint256,bytes,bytes)",
-	"62ad1b83": "operatorSend(address,address,uint256,bytes,bytes)",
-	"fad8b32a": "revokeOperator(address)",
-	"9bd9bbc6": "send(address,uint256,bytes)",
-	"cae9ca51": "approveAndCall(address,uint256,bytes)",
-	"d135ca1d": "decreaseAllowanceAndCall(address,uint256,bytes)",
-	"5fd42775": "increaseAllowanceAndCall(address,uint256,bytes)",
-	"4000aea0": "transferAndCall(address,uint256,bytes)",
-	"c1d34b89": "transferFromAndCall(address,address,uint256,bytes)",
-	"47089f62": "addVerified(address,bytes32)",
-	"79f64720": "cancelAndReissue(address,address)",
-	"cc397ed3": "getCurrentFor(address)",
-	"f3221c7f": "hasHash(address,bytes32)",
-	"197bc336": "holderAt(uint256)",
-	"1aab9a9f": "holderCount()",
-	"d4d7b19a": "isHolder(address)",
-	"2da7293e": "isSuperseded(address)",
-	"b9209e33": "isVerified(address)",
-	"4487b392": "removeVerified(address)",
-	"354b7b1d": "updateVerified(address,bytes32)",
+type InterfaceName string
+
+type InterfaceData struct {
+	Value       string
+	Description string
+	Callable    bool
 }
 
-var ERC_INTERFACE_IDENTIFIERS = map[string]map[string]string{
-	"20": {
-		"dd62ed3e": "allowance(address,address)",
-		"095ea7b3": "approve(address,uint256)",
-		"70a08231": "balanceOf(address)",
-		"18160ddd": "totalSupply()",
-		"a9059cbb": "transfer(address,uint256)",
-		"23b872dd": "transferFrom(address,address,uint256)",
-	},
-	"165": {
-		"01ffc9a7": "supportsInterface(bytes4)",
-	},
-	"721": {
-		"095ea7b3": "approve(address,uint256)",
-		"70a08231": "balanceOf(address)",
-		"081812fc": "getApproved(uint256)",
-		"e985e9c5": "isApprovedForAll(address,address)",
-		"6352211e": "ownerOf(uint256)",
-		"42842e0e": "safeTransferFrom(address,address,uint256)",
-		"b88d4fde": "safeTransferFrom(address,address,uint256,bytes)",
-		"a22cb465": "setApprovalForAll(address,bool)",
-		"01ffc9a7": "supportsInterface(bytes4)",
-		"23b872dd": "transferFrom(address,address,uint256)",
-	},
-	"721_receiver": {
-		"150b7a02": "onERC721Received(address,address,uint256,bytes)",
-	},
-	"721_metadata": {
-		"06fdde03": "name()",
-		"95d89b41": "symbol()",
-		"c87b56dd": "tokenURI(uint256)",
-	},
-	"721_enumerable": {
-		"4f6ccce7": "tokenByIndex(uint256)",
-		"2f745c59": "tokenOfOwnerByIndex(address,uint256)",
-		"18160ddd": "totalSupply()",
-	},
-	"820": {
-		"249cb3fa": "canImplementInterfaceForAddress(bytes32,address)",
-	},
-	"1155": {
-		"00fdd58e": "balanceOf(address,uint256)",
-		"4e1273f4": "balanceOfBatch(address[],uint256[])",
-		"e985e9c5": "isApprovedForAll(address,address)",
-		"2eb2c2d6": "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
-		"f242432a": "safeTransferFrom(address,address,uint256,uint256,bytes)",
-		"a22cb465": "setApprovalForAll(address,bool)",
-	},
-	"1155_receiver": {
-		"bc197c81": "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)",
-		"f23a6e61": "onERC1155Received(address,address,uint256,uint256,bytes)",
-	},
-	"1155_metadata": {
-		"0e89341c": "uri(uint256)",
-	},
-	"223": {
-		"70a08231": "balanceOf(address)",
-		"313ce567": "decimals()",
-		"06fdde03": "name()",
-		"95d89b41": "symbol()",
-		"18160ddd": "totalSupply()",
-		"a9059cbb": "transfer(address,uint256)",
-		"be45fd62": "transfer(address,uint256,bytes)",
-		"f6368f8a": "transfer(address,uint256,bytes,string)",
-	},
-	"621": {
-		"869e0e60": "decreaseSupply(uint256,address)",
-		"124fc7e0": "increaseSupply(uint256,address)",
-	},
-	"777": {
-		"959b8c3f": "authorizeOperator(address)",
-		"70a08231": "balanceOf(address)",
-		"fe9d9303": "burn(uint256,bytes)",
-		"06e48538": "defaultOperators()",
-		"556f0dc7": "granularity()",
-		"d95b6371": "isOperatorFor(address,address)",
-		"06fdde03": "name()",
-		"fc673c4f": "operatorBurn(address,uint256,bytes,bytes)",
-		"62ad1b83": "operatorSend(address,address,uint256,bytes,bytes)",
-		"fad8b32a": "revokeOperator(address)",
-		"9bd9bbc6": "send(address,uint256,bytes)",
-		"95d89b41": "symbol()",
-		"18160ddd": "totalSupply()",
-	},
-	"777_receiver": {
-		"0023de29": "tokensReceived(address,address,address,uint256,bytes,bytes)",
-	},
-	"777_sender": {
-		"75ab9782": "tokensToSend(address,address,address,uint256,bytes,bytes)",
-	},
-	"827": {
-		"cae9ca51": "approveAndCall(address,uint256,bytes)",
-		"d135ca1d": "decreaseAllowanceAndCall(address,uint256,bytes)",
-		"5fd42775": "increaseAllowanceAndCall(address,uint256,bytes)",
-		"4000aea0": "transferAndCall(address,uint256,bytes)",
-		"c1d34b89": "transferFromAndCall(address,address,uint256,bytes)",
-	},
-	"884": {
-		"47089f62": "addVerified(address,bytes32)",
-		"79f64720": "cancelAndReissue(address,address)",
-		"cc397ed3": "getCurrentFor(address)",
-		"f3221c7f": "hasHash(address,bytes32)",
-		"197bc336": "holderAt(uint256)",
-		"1aab9a9f": "holderCount()",
-		"d4d7b19a": "isHolder(address)",
-		"2da7293e": "isSuperseded(address)",
-		"b9209e33": "isVerified(address)",
-		"4487b392": "removeVerified(address)",
-		"a9059cbb": "transfer(address,uint256)",
-		"23b872dd": "transferFrom(address,address,uint256)",
-		"354b7b1d": "updateVerified(address,bytes32)",
-	},
+const (
+	ADD_VERIFIED                        InterfaceName = "ADD_VERIFIED"
+	ALLOWANCE                           InterfaceName = "ALLOWANCE"
+	APPROVE                             InterfaceName = "APPROVE"
+	APPROVE_AND_CALL                    InterfaceName = "APPROVE_AND_CALL"
+	AUTHORIZE_OPERATOR                  InterfaceName = "AUTHORIZE_OPERATOR"
+	BALANCE_OF                          InterfaceName = "BALANCE_OF"
+	BALANCE_OF_1                        InterfaceName = "BALANCE_OF_1"
+	BALANCE_OF_BATCH                    InterfaceName = "BALANCE_OF_BATCH"
+	BURN                                InterfaceName = "BURN"
+	BURN_1                              InterfaceName = "BURN_1"
+	BURN_FROM                           InterfaceName = "BURN_FROM"
+	CANCEL_AND_REISSUE                  InterfaceName = "CANCEL_AND_REISSUE"
+	CAN_IMPLEMENT_INTERFACE_FOR_ADDRESS InterfaceName = "CAN_IMPLEMENT_INTERFACE_FOR_ADDRESS"
+	CAP                                 InterfaceName = "CAP"
+	DECIMALS                            InterfaceName = "DECIMALS"
+	DECREASE_ALLOWANCE                  InterfaceName = "DECREASE_ALLOWANCE"
+	DECREASE_ALLOWANCE_AND_CALL         InterfaceName = "DECREASE_ALLOWANCE_AND_CALL"
+	DECREASE_SUPPLY                     InterfaceName = "DECREASE_SUPPLY"
+	DEFAULT_OPERATORS                   InterfaceName = "DEFAULT_OPERATORS"
+	GET_APPROVED                        InterfaceName = "GET_APPROVED"
+	GET_CURRENT_FOR                     InterfaceName = "GET_CURRENT_FOR"
+	GRANULARITY                         InterfaceName = "GRANULARITY"
+	HAS_HASH                            InterfaceName = "HAS_HASH"
+	HOLDER_AT                           InterfaceName = "HOLDER_AT"
+	HOLDER_COUNT                        InterfaceName = "HOLDER_COUNT"
+	INCREASE_ALLOWANCE                  InterfaceName = "INCREASE_ALLOWANCE"
+	INCREASE_ALLOWANCE_AND_CALL         InterfaceName = "INCREASE_ALLOWANCE_AND_CALL"
+	INCREASE_SUPPLY                     InterfaceName = "INCREASE_SUPPLY"
+	IS_APPROVED_FOR_ALL                 InterfaceName = "IS_APPROVED_FOR_ALL"
+	IS_HOLDER                           InterfaceName = "IS_HOLDER"
+	IS_OPERATOR_FOR                     InterfaceName = "IS_OPERATOR_FOR"
+	IS_SUPERSEDED                       InterfaceName = "IS_SUPERSEDED"
+	IS_VERIFIED                         InterfaceName = "IS_VERIFIED"
+	MINT                                InterfaceName = "MINT"
+	NAME                                InterfaceName = "NAME"
+	ON_ERC721_RECEIVED                  InterfaceName = "ON_ERC721_RECEIVED"
+	ON_ERC1155_BATCH_RECEIVED           InterfaceName = "ON_ERC1155_BATCH_RECEIVED"
+	ON_ERC1155_RECEIVED                 InterfaceName = "ON_ERC1155_RECEIVED"
+	OPERATOR_BURN                       InterfaceName = "OPERATOR_BURN"
+	OPERATOR_SEND                       InterfaceName = "OPERATOR_SEND"
+	OWNER_OF                            InterfaceName = "OWNER_OF"
+	REMOVE_VERIFIED                     InterfaceName = "REMOVE_VERIFIED"
+	REVOKE_OPERATOR                     InterfaceName = "REVOKE_OPERATOR"
+	SAFE_BATCH_TRANSFER_FROM            InterfaceName = "SAFE_BATCH_TRANSFER_FROM"
+	SAFE_TRANSFER_FROM                  InterfaceName = "SAFE_TRANSFER_FROM"
+	SAFE_TRANSFER_FROM_1                InterfaceName = "SAFE_TRANSFER_FROM_1"
+	SEND                                InterfaceName = "SEND"
+	SET_APPROVAL_FOR_ALL                InterfaceName = "SET_APPROVAL_FOR_ALL"
+	SUPPORTS_INTERFACE                  InterfaceName = "SUPPORTS_INTERFACE"
+	SYMBOL                              InterfaceName = "SYMBOL"
+	TOKENS_RECEIVED                     InterfaceName = "TOKENS_RECEIVED"
+	TOKENS_TO_SEND                      InterfaceName = "TOKENS_TO_SEND"
+	TOKEN_BY_INDEX                      InterfaceName = "TOKEN_BY_INDEX"
+	TOKEN_OF_OWNER_BY_INDEX             InterfaceName = "TOKEN_OF_OWNER_BY_INDEX"
+	TOKEN_URI                           InterfaceName = "TOKEN_URI"
+	TOTAL_SUPPLY                        InterfaceName = "TOTAL_SUPPLY"
+	TRANSFER                            InterfaceName = "TRANSFER"
+	TRANSFER_1                          InterfaceName = "TRANSFER_1"
+	TRANSFER_2                          InterfaceName = "TRANSFER_2"
+	TRANSFER_AND_CALL                   InterfaceName = "TRANSFER_AND_CALL"
+	TRANSFER_FROM                       InterfaceName = "TRANSFER_FROM"
+	TRANSFER_FROM_AND_CALL              InterfaceName = "TRANSFER_FROM_AND_CALL"
+	UPDATE_VERIFIED                     InterfaceName = "UPDATE_VERIFIED"
+	URI                                 InterfaceName = "URI"
+)
+
+//Object.keys(e).forEach(key => {
+//var k = e[key].replace(/(?<![A-Z])[A-Z]/g, `_$&`).replace(/\(.*/, '').toLocaleUpperCase()
+//var m = g[k] ? k+'_1' : k;
+//var callable = /\(.+\)/.test(e[key])
+//g[m] = {Value: key, Description: e[key], Callable: !callable}
+// })
+
+var INTERFACE_IDENTIFIERS = map[InterfaceName]InterfaceData{
+	ADD_VERIFIED:                        {Value: "47089f62", Description: "addVerified(address,bytes32)", Callable: false},
+	ALLOWANCE:                           {Value: "dd62ed3e", Description: "allowance(address,address)", Callable: false},
+	APPROVE:                             {Value: "095ea7b3", Description: "approve(address,uint256)", Callable: false},
+	APPROVE_AND_CALL:                    {Value: "cae9ca51", Description: "approveAndCall(address,uint256,bytes)", Callable: false},
+	AUTHORIZE_OPERATOR:                  {Value: "959b8c3f", Description: "authorizeOperator(address)", Callable: false},
+	BALANCE_OF:                          {Value: "70a08231", Description: "balanceOf(address)", Callable: false},
+	BALANCE_OF_1:                        {Value: "00fdd58e", Description: "balanceOf(address,uint256)", Callable: false},
+	BALANCE_OF_BATCH:                    {Value: "4e1273f4", Description: "balanceOfBatch(address[],uint256[])", Callable: false},
+	BURN:                                {Value: "42966c68", Description: "burn(uint256)", Callable: false},
+	BURN_1:                              {Value: "fe9d9303", Description: "burn(uint256,bytes)", Callable: false},
+	BURN_FROM:                           {Value: "79cc6790", Description: "burnFrom(address,uint256)", Callable: false},
+	CANCEL_AND_REISSUE:                  {Value: "79f64720", Description: "cancelAndReissue(address,address)", Callable: false},
+	CAN_IMPLEMENT_INTERFACE_FOR_ADDRESS: {Value: "249cb3fa", Description: "canImplementInterfaceForAddress(bytes32,address)", Callable: false},
+	CAP:                                 {Value: "355274ea", Description: "cap()", Callable: true},
+	DECIMALS:                            {Value: "313ce567", Description: "decimals()", Callable: true},
+	DECREASE_ALLOWANCE:                  {Value: "a457c2d7", Description: "decreaseAllowance(address,uint256)", Callable: false},
+	DECREASE_ALLOWANCE_AND_CALL:         {Value: "d135ca1d", Description: "decreaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
+	DECREASE_SUPPLY:                     {Value: "869e0e60", Description: "decreaseSupply(uint256,address)", Callable: false},
+	DEFAULT_OPERATORS:                   {Value: "06e48538", Description: "defaultOperators()", Callable: true},
+	GET_APPROVED:                        {Value: "081812fc", Description: "getApproved(uint256)", Callable: false},
+	GET_CURRENT_FOR:                     {Value: "cc397ed3", Description: "getCurrentFor(address)", Callable: false},
+	GRANULARITY:                         {Value: "556f0dc7", Description: "granularity()", Callable: true},
+	HAS_HASH:                            {Value: "f3221c7f", Description: "hasHash(address,bytes32)", Callable: false},
+	HOLDER_AT:                           {Value: "197bc336", Description: "holderAt(uint256)", Callable: false},
+	HOLDER_COUNT:                        {Value: "1aab9a9f", Description: "holderCount()", Callable: true},
+	INCREASE_ALLOWANCE:                  {Value: "39509351", Description: "increaseAllowance(address,uint256)", Callable: false},
+	INCREASE_ALLOWANCE_AND_CALL:         {Value: "5fd42775", Description: "increaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
+	INCREASE_SUPPLY:                     {Value: "124fc7e0", Description: "increaseSupply(uint256,address)", Callable: false},
+	IS_APPROVED_FOR_ALL:                 {Value: "e985e9c5", Description: "isApprovedForAll(address,address)", Callable: false},
+	IS_HOLDER:                           {Value: "d4d7b19a", Description: "isHolder(address)", Callable: false},
+	IS_OPERATOR_FOR:                     {Value: "d95b6371", Description: "isOperatorFor(address,address)", Callable: false},
+	IS_SUPERSEDED:                       {Value: "2da7293e", Description: "isSuperseded(address)", Callable: false},
+	IS_VERIFIED:                         {Value: "b9209e33", Description: "isVerified(address)", Callable: false},
+	MINT:                                {Value: "40c10f19", Description: "mint(address,uint256)", Callable: false},
+	NAME:                                {Value: "06fdde03", Description: "name()", Callable: true},
+	ON_ERC721_RECEIVED:                  {Value: "150b7a02", Description: "onERC721Received(address,address,uint256,bytes)", Callable: false},
+	ON_ERC1155_BATCH_RECEIVED:           {Value: "bc197c81", Description: "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)", Callable: false},
+	ON_ERC1155_RECEIVED:                 {Value: "f23a6e61", Description: "onERC1155Received(address,address,uint256,uint256,bytes)", Callable: false},
+	OPERATOR_BURN:                       {Value: "fc673c4f", Description: "operatorBurn(address,uint256,bytes,bytes)", Callable: false},
+	OPERATOR_SEND:                       {Value: "62ad1b83", Description: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
+	OWNER_OF:                            {Value: "6352211e", Description: "ownerOf(uint256)", Callable: false},
+	REMOVE_VERIFIED:                     {Value: "4487b392", Description: "removeVerified(address)", Callable: false},
+	REVOKE_OPERATOR:                     {Value: "fad8b32a", Description: "revokeOperator(address)", Callable: false},
+	SAFE_BATCH_TRANSFER_FROM:            {Value: "2eb2c2d6", Description: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
+	SAFE_TRANSFER_FROM:                  {Value: "42842e0e", Description: "safeTransferFrom(address,address,uint256)", Callable: false},
+	SAFE_TRANSFER_FROM_1:                {Value: "f242432a", Description: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
+	SEND:                                {Value: "9bd9bbc6", Description: "send(address,uint256,bytes)", Callable: false},
+	SET_APPROVAL_FOR_ALL:                {Value: "a22cb465", Description: "setApprovalForAll(address,bool)", Callable: false},
+	SUPPORTS_INTERFACE:                  {Value: "01ffc9a7", Description: "supportsInterface(bytes4)", Callable: false},
+	SYMBOL:                              {Value: "95d89b41", Description: "symbol()", Callable: true},
+	TOKENS_RECEIVED:                     {Value: "0023de29", Description: "tokensReceived(address,address,address,uint256,bytes,bytes)", Callable: false},
+	TOKENS_TO_SEND:                      {Value: "75ab9782", Description: "tokensToSend(address,address,address,uint256,bytes,bytes)", Callable: false},
+	TOKEN_BY_INDEX:                      {Value: "4f6ccce7", Description: "tokenByIndex(uint256)", Callable: false},
+	TOKEN_OF_OWNER_BY_INDEX:             {Value: "2f745c59", Description: "tokenOfOwnerByIndex(address,uint256)", Callable: false},
+	TOKEN_URI:                           {Value: "c87b56dd", Description: "tokenURI(uint256)", Callable: false},
+	TOTAL_SUPPLY:                        {Value: "18160ddd", Description: "totalSupply()", Callable: true},
+	TRANSFER:                            {Value: "a9059cbb", Description: "transfer(address,uint256)", Callable: false},
+	TRANSFER_1:                          {Value: "be45fd62", Description: "transfer(address,uint256,bytes)", Callable: false},
+	TRANSFER_2:                          {Value: "f6368f8a", Description: "transfer(address,uint256,bytes,string)", Callable: false},
+	TRANSFER_AND_CALL:                   {Value: "4000aea0", Description: "transferAndCall(address,uint256,bytes)", Callable: false},
+	TRANSFER_FROM:                       {Value: "23b872dd", Description: "transferFrom(address,address,uint256)", Callable: false},
+	TRANSFER_FROM_AND_CALL:              {Value: "c1d34b89", Description: "transferFromAndCall(address,address,uint256,bytes)", Callable: false},
+	UPDATE_VERIFIED:                     {Value: "354b7b1d", Description: "updateVerified(address,bytes32)", Callable: false},
+	URI:                                 {Value: "0e89341c", Description: "uri(uint256)", Callable: false},
+}
+
+type ErcName string
+type ErcData []InterfaceName
+
+const (
+	ERC_20             ErcName = "ERC_20"
+	ERC_20_BURNABLE    ErcName = "ERC_20_BURNABLE"
+	ERC_20_CAPPED      ErcName = "ERC_20_CAPPED"
+	ERC_20_DETAILED    ErcName = "ERC_20_DETAILED"
+	ERC_20_MINTABLE    ErcName = "ERC_20_MINTABLE"
+	ERC_20_PAUSABLE    ErcName = "ERC_20_PAUSABLE"
+	ERC_165            ErcName = "ERC_165"
+	ERC_721            ErcName = "ERC_721"
+	ERC_721_RECEIVER   ErcName = "ERC_721_RECEIVER"
+	ERC_721_METADATA   ErcName = "ERC_721_METADATA"
+	ERC_721_ENUMERABLE ErcName = "ERC_721_ENUMERABLE"
+	ERC_820            ErcName = "ERC_820"
+	ERC_1155           ErcName = "1155"
+	ERC_1155_RECEIVER  ErcName = "ERC_1155_RECEIVER"
+	ERC_1155_METADATA  ErcName = "ERC_1155_METADATA"
+	ERC_223            ErcName = "ERC_223"
+	ERC_621            ErcName = "ERC_621"
+	ERC_777            ErcName = "ERC_777"
+	ERC_777_RECEIVER   ErcName = "ERC_777_RECEIVER"
+	ERC_777_SENDER     ErcName = "ERC_777_SENDER"
+	ERC_827            ErcName = "ERC_827"
+	ERC_884            ErcName = "ERC_884"
+)
+
+var ERC_INTERFACE_IDENTIFIERS = map[ErcName]ErcData{
+	ERC_20:             {ALLOWANCE, APPROVE, BALANCE_OF, TOTAL_SUPPLY, TRANSFER, TRANSFER_FROM},
+	ERC_20_BURNABLE:    {BURN, BURN_FROM},
+	ERC_20_CAPPED:      {CAP},
+	ERC_20_DETAILED:    {DECIMALS, NAME, SYMBOL},
+	ERC_20_MINTABLE:    {MINT},
+	ERC_20_PAUSABLE:    {INCREASE_ALLOWANCE, APPROVE, DECREASE_ALLOWANCE, TRANSFER, TRANSFER_FROM},
+	ERC_165:            {SUPPORTS_INTERFACE},
+	ERC_721:            {APPROVE, BALANCE_OF, GET_APPROVED, IS_APPROVED_FOR_ALL, OWNER_OF, SAFE_TRANSFER_FROM, SAFE_TRANSFER_FROM_1, SET_APPROVAL_FOR_ALL, SUPPORTS_INTERFACE, TRANSFER_FROM},
+	ERC_721_RECEIVER:   {ON_ERC721_RECEIVED},
+	ERC_721_METADATA:   {NAME, SYMBOL, TOKEN_URI},
+	ERC_721_ENUMERABLE: {TOKEN_BY_INDEX, TOKEN_OF_OWNER_BY_INDEX, TOTAL_SUPPLY},
+	ERC_820:            {CAN_IMPLEMENT_INTERFACE_FOR_ADDRESS},
+	ERC_1155:           {BALANCE_OF_1, BALANCE_OF_BATCH, IS_APPROVED_FOR_ALL, SAFE_BATCH_TRANSFER_FROM, SAFE_TRANSFER_FROM_1, SET_APPROVAL_FOR_ALL},
+	ERC_1155_RECEIVER:  {ON_ERC1155_BATCH_RECEIVED, ON_ERC1155_RECEIVED},
+	ERC_1155_METADATA:  {URI},
+	ERC_223:            {BALANCE_OF, DECIMALS, NAME, SYMBOL, TOTAL_SUPPLY, TRANSFER, TRANSFER_1, TRANSFER_2},
+	ERC_621:            {DECREASE_SUPPLY, INCREASE_SUPPLY},
+	ERC_777:            {AUTHORIZE_OPERATOR, BALANCE_OF, BURN_1, DEFAULT_OPERATORS, GRANULARITY, IS_OPERATOR_FOR, NAME, OPERATOR_BURN, OPERATOR_SEND, REVOKE_OPERATOR, SEND, SYMBOL, TOTAL_SUPPLY},
+	ERC_777_RECEIVER:   {TOKENS_RECEIVED},
+	ERC_777_SENDER:     {TOKENS_TO_SEND},
+	ERC_827:            {APPROVE_AND_CALL, DECREASE_ALLOWANCE_AND_CALL, INCREASE_ALLOWANCE_AND_CALL, TRANSFER_AND_CALL, TRANSFER_FROM_AND_CALL},
+	ERC_884:            {ADD_VERIFIED, CANCEL_AND_REISSUE, GET_CURRENT_FOR, HAS_HASH, HOLDER_AT, HOLDER_COUNT, IS_HOLDER, IS_SUPERSEDED, IS_VERIFIED, REMOVE_VERIFIED, TRANSFER, TRANSFER_FROM, UPDATE_VERIFIED},
 }
 
 // Token is an auto generated Go binding around an Ethereum contract.
@@ -319,26 +345,28 @@ func (_Token *TokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	return *ret0, err
 }
 
-func (_Token *TokenCaller) Types(byteCode string) []string {
-	identifiers := map[string]bool{}
-	for k := range INTERFACE_IDENTIFIERS {
-		if strings.Contains(byteCode, k) {
+func (_Token *TokenCaller) GetInfo(byteCode string) ([]ErcName, []InterfaceName) {
+	identifiers := map[InterfaceName]bool{}
+	var interfaces []InterfaceName
+	for k, v := range INTERFACE_IDENTIFIERS {
+		if strings.Contains(byteCode, v.Value) {
 			identifiers[k] = true
+			interfaces = append(interfaces, k)
 		}
 	}
-	types := map[string]bool{}
+	types := map[ErcName]bool{}
 Loop:
 	for k, v := range ERC_INTERFACE_IDENTIFIERS {
-		for ercIdentifier := range v {
+		for _, ercIdentifier := range v {
 			if _, ok := identifiers[ercIdentifier]; !ok {
 				continue Loop
 			}
 		}
 		types[k] = true
 	}
-	v := make([]string, len(types))
+	ercNames := make([]ErcName, len(types))
 	for key := range types {
-		v = append(v, key)
+		ercNames = append(ercNames, key)
 	}
-	return v
+	return ercNames, interfaces
 }
