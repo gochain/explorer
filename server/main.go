@@ -188,7 +188,6 @@ func main() {
 		})
 		r.Route("/api", func(r chi.Router) {
 			r.Post("/verify", verifyContract)
-			r.Get("/compiler", getCompilerVersion)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -354,15 +353,6 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusAccepted, result)
-}
-
-func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
-	result, err := backendInstance.GetCompilerVersion()
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

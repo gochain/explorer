@@ -22,8 +22,7 @@ import {ROUTES} from '../../utils/constants';
   styleUrls: ['./contract.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class ContractComponent implements OnInit {
-  compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
+export class ContractComponent implements OnInit {  
   contract: Contract;
   /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 

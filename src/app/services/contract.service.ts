@@ -24,7 +24,4 @@ export class ContractService {
     return this._apiService.post('/verify', data);
   }
 
-  getCompilerVersion() {
-    return this._apiService.get('/compiler');
-  }
 }

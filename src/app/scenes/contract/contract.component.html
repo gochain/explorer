@@ -10,10 +10,7 @@
 </p>
 <p>
   If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published
-  online.
-</p>
-<p>
-  Compiler version: {{compilerVersion$ | async}}
+  online. (to build a contract you should either use <a href="https://github.com/gochain-io/web3#build-a-smart-contract">web3 tool</a> or set the version of the solc compiler in the contract source header using a 'pragma solidity' tag)
 </p>
 
 <form class="uk-form-horizontal" [formGroup]="form" (submit)="onSubmit()">

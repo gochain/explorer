@@ -11,7 +11,6 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/v3/common"
-	"github.com/gochain-io/gochain/v3/common/compiler"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
@@ -158,7 +157,7 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("contract with given address is already verified")
 		return nil, err
 	}
-	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
+	compileData, err := CompileSolidityString(contractData.SourceCode)
 	if err != nil {
 		err := errors.New("error occurred while compiling source code")
 		return nil, err
@@ -196,17 +195,6 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
 		return nil, err
 	}
-}
-
-func (self *Backend) GetCompilerVersion() (string, error) {
-	result, err := compiler.SolidityVersion("solc")
-	if err != nil {
-		err := errors.New("error occurred while processing")
-		return "", err
-	}
-	versionRegexp := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)\+commit\.[^.]*`)
-	longVersion := versionRegexp.FindStringSubmatch(result.FullVersion)
-	return longVersion[0], nil
 }
 
 //METHODS USED IN GRABBER
