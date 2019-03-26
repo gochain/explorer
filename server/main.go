@@ -347,7 +347,7 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}*/
-	result, err := backendInstance.VerifyContract(contractData)
+	result, err := backendInstance.VerifyContract(r.Context(), contractData)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return

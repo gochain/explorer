@@ -147,7 +147,7 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
 }
 
-func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Contract, error) {
+func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Contract) (*models.Contract, error) {
 	contract := self.GetContract(contractData.Address)
 	if contract == nil {
 		err := errors.New("contract with given address not found")
@@ -157,8 +157,9 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("contract with given address is already verified")
 		return nil, err
 	}
-	compileData, err := CompileSolidityString(contractData.SourceCode)
+	compileData, err := CompileSolidityString(ctx, contractData.SourceCode)
 	if err != nil {
+		log.Error().Err(err).Msg("error while compilation")
 		err := errors.New("error occurred while compiling source code")
 		return nil, err
 	}
