@@ -312,6 +312,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		TotalSupply:    token.TotalSupply.String(),
 		Contract:       contract,
 		GO20:           go20,
+		ErcTypes:       token.Types,
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,

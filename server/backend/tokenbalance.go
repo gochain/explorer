@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"errors"
+	"github.com/gochain-io/explorer/server/utils"
 	"math/big"
 	"strings"
 
@@ -20,7 +21,7 @@ type TokenDetails struct {
 	TotalSupply *big.Int
 	Decimals    int64
 	Block       int64
-	Types       []ErcName
+	Types       []utils.ErcName
 }
 
 type TokenHolderDetails struct {
@@ -120,20 +121,20 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 		return err
 	}
 
-	var interfaces []InterfaceName
+	var interfaces []utils.InterfaceName
 	tb.Types, interfaces = token.GetInfo(byteCode)
 Loop:
 	for _, interfaceName := range interfaces {
-		if InterfaceIdentifiers[interfaceName].Callable {
+		if utils.InterfaceIdentifiers[interfaceName].Callable {
 			switch interfaceName {
-			case Decimals:
+			case utils.Decimals:
 				decimals, err := token.Decimals(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
 					continue Loop
 				}
 				tb.Decimals = decimals.Int64()
-			case TotalSupply:
+			case utils.TotalSupply:
 				totalSupply, err := token.TotalSupply(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
@@ -141,13 +142,13 @@ Loop:
 					continue Loop
 				}
 				tb.TotalSupply = totalSupply
-			case Symbol:
+			case utils.Symbol:
 				tb.Symbol, err = token.Symbol(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
 					tb.Symbol = "MISSING"
 				}
-			case Name:
+			case utils.Name:
 				tb.Name, err = token.Name(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
