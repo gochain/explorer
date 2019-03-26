@@ -124,16 +124,16 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	tb.Types, interfaces = token.GetInfo(byteCode)
 Loop:
 	for _, interfaceName := range interfaces {
-		if INTERFACE_IDENTIFIERS[interfaceName].Callable {
+		if InterfaceIdentifiers[interfaceName].Callable {
 			switch interfaceName {
-			case DECIMALS:
+			case Decimals:
 				decimals, err := token.Decimals(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
 					continue Loop
 				}
 				tb.Decimals = decimals.Int64()
-			case TOTAL_SUPPLY:
+			case TotalSupply:
 				totalSupply, err := token.TotalSupply(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
@@ -141,13 +141,13 @@ Loop:
 					continue Loop
 				}
 				tb.TotalSupply = totalSupply
-			case SYMBOL:
+			case Symbol:
 				tb.Symbol, err = token.Symbol(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
 					tb.Symbol = "MISSING"
 				}
-			case NAME:
+			case Name:
 				tb.Name, err = token.Name(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
