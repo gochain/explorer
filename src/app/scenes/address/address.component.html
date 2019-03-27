@@ -42,17 +42,17 @@
           <ul>
             <li>
               <p>Total transactions:</p>
-              <b>{{addr.number_of_transactions}}</b>
+              <b>{{addr.number_of_transactions || 0}}</b>
             </li>
             <ng-container *ngIf="addr.contract && addr.go20">
               <li>
                 <p>Total internal transactions:</p>
-                <b>{{addr.number_of_internal_transactions}}</b>
+                <b>{{addr.number_of_internal_transactions || 0}}</b>
               </li>
               <li>
                 <p>Total holders:</p>
-                <b>{{addr.number_of_token_holders}}</b>
-              </li>length
+                <b>{{addr.number_of_token_holders || 0}}</b>
+              </li>
             </ng-container>
           </ul>
         </li>

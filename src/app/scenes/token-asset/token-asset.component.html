@@ -1,0 +1,49 @@
+<div class="main-top">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
+<ng-container *ngIf="!!metadata; else notFound">
+  <div class="p--20">
+    <div class="list-holder">
+      <ul>
+        <li>
+          <p>Token address</p>
+          <b><a routerLink="/token/{{contractAddr}}">{{contractAddr}}</a></b>
+        </li>
+        <li>
+          <p>Token ID</p>
+          <b>{{tokenId}}</b>
+        </li>
+        <li>
+          <p>Name</p>
+          <b>{{metadata.name}}</b>
+        </li>
+        <li>
+          <p>Description</p>
+          <b>{{metadata.description}}</b>
+        </li>
+        <li>
+          <p>Image</p>
+          <b><img class="token__img" [src]="metadata.image"></b>
+        </li>
+        <li>
+          <p>URL</p>
+          <b><a [href]="metadata.external_url" target="_blank">{{metadata.external_url}}</a></b>
+        </li>
+      </ul>
+    </div>
+    <div class="list-holder__footer">
+      <div>
+        <p>Data</p>
+        <b>
+          <pre class="code">{{metadata.origin_data}}</pre>
+        </b>
+      </div>
+    </div>
+  </div>
+</ng-container>
+<ng-template #notFound>
+  <app-info text="Token metadata is not found"></app-info>
+</ng-template>

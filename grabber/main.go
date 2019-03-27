@@ -207,7 +207,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				contract = true
 				byteCode := hex.EncodeToString(contractDataArray)
 				importer.ImportContract(normalizedAddress, byteCode)
-				tokenDetails, err = importer.GetTokenDetails(normalizedAddress)
+				tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 				if err != nil {
 					log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
 					go20 = false

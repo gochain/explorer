@@ -95,23 +95,19 @@ export class AddressComponent implements OnInit, OnDestroy {
 
   getTransactionData() {
     this._commonService.getAddressTransactions(this.addrHash, this.transactionQueryParams.params).subscribe((data: any) => {
-      if (data.transactions && data.transactions.length) {
-        this.transactions = data.transactions;
-      } else {
-        this.transactions = [];
-      }
+      this.transactions = data.transactions || [];
     });
   }
 
   getHolderData() {
     this._commonService.getAddressHolders(this.addrHash, this.holderQueryParams.params).subscribe((data: any) => {
-      this.token_holders = data.token_holders;
+      this.token_holders = data.token_holders || [];
     });
   }
 
   getInternalTransactions() {
     this._commonService.getAddressInternalTransaction(this.addrHash, this.internalTransactionQueryParams.params).subscribe((data: any) => {
-      this.internal_transactions = data.internal_transactions;
+      this.internal_transactions = data.internal_transactions || [];
     });
   }
 

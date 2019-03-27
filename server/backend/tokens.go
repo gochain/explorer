@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"github.com/gochain-io/explorer/server/utils"
 	"math/big"
 	"strings"
 
@@ -141,4 +142,30 @@ func (_Token *TokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	out := ret0
 	err := _Token.contract.Call(opts, out, "symbol")
 	return *ret0, err
+}
+
+func (_Token *TokenCaller) GetInfo(byteCode string) ([]utils.ErcName, []utils.InterfaceName) {
+	identifiers := map[utils.InterfaceName]bool{}
+	var interfaces []utils.InterfaceName
+	for k, v := range utils.InterfaceIdentifiers {
+		if strings.Contains(byteCode, v.Value) {
+			identifiers[k] = true
+			interfaces = append(interfaces, k)
+		}
+	}
+	types := map[utils.ErcName]bool{}
+Loop:
+	for k, v := range utils.ErcInterfaceIdentifiers {
+		for _, ercIdentifier := range v {
+			if _, ok := identifiers[ercIdentifier]; !ok {
+				continue Loop
+			}
+		}
+		types[k] = true
+	}
+	ercNames := make([]utils.ErcName, 0, len(types))
+	for key := range types {
+		ercNames = append(ercNames, key)
+	}
+	return ercNames, interfaces
 }
