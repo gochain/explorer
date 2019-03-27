@@ -25,8 +25,8 @@ export class ApiService {
       : environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
   }
 
-  get(url: string, params?: HttpParams): Observable<any> {
-    return this.http.get<any>(this.apiURL + url, {
+  get(url: string, params?: HttpParams, manualUrl = false): Observable<any> {
+    return this.http.get<any>(manualUrl ? url : (this.apiURL + url), {
       params
     }).pipe(
       catchError(this._handleError)

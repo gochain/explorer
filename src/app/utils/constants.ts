@@ -10,6 +10,7 @@ export const ROUTES = {
   BLOCK: 'block',
   ADDRESS_FULL: 'address',
   ADDRESS: 'addr',
+  TOKEN: 'token',
   RICHLIST: 'richlist',
   TRANSACTION: 'tx',
   SETTINGS: 'settings',
