@@ -1,13 +1,14 @@
 version: 2
 jobs:
-  test:    
+  build-test:
     docker:
-      - image: circleci/node:latest
+      - image: circleci/golang:1.12
     steps:
-      - setup_remote_docker
-      - checkout      
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - checkout
       - run: ./run_tests.sh
-  build:
+  release:
     docker:
       - image: google/cloud-sdk      
     steps:
@@ -28,12 +29,12 @@ jobs:
             fi
 workflows:
   version: 2  
-  test-and-release:
+  build-test-release:
     jobs:
-      - test
-      - build:
+      - build-test
+      - release:
           requires:
-            - test
+            - build-test
           filters:
             branches:
               only: master

@@ -22,30 +22,31 @@ func main() {
 	var loglevel string
 	var startFrom int64
 	app := cli.NewApp()
+	app.Usage = "Grabber populates a mongo database with explorer data."
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
-			Usage:       "rpc api url, 'https://rpc.gochain.io'",
+			Usage:       "rpc api url",
 			Destination: &rpcUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
-			Usage:       "mongo connection url, '127.0.0.1:27017'",
+			Usage:       "mongo connection url",
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
 			Value:       "blocks",
-			Usage:       "mongo database name, 'blocks'",
+			Usage:       "mongo database name",
 			Destination: &dbName,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
 			Value:       "info",
-			Usage:       "loglevel debug/info/warn/fatal, default is Info",
+			Usage:       "loglevel debug/info/warn/fatal",
 			Destination: &loglevel,
 		},
 		cli.Int64Flag{
