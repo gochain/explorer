@@ -428,3 +428,16 @@ body {
   width: 700px;
   display: inline-block;
 }
+
+.badge {
+  color: #fff;
+  background-color: #17a2b8;
+  display: inline-block;
+  padding: .25em .4em;
+  font-size: 85%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  border-radius: .25rem;
+}
