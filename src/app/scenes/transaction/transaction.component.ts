@@ -1,13 +1,16 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { Observable } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import {ActivatedRoute, ParamMap} from '@angular/router';
+import {interval, Observable} from 'rxjs';
+import {mergeMap, startWith, switchMap, tap} from 'rxjs/operators';
 /*SERVICES*/
-import { CommonService } from '../../services/common.service';
-import { LayoutService } from '../../services/layout.service';
+import {CommonService} from '../../services/common.service';
+import {LayoutService} from '../../services/layout.service';
+import {WalletService} from '../../modules/wallet/wallet.service';
 /*MODELS*/
-import { Transaction } from '../../models/transaction.model';
+import {Transaction} from '../../models/transaction.model';
+import {fromPromise} from 'rxjs/internal-compatibility';
+
 @Component({
   selector: 'app-transaction',
   templateUrl: './transaction.component.html',
@@ -17,22 +20,30 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
   showUtf8 = false;
   private _txHash: string;
-  transaction: Observable<Transaction>;
+  transaction$: Observable<Transaction> = this._route.paramMap.pipe(
+    switchMap((params: ParamMap) => {
+      this._txHash = params.get('id');
+      return this._commonService.getTransaction(this._txHash).pipe(
+        tap(() => {
+          this._layoutService.offLoading();
+        })
+      );
+    })
+  );
+  recentBlockNumber$: Observable<number> = interval(5000).pipe(
+    startWith(0),
+    mergeMap(() => fromPromise(this._walletService.w3.eth.getBlockNumber()))
+  );
 
-  constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
+  constructor(private _commonService: CommonService,
+              private _route: ActivatedRoute,
+              private _layoutService: LayoutService,
+              private _walletService: WalletService,
+  ) {
   }
-  ngOnInit() {
+
+  async ngOnInit() {
     this._layoutService.onLoading();
-    this.transaction = this._route.paramMap.pipe(
-      switchMap((params: ParamMap) => {
-        this._txHash = params.get('id');
-        return this._commonService.getTransaction(this._txHash).pipe(
-          tap(() => {
-            this._layoutService.offLoading();
-          })
-        );
-      })
-    );
   }
 
   ngOnDestroy(): void {
