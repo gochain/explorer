@@ -44,6 +44,7 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
+import { TokenComponent } from './scenes/token/token.component';
 
 @NgModule({
   declarations: [
@@ -66,6 +67,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     InfoComponent,
     ContractComponent,
     TokenAssetComponent,
+    TokenComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),

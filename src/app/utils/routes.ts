@@ -9,6 +9,7 @@ import {HomeComponent} from '../scenes/home/home.component';
 import {PageNotFoundComponent} from '../scenes/page-not-found/page-not-found.component';
 import {ContractComponent} from '../scenes/contract/contract.component';
 import {TokenAssetComponent} from '../scenes/token-asset/token-asset.component';
+import {TokenComponent} from '../scenes/token/token.component';
 // import {SettingsComponent} from '../scenes/settings/settings.component';
 /*UTILS*/
 import {ROUTES} from './constants';
@@ -22,6 +23,7 @@ export const APP_ROUTES: Routes = [
   {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
   {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},
   {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
+  {path: ROUTES.TOKEN + '/:id', component: TokenComponent},
   {path: ROUTES.TOKEN + '/:id/asset/:tokenId', component: TokenAssetComponent},
   {path: ROUTES.VERIFY, component: ContractComponent},
   {path: ROUTES.RICHLIST, component: RichlistComponent},

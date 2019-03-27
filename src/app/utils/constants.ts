@@ -55,3 +55,28 @@ export const MENU_ITEMS: MenuItem[] = [
 ];
 
 export const DEFAULT_GAS_LIMIT = 21000;
+
+export const TOKEN_TYPES = {
+  Erc20: 'Erc20',
+  Erc20Burnable: 'Erc20 Burnable',
+  Erc20Capped: 'Erc20 Capped',
+  Erc20Detailed: 'Erc20 Detailed',
+  Erc20Mintable: 'Erc20 Mintable',
+  Erc20Pausable: 'Erc20 Pausable',
+  Erc165: 'Erc165',
+  Erc721: 'Erc721',
+  Erc721Receiver: 'Erc721 Receiver',
+  Erc721Metadata: 'Erc721 Metadata',
+  Erc721Enumerable: 'Erc721 Enumerable',
+  Erc820: 'Erc820',
+  Erc1155: 'Erc1155',
+  Erc1155Receiver: 'Erc1155 Receiver',
+  Erc1155Metadata: 'Erc1155 Metadata',
+  Erc223: 'Erc223',
+  Erc621: 'Erc621',
+  Erc777: 'Erc777',
+  Erc777Receiver: 'Erc777 Receiver',
+  Erc777Sender: 'Erc777 Sender',
+  Erc827: 'Erc827',
+  Erc884: 'Erc884',
+};
