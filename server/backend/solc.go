@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -73,7 +74,9 @@ func (s *Solidity) makeArgs() ([]string, error) {
 // SolidityVersion scan the source code and parse the version from pragma attribute
 func SolidityVersion(source string) (*Solidity, error) {
 	var err error
-	for _, line := range strings.Split(source, "\n") {
+	scanner := bufio.NewScanner(strings.NewReader(source))
+	for scanner.Scan() {
+		line := scanner.Text()
 		if strings.HasPrefix(strings.TrimSpace(line), "pragma solidity") {
 			matches := versionRegexp.FindStringSubmatch(line)
 			if len(matches) != 4 {
