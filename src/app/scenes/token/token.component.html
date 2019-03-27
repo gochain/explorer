@@ -1,0 +1,78 @@
+<div class="main-top">
+  <div class="main-top__search">
+    <h1>Explore your block</h1>
+    <app-search></app-search>
+  </div>
+</div>
+<ng-container *ngIf="(address | async) as addr; else addressNotFound">
+  <div class="p--20 p-b--60">
+    <div class="uk-overflow-auto list-holder">
+      <ul>
+        <li>
+          <p>Token address:</p>
+          <b><a routerLink="/addr/{{addr.address}}">{{addr.address}}</a></b>
+        </li>
+        <ng-container *ngIf="addr.contract && addr.go20">
+          <li>
+            <ul>
+              <li>
+                <p>Token name:</p>
+                <b>{{addr.token_name}}</b>
+              </li>
+              <li>
+                <p>Token symbol:</p>
+                <b>{{addr.token_symbol}}</b>
+              </li>
+              <li>
+                <p>Total supply:</p>
+                <b>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</b>
+              </li>
+            </ul>
+          </li>
+          <li *ngIf="addr.decimals">
+            <p>Decimals:</p>
+            <b>{{addr.decimals}}</b>
+          </li>
+        </ng-container>
+        <li>
+          <ul>
+            <li>
+              <p>Total transactions:</p>
+              <b>{{addr.number_of_transactions || 0}}</b>
+            </li>
+            <ng-container *ngIf="addr.contract && addr.go20">
+              <li>
+                <p>Total internal transactions:</p>
+                <b>{{addr.number_of_internal_transactions || 0}}</b>
+              </li>
+              <li>
+                <p>Total holders:</p>
+                <b>{{addr.number_of_token_holders || 0}}</b>
+              </li>
+            </ng-container>
+          </ul>
+        </li>
+        <li *ngIf="!!addr.erc_types.length">
+          <p>Token type:</p>
+          <b><span class="m-r--20" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></b>
+        </li>
+        <li>
+          <p>Updated at:</p>
+          <b>{{addr.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}}</b>
+        </li>
+      </ul>
+    </div>
+    <div class="list-holder__footer">
+      <div class="uk-margin" *ngIf="addr.ercObj['Erc721Metadata']">
+        <h4>Assets:</h4>
+        <input class="uk-input uk-form-width-medium" type="text" placeholder="Enter Token ID" [(ngModel)]="tokenId">
+        <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
+                class="uk-button uk-button-primary m-l--10">Search
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>
+<ng-template #addressNotFound>
+  <app-info text="Token not found"></app-info>
+</ng-template>

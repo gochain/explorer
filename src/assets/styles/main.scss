@@ -396,7 +396,7 @@ body {
     margin: 0 auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 
-    div {
+    > div {
       padding: 30px;
 
       b {
@@ -427,4 +427,17 @@ body {
   padding: 50px;
   width: 700px;
   display: inline-block;
+}
+
+.badge {
+  color: #fff;
+  background-color: #17a2b8;
+  display: inline-block;
+  padding: .25em .4em;
+  font-size: 85%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  border-radius: .25rem;
 }
