@@ -51,8 +51,12 @@ export class ApiService {
     console.error(
       `Backend returned code ${error.status}, ` +
       `body was: ${error.error}`);
-    if (objHas(error, 'error.error.message')) {
-      this.toastrService.danger(error.error.error.message);
+    const msg = objHas(error, 'error.error.message')
+      ? error.error.error.message
+      : error.message
+        ? error.message : null;
+    if (msg) {
+      this.toastrService.danger(msg);
     } else {
       this.toastrService.danger('Something bad happened during request; please try again later.');
     }

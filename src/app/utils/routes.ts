@@ -12,17 +12,23 @@ import {TokenAssetComponent} from '../scenes/token-asset/token-asset.component';
 // import {SettingsComponent} from '../scenes/settings/settings.component';
 /*UTILS*/
 import {ROUTES} from './constants';
+import {CommonService} from '../services/common.service';
 
 export const APP_ROUTES: Routes = [
   {
     path: 'wallet',
     loadChildren: './modules/wallet/wallet.module#WalletModule',
+    resolve: {rpcProvider: CommonService},
   },
   {path: ROUTES.BLOCK + '/:id', component: BlockComponent},
   {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
   {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},
   {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
-  {path: ROUTES.TOKEN + '/:id/asset/:tokenId', component: TokenAssetComponent},
+  {
+    path: ROUTES.TOKEN + '/:id/asset/:tokenId',
+    component: TokenAssetComponent,
+    resolve: {rpcProvider: CommonService},
+  },
   {path: ROUTES.VERIFY, component: ContractComponent},
   {path: ROUTES.RICHLIST, component: RichlistComponent},
   /*{path: ROUTES.SETTINGS, component: SettingsComponent},*/

@@ -1,6 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
+import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
 /*MODELS*/
@@ -15,8 +16,19 @@ import {Stats} from '../models/stats.model';
 import {Contract} from '../models/contract.model';
 
 @Injectable()
-export class CommonService {
+export class CommonService implements Resolve<string> {
+  rpcProvider: string;
+
   constructor(private _apiService: ApiService) {
+  }
+
+  resolve(): Observable<string> | Promise<string> | string {
+    return this.rpcProvider || this.getRpcProvider();
+  }
+
+  async getRpcProvider() {
+    this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
+    return this.rpcProvider;
   }
 
   getRecentBlocks(): Observable<BlockList> {

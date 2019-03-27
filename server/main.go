@@ -27,6 +27,7 @@ var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
 var reCaptchaSecret string
+var rpcUrl string
 
 const defaultFetchLimit = 500
 
@@ -98,7 +99,6 @@ func parseBlockNumber(r *http.Request) (int, error) {
 }
 
 func main() {
-	var rpcUrl string
 	var mongoUrl string
 	var dbName string
 	var loglevel string
@@ -189,6 +189,7 @@ func main() {
 		r.Route("/api", func(r chi.Router) {
 			r.Post("/verify", verifyContract)
 			r.Get("/compiler", getCompilerVersion)
+			r.Get("/rpc_provider", getRpcProvider)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -363,6 +364,10 @@ func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func getRpcProvider(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, rpcUrl)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
