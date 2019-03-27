@@ -11,6 +11,8 @@ import {Account, TxSignature} from 'web3/eth/accounts';
 import {TransactionReceipt} from 'web3/types';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
+import {CommonService} from '../../services/common.service';
+
 /*MODELS*/
 
 @Injectable()
@@ -29,7 +31,11 @@ export class WalletService {
     return /^explorer\.gochain\.io/.test(location.hostname) ? 'https://rpc.gochain.io' : 'https://testnet-rpc.gochain.io';
   }
 
-  constructor(@Inject(WEB3) public _web3: Web3, private _toastrService: ToastrService) {
+  constructor(@Inject(WEB3) public _web3: Web3,
+              private _toastrService: ToastrService,
+              private _commonService: CommonService) {
+    const provider = new Web3.providers.HttpProvider(this._commonService.rpcProvider);
+    this._web3.setProvider(provider);
     this.rpcHost = WalletService.getHost();
   }
 
