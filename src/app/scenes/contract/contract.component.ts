@@ -22,22 +22,22 @@ import {ROUTES} from '../../utils/constants';
   styleUrls: ['./contract.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class ContractComponent implements OnInit {
-  compilerVersion$: Observable<string> = this.contactService.getCompilerVersion();
+export class ContractComponent implements OnInit {  
   contract: Contract;
   /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 
   form: FormGroup = this._fb.group({
     address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
     contract_name: ['', Validators.required],
+    compiler_version: ['', Validators.required],
     // optimization: [true, Validators.required],
     source_code: ['', Validators.required],
     /*recaptcha_token: null,*/
   });
 
-  // compiler_version: ['', Validators.required],
+  
   // abi: [''],
-  // compilers: any[] = [];
+  compilers: any[] = [];
 
   private _subsArr$: Subscription[] = [];
 
@@ -46,15 +46,9 @@ export class ContractComponent implements OnInit {
               private contactService: ContractService,
               private toastrService: ToastrService,
               private _router: Router) {
-    /*this.contactService.getCompilersList().subscribe((value: any) => {
-      this.compilers = value.builds.map((item: Compiler) => {
-        if (item.prerelease && item.prerelease.length > 0) {
-          return item.version + '-' + item.prerelease + '+' +  item.build;
-        } else {
-          return item.version;
-        }
-      }).reverse();
-    });*/
+    this.contactService.getCompilersList().subscribe((value: any) => {
+      this.compilers = value;
+    });
   }
 
   ngOnInit() {

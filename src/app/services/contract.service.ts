@@ -17,14 +17,11 @@ export class ContractService {
   }
 
   getCompilersList() {
-    return this.http.get('https://ethereum.github.io/solc-bin/bin/list.json');
+    return this._apiService.get('/compiler');
   }
 
   compile(data: any) {
     return this._apiService.post('/verify', data);
   }
 
-  getCompilerVersion() {
-    return this._apiService.get('/compiler');
-  }
 }

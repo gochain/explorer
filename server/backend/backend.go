@@ -11,7 +11,6 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/v3/common"
-	"github.com/gochain-io/gochain/v3/common/compiler"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
@@ -22,6 +21,7 @@ type Backend struct {
 	goClient              *goclient.Client
 	extendedGochainClient *EthRPC
 	tokenBalance          *TokenBalance
+	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	genesisAddressList    []string
 }
@@ -53,6 +53,7 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	importer.extendedGochainClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
+	importer.dockerhubAPI = new(DockerHubAPI)
 	return importer
 }
 
@@ -148,7 +149,11 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
 }
 
-func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Contract, error) {
+func (self *Backend) GetCompilerVersion() ([]string, error) {
+	return self.dockerhubAPI.GetSolcImageTags()
+}
+
+func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Contract) (*models.Contract, error) {
 	contract := self.GetContract(contractData.Address)
 	if contract == nil {
 		err := errors.New("contract with given address not found")
@@ -158,8 +163,9 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("contract with given address is already verified")
 		return nil, err
 	}
-	compileData, err := compiler.CompileSolidityString("solc", contractData.SourceCode)
+	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode)
 	if err != nil {
+		log.Error().Err(err).Msg("error while compilation")
 		err := errors.New("error occurred while compiling source code")
 		return nil, err
 	}
@@ -196,17 +202,6 @@ func (self *Backend) VerifyContract(contractData *models.Contract) (*models.Cont
 		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
 		return nil, err
 	}
-}
-
-func (self *Backend) GetCompilerVersion() (string, error) {
-	result, err := compiler.SolidityVersion("solc")
-	if err != nil {
-		err := errors.New("error occurred while processing")
-		return "", err
-	}
-	versionRegexp := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)\+commit\.[^.]*`)
-	longVersion := versionRegexp.FindStringSubmatch(result.FullVersion)
-	return longVersion[0], nil
 }
 
 //METHODS USED IN GRABBER
