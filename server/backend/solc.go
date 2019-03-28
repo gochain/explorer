@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -44,8 +42,7 @@ type ContractInfo struct {
 
 // Solidity contains information about the solidity compiler.
 type Solidity struct {
-	Path, Version       string
-	Major, Minor, Patch int
+	Path, Version string
 }
 
 // --combined-output format
@@ -64,49 +61,19 @@ func (s *Solidity) makeArgs() ([]string, error) {
 		return nil, err
 	}
 	return []string{
-		"run", "-i", "-v", dir + ":/workdir", "-w", "/workdir", "ethereum/solc:" + strconv.Itoa(s.Major) + "." + strconv.Itoa(s.Minor) + "." + strconv.Itoa(s.Patch),
+		"run", "-i", "-v", dir + ":/workdir", "-w", "/workdir", "ethereum/solc:" + s.Version,
 		"--combined-json",
 		"bin,bin-runtime,srcmap,srcmap-runtime,abi,userdoc,devdoc,metadata",
 		"--optimize", // code optimizer switched on
 	}, nil
 }
 
-// SolidityVersion scan the source code and parse the version from pragma attribute
-func SolidityVersion(source string) (*Solidity, error) {
-	var err error
-	scanner := bufio.NewScanner(strings.NewReader(source))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(strings.TrimSpace(line), "pragma solidity") {
-			matches := versionRegexp.FindStringSubmatch(line)
-			if len(matches) != 4 {
-				return nil, fmt.Errorf("can't parse a solc version %q", source)
-			}
-			s := &Solidity{Path: "docker", Version: matches[0]}
-			if s.Major, err = strconv.Atoi(matches[1]); err != nil {
-				return nil, err
-			}
-			if s.Minor, err = strconv.Atoi(matches[2]); err != nil {
-				return nil, err
-			}
-			if s.Patch, err = strconv.Atoi(matches[3]); err != nil {
-				return nil, err
-			}
-			return s, nil
-		}
-	}
-	return nil, fmt.Errorf("can't find a pragma solidity keyword")
-}
-
 // CompileSolidityString builds and returns all the contracts contained within a source string.
-func CompileSolidityString(ctx context.Context, source string) (map[string]*Contract, error) {
+func CompileSolidityString(ctx context.Context, compilerVersion, source string) (map[string]*Contract, error) {
 	if len(source) == 0 {
 		return nil, errors.New("solc: empty source string")
 	}
-	s, err := SolidityVersion(source)
-	if err != nil {
-		return nil, err
-	}
+	s := &Solidity{Path: "docker", Version: compilerVersion}
 	args, err := s.makeArgs()
 	if err != nil {
 		return nil, err

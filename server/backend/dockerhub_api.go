@@ -7,30 +7,30 @@ import (
 	"time"
 )
 
+type DockerHubAPI struct {
+	lastUpdatedSolcAt    time.Time
+	cachedListOfSolcTags []string
+}
+
 const dockerHubUrl = "https://registry.hub.docker.com"
 
 type Tag struct {
 	Name string
 }
 
-var (
-	LastUpdatedAt    time.Time
-	CachedListOfTags []string
-)
-
-func GetSolcImageTags() ([]string, error) {
-	duration := time.Since(LastUpdatedAt)
+func (api *DockerHubAPI) GetSolcImageTags() ([]string, error) {
+	duration := time.Since(api.lastUpdatedSolcAt)
 	if int(duration.Hours()) < 1 {
-		return CachedListOfTags, nil
+		return api.cachedListOfSolcTags, nil
 	}
 	//update the list of the tags every hour
 	tags, err := GetImageTags("ethereum/solc")
 	if err != nil {
 		return nil, err
 	}
-	LastUpdatedAt = time.Now()
-	CachedListOfTags = tags
-	return CachedListOfTags, nil
+	api.lastUpdatedSolcAt = time.Now()
+	api.cachedListOfSolcTags = tags
+	return api.cachedListOfSolcTags, nil
 }
 
 func GetImageTags(imageFullName string) (tags []string, err error) {
@@ -46,7 +46,7 @@ func GetImageTags(imageFullName string) (tags []string, err error) {
 
 func filterTags(tags []Tag) (res []string) {
 	for _, elem := range tags {
-		if !(strings.Contains(elem.Name, "alpine") || elem.Name == "stable") {
+		if !(strings.Contains(elem.Name, "alpine") || elem.Name == "stable" || elem.Name == "nightly") {
 			res = append(res, elem.Name)
 		}
 	}

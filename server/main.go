@@ -188,6 +188,7 @@ func main() {
 		})
 		r.Route("/api", func(r chi.Router) {
 			r.Post("/verify", verifyContract)
+			r.Get("/compiler", getCompilerVersion)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -337,11 +338,31 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}*/
-	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
+	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
 		err := errors.New("required field is empty")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
+
+	compilerVersions, err := backendInstance.GetCompilerVersion()
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	compilerOk := false
+	for _, compiler := range compilerVersions {
+		if contractData.CompilerVersion == compiler {
+			compilerOk = true
+		}
+	}
+
+	if compilerOk != true {
+		err := errors.New("wrong compiler version")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
 	/*err = verifyReCaptcha(contractData.RecaptchaToken, reCaptchaSecret, "contractVerification", r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
@@ -353,6 +374,15 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusAccepted, result)
+}
+
+func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
+	result, err := backendInstance.GetCompilerVersion()
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {

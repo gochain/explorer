@@ -21,6 +21,7 @@ type Backend struct {
 	goClient              *goclient.Client
 	extendedGochainClient *EthRPC
 	tokenBalance          *TokenBalance
+	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	genesisAddressList    []string
 }
@@ -52,6 +53,7 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	importer.extendedGochainClient = exClient
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
+	importer.dockerhubAPI = new(DockerHubAPI)
 	return importer
 }
 
@@ -147,6 +149,10 @@ func (self *Backend) GetBlockByHash(hash string) *models.Block {
 	return self.mongo.getBlockByHash(hash)
 }
 
+func (self *Backend) GetCompilerVersion() ([]string, error) {
+	return self.dockerhubAPI.GetSolcImageTags()
+}
+
 func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Contract) (*models.Contract, error) {
 	contract := self.GetContract(contractData.Address)
 	if contract == nil {
@@ -157,7 +163,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		err := errors.New("contract with given address is already verified")
 		return nil, err
 	}
-	compileData, err := CompileSolidityString(ctx, contractData.SourceCode)
+	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode)
 	if err != nil {
 		log.Error().Err(err).Msg("error while compilation")
 		err := errors.New("error occurred while compiling source code")
