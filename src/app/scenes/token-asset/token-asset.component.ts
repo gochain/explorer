@@ -64,8 +64,13 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
   }
 
   getData() {
-    const funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(TOKEN_URL_ABI, [1]);
-
+    let funcABI: string;
+    try {
+      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(TOKEN_URL_ABI, [this.tokenId]);
+    } catch (err) {
+      this._toastrService.danger(err);
+      return;
+    }
     this._walletService.w3.eth.call({
       to: this.contractAddr,
       data: funcABI,
