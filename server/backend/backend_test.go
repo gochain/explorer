@@ -24,6 +24,7 @@ func createImportBlock() types.Block {
 	testBackend.ImportBlock(&block)
 	return block
 }
+
 func TestImportAddress(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
@@ -242,8 +243,8 @@ func TestInternalTransactions(t *testing.T) {
 	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
 	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
 
-	var transaction1 = TransferEvent{BlockNumber: 0001, From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
-	var transaction2 = TransferEvent{BlockNumber: 0002, From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
+	var transaction1 = TransferEvent{BlockNumber: 10, TransactionHash: "hash1", From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
+	var transaction2 = TransferEvent{BlockNumber: 20, TransactionHash: "hash2", From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
@@ -264,6 +265,7 @@ func TestInternalTransactions(t *testing.T) {
 	}
 
 }
+
 func TestReloadBlock(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()

@@ -8,10 +8,6 @@ ADD go.mod $D
 ADD go.sum $D
 RUN go mod download
 ADD . $D
-# maybe test
-# todo restore -tags=integration after they are fixed
-ARG TEST
-RUN if [ "${TEST}" = "on" ] ; then go test ./... ; else echo "skipping tests"; fi
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
 
