@@ -21,7 +21,7 @@ docker run --name test_explorer_grabber -d --network="container:$varA" gochain/e
 docker run --name test_explorer_server -d --network="container:$varA" gochain/explorer:test_ci server -d /explorer/ -u https://testnet-rpc.gochain.io
 # this will run both integration and unit tests, integration test will require mongo running
 echo "Run integration tests"
-docker run --name test_explorer_go_integration -w=/explorer -v $(pwd):/explorer --network="container:$varA" golang:alpine apk add git && go test -tags=integration ./...
+docker run --name test_explorer_go_integration -w=/explorer -v $(pwd):/explorer --network="container:$varA" golang:alpine apk add git && go test ./...
 echo "Sleeping"
 sleep 20 # let's wait until server start
 # docker exec test_explorer npm test
