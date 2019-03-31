@@ -15,7 +15,7 @@ trap cleanup_containers EXIT SIGINT SIGTERM
 docker run --name test_mongo -d -p 8545:8545 -p 8080:8080 -p 27017:27017 mongo
 varA=`docker ps --no-trunc -q | cut -c 1-12`
 # build
-# docker build -t gochain/explorer:test_ci .
+docker build -t gochain/explorer:test_ci .
 # launch required containers
 docker run --name test_explorer_grabber -d --network="container:$varA" gochain/explorer:test_ci grabber -u https://testnet-rpc.gochain.io -s 10
 docker run --name test_explorer_server -d --network="container:$varA" gochain/explorer:test_ci server -d /explorer/ -u https://testnet-rpc.gochain.io
