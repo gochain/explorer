@@ -21,9 +21,10 @@ import (
 var wei = big.NewInt(1000000000000000000)
 
 type MongoBackend struct {
-	host     string
-	mongo    *mgo.Database
-	goClient *goclient.Client
+	host         string
+	mongo        *mgo.Database
+	mongoSession *mgo.Session
+	goClient     *goclient.Client
 }
 
 // New create new rpc client with given url
@@ -43,13 +44,16 @@ func NewMongoClient(host, rpcUrl, dbName string) *MongoBackend {
 	}
 
 	importer := new(MongoBackend)
-
+	importer.mongoSession = session
 	importer.mongo = session.DB(dbName)
 	importer.goClient = client
 	importer.createIndexes()
 
 	return importer
 
+}
+func (self *MongoBackend) PingDB() error {
+	return self.mongoSession.Ping()
 }
 func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
 	from, err := self.goClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)

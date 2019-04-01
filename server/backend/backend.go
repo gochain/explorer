@@ -58,6 +58,10 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 }
 
 //METHODS USED IN API
+func (self *Backend) PingDB() error {
+	return self.mongo.PingDB()
+}
+
 func (self *Backend) BalanceAt(address, block string) (*big.Int, error) {
 	var value *big.Int
 	err := retry(5, 2*time.Second, func() (err error) {

@@ -187,6 +187,7 @@ func main() {
 			r.Get("/{address}/contract", getContract)
 		})
 		r.Route("/api", func(r chi.Router) {
+			r.Head("/", pingDB)
 			r.Post("/verify", verifyContract)
 			r.Get("/compiler", getCompilerVersion)
 			r.Get("/rpc_provider", getRpcProvider)
@@ -423,4 +424,14 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
+}
+
+func pingDB(w http.ResponseWriter, r *http.Request) {
+	err := backendInstance.PingDB()
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, err)
+	} else {
+		writeJSON(w, http.StatusOK, "PingOK")
+	}
+
 }
