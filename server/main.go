@@ -159,7 +159,7 @@ func main() {
 		cors2 := cors.New(cors.Options{
 			// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 			AllowedOrigins:   []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Origin"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
@@ -201,6 +201,7 @@ func main() {
 		})
 
 		r.Route("/", func(r chi.Router) {
+			r.Head("/", pingDB)
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
 			r.Get("/*", staticHandler)
