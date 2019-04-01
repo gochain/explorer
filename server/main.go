@@ -201,7 +201,9 @@ func main() {
 		})
 
 		r.Route("/", func(r chi.Router) {
-			r.Head("/", pingDB)
+			r.Head("/", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
 			r.Get("/*", staticHandler)
@@ -430,9 +432,10 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 func pingDB(w http.ResponseWriter, r *http.Request) {
 	err := backendInstance.PingDB()
 	if err != nil {
-		errorResponse(w, http.StatusInternalServerError, err)
+		log.Error().Err(err).Msg("Cannot ping DB")
+		w.WriteHeader(http.StatusInternalServerError)
 	} else {
-		writeJSON(w, http.StatusOK, "PingOK")
+		w.WriteHeader(http.StatusOK)
 	}
 
 }
