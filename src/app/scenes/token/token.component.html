@@ -25,7 +25,7 @@
               </li>
               <li>
                 <p>Total supply:</p>
-                <b>{{addr.total_supply | weiToGO: false : true : addr.decimals | bigNumber}}</b>
+                <b>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</b>
               </li>
             </ul>
           </li>

@@ -27,6 +27,8 @@ export class WeiToGOPipe implements PipeTransform {
     if (showUnit) {
       value += ' GO';
     }
+    // remove dot in the end
+    value = value.replace(/\.$/, '');
     return value;
   }
 }
