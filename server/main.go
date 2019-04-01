@@ -159,7 +159,7 @@ func main() {
 		cors2 := cors.New(cors.Options{
 			// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 			AllowedOrigins:   []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Origin"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
@@ -187,6 +187,7 @@ func main() {
 			r.Get("/{address}/contract", getContract)
 		})
 		r.Route("/api", func(r chi.Router) {
+			r.Head("/", pingDB)
 			r.Post("/verify", verifyContract)
 			r.Get("/compiler", getCompilerVersion)
 			r.Get("/rpc_provider", getRpcProvider)
@@ -200,6 +201,9 @@ func main() {
 		})
 
 		r.Route("/", func(r chi.Router) {
+			r.Head("/", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
 			r.Get("/*", staticHandler)
@@ -423,4 +427,15 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
+}
+
+func pingDB(w http.ResponseWriter, r *http.Request) {
+	err := backendInstance.PingDB()
+	if err != nil {
+		log.Error().Err(err).Msg("Cannot ping DB")
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+
 }
