@@ -16,19 +16,19 @@
           <p>Token ID</p>
           <b>{{tokenId}}</b>
         </li>
-        <li>
+        <li *ngIf="metadata.name">
           <p>Name</p>
           <b>{{metadata.name}}</b>
         </li>
-        <li>
+        <li *ngIf="metadata.description">
           <p>Description</p>
           <b>{{metadata.description}}</b>
         </li>
-        <li>
+        <li *ngIf="metadata.image">
           <p>Image</p>
           <b><img class="token__img" [src]="metadata.image"></b>
         </li>
-        <li>
+        <li *ngIf="metadata.external_url">
           <p>URL</p>
           <b><a [href]="metadata.external_url" target="_blank">{{metadata.external_url}}</a></b>
         </li>

@@ -11,7 +11,6 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {environment} from '../../../environments/environment';
 import {ROUTES} from '../../utils/constants';
 
 // import {Compiler} from '../../models/compiler.model';
@@ -22,7 +21,7 @@ import {ROUTES} from '../../utils/constants';
   styleUrls: ['./contract.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class ContractComponent implements OnInit {  
+export class ContractComponent implements OnInit {
   contract: Contract;
   /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 
@@ -35,9 +34,9 @@ export class ContractComponent implements OnInit {
     /*recaptcha_token: null,*/
   });
 
-  
+
   // abi: [''],
-  compilers: any[] = [];
+  compilers$: Observable<any[]> = this.contactService.getCompilersList();
 
   private _subsArr$: Subscription[] = [];
 
@@ -46,9 +45,6 @@ export class ContractComponent implements OnInit {
               private contactService: ContractService,
               private toastrService: ToastrService,
               private _router: Router) {
-    this.contactService.getCompilersList().subscribe((value: any) => {
-      this.compilers = value;
-    });
   }
 
   ngOnInit() {

@@ -29,7 +29,7 @@
   <div class="uk-margin">
     <label class="uk-form-label" for="form-horizontal-select">Compiler*</label>
     <div class="uk-form-controls">
-      <select class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
+      <select *ngIf="compilers$ | async as compilers" class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
         <option value="" disabled selected>Select compiler</option>
         <option *ngFor="let compiler of compilers">{{compiler}}</option>
       </select>
