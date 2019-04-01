@@ -2,7 +2,7 @@
   <div class="topbar__left">
     <div class="topbar__icon">
       <a routerLink="/">
-        <img src="../../../assets/images/{{logoSrc}}" alt="Gochain Explorer">
+        <img *ngIf="logoSrc$ | async as logoSrc" src="../../../assets/images/{{logoSrc}}" alt="Gochain Explorer" />
       </a>
     </div>
     <div class="topbar__theme">

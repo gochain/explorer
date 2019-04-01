@@ -15,7 +15,7 @@ export class ToggleSwitchComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._layoutService.themeColor.pipe(
+    this._layoutService.themeColor$.pipe(
       filter(value => !!value)
     ).subscribe(value => {
       this.themeColor = value;
@@ -24,6 +24,6 @@ export class ToggleSwitchComponent implements OnInit {
 
   onChange() {
     const color = this.themeColor === ThemeColor.DARK ? ThemeColor.LIGHT : ThemeColor.DARK;
-    this._layoutService.themeColor.next(color);
+    this._layoutService.themeColor$.next(color);
   }
 }

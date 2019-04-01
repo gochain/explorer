@@ -2,7 +2,7 @@ import {MenuItem} from '../models/menu_item.model';
 import {ThemeColor} from './enums';
 
 export const THEME_SETTINGS = {
-  color: ThemeColor.DARK,
+  color: ThemeColor.LIGHT,
 };
 
 export const ROUTES = {
@@ -79,4 +79,9 @@ export const TOKEN_TYPES = {
   Erc777Sender: 'ERC777 Sender',
   Erc827: 'ERC827',
   Erc884: 'ERC884',
+};
+
+export const LOGO_NAMES = {
+  [ThemeColor.LIGHT]: 'logo_fullcolor.png',
+  [ThemeColor.DARK]: 'logo_allwhite.png',
 };
