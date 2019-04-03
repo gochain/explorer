@@ -18,7 +18,7 @@
         </li>
         <li>
           <p>Created At</p>
-          <b>{{block.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{block.created_at | timeAgo }})</b>
+          <b>{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo }})</b>
         </li>
         <li>
           <p>Parent block hash</p>
@@ -86,7 +86,7 @@
             Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
           </div>
           <div class="uk-text-truncate">
-            Processed: {{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+            Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
           </div>
           <div class="uk-text-truncate">
             From: <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
@@ -114,7 +114,7 @@
             <tbody>
             <tr *ngFor="let tx of transactions">
               <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-              <td class="uk-text-nowrap">{{tx.created_at| date: 'dd/MM/yyyy HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+              <td class="uk-text-nowrap">{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
               </td>
               <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.from}}">{{tx.from}}</a></td>
               <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.to}}">{{tx.to}}</a></td>
