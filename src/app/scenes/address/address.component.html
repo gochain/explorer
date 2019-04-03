@@ -58,7 +58,7 @@
         </li>
         <li>
           <p>Updated at:</p>
-          <b>{{addr.updated_at}}</b>
+          <b>{{addr.updated_at | date: 'yyyy/MM/dd, HH:mm:ss'}}</b>
         </li>
       </ul>
     </div>
@@ -72,7 +72,7 @@
               <div class="tr-card" *ngFor="let tx of transactions">
                 <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
                 </div>
-                <div class="uk-text-truncate">Processed: {{tx.created_at}}
+                <div class="uk-text-truncate">Processed: {{tx.created_at | date: 'yyyy/MM/dd, HH:mm:ss'}}
                   ({{tx.created_at | timeAgo}})
                 </div>
                 <div class="uk-text-truncate">Associate:
@@ -106,7 +106,7 @@
                     <tr *ngFor="let tx of transactions">
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
                       <td class="uk-text-nowrap">
-                        {{tx.created_at}} ({{tx.created_at | timeAgo}})
+                        {{tx.created_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.created_at | timeAgo}})
                       </td>
                       <ng-container *ngIf="addr.address === tx.to; else out">
                         <td>
@@ -150,8 +150,8 @@
                 <div class="uk-text-truncate"> <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></div>
                 <div class="uk-text-truncate">
                   <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                    Processed: {{tx.created_at}} ({{tx.created_at | timeAgo }})</ng-container>
-                  <ng-template #updated_at>Processed: {{tx.updated_at}} ({{tx.updated_at | timeAgo }})</ng-template>
+                    Processed: {{tx.created_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.created_at | timeAgo }})</ng-container>
+                  <ng-template #updated_at>Processed: {{tx.updated_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
                 </div>
                 <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
                 <div class="uk-text-truncate">To: {{tx.to_address}}</div>
@@ -176,10 +176,10 @@
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a></td>
                       <td>
                         <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                          {{tx.created_at}} ({{tx.created_at | timeAgo }})
+                          {{tx.created_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.created_at | timeAgo }})
                         </ng-container>
                         <ng-template #updated_at>
-                          {{tx.updated_at}} ({{tx.updated_at | timeAgo }})</ng-template>
+                          {{tx.updated_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.updated_at | timeAgo }})</ng-template>
                       </td>
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
                       <td class="uk-text-truncate"><a class="ws-p" routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
@@ -258,7 +258,7 @@
               <p>Contract Name: {{contract.contract_name}}</p>
               <p>Compiler Version: {{contract.compiler_version}}</p>
               <p>Optimization: {{contract.optimization}}</p>
-              <p>Verified: {{contract.updated_at}} ({{contract.updated_at | timeAgo}})</p>
+              <p>Verified: {{contract.updated_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{contract.updated_at | timeAgo}})</p>
               <pre class="code">{{contract.source_code}}</pre>
             </ng-container>
             <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-microchip"></i> Contract Bytecode</h5>
