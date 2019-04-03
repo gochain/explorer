@@ -21,7 +21,7 @@
         </li>
         <li>
           <p>Processed at</p>
-          <b>{{tx.created_at | date: 'yyyy/MM/dd, HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
+          <b>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
         </li>
         <li *ngIf="!tx.to">
           <p>Contract address</p>
