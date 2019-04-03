@@ -10,10 +10,7 @@
 </p>
 <p>
   If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published
-  online.
-</p>
-<p>
-  Compiler version: {{compilerVersion$ | async}}
+  online. (to build a contract you should either use <a href="https://github.com/gochain-io/web3#build-a-smart-contract">web3 tool</a> or set the version of the solc compiler in the contract source header using a 'pragma solidity' tag)
 </p>
 
 <form class="uk-form-horizontal" [formGroup]="form" (submit)="onSubmit()">
@@ -29,15 +26,15 @@
       <input class="uk-input" type="text" placeholder="" formControlName="contract_name">
     </div>
   </div>
-  <!--<div class="uk-margin">
+  <div class="uk-margin">
     <label class="uk-form-label" for="form-horizontal-select">Compiler*</label>
     <div class="uk-form-controls">
-      <select class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
+      <select *ngIf="compilers$ | async as compilers" class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
         <option value="" disabled selected>Select compiler</option>
         <option *ngFor="let compiler of compilers">{{compiler}}</option>
       </select>
     </div>
-  </div>-->
+  </div>
   <!--<div class="uk-margin">
     <div class="uk-form-label">Optimization*</div>
     <div class="uk-form-controls uk-form-controls-text">

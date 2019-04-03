@@ -20,6 +20,7 @@ import {PaginationComponent} from './components/pagination/pagination.component'
 import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.component';
 import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
 import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
+import {TokenAssetComponent} from './scenes/token-asset/token-asset.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
@@ -27,7 +28,7 @@ import {ContractComponent} from './scenes/contract/contract.component';
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
 import {LayoutService} from './services/layout.service';
-import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
+import {WalletService} from './modules/wallet/wallet.service';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes/pipes.module';
@@ -36,12 +37,14 @@ import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {SliderModule} from './modules/slider/slider.module';
 import {ToastrModule} from './modules/toastr/toastr.module';
+import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
+import { TokenComponent } from './scenes/token/token.component';
 
 @NgModule({
   declarations: [
@@ -63,6 +66,8 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     MobileMenuComponent,
     InfoComponent,
     ContractComponent,
+    TokenAssetComponent,
+    TokenComponent,
   ],
   imports: [
     RouterModule.forRoot(APP_ROUTES),
@@ -90,6 +95,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     ApiService,
     CommonService,
     LayoutService,
+    WalletService,
   ],
   bootstrap: [AppComponent]
 })

@@ -1,26 +1,18 @@
-.PHONY: dep server grabber build frontend backend docker release install test deploy
+.PHONY: docker test-backend server grabber backend frontend build
 
 docker:
-	docker build -t gochain/explorer:go-test .
+	docker build -t gochain/explorer .
 
-# test:
-# 	npm install
-# 	./run_tests.sh
+test-backend:
+	go test ./...
 
-# release: docker
-# 	./release.sh
+server:
+	cd server && go build -v
 
-server: build
-	cd server && ./server
-
-grabber: buildback
-	cd grabber && ./grabber
-
-build: backend frontend
-
-backend:	
-	cd server &&  go build -v
+grabber:
 	cd grabber && go build -v
+
+backend: server grabber
 
 frontend:
 	npm i
@@ -29,3 +21,5 @@ frontend:
 	rm -rf dist/explorer
 	npm rebuild node-sass
 	ng build --prod
+
+build: backend frontend

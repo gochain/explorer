@@ -27,6 +27,7 @@ var backendInstance *backend.Backend
 var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
 var reCaptchaSecret string
+var rpcUrl string
 
 const defaultFetchLimit = 500
 
@@ -98,30 +99,30 @@ func parseBlockNumber(r *http.Request) (int, error) {
 }
 
 func main() {
-	var rpcUrl string
 	var mongoUrl string
 	var dbName string
 	var loglevel string
 
 	app := cli.NewApp()
+	app.Usage = "Server serves the explorer web interface, backed by a mongo database."
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
-			Usage:       "rpc api url, 'https://rpc.gochain.io'",
+			Usage:       "rpc api url",
 			Destination: &rpcUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
-			Usage:       "mongo connection url, '127.0.0.1:27017'",
+			Usage:       "mongo connection url",
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
 			Value:       "blocks",
-			Usage:       "mongo database name, 'blocks'",
+			Usage:       "mongo database name",
 			Destination: &dbName,
 		},
 		cli.StringFlag{
@@ -158,7 +159,7 @@ func main() {
 		cors2 := cors.New(cors.Options{
 			// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 			AllowedOrigins:   []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Origin"},
 			ExposedHeaders:   []string{"Link"},
 			AllowCredentials: true,
@@ -186,8 +187,10 @@ func main() {
 			r.Get("/{address}/contract", getContract)
 		})
 		r.Route("/api", func(r chi.Router) {
+			r.Head("/", pingDB)
 			r.Post("/verify", verifyContract)
 			r.Get("/compiler", getCompilerVersion)
+			r.Get("/rpc_provider", getRpcProvider)
 		})
 		r.Route("/api/transaction", func(r chi.Router) {
 			r.Get("/{hash}", getTransaction)
@@ -198,6 +201,9 @@ func main() {
 		})
 
 		r.Route("/", func(r chi.Router) {
+			r.Head("/", func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
 			r.Get("/*", staticHandler)
@@ -337,17 +343,37 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}*/
-	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" {
+	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
 		err := errors.New("required field is empty")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
+
+	compilerVersions, err := backendInstance.GetCompilerVersion()
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	compilerOk := false
+	for _, compiler := range compilerVersions {
+		if contractData.CompilerVersion == compiler {
+			compilerOk = true
+		}
+	}
+
+	if compilerOk != true {
+		err := errors.New("wrong compiler version")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
 	/*err = verifyReCaptcha(contractData.RecaptchaToken, reCaptchaSecret, "contractVerification", r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}*/
-	result, err := backendInstance.VerifyContract(contractData)
+	result, err := backendInstance.VerifyContract(r.Context(), contractData)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
@@ -362,6 +388,10 @@ func getCompilerVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func getRpcProvider(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, rpcUrl)
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
@@ -397,4 +427,15 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
+}
+
+func pingDB(w http.ResponseWriter, r *http.Request) {
+	err := backendInstance.PingDB()
+	if err != nil {
+		log.Error().Err(err).Msg("Cannot ping DB")
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+
 }

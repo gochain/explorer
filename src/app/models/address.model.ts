@@ -8,6 +8,8 @@ export class Address {
   total_supply: number;
   contract: boolean;
   go20: boolean;
+  erc_types: string[];
+  ercObj: object;
   supplyOwned?: string;
   number_of_transactions: number;
   number_of_token_holders: number;

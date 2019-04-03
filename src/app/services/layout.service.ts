@@ -12,7 +12,7 @@ import {ThemeColor} from '../utils/enums';
 })
 export class LayoutService {
   isPageLoading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  themeColor: BehaviorSubject<ThemeColor>;
+  themeColor$: BehaviorSubject<ThemeColor> = new BehaviorSubject<ThemeColor>(ThemeColor.LIGHT);
   themeSettings: ThemeSettings;
   mobileMenuState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   mobileSearchState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -21,14 +21,15 @@ export class LayoutService {
     const themeSettings = localStorage.getItem('THEME_SETTINGS');
     if (themeSettings) {
       this.themeSettings = JSON.parse(themeSettings);
+      console.log(this.themeSettings);
     } else {
       localStorage.setItem('THEME_SETTINGS', JSON.stringify(THEME_SETTINGS));
       this.themeSettings = THEME_SETTINGS;
     }
 
-    this.themeColor = new BehaviorSubject<ThemeColor>(this.themeSettings.color);
+    this.themeColor$.next(this.themeSettings.color);
 
-    this.themeColor.subscribe((value: ThemeColor) => {
+    this.themeColor$.subscribe((value: ThemeColor) => {
       document.body.classList.remove(ThemeColor.DARK, ThemeColor.LIGHT);
       document.body.classList.add(value);
       this.themeSettings.color = value;

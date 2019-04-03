@@ -9,21 +9,21 @@ import {filter} from 'rxjs/operators';
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent implements OnInit {
-  themeColor: string;
+  themeColor$: string;
 
   constructor(private _layoutService: LayoutService) {
   }
 
   ngOnInit() {
-    this._layoutService.themeColor.pipe(
+    this._layoutService.themeColor$.pipe(
       filter(value => !!value)
     ).subscribe(value => {
-      this.themeColor = value;
+      this.themeColor$ = value;
     });
   }
 
   onThemeColorChange() {
-    this._layoutService.themeColor.next(this.themeColor);
+    this._layoutService.themeColor$.next(this.themeColor$);
   }
 
   onSubmit() {

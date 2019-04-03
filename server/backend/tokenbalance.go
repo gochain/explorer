@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"errors"
+	"github.com/gochain-io/explorer/server/utils"
 	"math/big"
 	"strings"
 
@@ -20,6 +21,7 @@ type TokenDetails struct {
 	TotalSupply *big.Int
 	Decimals    int64
 	Block       int64
+	Types       []utils.ErcName
 }
 
 type TokenHolderDetails struct {
@@ -80,16 +82,16 @@ func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenH
 	return th, err
 }
 
-func (rpc *TokenBalance) GetTokenDetails(contract string) (*TokenDetails, error) {
+func (rpc *TokenBalance) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
 	tb := &TokenDetails{
-		Contract:    common.HexToAddress(contract),
+		Contract:    common.HexToAddress(contractAddress),
 		Decimals:    0,
 		TotalSupply: big.NewInt(0),
 	}
-	err := tb.queryTokenDetails(rpc.conn)
+	err := tb.queryTokenDetails(rpc.conn, byteCode)
 	return tb, err
 }
 
@@ -109,40 +111,51 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client) err
 	return err
 }
 
-func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client) error {
+func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
+
 	if err != nil {
 		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
 		return err
 	}
 
-	decimals, err := token.Decimals(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
-		return err
-	}
-	tb.Decimals = decimals.Int64()
-
-	totalSupply, err := token.TotalSupply(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
-		tb.TotalSupply = big.NewInt(0)
-		return err
-	}
-	tb.TotalSupply = totalSupply
-
-	tb.Symbol, err = token.Symbol(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
-		tb.Symbol = "MISSING"
-	}
-
-	tb.Name, err = token.Name(nil)
-	if err != nil {
-		log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
-		tb.Name = "MISSING"
+	var interfaces []utils.InterfaceName
+	tb.Types, interfaces = token.GetInfo(byteCode)
+Loop:
+	for _, interfaceName := range interfaces {
+		if utils.InterfaceIdentifiers[interfaceName].Callable {
+			switch interfaceName {
+			case utils.Decimals:
+				decimals, err := token.Decimals(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
+					continue Loop
+				}
+				tb.Decimals = decimals.Int64()
+			case utils.TotalSupply:
+				totalSupply, err := token.TotalSupply(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
+					tb.TotalSupply = big.NewInt(0)
+					continue Loop
+				}
+				tb.TotalSupply = totalSupply
+			case utils.Symbol:
+				tb.Symbol, err = token.Symbol(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
+					tb.Symbol = "MISSING"
+				}
+			case utils.Name:
+				tb.Name, err = token.Name(nil)
+				if err != nil {
+					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
+					tb.Name = "MISSING"
+				}
+			}
+		}
 	}
 
 	return err

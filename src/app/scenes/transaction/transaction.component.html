@@ -4,13 +4,20 @@
     <app-search></app-search>
   </div>
 </div>
-<ng-container *ngIf="(transaction | async) as tx; else transactionNotFound">
+<ng-container *ngIf="(transaction$ | async) as tx; else transactionNotFound">
   <div class="uk-margin">
     <div class="uk-overflow-auto list-holder">
       <ul>
         <li>
           <p>Transaction hash</p>
           <b>{{tx.tx_hash}}</b>
+        </li>
+        <li>
+          <p>Block number</p>
+          <b>
+            <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
+            <div class="badge m-l--20" *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block Confirmations</div>
+          </b>
         </li>
         <li>
           <p>Processed at</p>
@@ -50,7 +57,7 @@
             </li>
             <li>
               <p>Gas used</p>
-              <b>{{tx.gas_fee/tx.gas_price | bigNumber}}</b>
+              <b>{{tx.gas_fee / tx.gas_price | bigNumber}}</b>
             </li>
             <li>
               <p>Gas fee</p>
@@ -60,12 +67,6 @@
         </li>
         <li>
           <ul>
-            <li>
-              <p>Block number</p>
-              <b>
-                <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
-              </b>
-            </li>
             <li>
               <p>Nonce</p>
               <b>{{tx.nonce}}</b>

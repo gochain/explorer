@@ -25,8 +25,8 @@ export class ApiService {
       : environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
   }
 
-  get(url: string, params?: HttpParams): Observable<any> {
-    return this.http.get<any>(this.apiURL + url, {
+  get(url: string, params?: HttpParams, manualUrl = false): Observable<any> {
+    return this.http.get<any>(manualUrl ? url : (this.apiURL + url), {
       params
     }).pipe(
       catchError(this._handleError)
@@ -51,8 +51,12 @@ export class ApiService {
     console.error(
       `Backend returned code ${error.status}, ` +
       `body was: ${error.error}`);
-    if (objHas(error, 'error.error.message')) {
-      this.toastrService.danger(error.error.error.message);
+    const msg = objHas(error, 'error.error.message')
+      ? error.error.error.message
+      : error.message
+        ? error.message : null;
+    if (msg) {
+      this.toastrService.danger(msg);
     } else {
       this.toastrService.danger('Something bad happened during request; please try again later.');
     }

@@ -1,3 +1,5 @@
+// +build integration
+
 package backend
 
 import (
@@ -22,6 +24,7 @@ func createImportBlock() types.Block {
 	testBackend.ImportBlock(&block)
 	return block
 }
+
 func TestImportAddress(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
@@ -82,17 +85,17 @@ func TestTransactions(t *testing.T) {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
 
-	transactionsFromAddress := testBackend.GetTransactionList(transactionFromDB.From, 0, 100)
+	transactionsFromAddress := testBackend.GetTransactionList(transactionFromDB.From, 0, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsFromAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsFromAddress), 4)
 	}
 
-	transactionsToAddress := testBackend.GetTransactionList(transactionFromDB.To, 0, 100)
+	transactionsToAddress := testBackend.GetTransactionList(transactionFromDB.To, 0, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsToAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
 
-	transactionsToAddress = testBackend.GetTransactionList(transactionFromDB.To, 2, 100)
+	transactionsToAddress = testBackend.GetTransactionList(transactionFromDB.To, 2, 100, time.Unix(0, 0), time.Now(), nil)
 	if len(transactionsToAddress) != 2 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 2)
 	}
@@ -208,7 +211,7 @@ func TestTokenHolder(t *testing.T) {
 	testBackend.ImportTokenHolder(addrHash, tokenHolderHash2, token)
 	holders := testBackend.GetTokenHoldersList(addrHash, 0, 100)
 	if len(holders) != 2 {
-		t.Errorf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
+		t.Fatalf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
 	}
 
 	if holders[0].TokenHolderAddress != tokenHolderHash1 {
@@ -240,17 +243,17 @@ func TestInternalTransactions(t *testing.T) {
 	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
 	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
 
-	var transaction1 = TransferEvent{BlockNumber: 0001, From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
-	var transaction2 = TransferEvent{BlockNumber: 0002, From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
+	var transaction1 = TransferEvent{BlockNumber: 10, TransactionHash: "hash1", From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
+	var transaction2 = TransferEvent{BlockNumber: 20, TransactionHash: "hash2", From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
 	testBackend.ImportInternalTransaction(addrHash, transaction1)
 	testBackend.ImportInternalTransaction(addrHash, transaction2)
 
-	transactions := testBackend.GetInternalTransactionsList(addrHash, 0, 100)
+	transactions := testBackend.GetInternalTransactionsList(addrHash, "", "", 0, 100)
 	if len(transactions) != 2 {
-		t.Errorf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
+		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
 	}
 
 	if transactions[0].BlockNumber != transaction2.BlockNumber {
@@ -262,6 +265,7 @@ func TestInternalTransactions(t *testing.T) {
 	}
 
 }
+
 func TestReloadBlock(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock()
