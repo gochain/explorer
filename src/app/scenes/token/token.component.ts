@@ -24,9 +24,14 @@ export class TokenComponent implements OnInit, OnDestroy {
   addrHash: string;
   tokenId: string;
   tokenTypes = TOKEN_TYPES;
+  apiUrl = this._commonService.getApiUrl();
   private _subsArr$: Subscription[] = [];
 
-  constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
+  constructor(
+    private _commonService: CommonService,
+    private _route: ActivatedRoute,
+    private _layoutService: LayoutService,
+    ) {
   }
 
   ngOnInit() {

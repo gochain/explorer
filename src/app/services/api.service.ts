@@ -15,14 +15,14 @@ import {objHas} from '../utils/functions';
 export class ApiService {
   apiURL: string;
 
-  constructor(private http: HttpClient, private toastrService: ToastrService) {
-    this.apiURL = this.getApiURL();
-  }
-
-  getApiURL() {
+  static getApiURL() {
     return environment.production
       ? window.location.origin + '/' + environment.API_PATH
       : environment.API_PROTOCOL + '://' + location.hostname + ':' + environment.API_PORT + '/' + environment.API_PATH;
+  }
+
+  constructor(private http: HttpClient, private toastrService: ToastrService) {
+    this.apiURL = ApiService.getApiURL();
   }
 
   get(url: string, params?: HttpParams, manualUrl = false): Observable<any> {

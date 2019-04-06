@@ -34,6 +34,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
   addrHash: string;
+  apiUrl = this._commonService.getApiUrl();
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
