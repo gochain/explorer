@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/skip2/go-qrcode"
 	"math/big"
 	"net/http"
 	"os"
@@ -11,12 +12,11 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
+	"encoding/json"
+	"errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli"
-
-	"encoding/json"
-	"errors"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -185,6 +185,7 @@ func main() {
 			r.Get("/{address}/holders", getTokenHolders)
 			r.Get("/{address}/internal_transactions", getInternalTransactions)
 			r.Get("/{address}/contract", getContract)
+			r.Get("/{address}/qr", getQr)
 		})
 		r.Route("/api", func(r chi.Router) {
 			r.Head("/", pingDB)
@@ -328,6 +329,17 @@ func getContract(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
 	contract := backendInstance.GetContract(contractAddress)
 	writeJSON(w, http.StatusOK, contract)
+}
+
+func getQr(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	var png []byte
+	png, err := qrcode.Encode(contractAddress, qrcode.Medium, 256)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	writeFile(w, http.StatusOK, "image/png", png)
 }
 
 func verifyContract(w http.ResponseWriter, r *http.Request) {
