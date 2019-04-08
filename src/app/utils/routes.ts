@@ -11,9 +11,10 @@ import {ContractComponent} from '../scenes/contract/contract.component';
 import {TokenAssetComponent} from '../scenes/token-asset/token-asset.component';
 import {TokenComponent} from '../scenes/token/token.component';
 // import {SettingsComponent} from '../scenes/settings/settings.component';
+/*SERVICES*/
+import {CommonService} from '../services/common.service';
 /*UTILS*/
 import {ROUTES} from './constants';
-import {CommonService} from '../services/common.service';
 
 export const APP_ROUTES: Routes = [
   {
@@ -22,7 +23,11 @@ export const APP_ROUTES: Routes = [
     resolve: {rpcProvider: CommonService},
   },
   {path: ROUTES.BLOCK + '/:id', component: BlockComponent},
-  {path: ROUTES.TRANSACTION + '/:id', component: TransactionComponent},
+  {
+    path: ROUTES.TRANSACTION + '/:id',
+    component: TransactionComponent,
+    resolve: {rpcProvider: CommonService},
+  },
   {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},
   {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
   {path: ROUTES.TOKEN + '/:id', component: TokenComponent},

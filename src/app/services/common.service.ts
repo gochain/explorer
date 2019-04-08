@@ -1,6 +1,6 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {Observable, of} from 'rxjs';
+import {Observable} from 'rxjs';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -28,6 +28,7 @@ export class CommonService implements Resolve<string> {
 
   async getRpcProvider() {
     this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
+    console.log(this.rpcProvider);
     return this.rpcProvider;
   }
 

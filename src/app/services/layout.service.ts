@@ -21,7 +21,6 @@ export class LayoutService {
     const themeSettings = localStorage.getItem('THEME_SETTINGS');
     if (themeSettings) {
       this.themeSettings = JSON.parse(themeSettings);
-      console.log(this.themeSettings);
     } else {
       localStorage.setItem('THEME_SETTINGS', JSON.stringify(THEME_SETTINGS));
       this.themeSettings = THEME_SETTINGS;
