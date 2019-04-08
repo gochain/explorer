@@ -1,6 +1,6 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {Observable, of} from 'rxjs';
+import {Observable} from 'rxjs';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
