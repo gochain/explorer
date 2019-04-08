@@ -28,7 +28,6 @@ export class CommonService implements Resolve<string> {
 
   async getRpcProvider() {
     this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
-    console.log(this.rpcProvider);
     return this.rpcProvider;
   }
 

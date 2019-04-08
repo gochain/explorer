@@ -33,7 +33,6 @@ export class TransactionComponent implements OnInit, OnDestroy {
   recentBlockNumber$: Observable<number> = interval(5000).pipe(
     startWith(0),
     mergeMap(() => fromPromise(this._walletService.w3.eth.getBlockNumber())),
-    tap(res => console.log(res)),
   );
 
   constructor(private _commonService: CommonService,
