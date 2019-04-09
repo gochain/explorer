@@ -13,10 +13,18 @@
           <b>{{tx.tx_hash}}</b>
         </li>
         <li>
+          <p>Status</p>
+          <b>
+            <div class="badge {{tx.status ? 'c--success' : 'c--danger'}}">
+              {{tx.status ? 'Success' : 'Failed'}}
+            </div>
+          </b>
+        </li>
+        <li>
           <p>Block number</p>
           <b>
             <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
-            <div class="badge m-l--20" *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block Confirmations</div>
+            <div class="badge c--info m-l--20" *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block Confirmations</div>
           </b>
         </li>
         <li>

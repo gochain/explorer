@@ -242,6 +242,10 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		receipt, err := self.goClient.TransactionReceipt(context.Background(), tx.Hash())
 		if err == nil {
 			transaction.ContractAddress = receipt.ContractAddress.String()
+			transaction.Status = false
+			if receipt.Status != 0 {
+				transaction.Status = true
+			}
 			toAddress = transaction.ContractAddress
 		} else {
 			log.Error().Err(err).Str("hash", transaction.TxHash).Msg("Cannot get a receipt in importTX")
@@ -474,6 +478,10 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		}
 		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
 		c.ContractAddress = receipt.ContractAddress.String()
+		c.Status = false
+		if receipt.Status != 0 {
+			c.Status = true
+		}
 		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
 	}
 	return &c
