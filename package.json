@@ -12,7 +12,8 @@
     "test:prod": "ng test --watch=false",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "postinstall": "node patch.js"
+    "postinstall": "node patch.js",
+    "analyze": "ng build --prod --stats-json && webpack-bundle-analyzer dist/explorer/stats.json"
   },
   "dependencies": {
     "@angular/animations": "^7.2.12",
@@ -51,6 +52,7 @@
     "protractor": "^5.4.2",
     "ts-node": "^8.0.3",
     "tslint": "^5.15.0",
-    "typescript": "<3.3.0"
+    "typescript": "<3.3.0",
+    "webpack-bundle-analyzer": "^3.2.0"
   }
 }
