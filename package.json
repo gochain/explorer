@@ -1,7 +1,7 @@
 {
   "name": "GoChainExplorer",
   "private": true,
-  "version": "0.4.47",
+  "version": "0.4.48",
   "description": "A lightweight GoChain block explorer",
   "repository": "https://github.com/gochain-io/explorer",
   "scripts": {
@@ -12,18 +12,19 @@
     "test:prod": "ng test --watch=false",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "postinstall": "node patch.js"
+    "postinstall": "node patch.js",
+    "analyze": "ng build --prod --stats-json && webpack-bundle-analyzer dist/explorer/stats.json"
   },
   "dependencies": {
-    "@angular/animations": "^7.2.11",
-    "@angular/common": "^7.2.11",
-    "@angular/compiler": "^7.2.11",
-    "@angular/core": "^7.2.11",
-    "@angular/forms": "^7.2.11",
-    "@angular/http": "^7.2.11",
-    "@angular/platform-browser": "^7.2.11",
-    "@angular/platform-browser-dynamic": "^7.2.11",
-    "@angular/router": "^7.2.11",
+    "@angular/animations": "^7.2.12",
+    "@angular/common": "^7.2.12",
+    "@angular/compiler": "^7.2.12",
+    "@angular/core": "^7.2.12",
+    "@angular/forms": "^7.2.12",
+    "@angular/http": "^7.2.12",
+    "@angular/platform-browser": "^7.2.12",
+    "@angular/platform-browser-dynamic": "^7.2.12",
+    "@angular/router": "^7.2.12",
     "@ngx-progressbar/core": "^5.3.2",
     "@ngx-progressbar/http": "^5.3.2",
     "rxjs": "^6.4.0",
@@ -32,16 +33,16 @@
     "zone.js": "^0.9.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^0.13.7",
-    "@angular/cli": "^7.3.7",
-    "@angular/compiler-cli": "^7.2.11",
-    "@angular/language-service": "^7.2.11",
+    "@angular-devkit/build-angular": "^0.13.8",
+    "@angular/cli": "^7.3.8",
+    "@angular/compiler-cli": "^7.2.12",
+    "@angular/language-service": "^7.2.12",
     "@types/jasmine": "^3.3.12",
     "@types/jasminewd2": "^2.0.6",
-    "@types/node": "^11.12.2",
+    "@types/node": "^11.13.2",
     "@types/web3": "^1.0.18",
     "codelyzer": "^5.0.0",
-    "jasmine-core": "^3.3.0",
+    "jasmine-core": "^3.4.0",
     "jasmine-spec-reporter": "~4.2.1",
     "karma": "^4.0.1",
     "karma-chrome-launcher": "~2.2.0",
@@ -50,7 +51,8 @@
     "karma-jasmine-html-reporter": "^1.4.0",
     "protractor": "^5.4.2",
     "ts-node": "^8.0.3",
-    "tslint": "^5.14.0",
-    "typescript": "<3.3.0"
+    "tslint": "^5.15.0",
+    "typescript": "<3.3.0",
+    "webpack-bundle-analyzer": "^3.2.0"
   }
 }
