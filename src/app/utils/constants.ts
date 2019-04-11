@@ -82,6 +82,6 @@ export const TOKEN_TYPES = {
 };
 
 export const LOGO_NAMES = {
-  [ThemeColor.LIGHT]: 'logo_fullcolor.png',
-  [ThemeColor.DARK]: 'logo_allwhite.png',
+  [ThemeColor.LIGHT]: 'logo_fullcolor.svg',
+  [ThemeColor.DARK]: 'logo_allwhite.svg',
 };
