@@ -31,6 +31,10 @@ export class CommonService implements Resolve<string> {
     return this.rpcProvider;
   }
 
+  getApiUrl(): string {
+    return this._apiService.apiURL;
+  }
+
   getRecentBlocks(): Observable<BlockList> {
     return this._apiService.get('/blocks');
   }

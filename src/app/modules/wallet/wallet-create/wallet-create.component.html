@@ -10,6 +10,12 @@
       <pre class="code">{{account.privateKey}}</pre>
       <p>Address</p>
       <pre class="code">{{account.address}}</pre>
+      <p>QR</p>
+      <p>
+        <a href="{{apiUrl}}/address/{{account.address}}/qr" target="_blank">
+          <img height="150" width="150" src="{{apiUrl}}/address/{{account.address}}/qr" alt="{{account.address}}" />
+        </a>
+      </p>
       <div class="center m-t--20">
         <button routerLink="/wallet" class="btn btn--sm btn--round">Back</button>
       </div>

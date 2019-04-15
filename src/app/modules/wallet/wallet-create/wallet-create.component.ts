@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {WalletService} from '../wallet.service';
 import {Account} from 'web3/eth/accounts';
+import {CommonService} from '../../../services/common.service';
 
 @Component({
   selector: 'app-wallet-create',
@@ -10,8 +11,12 @@ import {Account} from 'web3/eth/accounts';
 export class WalletCreateComponent implements OnInit {
 
   account: Account;
+  apiUrl = this._commonService.getApiUrl();
 
-  constructor(private _walletService: WalletService) {
+  constructor(
+    private _walletService: WalletService,
+    private _commonService: CommonService,
+  ) {
   }
 
   ngOnInit(): void {

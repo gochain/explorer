@@ -60,6 +60,14 @@
           <p>Updated at:</p>
           <b>{{addr.updated_at | date: 'dd/MM/yyyy HH:mm:ss'}}</b>
         </li>
+        <li>
+          <p>QR:</p>
+          <b>
+            <a href="{{apiUrl}}/address/{{addr.address}}/qr" target="_blank">
+              <img height="150" width="150" src="{{apiUrl}}/address/{{addr.address}}/qr" alt="{{addr.address}}" />
+            </a>
+          </b>
+        </li>
       </ul>
     </div>
     <div class="list-holder__footer">
