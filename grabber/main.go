@@ -1,12 +1,11 @@
 package main
 
 import (
-	"os"
-
-	"math/big"
-	"time"
-
 	"encoding/hex"
+	"fmt"
+	"math/big"
+	"os"
+	"time"
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/v3/common"
@@ -55,13 +54,25 @@ func main() {
 			Usage:       "refill from this block",
 			Destination: &startFrom,
 		},
+		cli.StringSliceFlag{
+			Name:  "locked-accounts",
+			Usage: "accounts with locked funds to exclude from rich list and circulating supply",
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName)
+
+		lockedAccounts := c.StringSlice("locked-accounts")
+		for _, l := range lockedAccounts {
+			if !common.IsHexAddress(l) {
+				return fmt.Errorf("invalid hex address: %s", l)
+			}
+		}
+
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)

@@ -23,7 +23,7 @@ type Backend struct {
 	tokenBalance          *TokenBalance
 	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
-	genesisAddressList    []string
+	lockedAccounts        []string
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -41,7 +41,7 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to gochain network")
@@ -54,6 +54,7 @@ func NewBackend(mongoUrl, rpcUrl, dbName string) *Backend {
 	importer.mongo = mongoBackend
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
 	importer.dockerhubAPI = new(DockerHubAPI)
+	importer.lockedAccounts = lockedAccounts
 	return importer
 }
 
@@ -91,8 +92,20 @@ func (self *Backend) TotalSupply() (*big.Int, error) {
 func (self *Backend) CirculatingSupply() (*big.Int, error) {
 	var value *big.Int
 	err := retry(5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.circulatingSupply()
-		return err
+		total, err := self.extendedGochainClient.ethTotalSupply()
+		if err != nil {
+			return err
+		}
+		locked := new(big.Int)
+		for _, l := range self.lockedAccounts {
+			bal, err := self.extendedGochainClient.ethGetBalance(l, "latest")
+			if err != nil {
+				return err
+			}
+			locked = locked.Add(locked, bal)
+		}
+		value = new(big.Int).Sub(total, locked)
+		return nil
 	})
 	return value, err
 }
@@ -100,14 +113,7 @@ func (self *Backend) GetStats() *models.Stats {
 	return self.mongo.getStats()
 }
 func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
-	if len(self.genesisAddressList) == 0 {
-		var err error
-		_, self.genesisAddressList, err = self.GenesisAlloc()
-		if err != nil {
-			log.Info().Err(err).Msg("failed response from GenesisAlloc")
-		}
-	}
-	return self.mongo.getRichlist(skip, limit, self.genesisAddressList)
+	return self.mongo.getRichlist(skip, limit, self.lockedAccounts)
 
 }
 func (self *Backend) GetAddressByHash(hash string) *models.Address {
@@ -213,15 +219,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 func (self *Backend) UpdateStats() {
 	self.mongo.updateStats()
 }
-func (self *Backend) GenesisAlloc() (*big.Int, []string, error) {
-	var value *big.Int
-	var list []string
-	err := retry(5, 2*time.Second, func() (err error) {
-		value, list, err = self.extendedGochainClient.genesisAlloc()
-		return err
-	})
-	return value, list, err
-}
+
 func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetails, error) {
 	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
 }

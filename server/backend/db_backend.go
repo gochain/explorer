@@ -553,9 +553,9 @@ func (self *MongoBackend) updateContract(contract *models.Contract) bool {
 	return true
 }
 
-func (self *MongoBackend) getRichlist(skip, limit int, genesisAddressList []string) []*models.Address {
+func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) []*models.Address {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": genesisAddressList}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
+	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
 		log.Debug().Err(err).Msg("GetRichlist")
 	}

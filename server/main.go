@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/skip2/go-qrcode"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"math/big"
 	"net/http"
 	"os"
@@ -12,15 +14,14 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"encoding/json"
-	"errors"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/urfave/cli"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"github.com/gochain-io/gochain/v3/common"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	qrcode "github.com/skip2/go-qrcode"
+	"github.com/urfave/cli"
 )
 
 var backendInstance *backend.Backend
@@ -143,13 +144,25 @@ func main() {
 			Usage:       "secret key for google recaptcha v3",
 			Destination: &reCaptchaSecret,
 		},
+		cli.StringSliceFlag{
+			Name:  "locked-accounts",
+			Usage: "accounts with locked funds to exclude from rich list and circulating supply",
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
 		zerolog.SetGlobalLevel(level)
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName)
+
+		lockedAccounts := c.StringSlice("locked-accounts")
+		for _, l := range lockedAccounts {
+			if !common.IsHexAddress(l) {
+				return fmt.Errorf("invalid hex address: %s", l)
+			}
+		}
+
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
