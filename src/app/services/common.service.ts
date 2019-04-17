@@ -47,7 +47,7 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/blocks/' + blockNum + '/transactions', data);
   }
 
-  getTransaction(txHash: string): Observable<Transaction> {
+  getTransaction(txHash: string): Observable<Transaction | null> {
     return this._apiService.get('/transaction/' + txHash);
   }
 

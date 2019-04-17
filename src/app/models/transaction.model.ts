@@ -11,4 +11,5 @@ export class Transaction {
   from: string;
   to: string;
   contract_address: string;
+  status: boolean;
 }

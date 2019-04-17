@@ -6,6 +6,7 @@ type Transaction struct {
 	TxHash          string    `json:"tx_hash" bson:"tx_hash"`
 	To              string    `json:"to" bson:"to"`
 	From            string    `json:"from" bson:"from"`
+	Status          bool      `json:"status" bson:"status"`
 	ContractAddress string    `json:"contract_address" bson:"contract_address"`
 	Value           string    `json:"value" bson:"value"`
 	GasPrice        string    `json:"gas_price" bson:"gas_price"`
