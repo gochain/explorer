@@ -6,7 +6,10 @@ import {PipeTransform, Pipe} from '@angular/core';
 
 export class WeiToGOPipe implements PipeTransform {
 
-  transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18 ): string {    
+  transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18 ): string {
+    if (!val) {
+      return;
+    }
     const parts = val.toString().split('.');
     if (parts[0].length > decimals) {
       parts[0] = parts[0].slice(0, parts[0].length - decimals) + '.' + parts[0].slice(parts[0].length - decimals, parts[0].length);
