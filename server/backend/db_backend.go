@@ -243,7 +243,7 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		if err == nil {
 			transaction.ContractAddress = receipt.ContractAddress.String()
 			transaction.Status = false
-			if receipt.Status != 0 {
+			if receipt.Status == 1 {
 				transaction.Status = true
 			}
 			toAddress = transaction.ContractAddress
@@ -479,7 +479,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
 		c.ContractAddress = receipt.ContractAddress.String()
 		c.Status = false
-		if receipt.Status != 0 {
+		if receipt.Status == 1 {
 			c.Status = true
 		}
 		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")

@@ -4,7 +4,7 @@
     <app-search></app-search>
   </div>
 </div>
-<ng-container *ngIf="(transaction$ | async) as tx; else transactionNotFound">
+<ng-container *ngIf="tx; else transactionNotFound">
   <div class="uk-margin">
     <div class="uk-overflow-auto list-holder">
       <ul>
@@ -15,23 +15,33 @@
         <li>
           <p>Status</p>
           <b>
-            <div class="badge {{tx.status ? 'c--success' : 'c--danger'}}">
-              {{tx.status ? 'Success' : 'Failed'}}
-            </div>
+            <ng-container *ngIf="tx.block_number ; else pendingTx;">
+              <div class="badge {{tx.status ? 'c--success' : 'c--danger'}}">
+                {{tx.status ? 'Success' : 'Failed'}}
+              </div>
+            </ng-container>
+            <ng-template #pendingTx>
+              <div class="badge c--info">
+                Pending
+              </div>
+            </ng-template>
           </b>
         </li>
-        <li>
+        <li *ngIf="tx.block_number">
           <p>Block number</p>
           <b>
             <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
-            <div class="badge c--info m-l--20" *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block Confirmations</div>
+            <div class="badge c--info m-l--20"
+                 *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block
+              Confirmations
+            </div>
           </b>
         </li>
-        <li>
+        <li *ngIf="tx.created_at">
           <p>Processed at</p>
           <b>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
         </li>
-        <li *ngIf="!tx.to">
+        <li *ngIf="tx.contract_address">
           <p>Contract address</p>
           <b>
             <a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>
@@ -63,11 +73,11 @@
               <p>Gas limit</p>
               <b>{{tx.gas_limit | bigNumber}}</b>
             </li>
-            <li>
+            <li *ngIf="tx.gas_fee">
               <p>Gas used</p>
               <b>{{tx.gas_fee / tx.gas_price | bigNumber}}</b>
             </li>
-            <li>
+            <li *ngIf="tx.gas_fee">
               <p>Gas fee</p>
               <b>{{tx.gas_fee | weiToGO | bigNumber}}</b>
             </li>
