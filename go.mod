@@ -24,6 +24,7 @@ require (
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/rs/zerolog v1.10.3
+	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/syndtr/goleveldb v0.0.0-20181105012736-f9080354173f // indirect
