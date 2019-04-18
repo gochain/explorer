@@ -194,7 +194,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		for index, address := range addresses {
 			normalizedAddress := common.HexToAddress(address.Address).Hex()
-			balance, err := importer.BalanceAt(normalizedAddress, "pending")
+			balance, err := importer.BalanceAt(normalizedAddress, "latest")
 			if err != nil {
 				log.Fatal().Err(err).Msg("updateAddresses")
 			}
