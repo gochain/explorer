@@ -195,6 +195,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		contract.ContractName = contractData.ContractName
 		contract.SourceCode = compileData[key].Info.Source
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
+		contract.Abi = compileData[key].Info.AbiDefinition
 		contract.UpdatedAt = time.Now()
 		result := self.mongo.updateContract(contract)
 		if !result {
