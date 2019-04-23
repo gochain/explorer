@@ -210,8 +210,8 @@ func main() {
 			r.Get("/*", staticHandler)
 		})
 
-		http.ListenAndServe(":8080", r)
-		return nil
+		err := http.ListenAndServe(":8080", r)
+		return err
 	}
 	err := app.Run(os.Args)
 	if err != nil {

@@ -167,7 +167,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		err := errors.New("contract with given address is already verified")
 		return nil, err
 	}
-	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode)
+	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode, contractData.Optimization)
 	if err != nil {
 		log.Error().Err(err).Msg("error while compilation")
 		err := errors.New("error occurred while compiling source code")
@@ -191,10 +191,11 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
 	if sourceBin == contractBin {
 		contract.Valid = true
-		contract.Optimization = true
+		contract.Optimization = contractData.Optimization
 		contract.ContractName = contractData.ContractName
 		contract.SourceCode = compileData[key].Info.Source
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
+		contract.Abi = compileData[key].Info.AbiDefinition
 		contract.UpdatedAt = time.Now()
 		result := self.mongo.updateContract(contract)
 		if !result {

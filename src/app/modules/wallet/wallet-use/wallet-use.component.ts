@@ -1,14 +1,20 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
+import {ActivatedRoute, ParamMap} from '@angular/router';
 import {Subscription} from 'rxjs';
-import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
+import {CommonService} from '../../../services/common.service';
 /*MODELS*/
-import Contract from 'web3/eth/contract';
+import Web3Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
+import {Contract} from '../../../models/contract.model';
+/*UTILS*/
+import {ErcName, InterfaceName} from '../../../utils/enums';
+import {ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI} from '../../../utils/constants';
 
 @Component({
   selector: 'app-wallet-use',
@@ -26,12 +32,14 @@ export class WalletUseComponent implements OnInit {
   });
 
   // Contract stuff
-  contract: Contract;
+  contract: Web3Contract;
   selectedFunction: ABIDefinition;
   functionResult: any[][];
   functions: ABIDefinition[] = [];
 
   isProcessing = false;
+
+  abiTemplates = [ErcName.Erc20, ErcName.Erc721];
 
   private _subsArr$: Subscription[] = [];
 
@@ -43,15 +51,33 @@ export class WalletUseComponent implements OnInit {
     private _walletService: WalletService,
     private _fb: FormBuilder,
     private _toastrService: ToastrService,
+    private _activatedRoute: ActivatedRoute,
+    private _commonService: CommonService,
   ) {
   }
 
   ngOnInit() {
+    this._subsArr$.push(
+      this._activatedRoute.queryParamMap.pipe(
+        filter((params: ParamMap) => params.has('address'))
+      ).subscribe((params: ParamMap) => {
+        const addr = params.get('address');
+        if (addr.length === 42) {
+          this.useContractForm.patchValue({
+            contractAddress: addr
+          });
+          this.getContractData(addr);
+        } else {
+          this._toastrService.warning('Contract address is invalid');
+        }
+      })
+    );
     this._subsArr$.push(this.useContractForm.get('contractAddress').valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
-    ).subscribe(val => {
+    ).subscribe((val: string) => {
       this.updateContractInfo();
+      this.getContractData(val);
     }));
     this._subsArr$.push(this.useContractForm.get('contractABI').valueChanges.pipe(
       debounceTime(500),
@@ -62,6 +88,31 @@ export class WalletUseComponent implements OnInit {
     this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.subscribe(value => {
       this.loadFunction(value);
     }));
+  }
+
+  private getContractData(addrHash: string) {
+    this._commonService.getContract(addrHash).pipe(
+      filter((data: Contract) => data && data.valid && !!data.abi.length),
+    ).subscribe((data: Contract) => {
+      this.useContractForm.patchValue({
+        contractABI: JSON.stringify(data.abi),
+      }, {
+        emitEvent: false,
+      });
+      this.initiateContract(data.abi, addrHash);
+    });
+  }
+
+  private initiateContract(abi: ABIDefinition[], addrHash: string) {
+    try {
+      this.contract = new this._walletService.w3.eth.Contract(abi, addrHash);
+      this.functions = this.contract.options.jsonInterface
+        .filter((abiDef: ABIDefinition) => abiDef.type === 'function')
+        .sort((abiDef: ABIDefinition) => !abiDef.payable && abiDef.constant ? -1 : 1);
+    } catch (e) {
+      this._toastrService.danger('Can]\'t initiate contract, check entered data');
+      return;
+    }
   }
 
   /**
@@ -76,7 +127,7 @@ export class WalletUseComponent implements OnInit {
     this.selectedFunction = func;
     // TODO: IF ANY INPUTS, add a sub formgroup
     // if constant, just show value immediately
-    if (func.inputs && func.inputs.length) {
+    if (func && func.inputs && func.inputs.length) {
       func.inputs.forEach(() => {
         this.addFunctionParameter();
       });
@@ -146,11 +197,15 @@ export class WalletUseComponent implements OnInit {
     this.functions = [];
     const addr: string = this.useContractForm.get('contractAddress').value;
     let abi = this.useContractForm.get('contractABI').value;
-    if (!addr || !abi) {
+    if (!addr) {
       return;
     }
     if (addr.length !== 42) {
       this._toastrService.danger('Wrong contract address');
+      return;
+    }
+    if (!abi) {
+      return;
     }
 
     if (abi && abi.length > 0) {
@@ -160,14 +215,7 @@ export class WalletUseComponent implements OnInit {
         this._toastrService.danger('Can\'t parse contract abi');
         return;
       }
-      try {
-        this.contract = new this._walletService.w3.eth.Contract(abi, addr);
-        this.functions = this.contract.options.jsonInterface
-          .filter((abiDef: ABIDefinition) => abiDef.type === 'function' && !abiDef.payable && abiDef.constant);
-      } catch (e) {
-        this._toastrService.danger('Can]\'t initiate contract, check entered data');
-        return;
-      }
+      this.initiateContract(abi, addr);
     }
   }
 
@@ -181,5 +229,18 @@ export class WalletUseComponent implements OnInit {
     }
 
     this.callABIFunction(this.selectedFunction, params);
+  }
+
+  onAbiTemplateClick(ercName: ErcName) {
+    const ABI: ABIDefinition[] = ERC_INTERFACE_IDENTIFIERS[ercName].map((interfaceName: InterfaceName) => INTERFACE_ABI[interfaceName]);
+    const addr: string = this.useContractForm.get('contractAddress').value;
+    this.useContractForm.patchValue({
+      contractABI: JSON.stringify(ABI),
+    }, {
+      emitEvent: false,
+    });
+    if (addr.length === 42 && ABI.length) {
+      this.initiateContract(ABI, addr);
+    }
   }
 }
