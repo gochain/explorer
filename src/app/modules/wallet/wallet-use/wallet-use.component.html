@@ -12,6 +12,9 @@
       <div class="uk-form-controls">
               <textarea class="uk-textarea" placeholder="ABI / JSON Interface" formControlName="contractABI"
                         rows="5"></textarea>
+        <div class="m-t--10">
+          or select template: <button *ngFor="let value of abiTemplates" (click)="onAbiTemplateClick(value)" type="button" class="badge m-r--10 c--primary">{{value}}</button>
+        </div>
       </div>
     </div>
     <ng-container *ngIf="contract != null">
@@ -19,8 +22,8 @@
         <label class="uk-form-label">Choose Contract Function (only free functions are available)</label>
         <div class="uk-form-controls">
           <select class="uk-select" formControlName="contractFunction">
-            <option *ngFor="let selectableFunction of functions; let index = index;" [value]="index">
-              {{selectableFunction.name}} - 'free'
+            <option *ngFor="let selectableFunction of functions; let index = index;" [value]="index" [disabled]="selectableFunction.payable || !selectableFunction.constant">
+              {{selectableFunction.name}} - {{!selectableFunction.payable && selectableFunction.constant ? 'free' : 'need wallet'}}
             </option>
           </select>
         </div>

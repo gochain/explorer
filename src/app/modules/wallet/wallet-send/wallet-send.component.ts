@@ -1,19 +1,25 @@
 /*CORE*/
 import {Component, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
-import {Subscription} from 'rxjs';
-import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {ActivatedRoute, ParamMap} from '@angular/router';
+import {forkJoin, Subscription} from 'rxjs';
+import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
+import {CommonService} from '../../../services/common.service';
 /*MODELS*/
-import Contract from 'web3/eth/contract';
+import Web3Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
 import {Tx} from 'web3/eth/types';
 import {TransactionReceipt} from 'web3/types';
+import {Contract} from '../../../models/contract.model';
+import {Address} from '../../../models/address.model';
+import {Badge} from '../../../models/badge.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {DEFAULT_GAS_LIMIT} from '../../../utils/constants';
+import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI, TOKEN_TYPES} from '../../../utils/constants';
+import {ErcName, InterfaceName, StatusColor} from '../../../utils/enums';
 
 @Component({
   selector: 'app-wallet-send',
@@ -55,11 +61,15 @@ export class WalletSendComponent implements OnInit {
   isProcessing = false;
 
   // Contract stuff
-  contract: Contract;
+  contract: Web3Contract;
   selectedFunction: ABIDefinition;
   functionResult: any[][];
 
   isOpening = false;
+
+  contractBadges: Badge[] = [];
+
+  abiTemplates = [ErcName.Erc20, ErcName.Erc721];
 
   private _subsArr$: Subscription[] = [];
 
@@ -89,15 +99,33 @@ export class WalletSendComponent implements OnInit {
     private _walletService: WalletService,
     private _fb: FormBuilder,
     private _toastrService: ToastrService,
+    private _activatedRoute: ActivatedRoute,
+    private _commonService: CommonService,
   ) {
   }
 
   ngOnInit() {
+    this._subsArr$.push(
+      this._activatedRoute.queryParamMap.pipe(
+        filter((params: ParamMap) => params.has('address'))
+      ).subscribe((params: ParamMap) => {
+        const addr = params.get('address');
+        if (addr.length === 42) {
+          this.useContractForm.patchValue({
+            contractAddress: addr
+          });
+          this.getContractData(addr);
+        } else {
+          this._toastrService.warning('Contract address is invalid');
+        }
+      })
+    );
     this._subsArr$.push(this.useContractForm.get('contractAddress').valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
     ).subscribe(val => {
       this.updateContractInfo();
+      this.getContractData(val);
     }));
     this._subsArr$.push(this.useContractForm.get('contractABI').valueChanges.pipe(
       debounceTime(500),
@@ -108,6 +136,47 @@ export class WalletSendComponent implements OnInit {
     this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.subscribe(value => {
       this.loadFunction(value);
     }));
+  }
+
+  private getContractData(addrHash: string) {
+    forkJoin(
+      this._commonService.getAddress(addrHash),
+      this._commonService.getContract(addrHash),
+    ).pipe(
+      filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
+    ).subscribe((data: [Address, Contract]) => {
+      const badges: Badge[] = [];
+      const address: Address = data[0];
+      const contract: Contract = data[1];
+      if (contract.valid) {
+        badges.push({
+          type: StatusColor.Success,
+          text: 'Verified',
+        });
+      }
+      address.erc_types.forEach((value: string) => {
+        badges.push({
+          type: StatusColor.Info,
+          text: TOKEN_TYPES[value],
+        });
+      });
+      this.contractBadges = badges;
+      this.useContractForm.patchValue({
+        contractABI: JSON.stringify(contract.abi),
+      }, {
+        emitEvent: false,
+      });
+      this.initiateContract(contract.abi, addrHash);
+    });
+  }
+
+  private initiateContract(abi: ABIDefinition[], addrHash: string) {
+    try {
+      this.contract = new this._walletService.w3.eth.Contract(abi, addrHash);
+    } catch (e) {
+      this._toastrService.danger('Can]\'t initiate contract, check entered data');
+      return;
+    }
   }
 
   /**
@@ -247,11 +316,15 @@ export class WalletSendComponent implements OnInit {
     this.contract = null;
     const addr: string = this.useContractForm.get('contractAddress').value;
     let abi = this.useContractForm.get('contractABI').value;
-    if (!addr || !abi) {
+    if (!addr) {
       return;
     }
     if (addr.length !== 42) {
       this._toastrService.danger('Wrong contract address');
+      return;
+    }
+    if (!abi) {
+      return;
     }
 
     if (abi && abi.length > 0) {
@@ -261,12 +334,7 @@ export class WalletSendComponent implements OnInit {
         this._toastrService.danger('Can\'t parse contract abi');
         return;
       }
-      try {
-        this.contract = new this._walletService.w3.eth.Contract(abi, addr);
-      } catch (e) {
-        this._toastrService.danger('Can]\'t initiate contract, check entered data');
-        return;
-      }
+      this.initiateContract(abi, addr);
     }
   }
 
@@ -422,5 +490,18 @@ export class WalletSendComponent implements OnInit {
   resetProcessing() {
     this.isProcessing = false;
     this.receipt = null;
+  }
+
+  onAbiTemplateClick(ercName: ErcName) {
+    const ABI: ABIDefinition[] = ERC_INTERFACE_IDENTIFIERS[ercName].map((interfaceName: InterfaceName) => INTERFACE_ABI[interfaceName]);
+    const addr: string = this.useContractForm.get('contractAddress').value;
+    this.useContractForm.patchValue({
+      contractABI: JSON.stringify(ABI),
+    }, {
+      emitEvent: false,
+    });
+    if (addr.length === 42 && ABI.length) {
+      this.initiateContract(ABI, addr);
+    }
   }
 }
