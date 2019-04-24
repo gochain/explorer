@@ -1,8 +1,8 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ActivatedRoute, ParamMap} from '@angular/router';
-import {Subscription} from 'rxjs';
+import {forkJoin, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../wallet.service';
@@ -12,16 +12,34 @@ import {CommonService} from '../../../services/common.service';
 import Web3Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
 import {Contract} from '../../../models/contract.model';
+import {Badge} from '../../../models/badge.model';
+import {Address} from '../../../models/address.model';
 /*UTILS*/
 import {ErcName, InterfaceName} from '../../../utils/enums';
 import {ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI} from '../../../utils/constants';
+import {getAbiMethods, makeContractBadges} from '../../../utils/functions';
 
 @Component({
   selector: 'app-wallet-use',
   templateUrl: './wallet-use.component.html',
-  styleUrls: ['./wallet-use.component.scss']
+  styleUrls: ['./wallet-use.component.scss'],
 })
 export class WalletUseComponent implements OnInit {
+
+  hasData = false;
+
+  @Input('contractData')
+  set address([addr, contract]: [Address, Contract]) {
+    this.hasData = true;
+    this.useContractForm.patchValue({
+      contractAddress: addr.address,
+    }, {
+      emitEvent: false,
+    });
+    if (contract) {
+      this.handleContractData(addr, contract);
+    }
+  }
 
   useContractForm: FormGroup = this._fb.group({
     contractAddress: ['', Validators.required],
@@ -38,6 +56,8 @@ export class WalletUseComponent implements OnInit {
   functions: ABIDefinition[] = [];
 
   isProcessing = false;
+
+  contractBadges: Badge[] = [];
 
   abiTemplates = [ErcName.Erc20, ErcName.Erc721];
 
@@ -91,24 +111,30 @@ export class WalletUseComponent implements OnInit {
   }
 
   private getContractData(addrHash: string) {
-    this._commonService.getContract(addrHash).pipe(
-      filter((data: Contract) => data && data.valid && !!data.abi.length),
-    ).subscribe((data: Contract) => {
-      this.useContractForm.patchValue({
-        contractABI: JSON.stringify(data.abi),
-      }, {
-        emitEvent: false,
-      });
-      this.initiateContract(data.abi, addrHash);
+    forkJoin(
+      this._commonService.getAddress(addrHash),
+      this._commonService.getContract(addrHash),
+    ).pipe(
+      filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
+    ).subscribe((data: [Address, Contract]) => {
+      this.handleContractData(data[0], data[1]);
     });
+  }
+
+  private handleContractData(address: Address, contract: Contract) {
+    this.contractBadges = makeContractBadges(address, contract);
+    this.useContractForm.patchValue({
+      contractABI: JSON.stringify(contract.abi),
+    }, {
+      emitEvent: false,
+    });
+    this.initiateContract(contract.abi, address.address);
   }
 
   private initiateContract(abi: ABIDefinition[], addrHash: string) {
     try {
       this.contract = new this._walletService.w3.eth.Contract(abi, addrHash);
-      this.functions = this.contract.options.jsonInterface
-        .filter((abiDef: ABIDefinition) => abiDef.type === 'function')
-        .sort((abiDef: ABIDefinition) => !abiDef.payable && abiDef.constant ? -1 : 1);
+      this.functions = getAbiMethods(this.contract.options.jsonInterface);
     } catch (e) {
       this._toastrService.danger('Can]\'t initiate contract, check entered data');
       return;

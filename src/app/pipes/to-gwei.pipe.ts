@@ -3,7 +3,7 @@ import {PipeTransform, Pipe} from '@angular/core';
 @Pipe({
   name: 'toGwei'
 })
-export class ToGwei implements PipeTransform {
+export class ToGweiPipe implements PipeTransform {
 
   transform(val: number): string {
     if (!val) {

@@ -18,8 +18,9 @@ import {Address} from '../../../models/address.model';
 import {Badge} from '../../../models/badge.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI, TOKEN_TYPES} from '../../../utils/constants';
-import {ErcName, InterfaceName, StatusColor} from '../../../utils/enums';
+import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI} from '../../../utils/constants';
+import {ErcName, InterfaceName} from '../../../utils/enums';
+import {getAbiMethods, makeContractBadges} from '../../../utils/functions';
 
 @Component({
   selector: 'app-wallet-send',
@@ -145,22 +146,9 @@ export class WalletSendComponent implements OnInit {
     ).pipe(
       filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
     ).subscribe((data: [Address, Contract]) => {
-      const badges: Badge[] = [];
       const address: Address = data[0];
       const contract: Contract = data[1];
-      if (contract.valid) {
-        badges.push({
-          type: StatusColor.Success,
-          text: 'Verified',
-        });
-      }
-      address.erc_types.forEach((value: string) => {
-        badges.push({
-          type: StatusColor.Info,
-          text: TOKEN_TYPES[value],
-        });
-      });
-      this.contractBadges = badges;
+      this.contractBadges = makeContractBadges(address, contract);
       this.useContractForm.patchValue({
         contractABI: JSON.stringify(contract.abi),
       }, {
@@ -255,7 +243,7 @@ export class WalletSendComponent implements OnInit {
 
   funcsToSelect(): ABIDefinition[] {
     const abi: ABIDefinition[] = this.contract.options.jsonInterface;
-    return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function');
+    return getAbiMethods(abi);
   }
 
   reset() {
