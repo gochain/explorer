@@ -108,7 +108,7 @@
               <div class="uk-form-controls">
                 <input class="uk-input" placeholder="Contract Address" formControlName="contractAddress">
                 <span *ngFor="let badge of contractBadges"
-                      class="badge c--{{badge.type}} m-r--20 m-t--10">{{badge.text}}</span>
+                      class="badge c--{{badge.type}} m-r--10 m-t--10">{{badge.text}}</span>
               </div>
             </div>
             <div class="uk-margin">
@@ -126,10 +126,20 @@
                 <label class="uk-form-label">Choose Contract Function</label>
                 <div class="uk-form-controls">
                   <select class="uk-select" formControlName="contractFunction">
-                    <option *ngFor="let selectableFunction of funcsToSelect(); let index = index;" [value]="index">
-                      {{selectableFunction.name}}
-                      - {{selectableFunction.payable || !selectableFunction.constant ? '$' : 'free'}}
-                    </option>
+                    <optgroup label="Free">
+                      <ng-container *ngFor="let selectableFunction of funcsToSelect(); let index = index;">
+                        <option *ngIf="!selectableFunction.payable && selectableFunction.constant" [value]="index">
+                          {{selectableFunction | abiMethod}}
+                        </option>
+                      </ng-container>
+                    </optgroup>
+                    <optgroup label="Wallet Required">
+                      <ng-container *ngFor="let selectableFunction of funcsToSelect(); let index = index;">
+                        <option *ngIf="selectableFunction.payable || !selectableFunction.constant" [value]="index">
+                          {{selectableFunction | abiMethod}}
+                        </option>
+                      </ng-container>
+                    </optgroup>
                   </select>
                 </div>
               </div>

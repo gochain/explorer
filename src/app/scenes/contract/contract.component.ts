@@ -31,12 +31,9 @@ export class ContractComponent implements OnInit {
     compiler_version: ['', Validators.required],
     optimization: [true, Validators.required],
     source_code: ['', Validators.required],
-    // enabled_abi: [true, Validators.required],
     /*recaptcha_token: null,*/
   });
 
-
-  // abi: [''],
   compilers$: Observable<any[]> = this.contactService.getCompilersList();
 
   private _subsArr$: Subscription[] = [];

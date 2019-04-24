@@ -80,14 +80,14 @@
           <dt>Interact with Smart Contract</dt>
           <dd>
             <button routerLink="/wallet/send" [queryParams]="{send_tx_tab: 'use_contract',address: addr.address}"
-                    type="button" class="uk-button uk-button-small uk-button-default m-r--10 m-t--10">Interact
+                    type="button" class="uk-button uk-button-small uk-button-default m-r--10 m-t--10">Use wallet
             </button>
             <button routerLink="/wallet/use" [queryParams]="{address: addr.address}" type="button"
-                    class="uk-button uk-button-small uk-button-default m-t--10">Open in Wallet
+                    class="uk-button uk-button-small uk-button-default m-t--10">Without wallet
             </button>
           </dd>
           <ng-container *ngIf="addr.ercObj && addr.ercObj['Erc721Metadata']">
-            <dt>Look for a assets</dt>
+            <dt>Look for an assets</dt>
             <dd>
               <div class="m-t--10">
                 <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
@@ -104,6 +104,11 @@
   </div>
   <div class="p-b--60">
     <app-tabs name="addr_tab">
+      <tab *ngIf="addr.contract" title="Interact">
+        <tab-content>
+          <app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>
+        </tab-content>
+      </tab>
       <tab name="transactions" title="Transactions">
         <tab-content>
           <ng-container *ngIf="transactions.length; else emptyTransactions">
