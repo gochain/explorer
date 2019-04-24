@@ -27,9 +27,21 @@ export const APP_ROUTES: Routes = [
     component: TransactionComponent,
     resolve: {rpcProvider: CommonService},
   },
-  {path: ROUTES.ADDRESS_FULL + '/:id', component: AddressComponent},
-  {path: ROUTES.ADDRESS + '/:id', component: AddressComponent},
-  {path: ROUTES.TOKEN + '/:id', component: AddressComponent},
+  {
+    path: ROUTES.ADDRESS_FULL + '/:id',
+    component: AddressComponent,
+    resolve: {rpcProvider: CommonService},
+  },
+  {
+    path: ROUTES.ADDRESS + '/:id',
+    component: AddressComponent,
+    resolve: {rpcProvider: CommonService},
+  },
+  {
+    path: ROUTES.TOKEN + '/:id',
+    component: AddressComponent,
+    resolve: {rpcProvider: CommonService},
+  },
   {
     path: ROUTES.TOKEN + '/:id/asset/:tokenId',
     component: TokenAssetComponent,
