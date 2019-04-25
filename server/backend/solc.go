@@ -28,17 +28,17 @@ type Contract struct {
 // Depending on the source, language version, compiler version, and compiler
 // options will provide information about how the contract was compiled.
 type ContractInfo struct {
-	Source          string                 `json:"source"`
-	Language        string                 `json:"language"`
-	LanguageVersion string                 `json:"languageVersion"`
-	CompilerVersion string                 `json:"compilerVersion"`
-	CompilerOptions string                 `json:"compilerOptions"`
-	SrcMap          string                 `json:"srcMap"`
-	SrcMapRuntime   string                 `json:"srcMapRuntime"`
-	AbiDefinition   []models.AbiDefinition `json:"abiDefinition"`
-	UserDoc         interface{}            `json:"userDoc"`
-	DeveloperDoc    interface{}            `json:"developerDoc"`
-	Metadata        string                 `json:"metadata"`
+	Source          string           `json:"source"`
+	Language        string           `json:"language"`
+	LanguageVersion string           `json:"languageVersion"`
+	CompilerVersion string           `json:"compilerVersion"`
+	CompilerOptions string           `json:"compilerOptions"`
+	SrcMap          string           `json:"srcMap"`
+	SrcMapRuntime   string           `json:"srcMapRuntime"`
+	AbiDefinition   []models.AbiItem `json:"abiDefinition"`
+	UserDoc         interface{}      `json:"userDoc"`
+	DeveloperDoc    interface{}      `json:"developerDoc"`
+	Metadata        string           `json:"metadata"`
 }
 
 // Solidity contains information about the solidity compiler.
@@ -113,7 +113,7 @@ func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion strin
 	contracts := make(map[string]*Contract)
 	for name, info := range output.Contracts {
 		// Parse the individual compilation results.
-		var abi []models.AbiDefinition
+		var abi []models.AbiItem
 		if err := json.Unmarshal([]byte(info.Abi), &abi); err != nil {
 			return nil, fmt.Errorf("solc: error reading abi definition (%v)", err)
 		}
