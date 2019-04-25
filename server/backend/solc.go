@@ -43,6 +43,7 @@ type ContractInfo struct {
 // Solidity contains information about the solidity compiler.
 type Solidity struct {
 	Path, Version string
+	Optimization  bool
 }
 
 // --combined-output format
@@ -60,20 +61,23 @@ func (s *Solidity) makeArgs() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []string{
+	args := []string{
 		"run", "-i", "-v", dir + ":/workdir", "-w", "/workdir", "ethereum/solc:" + s.Version,
 		"--combined-json",
 		"bin,bin-runtime,srcmap,srcmap-runtime,abi,userdoc,devdoc,metadata",
-		"--optimize", // code optimizer switched on
-	}, nil
+	}
+	if s.Optimization {
+		args = append(args, "--optimize")
+	}
+	return args, nil
 }
 
 // CompileSolidityString builds and returns all the contracts contained within a source string.
-func CompileSolidityString(ctx context.Context, compilerVersion, source string) (map[string]*Contract, error) {
+func CompileSolidityString(ctx context.Context, compilerVersion, source string, optimization bool) (map[string]*Contract, error) {
 	if len(source) == 0 {
 		return nil, errors.New("solc: empty source string")
 	}
-	s := &Solidity{Path: "docker", Version: compilerVersion}
+	s := &Solidity{Path: "docker", Version: compilerVersion, Optimization: optimization}
 	args, err := s.makeArgs()
 	if err != nil {
 		return nil, err

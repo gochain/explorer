@@ -16,6 +16,7 @@ import {InternalTransaction} from '../../models/internal-transaction.model';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {TOKEN_TYPES} from '../../utils/constants';
 
 
 @Component({
@@ -34,7 +35,9 @@ export class AddressComponent implements OnInit, OnDestroy {
   internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
   addrHash: string;
+  tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
+  tokenId: string;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -85,6 +88,10 @@ export class AddressComponent implements OnInit, OnDestroy {
           this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
           this.getHolderData();
           this.getInternalTransactions();
+          addr.ercObj = addr.erc_types.reduce((acc, val) => {
+            acc[val] = true;
+            return acc;
+          }, {});
         }
         if (addr.contract) {
           this.getContractData();

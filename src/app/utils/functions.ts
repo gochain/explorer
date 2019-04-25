@@ -1,4 +1,13 @@
+/*CORE*/
 import {Subscription} from 'rxjs';
+/*MODELS*/
+import {ABIDefinition} from 'web3/eth/abi';
+import {Address} from '../models/address.model';
+import {Contract} from '../models/contract.model';
+import {Badge} from '../models/badge.model';
+/*UTILS*/
+import {StatusColor} from './enums';
+import {TOKEN_TYPES} from './constants';
 
 declare const window: any;
 
@@ -64,4 +73,41 @@ export function isPrivateMode(): boolean {
   }
   // others
   return false;
+}
+
+/**
+ * returns only abi methods
+ * @param abi
+ */
+export function getAbiMethods(abi: ABIDefinition[]): ABIDefinition[] {
+  return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function');
+}
+
+/**
+ * forms badges for contract
+ * @param address
+ * @param contract
+ */
+export function makeContractBadges(address: Address, contract: Contract): Badge[] {
+  const badges: Badge[] = [];
+  if (contract.valid) {
+    badges.push({
+      type: StatusColor.Success,
+      text: 'Verified',
+    });
+  }
+  if (contract.abi.length) {
+    badges.push({
+      type: StatusColor.Info,
+      text: 'Has ABI',
+    });
+  }
+  address.erc_types.forEach((value: string) => {
+    badges.push({
+      type: StatusColor.Info,
+      text: TOKEN_TYPES[value],
+    });
+  });
+
+  return badges;
 }

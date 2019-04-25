@@ -29,13 +29,11 @@ export class ContractComponent implements OnInit {
     address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
     contract_name: ['', Validators.required],
     compiler_version: ['', Validators.required],
-    // optimization: [true, Validators.required],
+    optimization: [true, Validators.required],
     source_code: ['', Validators.required],
     /*recaptcha_token: null,*/
   });
 
-
-  // abi: [''],
   compilers$: Observable<any[]> = this.contactService.getCompilersList();
 
   private _subsArr$: Subscription[] = [];

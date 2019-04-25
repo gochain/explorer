@@ -1,18 +1,20 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {BigNumberPipe} from '../../pipes/big_number';
-import {WeiToGOPipe} from '../../pipes/wei_to_go';
-import {Hex2Str} from '../../pipes/hex_to_str';
-import {ToGwei} from '../../pipes/to-gwei';
-import {TrimExtra} from '../../pipes/trim-extra-data';
+import {BigNumberPipe} from '../../pipes/big-number.pipe';
+import {WeiToGOPipe} from '../../pipes/wei-to-go.pipe';
+import {Hex2Str} from '../../pipes/hex-to-str.pipe';
+import {ToGweiPipe} from '../../pipes/to-gwei.pipe';
+import {TrimExtra} from '../../pipes/trim-extra-data.pipe';
+import {AbiMethodPipe} from '../../pipes/abi-method.pipe';
 
 @NgModule({
   declarations: [
     BigNumberPipe,
     WeiToGOPipe,
     TrimExtra,
-    ToGwei,
+    ToGweiPipe,
     Hex2Str,
+    AbiMethodPipe
   ],
   imports: [
     CommonModule,
@@ -21,8 +23,9 @@ import {TrimExtra} from '../../pipes/trim-extra-data';
     BigNumberPipe,
     WeiToGOPipe,
     Hex2Str,
-    ToGwei,
+    ToGweiPipe,
     TrimExtra,
+    AbiMethodPipe,
   ]
 })
 export class PipesModule {

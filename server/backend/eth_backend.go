@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gochain-io/gochain/v3/common/hexutil"
 	"github.com/rs/zerolog/log"
 )
@@ -147,46 +146,6 @@ func (rpc *EthRPC) ethTotalSupply() (*big.Int, error) {
 	totalSupply, _ := parseBigInt(response)
 	log.Info().Str("totalSupply", totalSupply.String()).Msg("response from EthTotalSupply")
 	return totalSupply, nil
-}
-
-func (rpc *EthRPC) ethGenesisAlloc() (map[common.Address]GenesisAccount, error) {
-	var response map[common.Address]GenesisAccount
-	if err := rpc.call("eth_genesisAlloc", &response); err != nil {
-		log.Info().Err(err).Msg("failed response from eth_genesisAlloc")
-		return nil, err
-	}
-	log.Info().Interface("supply", response).Msg("response from eth_genesisAlloc")
-	return response, nil
-}
-
-func (rpc *EthRPC) genesisAlloc() (*big.Int, []string, error) {
-	data, err := rpc.ethGenesisAlloc()
-	var genesisAdresses []string
-	genesisAlloc := new(big.Int)
-	if err != nil {
-		log.Info().Err(err).Msg("failed response from GenesisAlloc")
-		return nil, nil, err
-	}
-	for k := range data {
-		bal, _ := rpc.ethGetBalance(k.Hex(), "latest")
-		genesisAdresses = append(genesisAdresses, k.Hex())
-		log.Info().Str("Address", k.Hex()).Str("Balance", bal.String()).Msg("GenesisAlloc")
-		genesisAlloc = new(big.Int).Add(genesisAlloc, bal)
-	}
-	log.Info().Str("GenesisAlloc", genesisAlloc.String()).Msg("response from GenesisAlloc")
-	return genesisAlloc, genesisAdresses, nil
-}
-
-func (rpc *EthRPC) circulatingSupply() (*big.Int, error) {
-	genesisAllocated, _, err := rpc.genesisAlloc()
-	totalSupply, err2 := rpc.ethTotalSupply()
-	log.Info().Str("GenesisAlloc", genesisAllocated.String()).Str("totalSupply", totalSupply.String()).Msg("circulatingSupply")
-	if err != nil || err2 != nil {
-		log.Info().Err(err).Err(err2).Msg("failed parsing CirculatingSupply")
-		return new(big.Int), err
-	}
-	circulatingSupply := new(big.Int).Sub(totalSupply, genesisAllocated)
-	return circulatingSupply, nil
 }
 
 func parseBigInt(value string) (*big.Int, error) {
