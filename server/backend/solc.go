@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gochain-io/explorer/server/models"
 	"os"
 	"os/exec"
 	"regexp"
@@ -112,7 +113,7 @@ func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion strin
 	contracts := make(map[string]*Contract)
 	for name, info := range output.Contracts {
 		// Parse the individual compilation results.
-		var abi interface{}
+		var abi []models.AbiDefinition
 		if err := json.Unmarshal([]byte(info.Abi), &abi); err != nil {
 			return nil, fmt.Errorf("solc: error reading abi definition (%v)", err)
 		}
