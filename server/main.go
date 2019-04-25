@@ -171,36 +171,6 @@ func main() {
 		// processing should be stopped.
 		r.Use(middleware.Timeout(60 * time.Second))
 
-		r.Route("/api/stats", func(r chi.Router) {
-			r.Get("/", getCurrentStats)
-		})
-		r.Route("/api/blocks", func(r chi.Router) {
-			r.Get("/", getListBlocks)
-			r.Get("/{num}", getBlock)
-			r.Get("/{num}/transactions", getBlockTransactions)
-		})
-		r.Route("/api/address", func(r chi.Router) {
-			r.Get("/{address}", getAddress)
-			r.Get("/{address}/transactions", getAddressTransactions)
-			r.Get("/{address}/holders", getTokenHolders)
-			r.Get("/{address}/internal_transactions", getInternalTransactions)
-			r.Get("/{address}/contract", getContract)
-			r.Get("/{address}/qr", getQr)
-		})
-		r.Route("/api", func(r chi.Router) {
-			r.Head("/", pingDB)
-			r.Post("/verify", verifyContract)
-			r.Get("/compiler", getCompilerVersion)
-			r.Get("/rpc_provider", getRpcProvider)
-		})
-		r.Route("/api/transaction", func(r chi.Router) {
-			r.Get("/{hash}", getTransaction)
-		})
-
-		r.Route("/api/richlist", func(r chi.Router) {
-			r.Get("/", getRichlist)
-		})
-
 		r.Route("/", func(r chi.Router) {
 			r.Head("/", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
@@ -208,6 +178,34 @@ func main() {
 			r.Get("/totalSupply", getTotalSupply)
 			r.Get("/circulatingSupply", getCirculating)
 			r.Get("/*", staticHandler)
+
+			r.Route("/api", func(r chi.Router) {
+				r.Head("/", pingDB)
+				r.Post("/verify", verifyContract)
+				r.Get("/compiler", getCompilerVersion)
+				r.Get("/rpc_provider", getRpcProvider)
+				r.Get("/stats", getCurrentStats)
+				r.Get("/richlist", getRichlist)
+
+				r.Route("/blocks", func(r chi.Router) {
+					r.Get("/", getListBlocks)
+					r.Get("/{num}", getBlock)
+					r.Get("/{num}/transactions", getBlockTransactions)
+				})
+
+				r.Route("/address", func(r chi.Router) {
+					r.Get("/{address}", getAddress)
+					r.Get("/{address}/transactions", getAddressTransactions)
+					r.Get("/{address}/holders", getTokenHolders)
+					r.Get("/{address}/internal_transactions", getInternalTransactions)
+					r.Get("/{address}/contract", getContract)
+					r.Get("/{address}/qr", getQr)
+				})
+
+				r.Route("/transaction", func(r chi.Router) {
+					r.Get("/{hash}", getTransaction)
+				})
+			})
 		})
 
 		err := http.ListenAndServe(":8080", r)
