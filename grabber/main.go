@@ -66,10 +66,12 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
 		lockedAccounts := c.StringSlice("locked-accounts")
-		for _, l := range lockedAccounts {
+		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
 				return fmt.Errorf("invalid hex address: %s", l)
 			}
+			// Ensure canonical form, since queries are case-sensitive.
+			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
 		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
