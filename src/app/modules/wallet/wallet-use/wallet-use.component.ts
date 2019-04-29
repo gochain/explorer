@@ -36,7 +36,7 @@ export class WalletUseComponent implements OnInit {
     }, {
       emitEvent: false,
     });
-    if (contract && contract.abi) {
+    if (contract && contract.abi && contract.abi.length) {
       this.handleContractData(addr, contract);
     }
   }
