@@ -111,10 +111,10 @@ export class WalletUseComponent implements OnInit {
   }
 
   private getContractData(addrHash: string) {
-    forkJoin(
+    forkJoin([
       this._commonService.getAddress(addrHash),
       this._commonService.getContract(addrHash),
-    ).pipe(
+    ]).pipe(
       filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
     ).subscribe((data: [Address, Contract]) => {
       this.handleContractData(data[0], data[1]);

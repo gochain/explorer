@@ -80,10 +80,10 @@ export class TransactionComponent implements OnInit, OnDestroy {
    * @param txHash
    */
   private getPendingTx(txHash: string): Observable<Transaction | null> {
-    return forkJoin(
+    return forkJoin([
       fromPromise(this._walletService.w3.eth.getTransaction(txHash)),
       fromPromise(this._walletService.w3.eth.getTransactionReceipt(txHash)),
-    ).pipe(
+    ]).pipe(
       filter((res: [Web3Tx, TransactionReceipt]) => !!res[0]),
       map((res: [Web3Tx, TransactionReceipt]) => {
         const tx: Web3Tx = res[0];
