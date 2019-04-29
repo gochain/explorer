@@ -56,7 +56,7 @@
             </ng-container>
           </ul>
         </li>
-        <li *ngIf="!!addr.erc_types.length">
+        <li *ngIf="addr.erc_types && !!addr.erc_types.length">
           <p>Token type:</p>
           <b><span class="badge c--info m-r--20" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></b>
         </li>
@@ -100,7 +100,7 @@
       </tab>
       <tab name="transactions" title="Transactions">
         <tab-content>
-          <ng-container *ngIf="transactions.length; else emptyTransactions">
+          <ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of transactions">
                 <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
@@ -177,7 +177,7 @@
       </tab>
       <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" title="Internal Transactions">
         <tab-content>
-          <ng-container *ngIf="internal_transactions.length; else emptyInternal">
+          <ng-container *ngIf="internal_transactions && !!internal_transactions.length; else emptyInternal">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of internal_transactions">
                 <div class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
