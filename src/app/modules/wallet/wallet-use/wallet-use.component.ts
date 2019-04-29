@@ -36,7 +36,7 @@ export class WalletUseComponent implements OnInit {
     }, {
       emitEvent: false,
     });
-    if (contract) {
+    if (contract && contract.abi) {
       this.handleContractData(addr, contract);
     }
   }
@@ -169,7 +169,7 @@ export class WalletUseComponent implements OnInit {
    * @param func
    * @param params
    */
-  callABIFunction(func: any, params: string[]): void {
+  callABIFunction(func: ABIDefinition, params: string[]): void {
     this.isProcessing = true;
     let funcABI: string;
     try {
