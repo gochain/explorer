@@ -74,30 +74,19 @@
         </li>
       </ul>
     </div>
-    <div class="list-holder__footer" *ngIf="addr.contract">
+    <div class="list-holder__footer" *ngIf="addr.contract && addr.ercObj && addr.ercObj['Erc721Metadata']">
       <div>
         <dl class="uk-description-list uk-description-list-divider">
-          <dt>Interact with Smart Contract</dt>
+          <dt>Look for an assets</dt>
           <dd>
-            <button routerLink="/wallet/send" [queryParams]="{send_tx_tab: 'use_contract',address: addr.address}"
-                    type="button" class="uk-button uk-button-small uk-button-default m-r--10 m-t--10">Use wallet
-            </button>
-            <button routerLink="/wallet/use" [queryParams]="{address: addr.address}" type="button"
-                    class="uk-button uk-button-small uk-button-default m-t--10">Without wallet
-            </button>
+            <div class="m-t--10">
+              <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
+                     [(ngModel)]="tokenId">
+              <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
+                      class="uk-button uk-button-small uk-button-primary m-l--10">Search
+              </button>
+            </div>
           </dd>
-          <ng-container *ngIf="addr.ercObj && addr.ercObj['Erc721Metadata']">
-            <dt>Look for an assets</dt>
-            <dd>
-              <div class="m-t--10">
-                <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
-                       [(ngModel)]="tokenId">
-                <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
-                        class="uk-button uk-button-small uk-button-primary m-l--10">Search
-                </button>
-              </div>
-            </dd>
-          </ng-container>
         </dl>
       </div>
     </div>

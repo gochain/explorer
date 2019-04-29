@@ -2,6 +2,7 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {RouterModule} from '@angular/router';
 /*COMPONENTS*/
 import {WalletUseComponent} from './wallet-use/wallet-use.component';
 /*SERVICES*/
@@ -17,6 +18,7 @@ import {PipesModule} from '../pipes/pipes.module';
     FormsModule,
     PipesModule,
     ReactiveFormsModule,
+    RouterModule,
   ],
   providers: [WalletService],
   exports: [
