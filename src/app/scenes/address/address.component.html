@@ -19,21 +19,21 @@
         <ng-container *ngIf="addr.contract && addr.go20">
           <li>
             <ul>
-              <li>
+              <li *ngIf="addr.token_name">
                 <p>Token name:</p>
                 <b>{{addr.token_name}}</b>
               </li>
-              <li>
+              <li *ngIf="addr.token_symbol">
                 <p>Token symbol:</p>
                 <b>{{addr.token_symbol}}</b>
               </li>
-              <li>
+              <li *ngIf="addr.total_supply">
                 <p>Total supply:</p>
                 <b>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</b>
               </li>
             </ul>
           </li>
-          <li>
+          <li *ngIf="addr.decimals">
             <p>Decimals:</p>
             <b>{{addr.decimals}}</b>
           </li>
@@ -56,7 +56,7 @@
             </ng-container>
           </ul>
         </li>
-        <li *ngIf="!!addr.erc_types.length">
+        <li *ngIf="addr.erc_types && !!addr.erc_types.length">
           <p>Token type:</p>
           <b><span class="badge c--info m-r--20" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></b>
         </li>
@@ -74,30 +74,19 @@
         </li>
       </ul>
     </div>
-    <div class="list-holder__footer" *ngIf="addr.contract">
+    <div class="list-holder__footer" *ngIf="addr.contract && addr.ercObj && addr.ercObj['Erc721Metadata']">
       <div>
         <dl class="uk-description-list uk-description-list-divider">
-          <dt>Interact with Smart Contract</dt>
+          <dt>Look for an assets</dt>
           <dd>
-            <button routerLink="/wallet/send" [queryParams]="{send_tx_tab: 'use_contract',address: addr.address}"
-                    type="button" class="uk-button uk-button-small uk-button-default m-r--10 m-t--10">Use wallet
-            </button>
-            <button routerLink="/wallet/use" [queryParams]="{address: addr.address}" type="button"
-                    class="uk-button uk-button-small uk-button-default m-t--10">Without wallet
-            </button>
+            <div class="m-t--10">
+              <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
+                     [(ngModel)]="tokenId">
+              <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
+                      class="uk-button uk-button-small uk-button-primary m-l--10">Search
+              </button>
+            </div>
           </dd>
-          <ng-container *ngIf="addr.ercObj && addr.ercObj['Erc721Metadata']">
-            <dt>Look for an assets</dt>
-            <dd>
-              <div class="m-t--10">
-                <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
-                       [(ngModel)]="tokenId">
-                <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
-                        class="uk-button uk-button-small uk-button-primary m-l--10">Search
-                </button>
-              </div>
-            </dd>
-          </ng-container>
         </dl>
       </div>
     </div>
@@ -111,7 +100,7 @@
       </tab>
       <tab name="transactions" title="Transactions">
         <tab-content>
-          <ng-container *ngIf="transactions.length; else emptyTransactions">
+          <ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of transactions">
                 <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
@@ -188,7 +177,7 @@
       </tab>
       <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" title="Internal Transactions">
         <tab-content>
-          <ng-container *ngIf="internal_transactions.length; else emptyInternal">
+          <ng-container *ngIf="internal_transactions && !!internal_transactions.length; else emptyInternal">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of internal_transactions">
                 <div class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
