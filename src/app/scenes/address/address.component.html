@@ -19,21 +19,21 @@
         <ng-container *ngIf="addr.contract && addr.go20">
           <li>
             <ul>
-              <li>
+              <li *ngIf="addr.token_name">
                 <p>Token name:</p>
                 <b>{{addr.token_name}}</b>
               </li>
-              <li>
+              <li *ngIf="addr.token_symbol">
                 <p>Token symbol:</p>
                 <b>{{addr.token_symbol}}</b>
               </li>
-              <li>
+              <li *ngIf="addr.total_supply">
                 <p>Total supply:</p>
                 <b>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</b>
               </li>
             </ul>
           </li>
-          <li>
+          <li *ngIf="addr.decimals">
             <p>Decimals:</p>
             <b>{{addr.decimals}}</b>
           </li>
