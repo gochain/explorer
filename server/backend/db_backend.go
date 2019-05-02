@@ -179,6 +179,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -335,10 +340,12 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
 	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
 	log.Info().Str("contractAddress", contractAddress).Str("tokenAddress", tokenHolderAddress).Str("balance", token.Balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
 	tokenHolder := &models.TokenHolder{
+		TokenName:          address.TokenName,
+		TokenSymbol:        address.TokenSymbol,
 		ContractAddress:    contractAddress,
 		TokenHolderAddress: tokenHolderAddress,
 		Balance:            token.Balance.String(),
@@ -506,6 +513,14 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
 		log.Debug().Str("contractAddress", contractAddress).Err(err).Msg("getTokenHoldersList")
+	}
+	return tokenHoldersList
+}
+func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit int) []*models.TokenHolder {
+	var tokenHoldersList []*models.TokenHolder
+	err := self.mongo.C("TokensHolders").Find(bson.M{"token_holder_address": ownerAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
+	if err != nil {
+		log.Debug().Str("token_holder_address", ownerAddress).Err(err).Msg("getOwnedTokensList")
 	}
 	return tokenHoldersList
 }

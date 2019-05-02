@@ -212,6 +212,7 @@ func main() {
 					r.Get("/{address}", getAddress)
 					r.Get("/{address}/transactions", getAddressTransactions)
 					r.Get("/{address}/holders", getTokenHolders)
+					r.Get("/{address}/owned_tokens", getOwnedTokens)
 					r.Get("/{address}/internal_transactions", getInternalTransactions)
 					r.Get("/{address}/contract", getContract)
 					r.Get("/{address}/qr", getQr)
@@ -324,6 +325,16 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	}
 	tokenHolders.Holders = backendInstance.GetTokenHoldersList(contractAddress, skip, limit)
 	writeJSON(w, http.StatusOK, tokenHolders)
+}
+
+func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	skip, limit := parseSkipLimit(r)
+	tokens := &models.OwnedTokenList{
+		OwnedTokens: []*models.TokenHolder{},
+	}
+	tokens.OwnedTokens = backendInstance.GetOwnedTokensList(contractAddress, skip, limit)
+	writeJSON(w, http.StatusOK, tokens)
 }
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {

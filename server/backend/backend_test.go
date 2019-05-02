@@ -3,6 +3,7 @@
 package backend
 
 import (
+	"github.com/gochain-io/explorer/server/models"
 	"math/big"
 	"testing"
 	"time"
@@ -204,11 +205,12 @@ func TestTokenHolder(t *testing.T) {
 
 	var token = &TokenHolderDetails{Balance: big.NewInt(1000000000000000000)}
 
+	addr := models.Address{Address: "addrHash ", TokenSymbol: "GoGo", TokenName: "GoGoTOken"}
 	addrHash := "0x0000000000000000000000000000000000000000"
 	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
 	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
-	testBackend.ImportTokenHolder(addrHash, tokenHolderHash1, token)
-	testBackend.ImportTokenHolder(addrHash, tokenHolderHash2, token)
+	testBackend.ImportTokenHolder(addrHash, tokenHolderHash1, token, &addr)
+	testBackend.ImportTokenHolder(addrHash, tokenHolderHash2, token, &addr)
 	holders := testBackend.GetTokenHoldersList(addrHash, 0, 100)
 	if len(holders) != 2 {
 		t.Fatalf("HolderList  was incorrect, got: %d, want: %d.", len(holders), 2)
@@ -224,6 +226,14 @@ func TestTokenHolder(t *testing.T) {
 
 	if holders[0].BalanceInt != 1 { // 1 GO
 		t.Errorf("HolderList  was incorrect, got: %d, want: %s.", holders[0].BalanceInt, "1")
+	}
+
+	if holders[0].TokenName != addr.TokenName {
+		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[0].TokenName, addr.TokenName)
+	}
+
+	if holders[0].TokenSymbol != addr.TokenSymbol {
+		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[0].TokenSymbol, addr.TokenSymbol)
 	}
 
 	if holders[1].TokenHolderAddress != tokenHolderHash2 {
