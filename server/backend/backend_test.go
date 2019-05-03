@@ -261,11 +261,14 @@ func TestInternalTransactions(t *testing.T) {
 	testBackend.ImportInternalTransaction(addrHash, transaction1)
 	testBackend.ImportInternalTransaction(addrHash, transaction2)
 
-	transactions := testBackend.GetInternalTransactionsList(addrHash, "", "", 0, 100)
+	transactions := testBackend.GetInternalTransactionsList(addrHash, false, 0, 100)
+	token_transactions := testBackend.GetInternalTransactionsList(tokenHolderHash1, true, 0, 100)
 	if len(transactions) != 2 {
 		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
 	}
-
+	if len(token_transactions) != 2 {
+		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(token_transactions), 2)
+	}
 	if transactions[0].BlockNumber != transaction2.BlockNumber {
 		t.Errorf("InternalTransactionList was incorrect, got: %d, want: %d.", transactions[0].BlockNumber, transaction1.BlockNumber)
 	}

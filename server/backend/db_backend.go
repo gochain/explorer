@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -193,7 +193,15 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"from_address", "block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
 
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"to_address", "block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
 	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -525,15 +533,11 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit in
 	return tokenHoldersList
 }
 
-func (self *MongoBackend) getInternalTransactionsList(contractAddress, fromAddress, toAddress string, skip, limit int) []*models.InternalTransaction {
+func (self *MongoBackend) getInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) []*models.InternalTransaction {
 	var internalTransactionsList []*models.InternalTransaction
 	var query bson.M
-	if fromAddress != "" && toAddress != "" {
-		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress, "to_address": toAddress}
-	} else if fromAddress == "" && toAddress != "" {
-		query = bson.M{"contract_address": contractAddress, "to_address": toAddress}
-	} else if fromAddress != "" && toAddress == "" {
-		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress}
+	if tokenTransactions {
+		query = bson.M{"$or": []bson.M{bson.M{"from_address": contractAddress}, bson.M{"to_address": contractAddress}}}
 	} else {
 		query = bson.M{"contract_address": contractAddress}
 	}

@@ -20,7 +20,7 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
@@ -339,13 +339,15 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	fromAddr := r.URL.Query().Get("from_address")
-	toAddr := r.URL.Query().Get("to_address")
+	tokenTransactions := false
+	if r.URL.Query().Get("token_transactions") != "" {
+		tokenTransactions = true
+	}
 	skip, limit := parseSkipLimit(r)
 	internalTransactions := &models.InternalTransactionsList{
 		Transactions: []*models.InternalTransaction{},
 	}
-	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, fromAddr, toAddr, skip, limit)
+	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
 	writeJSON(w, http.StatusOK, internalTransactions)
 }
 
