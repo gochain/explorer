@@ -64,8 +64,8 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/address/' + addrHash + '/holders', data);
   }
 
-  getAddressTokens(addrHash: string): Observable<any> {
-    return this._apiService.get(`/address/${addrHash}/owned_tokens?limit=100&skip=0`);
+  getAddressTokens(addrHash: string, data?: any): Observable<any> {
+    return this._apiService.get(`/address/${addrHash}/owned_tokens`, data);
   }
 
   getAddressInternalTransaction(addrHash: string, data?: any): Observable<InternalTransaction[]> {

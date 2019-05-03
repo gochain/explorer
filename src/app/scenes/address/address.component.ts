@@ -29,16 +29,18 @@ export class AddressComponent implements OnInit, OnDestroy {
   address: Observable<Address>;
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
+  // address owned tokens
+  tokens: Holder[] = [];
   internal_transactions: InternalTransaction[] = [];
   contract: Contract;
   transactionQueryParams: QueryParams = new QueryParams();
   internalTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
+  tokensQueryParams: QueryParams = new QueryParams();
   addrHash: string;
   tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
   tokenId: string;
-  addrBalances: Holder[] = [];
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -59,6 +61,9 @@ export class AddressComponent implements OnInit, OnDestroy {
       this.getTransactionData();
     }));
     this._subsArr$.push(this.holderQueryParams.state.subscribe(() => {
+      this.getHolderData();
+    }));
+    this._subsArr$.push(this.tokensQueryParams.state.subscribe(() => {
       this.getHolderData();
     }));
     this._subsArr$.push(this.internalTransactionQueryParams.state.subscribe(() => {
@@ -116,8 +121,8 @@ export class AddressComponent implements OnInit, OnDestroy {
   }
 
   getTokenData() {
-    this._commonService.getAddressTokens(this.addrHash).subscribe((data: any) => {
-      this.addrBalances = data.owned_tokens || [];
+    this._commonService.getAddressTokens(this.addrHash, this.tokensQueryParams.params).subscribe((data: any) => {
+      this.tokens = data.owned_tokens || [];
     });
   }
 

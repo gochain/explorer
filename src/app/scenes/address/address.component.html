@@ -14,10 +14,7 @@
         </li>
         <li>
           <p>Balance:</p>
-          <b>
-            <p>{{addr.balance_wei | weiToGO | bigNumber}}</p>
-            <p *ngFor="let item of addrBalances">{{item.balance_int}} {{item.token_symbol}}</p>
-          </b>
+          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
         </li>
         <ng-container *ngIf="addr.contract && addr.go20">
           <li>
@@ -96,11 +93,6 @@
   </div>
   <div class="p-b--60">
     <app-tabs name="addr_tab">
-      <tab *ngIf="addr.contract" title="Interact">
-        <tab-content>
-          <app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>
-        </tab-content>
-      </tab>
       <tab name="transactions" title="Transactions">
         <tab-content>
           <ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
@@ -176,6 +168,43 @@
           <ng-template #emptyTransactions>
             <div class="empty">No transactions</div>
           </ng-template>
+        </tab-content>
+      </tab>
+      <tab *ngIf="tokens.length" name="tokens" title="Tokens">
+        <tab-content>
+          <ng-container *ifViewportSize="['small']">
+            <div class="tr-card" *ngFor="let token of tokens">
+              <div>Balance: {{token.balance_int}} {{token.token_symbol}}</div>
+              <div>Token name: {{token.token_name}}</div>
+              <div class="uk-text-truncate">Contract: <a routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a></div>
+            </div>
+          </ng-container>
+          <ng-container *ifViewportSize="['large']">
+            <div class="uk-overflow-auto">
+              <table class="uk-table uk-table-small uk-table-striped">
+                <thead>
+                <tr>
+                  <th class="uk-text-nowrap uk-table-shrink">Balance</th>
+                  <th class="uk-text-nowrap uk-table-shrink">Token name</th>
+                  <th class="w_2_6">Linked contract address</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let token of tokens">
+                  <td class="uk-text-nowrap">{{token.balance_int}} {{token.token_symbol}}</td>
+                  <td class="uk-text-nowrap">{{token.token_name}}</td>
+                  <td class="uk-text-nowrap">
+                    <a class="ws-p" routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+          <div class="p-b--40 p-t--40">
+            <app-pagination [total]="tokensQueryParams.totalPage"
+                            (onSelect)="tokensQueryParams.toPage($event)"></app-pagination>
+          </div>
         </tab-content>
       </tab>
       <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" title="Internal Transactions">
@@ -289,6 +318,11 @@
           <ng-template #emptyHolders>
             <div class="empty">No holders</div>
           </ng-template>
+        </tab-content>
+      </tab>
+      <tab *ngIf="addr.contract" name="interact" title="Interact">
+        <tab-content>
+          <app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>
         </tab-content>
       </tab>
       <tab *ngIf="addr.contract" name="contract_source" title="Contract Source">
