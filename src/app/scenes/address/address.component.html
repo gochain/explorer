@@ -14,7 +14,10 @@
         </li>
         <li>
           <p>Balance:</p>
-          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
+          <b>
+            <p>{{addr.balance_wei | weiToGO | bigNumber}}</p>
+            <p *ngFor="let item of addrBalances">{{item.balance_int}} {{item.token_symbol}}</p>
+          </b>
         </li>
         <ng-container *ngIf="addr.contract && addr.go20">
           <li>

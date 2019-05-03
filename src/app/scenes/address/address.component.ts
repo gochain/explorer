@@ -38,6 +38,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
   tokenId: string;
+  addrBalances: Holder[] = [];
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -81,6 +82,7 @@ export class AddressComponent implements OnInit, OnDestroy {
       }),
       // getting token holder data if address is contract
       tap((addr: Address) => {
+        this.getTokenData();
         this._layoutService.offLoading();
         this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
         if (addr.contract && addr.go20) {
@@ -110,6 +112,12 @@ export class AddressComponent implements OnInit, OnDestroy {
   getHolderData() {
     this._commonService.getAddressHolders(this.addrHash, this.holderQueryParams.params).subscribe((data: any) => {
       this.token_holders = data.token_holders || [];
+    });
+  }
+
+  getTokenData() {
+    this._commonService.getAddressTokens(this.addrHash).subscribe((data: any) => {
+      this.addrBalances = data.owned_tokens || [];
     });
   }
 
