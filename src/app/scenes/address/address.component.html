@@ -4,7 +4,7 @@
     <app-search></app-search>
   </div>
 </div>
-<ng-container *ngIf="(address | async) as addr; else addressNotFound">
+<ng-container *ngIf="addr; else addressNotFound">
   <div class="uk-margin">
     <div class="uk-overflow-auto list-holder">
       <ul>
@@ -170,44 +170,50 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="tokens.length" name="tokens" title="Tokens">
+      <tab *ngIf="!addr.contract" name="tokens" title="Tokens">
         <tab-content>
-          <ng-container *ifViewportSize="['small']">
-            <div class="tr-card" *ngFor="let token of tokens">
-              <div>Balance: {{token.balance_int}} {{token.token_symbol}}</div>
-              <div>Token name: {{token.token_name}}</div>
-              <div class="uk-text-truncate">Contract: <a routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a></div>
+          <ng-container *ngIf="tokens.length; else emptyTokens">
+            <ng-container *ifViewportSize="['small']">
+              <div class="tr-card" *ngFor="let token of tokens">
+                <div>Balance: {{token.balance_int}} {{token.token_symbol}}</div>
+                <div>Token name: {{token.token_name}}</div>
+                <div class="uk-text-truncate">Contract: <a
+                    routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a></div>
+              </div>
+            </ng-container>
+            <ng-container *ifViewportSize="['large']">
+              <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-small uk-table-striped">
+                  <thead>
+                  <tr>
+                    <th class="uk-text-nowrap uk-table-shrink">Balance</th>
+                    <th class="uk-text-nowrap uk-table-shrink">Token name</th>
+                    <th class="w_2_6">Linked contract address</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let token of tokens">
+                    <td class="uk-text-nowrap">{{token.balance_int}} {{token.token_symbol}}</td>
+                    <td class="uk-text-nowrap">{{token.token_name}}</td>
+                    <td class="uk-text-nowrap">
+                      <a class="ws-p" routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+            <div class="p-b--40 p-t--40">
+              <app-pagination [total]="tokensQueryParams.totalPage"
+                              (onSelect)="tokensQueryParams.toPage($event)"></app-pagination>
             </div>
           </ng-container>
-          <ng-container *ifViewportSize="['large']">
-            <div class="uk-overflow-auto">
-              <table class="uk-table uk-table-small uk-table-striped">
-                <thead>
-                <tr>
-                  <th class="uk-text-nowrap uk-table-shrink">Balance</th>
-                  <th class="uk-text-nowrap uk-table-shrink">Token name</th>
-                  <th class="w_2_6">Linked contract address</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr *ngFor="let token of tokens">
-                  <td class="uk-text-nowrap">{{token.balance_int}} {{token.token_symbol}}</td>
-                  <td class="uk-text-nowrap">{{token.token_name}}</td>
-                  <td class="uk-text-nowrap">
-                    <a class="ws-p" routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a>
-                  </td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </ng-container>
-          <div class="p-b--40 p-t--40">
-            <app-pagination [total]="tokensQueryParams.totalPage"
-                            (onSelect)="tokensQueryParams.toPage($event)"></app-pagination>
-          </div>
+          <ng-template #emptyTokens>
+            <div class="empty">No tokens</div>
+          </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" title="Internal Transactions">
+      <tab name="internal_transactions" [title]="addr.contract ? addr.token_symbol + ' Transactions' : 'Token Transactions'">
         <tab-content>
           <ng-container *ngIf="internal_transactions && !!internal_transactions.length; else emptyInternal">
             <ng-container *ifViewportSize="['small']">
@@ -271,7 +277,7 @@
             </div>
           </ng-container>
           <ng-template #emptyInternal>
-            <div class="empty">No internal transactions</div>
+            <div class="empty">No transactions</div>
           </ng-template>
         </tab-content>
       </tab>

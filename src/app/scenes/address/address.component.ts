@@ -18,7 +18,6 @@ import {Contract} from '../../models/contract.model';
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {TOKEN_TYPES} from '../../utils/constants';
 
-
 @Component({
   selector: 'app-address',
   templateUrl: './address.component.html',
@@ -26,7 +25,7 @@ import {TOKEN_TYPES} from '../../utils/constants';
 })
 @AutoUnsubscribe('_subsArr$')
 export class AddressComponent implements OnInit, OnDestroy {
-  address: Observable<Address>;
+  addr: Address;
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
   // address owned tokens
@@ -76,7 +75,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   }
 
   getAddress() {
-    this.address = this._commonService.getAddress(this.addrHash).pipe(
+    this._commonService.getAddress(this.addrHash).pipe(
       filter(value => {
         if (!value) {
           this._layoutService.offLoading();
@@ -85,27 +84,26 @@ export class AddressComponent implements OnInit, OnDestroy {
 
         return true;
       }),
-      // getting token holder data if address is contract
-      tap((addr: Address) => {
-        this.getTokenData();
-        this._layoutService.offLoading();
-        this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
-        if (addr.contract && addr.go20) {
-          this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
-          this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
-          this.getHolderData();
-          this.getInternalTransactions();
-          addr.ercObj = addr.erc_types.reduce((acc, val) => {
-            acc[val] = true;
-            return acc;
-          }, {});
-        }
-        if (addr.contract) {
-          this.getContractData();
-        }
-        this.getTransactionData();
-      })
-    );
+    ).subscribe((addr: Address) => {
+      this.addr = addr;
+      this.getTokenData();
+      this._layoutService.offLoading();
+      this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
+      if (addr.contract && addr.go20) {
+        this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
+        this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
+        this.getHolderData();
+        this.getInternalTransactions();
+        addr.ercObj = addr.erc_types.reduce((acc, val) => {
+          acc[val] = true;
+          return acc;
+        }, {});
+      }
+      if (addr.contract) {
+        this.getContractData();
+      }
+      this.getTransactionData();
+    });
   }
 
   getTransactionData() {
@@ -127,7 +125,10 @@ export class AddressComponent implements OnInit, OnDestroy {
   }
 
   getInternalTransactions() {
-    this._commonService.getAddressInternalTransaction(this.addrHash, this.internalTransactionQueryParams.params).subscribe((data: any) => {
+    this._commonService.getAddressInternalTransaction(this.addrHash, {
+      ...this.internalTransactionQueryParams.params,
+      token_transactions: !this.addr.contract,
+    }).subscribe((data: any) => {
       this.internal_transactions = data.internal_transactions || [];
     });
   }
