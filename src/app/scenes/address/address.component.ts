@@ -31,9 +31,11 @@ export class AddressComponent implements OnInit, OnDestroy {
   // address owned tokens
   tokens: Holder[] = [];
   internal_transactions: InternalTransaction[] = [];
+  token_transactions: InternalTransaction[] = [];
   contract: Contract;
   transactionQueryParams: QueryParams = new QueryParams();
   internalTransactionQueryParams: QueryParams = new QueryParams();
+  tokenTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
   tokensQueryParams: QueryParams = new QueryParams();
   addrHash: string;
@@ -63,10 +65,13 @@ export class AddressComponent implements OnInit, OnDestroy {
       this.getHolderData();
     }));
     this._subsArr$.push(this.tokensQueryParams.state.subscribe(() => {
-      this.getHolderData();
+      this.getTokenData();
     }));
     this._subsArr$.push(this.internalTransactionQueryParams.state.subscribe(() => {
       this.getInternalTransactions();
+    }));
+    this._subsArr$.push(this.tokenTransactionQueryParams.state.subscribe(() => {
+      this.getTokenTransactions();
     }));
   }
 
@@ -86,23 +91,26 @@ export class AddressComponent implements OnInit, OnDestroy {
       }),
     ).subscribe((addr: Address) => {
       this.addr = addr;
-      this.getTokenData();
       this._layoutService.offLoading();
       this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
-      if (addr.contract && addr.go20) {
-        this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
-        this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
-        this.getHolderData();
-        this.getInternalTransactions();
-        addr.ercObj = addr.erc_types.reduce((acc, val) => {
+      this.getTransactionData();
+
+      if (this.addr.contract) {
+        if (this.addr.go20) {
+          this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
+          this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
+          this.getHolderData();
+          this.getInternalTransactions();
+        }
+        this.addr.ercObj = this.addr.erc_types.reduce((acc, val) => {
           acc[val] = true;
           return acc;
         }, {});
-      }
-      if (addr.contract) {
+
         this.getContractData();
+      } else {
+        this.getTokenData();
       }
-      this.getTransactionData();
     });
   }
 
@@ -127,9 +135,18 @@ export class AddressComponent implements OnInit, OnDestroy {
   getInternalTransactions() {
     this._commonService.getAddressInternalTransaction(this.addrHash, {
       ...this.internalTransactionQueryParams.params,
-      token_transactions: !this.addr.contract,
+      token_transactions: false,
     }).subscribe((data: any) => {
       this.internal_transactions = data.internal_transactions || [];
+    });
+  }
+
+  getTokenTransactions() {
+    this._commonService.getAddressInternalTransaction(this.addrHash, {
+      ...this.tokenTransactionQueryParams.params,
+      token_transactions: true,
+    }).subscribe((data: any) => {
+      this.token_transactions = data.internal_transactions || [];
     });
   }
 

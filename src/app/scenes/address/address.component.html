@@ -170,7 +170,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="!addr.contract" name="tokens" title="Tokens">
+      <tab *ngIf="!addr.contract" name="owned_tokens" title="Owned Tokens">
         <tab-content>
           <ng-container *ngIf="tokens.length; else emptyTokens">
             <ng-container *ifViewportSize="['small']">
@@ -188,7 +188,7 @@
                   <tr>
                     <th class="uk-text-nowrap uk-table-shrink">Balance</th>
                     <th class="uk-text-nowrap uk-table-shrink">Token name</th>
-                    <th class="w_2_6">Linked contract address</th>
+                    <th class="w_2_6">Contract</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -213,9 +213,9 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab name="internal_transactions" [title]="addr.contract ? addr.token_symbol + ' Transactions' : 'Token Transactions'">
+      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions" [title]="(addr.token_symbol || 'Internal')  + ' Transactions'">
         <tab-content>
-          <ng-container *ngIf="internal_transactions && !!internal_transactions.length; else emptyInternal">
+          <ng-container *ngIf="!!internal_transactions.length; else emptyInternalTxs">
             <ng-container *ifViewportSize="['small']">
               <div class="tr-card" *ngFor="let tx of internal_transactions">
                 <div class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
@@ -276,7 +276,75 @@
                               (onSelect)="internalTransactionQueryParams.toPage($event)"></app-pagination>
             </div>
           </ng-container>
-          <ng-template #emptyInternal>
+          <ng-template #emptyInternalTxs>
+            <div class="empty">No transactions</div>
+          </ng-template>
+        </tab-content>
+      </tab>
+      <tab name="token_transactions" title="Token Transactions">
+        <tab-content>
+          <ng-container *ngIf="!!token_transactions.length; else emptyTokenTx">
+            <ng-container *ifViewportSize="['small']">
+              <div class="tr-card" *ngFor="let tx of token_transactions">
+                <div class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+                </div>
+                <div class="uk-text-truncate">
+                  <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+                    Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+                  </ng-container>
+                  <ng-template #updated_at>Processed: {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+                    ({{tx.updated_at | timeAgo }})
+                  </ng-template>
+                </div>
+                <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
+                <div class="uk-text-truncate">To: {{tx.to_address}}</div>
+                <div>Value ({{addr.token_symbol}}
+                  ): {{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}</div>
+              </div>
+            </ng-container>
+            <ng-container *ifViewportSize="['medium', 'large']">
+              <div class="uk-overflow-auto">
+                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
+                  <thead>
+                  <tr>
+                    <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
+                    <th class="uk-width-1-5">Transaction hash</th>
+                    <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Processed at</th>
+                    <th class="uk-width-1-5">From</th>
+                    <th class="uk-width-1-5">To</th>
+                    <th class="uk-width-1-5 uk-text-nowrap">Value ({{addr.token_symbol}})</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let tx of internal_transactions">
+                    <td class="uk-text-truncate"><a class="ws-p"
+                                                    routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+                    </td>
+                    <td>
+                      <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+                        {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+                      </ng-container>
+                      <ng-template #updated_at>
+                        {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+                      </ng-template>
+                    </td>
+                    <td class="uk-text-truncate"><a class="ws-p"
+                                                    routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
+                    <td class="uk-text-truncate"><a class="ws-p"
+                                                    routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
+                    <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
+                      bigNumber}}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
+            <div class="p-b--40 p-t--40">
+              <app-pagination [total]="tokenTransactionQueryParams.totalPage"
+                              (onSelect)="tokenTransactionQueryParams.toPage($event)"></app-pagination>
+            </div>
+          </ng-container>
+          <ng-template #emptyTokenTx>
             <div class="empty">No transactions</div>
           </ng-template>
         </tab-content>
