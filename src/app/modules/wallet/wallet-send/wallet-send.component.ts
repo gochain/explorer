@@ -20,7 +20,7 @@ import {Badge} from '../../../models/badge.model';
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
 import {ErcName} from '../../../utils/enums';
-import {getAbiMethods, makeContractAbi, makeContractBadges} from '../../../utils/functions';
+import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
 
 @Component({
@@ -221,35 +221,9 @@ export class WalletSendComponent implements OnInit {
    * @param func
    * @param params
    */
-  callABIFunction(func: any, params: string[]): void {
-    let funcABI: string;
-    try {
-      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
-    } catch (err) {
-      this._toastrService.danger(err);
-      return;
-    }
-
-    this._walletService.w3.eth.call({
-      to: this.contract.options.address,
-      data: funcABI,
-    }).then((result: string) => {
-      const decoded: object = this._walletService.w3.eth.abi.decodeLog(func.outputs, result, []);
-      // This Result object is frikin stupid, it's literaly an empty object that they add fields too
-      // convert to something iterable
-      const arrR: any[][] = [];
-      // let mapR: Map<any,any> = new Map<any,any>();
-      // for (let j = 0; j < decoded.__length__; j++){
-      //   mapR.push([decoded[0], decoded[1]])
-      // }
-      Object.keys(decoded).forEach((key) => {
-        // mapR[key] = decoded[key];
-        if (key.startsWith('__')) {
-          return;
-        }
-        arrR.push([key, decoded[key]]);
-      });
-      this.functionResult = arrR;
+  callABIFunction(func: ABIDefinition, params: string[]): void {
+    this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
+      this.functionResult = getDecodedData(decoded);
     }).catch(err => {
       this._toastrService.danger(err);
     });

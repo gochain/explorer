@@ -12,11 +12,11 @@ import {TransactionReceipt} from 'web3/types';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
 import {CommonService} from '../../services/common.service';
-import {ContractAbi} from '../../utils/types';
 /*MODELS*/
-
+import {ABIDefinition} from 'web3/eth/abi';
 /*UTILS*/
-
+import {objIsEmpty} from '../../utils/functions';
+import {ContractAbi} from '../../utils/types';
 
 @Injectable()
 export class WalletService {
@@ -92,6 +92,33 @@ export class WalletService {
       );
     } catch (e) {
       return throwError(e);
+    }
+  }
+
+  /**
+   * call function
+   * @param addr
+   * @param abi
+   * @param params
+   */
+  call(addr: string, abi: ABIDefinition, params: any[]): Promise<object> | null {
+    try {
+      const encoded: string = this._web3.eth.abi.encodeFunctionCall(abi, params);
+      return this._web3.eth.call({
+        to: addr,
+        data: encoded,
+      }).then((res: string) => {
+        if (!res) {
+          throw new Error('Result is empty');
+        }
+        const decoded: object = this._web3.eth.abi.decodeLog(abi.outputs, res, []);
+        if (objIsEmpty(decoded)) {
+          throw new Error('Result is empty');
+        }
+        return decoded;
+      });
+    } catch (err) {
+      throw err;
     }
   }
 }

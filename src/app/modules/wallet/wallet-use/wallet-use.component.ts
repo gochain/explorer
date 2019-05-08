@@ -17,7 +17,7 @@ import {Address} from '../../../models/address.model';
 /*UTILS*/
 import {ErcName} from '../../../utils/enums';
 import {ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
-import {getAbiMethods, makeContractAbi, makeContractBadges} from '../../../utils/functions';
+import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
 
 @Component({
@@ -189,39 +189,11 @@ export class WalletUseComponent implements OnInit {
    */
   callABIFunction(func: ABIDefinition, params: string[]): void {
     this.isProcessing = true;
-    let funcABI: string;
-    try {
-      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
-    } catch (err) {
-      this._toastrService.danger(err);
-      this.isProcessing = false;
-      return;
-    }
-    this._walletService.w3.eth.call({
-      to: this.contract.options.address,
-      data: funcABI,
-    }).then((result: string) => {
-      const decoded: object = this._walletService.w3.eth.abi.decodeLog(func.outputs, result, []);
-      // This Result object is frikin stupid, it's literaly an empty object that they add fields too
-      // convert to something iterable
-      const arrR: any[][] = [];
-      // let mapR: Map<any,any> = new Map<any,any>();
-      // for (let j = 0; j < decoded.__length__; j++){
-      //   mapR.push([decoded[0], decoded[1]])
-      // }
-      Object.keys(decoded).forEach((key) => {
-        // mapR[key] = decoded[key];
-        if (key.startsWith('__')) {
-          return;
-        }
-        if (!decoded[key].payable || decoded[key].constant) {
-          arrR.push([key, decoded[key]]);
-        }
-      });
-      this.functionResult = arrR;
-      this.isProcessing = false;
+    this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
+      this.functionResult = getDecodedData(decoded);
     }).catch(err => {
       this._toastrService.danger(err);
+    }).then(() => {
       this.isProcessing = false;
     });
   }
