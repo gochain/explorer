@@ -128,8 +128,11 @@ func (self *Backend) GetTransactionList(address string, skip, limit int, fromTim
 func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
 	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), skip, limit)
 }
-func (self *Backend) GetInternalTransactionsList(contractAddress, fromAddress, toAddress string, skip, limit int) []*models.InternalTransaction {
-	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), fromAddress, toAddress, skip, limit)
+func (self *Backend) GetOwnedTokensList(ownerAddress string, skip, limit int) []*models.TokenHolder {
+	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), skip, limit)
+}
+func (self *Backend) GetInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) []*models.InternalTransaction {
+	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), tokenTransactions, skip, limit)
 }
 func (self *Backend) GetContract(contractAddress string) *models.Contract {
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
@@ -263,8 +266,8 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) [
 func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
 	return self.mongo.importAddress(address, balance, token, contract, go20, updatedAtBlock)
 }
-func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
-	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token)
+func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
+	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token, address)
 }
 func (self *Backend) ImportInternalTransaction(contractAddress string, transferEvent TransferEvent) *models.InternalTransaction {
 	createdAt := time.Now()
