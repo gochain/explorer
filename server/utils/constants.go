@@ -24,6 +24,7 @@ type InterfaceData struct {
 }
 
 const (
+	AddPauser                       InterfaceName = "AddPauser"
 	AddVerified                     InterfaceName = "AddVerified"
 	Allowance                       InterfaceName = "Allowance"
 	Approve                         InterfaceName = "Approve"
@@ -54,6 +55,7 @@ const (
 	IncreaseSupply                  InterfaceName = "IncreaseSupply"
 	IsApprovedForAll                InterfaceName = "IsApprovedForAll"
 	IsHolder                        InterfaceName = "IsHolder"
+	IsPauser                        InterfaceName = "IsPauser"
 	IsOperatorFor                   InterfaceName = "IsOperatorFor"
 	IsSuperseded                    InterfaceName = "IsSuperseded"
 	IsVerified                      InterfaceName = "IsVerified"
@@ -66,6 +68,7 @@ const (
 	OperatorSend                    InterfaceName = "OperatorSend"
 	OwnerOf                         InterfaceName = "OwnerOf"
 	RemoveVerified                  InterfaceName = "RemoveVerified"
+	RenouncePauser                  InterfaceName = "RenouncePauser"
 	RevokeOperator                  InterfaceName = "RevokeOperator"
 	SafeBatchTransferFrom           InterfaceName = "SafeBatchTransferFrom"
 	SafeTransferFrom                InterfaceName = "SafeTransferFrom"
@@ -90,9 +93,14 @@ const (
 	TransferFromAndCall             InterfaceName = "TransferFromAndCall"
 	UpdateVerified                  InterfaceName = "UpdateVerified"
 	URI                             InterfaceName = "URI"
+	Pause                           InterfaceName = "Pause"
+	Paused                          InterfaceName = "Paused"
+	Unpause                         InterfaceName = "Unpause"
+	MintWithTokenURI                InterfaceName = "MintWithTokenURI"
 )
 
 var InterfaceIdentifiers = map[InterfaceName]InterfaceData{
+	AddPauser:                       {Value: "82dc1ec4", Description: "addPauser(address)", Callable: false},
 	AddVerified:                     {Value: "47089f62", Description: "addVerified(address,bytes32)", Callable: false},
 	Allowance:                       {Value: "dd62ed3e", Description: "allowance(address,address)", Callable: false},
 	Approve:                         {Value: "095ea7b3", Description: "approve(address,uint256)", Callable: false},
@@ -123,6 +131,7 @@ var InterfaceIdentifiers = map[InterfaceName]InterfaceData{
 	IncreaseSupply:                  {Value: "124fc7e0", Description: "increaseSupply(uint256,address)", Callable: false},
 	IsApprovedForAll:                {Value: "e985e9c5", Description: "isApprovedForAll(address,address)", Callable: false},
 	IsHolder:                        {Value: "d4d7b19a", Description: "isHolder(address)", Callable: false},
+	IsPauser:                        {Value: "46fbf68e", Description: "isPauser(address)", Callable: true},
 	IsOperatorFor:                   {Value: "d95b6371", Description: "isOperatorFor(address,address)", Callable: false},
 	IsSuperseded:                    {Value: "2da7293e", Description: "isSuperseded(address)", Callable: false},
 	IsVerified:                      {Value: "b9209e33", Description: "isVerified(address)", Callable: false},
@@ -135,6 +144,7 @@ var InterfaceIdentifiers = map[InterfaceName]InterfaceData{
 	OperatorSend:                    {Value: "62ad1b83", Description: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
 	OwnerOf:                         {Value: "6352211e", Description: "ownerOf(uint256)", Callable: false},
 	RemoveVerified:                  {Value: "4487b392", Description: "removeVerified(address)", Callable: false},
+	RenouncePauser:                  {Value: "6ef8d66d", Description: "renouncePauser()", Callable: false},
 	RevokeOperator:                  {Value: "fad8b32a", Description: "revokeOperator(address)", Callable: false},
 	SafeBatchTransferFrom:           {Value: "2eb2c2d6", Description: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
 	SafeTransferFrom:                {Value: "42842e0e", Description: "safeTransferFrom(address,address,uint256)", Callable: false},
@@ -158,59 +168,73 @@ var InterfaceIdentifiers = map[InterfaceName]InterfaceData{
 	TransferFromAndCall:             {Value: "c1d34b89", Description: "transferFromAndCall(address,address,uint256,bytes)", Callable: false},
 	UpdateVerified:                  {Value: "354b7b1d", Description: "updateVerified(address,bytes32)", Callable: false},
 	URI:                             {Value: "0e89341c", Description: "uri(uint256)", Callable: false},
+	Pause:                           {Value: "8456cb59", Description: "pause()", Callable: false},
+	Paused:                          {Value: "5c975abb", Description: "paused()", Callable: true},
+	Unpause:                         {Value: "3f4ba83a", Description: "unpause()", Callable: false},
+	MintWithTokenURI:                {Value: "50bb4e7f", Description: "mintWithTokenURI(address,uint256,string)", Callable: false},
 }
 
 type ErcName string
 type ErcData []InterfaceName
 
 const (
-	Erc20            ErcName = "Erc20"
-	Erc20Burnable    ErcName = "Erc20Burnable"
-	Erc20Capped      ErcName = "Erc20Capped"
-	Erc20Detailed    ErcName = "Erc20Detailed"
-	Erc20Mintable    ErcName = "Erc20Mintable"
-	Erc20Pausable    ErcName = "Erc20Pausable"
-	Erc165           ErcName = "Erc165"
-	Erc721           ErcName = "Erc721"
-	Erc721Receiver   ErcName = "Erc721Receiver"
-	Erc721Metadata   ErcName = "Erc721Metadata"
-	Erc721Enumerable ErcName = "Erc721Enumerable"
-	Erc820           ErcName = "Erc820"
-	Erc1155          ErcName = "Erc1155"
-	Erc1155Receiver  ErcName = "Erc1155Receiver"
-	Erc1155Metadata  ErcName = "Erc1155Metadata"
-	Erc223           ErcName = "Erc223"
-	Erc223Receiver   ErcName = "Erc223Receiver"
-	Erc621           ErcName = "Erc621"
-	Erc777           ErcName = "Erc777"
-	Erc777Receiver   ErcName = "Erc777Receiver"
-	Erc777Sender     ErcName = "Erc777Sender"
-	Erc827           ErcName = "Erc827"
-	Erc884           ErcName = "Erc884"
+	Erc20                  ErcName = "Erc20"
+	Erc20Burnable          ErcName = "Erc20Burnable"
+	Erc20Capped            ErcName = "Erc20Capped"
+	Erc20Detailed          ErcName = "Erc20Detailed"
+	Erc20Mintable          ErcName = "Erc20Mintable"
+	Erc20Pausable          ErcName = "Erc20Pausable"
+	Erc165                 ErcName = "Erc165"
+	Erc721                 ErcName = "Erc721"
+	Erc721Burnable         ErcName = "Erc721Burnable"
+	Erc721Receiver         ErcName = "Erc721Receiver"
+	Erc721Metadata         ErcName = "Erc721Metadata"
+	Erc721Enumerable       ErcName = "Erc721Enumerable"
+	Erc721Pausable         ErcName = "Erc721Pausable"
+	Erc721Mintable         ErcName = "Erc721Mintable"
+	Erc721MetadataMintable ErcName = "Erc721MetadataMintable"
+	Erc721Full             ErcName = "Erc721Full"
+	Erc820                 ErcName = "Erc820"
+	Erc1155                ErcName = "Erc1155"
+	Erc1155Receiver        ErcName = "Erc1155Receiver"
+	Erc1155Metadata        ErcName = "Erc1155Metadata"
+	Erc223                 ErcName = "Erc223"
+	Erc223Receiver         ErcName = "Erc223Receiver"
+	Erc621                 ErcName = "Erc621"
+	Erc777                 ErcName = "Erc777"
+	Erc777Receiver         ErcName = "Erc777Receiver"
+	Erc777Sender           ErcName = "Erc777Sender"
+	Erc827                 ErcName = "Erc827"
+	Erc884                 ErcName = "Erc884"
 )
 
 var ErcInterfaceIdentifiers = map[ErcName]ErcData{
-	Erc20:            {Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom},
-	Erc20Burnable:    {Burn, BurnFrom},
-	Erc20Capped:      {Cap},
-	Erc20Detailed:    {Decimals, Name, Symbol},
-	Erc20Mintable:    {Mint},
-	Erc20Pausable:    {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom},
-	Erc165:           {SupportsInterface},
-	Erc721:           {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
-	Erc721Receiver:   {OnErc721Received},
-	Erc721Metadata:   {Name, Symbol, TokenUri},
-	Erc721Enumerable: {TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
-	Erc820:           {CanImplementInterfaceForAddress},
-	Erc1155:          {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
-	Erc1155Receiver:  {OnErc1155BatchReceived, OnErc1155Received},
-	Erc1155Metadata:  {URI},
-	Erc223:           {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
-	Erc223Receiver:   {TokenFallback},
-	Erc621:           {DecreaseSupply, IncreaseSupply},
-	Erc777:           {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name, OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
-	Erc777Receiver:   {TokensReceived},
-	Erc777Sender:     {TokensToSend},
-	Erc827:           {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
-	Erc884:           {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
+	Erc20:                  {Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom},
+	Erc20Burnable:          {Burn, BurnFrom},
+	Erc20Capped:            {Mint, Cap},
+	Erc20Detailed:          {Decimals, Name, Symbol},
+	Erc20Mintable:          {Mint},
+	Erc20Pausable:          {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
+	Erc165:                 {SupportsInterface},
+	Erc721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
+	Erc721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
+	Erc721Receiver:         {OnErc721Received},
+	Erc721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
+	Erc721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
+	Erc721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
+	Erc721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
+	Erc721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
+	Erc721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
+	Erc820:                 {CanImplementInterfaceForAddress},
+	Erc1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
+	Erc1155Receiver:        {OnErc1155BatchReceived, OnErc1155Received},
+	Erc1155Metadata:        {URI},
+	Erc223:                 {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
+	Erc223Receiver:         {TokenFallback},
+	Erc621:                 {DecreaseSupply, IncreaseSupply},
+	Erc777:                 {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name, OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
+	Erc777Receiver:         {TokensReceived},
+	Erc777Sender:           {TokensToSend},
+	Erc827:                 {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
+	Erc884:                 {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
 }
