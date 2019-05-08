@@ -18,14 +18,14 @@ type AbiItem struct {
 
 type Contract struct {
 	Address         string    `json:"address" bson:"address"`
-	Bytecode        string    `json:"byte_code" bson:"byte_code"`
-	Valid           bool      `json:"valid" bson:"valid"`
-	ContractName    string    `json:"contract_name" bson:"contract_name"`
-	CompilerVersion string    `json:"compiler_version" bson:"compiler_version"`
-	Optimization    bool      `json:"optimization" bson:"optimization"`
-	SourceCode      string    `json:"source_code" bson:"source_code"`
-	Abi             []AbiItem `json:"abi" bson:"abi"`
-	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at" bson:"updated_at"`
+	Bytecode        string    `json:"byte_code" bson:"byte_code,omitempty"`
+	Valid           bool      `json:"valid" bson:"valid,omitempty"`
+	ContractName    string    `json:"contract_name" bson:"contract_name,omitempty"`
+	CompilerVersion string    `json:"compiler_version" bson:"compiler_version,omitempty"`
+	Optimization    bool      `json:"optimization" bson:"optimization,omitempty"`
+	SourceCode      string    `json:"source_code" bson:"source_code,omitempty"`
+	Abi             []AbiItem `json:"abi" bson:"abi,omitempty"`
+	CreatedAt       time.Time `json:"created_at" bson:"created_at,omitempty"`
+	UpdatedAt       time.Time `json:"updated_at" bson:"updated_at,omitempty"`
 	/*RecaptchaToken  string    `json:"recaptcha_token"`*/
 }
