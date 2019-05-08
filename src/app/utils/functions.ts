@@ -6,8 +6,9 @@ import {Address} from '../models/address.model';
 import {Contract} from '../models/contract.model';
 import {Badge} from '../models/badge.model';
 /*UTILS*/
-import {StatusColor} from './enums';
+import {InterfaceName, StatusColor} from './enums';
 import {TOKEN_TYPES} from './constants';
+import {ContractAbi} from './types';
 
 declare const window: any;
 
@@ -96,7 +97,7 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
       text: 'Verified',
     });
   }
-  if (contract.abi.length) {
+  if (contract.abi && contract.abi.length) {
     badges.push({
       type: StatusColor.Info,
       text: 'Has ABI',
@@ -110,4 +111,19 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
   });
 
   return badges;
+}
+
+/**
+ * makes contract abi
+ * @param interfaceNames
+ * @param abi
+ */
+export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAbi): ABIDefinition[] {
+  const contractAbi: ABIDefinition[] = [];
+  interfaceNames.forEach((name: InterfaceName) => {
+    if (abi[name]) {
+      contractAbi.push(abi[name]);
+    }
+  });
+  return contractAbi;
 }

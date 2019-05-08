@@ -22,6 +22,7 @@ type TokenDetails struct {
 	Decimals    int64
 	Block       int64
 	Types       []utils.ErcName
+	Interfaces  []utils.InterfaceName
 }
 
 type TokenHolderDetails struct {
@@ -121,10 +122,10 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 		return err
 	}
 
-	var interfaces []utils.InterfaceName
-	tb.Types, interfaces = token.GetInfo(byteCode)
+	tb.Types, tb.Interfaces = token.GetInfo(byteCode)
 Loop:
-	for _, interfaceName := range interfaces {
+	for _, interfaceName := range tb.Interfaces {
+		// to-do: this part of code need refactor
 		if utils.InterfaceIdentifiers[interfaceName].Callable {
 			switch interfaceName {
 			case utils.Decimals:

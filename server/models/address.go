@@ -20,11 +20,12 @@ type Address struct {
 	Contract       bool      `json:"contract" bson:"contract"`
 	// Depreciated and gonna be deleted
 	// Should use ErcTypes
-	GO20                         bool            `json:"go20" bson:"go20"`
-	ErcTypes                     []utils.ErcName `json:"erc_types" bson:"erc_types"`
-	NumberOfTransactions         int             `json:"number_of_transactions" bson:"number_of_transactions"`
-	NumberOfTokenHolders         int             `json:"number_of_token_holders,omitempty" bson:"number_of_token_holders"`
-	NumberOfInternalTransactions int             `json:"number_of_internal_transactions,omitempty" bson:"number_of_internal_transactions"`
+	GO20                         bool                  `json:"go20" bson:"go20"`
+	ErcTypes                     []utils.ErcName       `json:"erc_types" bson:"erc_types"`
+	Interfaces                   []utils.InterfaceName `json:"interfaces" bson:"interfaces"`
+	NumberOfTransactions         int                   `json:"number_of_transactions" bson:"number_of_transactions"`
+	NumberOfTokenHolders         int                   `json:"number_of_token_holders,omitempty" bson:"number_of_token_holders"`
+	NumberOfInternalTransactions int                   `json:"number_of_internal_transactions,omitempty" bson:"number_of_internal_transactions"`
 }
 
 type AddressesList struct {

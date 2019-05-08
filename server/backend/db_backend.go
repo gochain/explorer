@@ -334,6 +334,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Contract:       contract,
 		GO20:           go20,
 		ErcTypes:       token.Types,
+		Interfaces:     token.Interfaces,
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,

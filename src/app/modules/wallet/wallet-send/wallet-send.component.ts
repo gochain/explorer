@@ -18,9 +18,10 @@ import {Address} from '../../../models/address.model';
 import {Badge} from '../../../models/badge.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI} from '../../../utils/constants';
-import {ErcName, InterfaceName} from '../../../utils/enums';
-import {getAbiMethods, makeContractBadges} from '../../../utils/functions';
+import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import {ErcName} from '../../../utils/enums';
+import {getAbiMethods, makeContractAbi, makeContractBadges} from '../../../utils/functions';
+import {ContractAbi} from '../../../utils/types';
 
 @Component({
   selector: 'app-wallet-send',
@@ -144,18 +145,37 @@ export class WalletSendComponent implements OnInit {
       this._commonService.getAddress(addrHash),
       this._commonService.getContract(addrHash),
     ]).pipe(
-      filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
+      filter((data: [Address, Contract]) => !!data[0] && !!data[1]),
     ).subscribe((data: [Address, Contract]) => {
-      const address: Address = data[0];
-      const contract: Contract = data[1];
-      this.contractBadges = makeContractBadges(address, contract);
+      this.handleContractData(data[0], data[1]);
+    });
+  }
+
+  private handleContractData(address: Address, contract: Contract) {
+    this.contractBadges = makeContractBadges(address, contract);
+    if (contract.abi && contract.abi.length) {
       this.useContractForm.patchValue({
         contractABI: JSON.stringify(contract.abi),
       }, {
         emitEvent: false,
       });
-      this.initiateContract(contract.abi, addrHash);
-    });
+      this.initiateContract(contract.abi, address.address);
+    } else if (address.interfaces && address.interfaces.length) {
+      this._walletService.abi$.subscribe((abiDefinitions: ContractAbi) => {
+        const abi: ABIDefinition[] = address.interfaces.reduce((acc, abiName) => {
+          if (abiDefinitions[abiName]) {
+            acc.push(abiDefinitions[abiName]);
+          }
+          return acc;
+        }, []);
+        this.useContractForm.patchValue({
+          contractABI: JSON.stringify(abi),
+        }, {
+          emitEvent: false,
+        });
+        this.initiateContract(abi, address.address);
+      });
+    }
   }
 
   private initiateContract(abi: ABIDefinition[], addrHash: string) {
@@ -481,15 +501,17 @@ export class WalletSendComponent implements OnInit {
   }
 
   onAbiTemplateClick(ercName: ErcName) {
-    const ABI: ABIDefinition[] = ERC_INTERFACE_IDENTIFIERS[ercName].map((interfaceName: InterfaceName) => INTERFACE_ABI[interfaceName]);
-    const addr: string = this.useContractForm.get('contractAddress').value;
-    this.useContractForm.patchValue({
-      contractABI: JSON.stringify(ABI),
-    }, {
-      emitEvent: false,
+    this._walletService.abi$.subscribe((abi: ContractAbi) => {
+      const ABI: ABIDefinition[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
+      const addr: string = this.useContractForm.get('contractAddress').value;
+      this.useContractForm.patchValue({
+        contractABI: JSON.stringify(ABI),
+      }, {
+        emitEvent: false,
+      });
+      if (addr.length === 42 && ABI.length) {
+        this.initiateContract(ABI, addr);
+      }
     });
-    if (addr.length === 42 && ABI.length) {
-      this.initiateContract(ABI, addr);
-    }
   }
 }
