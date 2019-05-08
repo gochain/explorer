@@ -256,7 +256,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 								go20 = false
 								continue
 							}
-							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder)
+							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
 						}
 					}
 				}
