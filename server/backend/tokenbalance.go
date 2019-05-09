@@ -22,7 +22,7 @@ type TokenDetails struct {
 	Decimals    int64
 	Block       int64
 	Types       []utils.ErcName
-	Interfaces  []utils.InterfaceName
+	Interfaces  []utils.FunctionName
 }
 
 type TokenHolderDetails struct {
