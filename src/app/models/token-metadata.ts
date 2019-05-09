@@ -5,4 +5,5 @@ export class TokenMetadata {
   external_url: string;
   extra_data: string;
   origin_data: string;
+  ownerAddr: string;
 }

@@ -1,7 +1,7 @@
 /*CORE*/
 import {Inject, Injectable} from '@angular/core';
-import {Observable, throwError} from 'rxjs';
-import {concatMap, map} from 'rxjs/operators';
+import {BehaviorSubject, Observable, throwError} from 'rxjs';
+import {concatMap, map, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
@@ -12,23 +12,27 @@ import {TransactionReceipt} from 'web3/types';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
 import {CommonService} from '../../services/common.service';
-
 /*MODELS*/
+import {ABIDefinition} from 'web3/eth/abi';
+/*UTILS*/
+import {objIsEmpty} from '../../utils/functions';
+import {ContractAbi} from '../../utils/types';
 
 @Injectable()
 export class WalletService {
 
-  rpcHost: string;
+  private _abi$: BehaviorSubject<ContractAbi> = new BehaviorSubject<ContractAbi>(null);
+  private _abi: ContractAbi;
+
+  get abi$() {
+    if (!this._abi) {
+      return this.getAbi();
+    }
+    return this._abi$;
+  }
 
   get w3(): Web3 {
     return this._web3;
-  }
-
-  /**
-   * set mainnet rpc for mainnet explorer either testnet
-   */
-  static getHost(): string {
-    return /^explorer\.gochain\.io/.test(location.hostname) ? 'https://rpc.gochain.io' : 'https://testnet-rpc.gochain.io';
   }
 
   constructor(@Inject(WEB3) public _web3: Web3,
@@ -36,7 +40,15 @@ export class WalletService {
               private _commonService: CommonService) {
     const provider = new Web3.providers.HttpProvider(this._commonService.rpcProvider);
     this._web3.setProvider(provider);
-    this.rpcHost = WalletService.getHost();
+  }
+
+  getAbi(): Observable<ContractAbi> {
+    return this._commonService.getAbi().pipe(
+      tap((abi: ContractAbi) => {
+        this._abi = abi;
+        this._abi$.next(abi);
+      })
+    );
   }
 
   createAccount(): Account {
@@ -80,6 +92,33 @@ export class WalletService {
       );
     } catch (e) {
       return throwError(e);
+    }
+  }
+
+  /**
+   * call function
+   * @param addr
+   * @param abi
+   * @param params
+   */
+  call(addr: string, abi: ABIDefinition, params: any[]): Promise<object> | null {
+    try {
+      const encoded: string = this._web3.eth.abi.encodeFunctionCall(abi, params);
+      return this._web3.eth.call({
+        to: addr,
+        data: encoded,
+      }).then((res: string) => {
+        if (!res) {
+          throw new Error('Result is empty');
+        }
+        const decoded: object = this._web3.eth.abi.decodeLog(abi.outputs, res, []);
+        if (objIsEmpty(decoded)) {
+          throw new Error('Result is empty');
+        }
+        return decoded;
+      });
+    } catch (err) {
+      throw err;
     }
   }
 }

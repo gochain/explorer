@@ -6,8 +6,9 @@ import {Address} from '../models/address.model';
 import {Contract} from '../models/contract.model';
 import {Badge} from '../models/badge.model';
 /*UTILS*/
-import {StatusColor} from './enums';
+import {InterfaceName, StatusColor} from './enums';
 import {TOKEN_TYPES} from './constants';
+import {ContractAbi} from './types';
 
 declare const window: any;
 
@@ -29,50 +30,11 @@ export function objHas(obj: any, keys: string): boolean {
 }
 
 /**
- *
+ * checks obj
+ * @param obj
  */
-export function isPrivateMode(): boolean {
-  const testLocalStorage = () => {
-    try {
-      if (localStorage.length) {
-        return true;
-      } else {
-        localStorage.x = 1;
-        localStorage.removeItem('x');
-        return true;
-      }
-    } catch (e) {
-      // Safari only enables cookie in private mode
-      // if cookie is disabled then all client side storage is disabled
-      // if all client side storage is disabled, then there is no point
-      // in using private mode
-      return !navigator.cookieEnabled;
-    }
-  };
-  // Chrome & Opera
-  if (window.webkitRequestFileSystem) {
-    return window.webkitRequestFileSystem(0, 0, true, false);
-  }
-  // Firefox
-  if ('MozAppearance' in document.documentElement.style) {
-    const db = indexedDB.open('test');
-    db.onerror = () => {
-      return true;
-    };
-    db.onsuccess = () => {
-      return false;
-    };
-  }
-  // Safari
-  if (/constructor/i.test(window.HTMLElement)) {
-    return testLocalStorage();
-  }
-  // IE10+ & Edge
-  if (!window.indexedDB && (window.PointerEvent || window.MSPointerEvent)) {
-    return true;
-  }
-  // others
-  return false;
+export function objIsEmpty(obj: any): boolean {
+  return Object.entries(obj).length === 0 && obj.constructor === Object;
 }
 
 /**
@@ -96,7 +58,7 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
       text: 'Verified',
     });
   }
-  if (contract.abi.length) {
+  if (contract.abi && contract.abi.length) {
     badges.push({
       type: StatusColor.Info,
       text: 'Has ABI',
@@ -110,4 +72,41 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
   });
 
   return badges;
+}
+
+/**
+ * makes contract abi
+ * @param interfaceNames
+ * @param abi
+ */
+export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAbi): ABIDefinition[] {
+  const contractAbi: ABIDefinition[] = [];
+  interfaceNames.forEach((name: InterfaceName) => {
+    if (abi[name]) {
+      contractAbi.push(abi[name]);
+    }
+  });
+  return contractAbi;
+}
+
+/**
+ * get appropriate data from function result
+ * @param decoded
+ */
+export function getDecodedData(decoded: object): any[][] {
+  const arrR: any[][] = [];
+  // let mapR: Map<any,any> = new Map<any,any>();
+  // for (let j = 0; j < decoded.__length__; j++){
+  //   mapR.push([decoded[0], decoded[1]])
+  // }
+  Object.keys(decoded).forEach((key) => {
+    // mapR[key] = decoded[key];
+    if (key.startsWith('__')) {
+      return;
+    }
+    if (!decoded[key].payable || decoded[key].constant) {
+      arrR.push([key, decoded[key]]);
+    }
+  });
+  return arrR;
 }

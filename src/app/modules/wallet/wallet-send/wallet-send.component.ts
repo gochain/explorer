@@ -18,9 +18,10 @@ import {Address} from '../../../models/address.model';
 import {Badge} from '../../../models/badge.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, INTERFACE_ABI} from '../../../utils/constants';
-import {ErcName, InterfaceName} from '../../../utils/enums';
-import {getAbiMethods, makeContractBadges} from '../../../utils/functions';
+import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import {ErcName} from '../../../utils/enums';
+import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
+import {ContractAbi} from '../../../utils/types';
 
 @Component({
   selector: 'app-wallet-send',
@@ -144,18 +145,37 @@ export class WalletSendComponent implements OnInit {
       this._commonService.getAddress(addrHash),
       this._commonService.getContract(addrHash),
     ]).pipe(
-      filter((data: [Address, Contract]) => data[0] && data[1] && data[1].valid && !!data[1].abi.length),
+      filter((data: [Address, Contract]) => !!data[0] && !!data[1]),
     ).subscribe((data: [Address, Contract]) => {
-      const address: Address = data[0];
-      const contract: Contract = data[1];
-      this.contractBadges = makeContractBadges(address, contract);
+      this.handleContractData(data[0], data[1]);
+    });
+  }
+
+  private handleContractData(address: Address, contract: Contract) {
+    this.contractBadges = makeContractBadges(address, contract);
+    if (contract.abi && contract.abi.length) {
       this.useContractForm.patchValue({
         contractABI: JSON.stringify(contract.abi),
       }, {
         emitEvent: false,
       });
-      this.initiateContract(contract.abi, addrHash);
-    });
+      this.initiateContract(contract.abi, address.address);
+    } else if (address.interfaces && address.interfaces.length) {
+      this._walletService.abi$.subscribe((abiDefinitions: ContractAbi) => {
+        const abi: ABIDefinition[] = address.interfaces.reduce((acc, abiName) => {
+          if (abiDefinitions[abiName]) {
+            acc.push(abiDefinitions[abiName]);
+          }
+          return acc;
+        }, []);
+        this.useContractForm.patchValue({
+          contractABI: JSON.stringify(abi),
+        }, {
+          emitEvent: false,
+        });
+        this.initiateContract(abi, address.address);
+      });
+    }
   }
 
   private initiateContract(abi: ABIDefinition[], addrHash: string) {
@@ -201,35 +221,9 @@ export class WalletSendComponent implements OnInit {
    * @param func
    * @param params
    */
-  callABIFunction(func: any, params: string[]): void {
-    let funcABI: string;
-    try {
-      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(func, params);
-    } catch (err) {
-      this._toastrService.danger(err);
-      return;
-    }
-
-    this._walletService.w3.eth.call({
-      to: this.contract.options.address,
-      data: funcABI,
-    }).then((result: string) => {
-      const decoded: object = this._walletService.w3.eth.abi.decodeLog(func.outputs, result, []);
-      // This Result object is frikin stupid, it's literaly an empty object that they add fields too
-      // convert to something iterable
-      const arrR: any[][] = [];
-      // let mapR: Map<any,any> = new Map<any,any>();
-      // for (let j = 0; j < decoded.__length__; j++){
-      //   mapR.push([decoded[0], decoded[1]])
-      // }
-      Object.keys(decoded).forEach((key) => {
-        // mapR[key] = decoded[key];
-        if (key.startsWith('__')) {
-          return;
-        }
-        arrR.push([key, decoded[key]]);
-      });
-      this.functionResult = arrR;
+  callABIFunction(func: ABIDefinition, params: string[]): void {
+    this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
+      this.functionResult = getDecodedData(decoded);
     }).catch(err => {
       this._toastrService.danger(err);
     });
@@ -481,15 +475,17 @@ export class WalletSendComponent implements OnInit {
   }
 
   onAbiTemplateClick(ercName: ErcName) {
-    const ABI: ABIDefinition[] = ERC_INTERFACE_IDENTIFIERS[ercName].map((interfaceName: InterfaceName) => INTERFACE_ABI[interfaceName]);
-    const addr: string = this.useContractForm.get('contractAddress').value;
-    this.useContractForm.patchValue({
-      contractABI: JSON.stringify(ABI),
-    }, {
-      emitEvent: false,
+    this._walletService.abi$.subscribe((abi: ContractAbi) => {
+      const ABI: ABIDefinition[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
+      const addr: string = this.useContractForm.get('contractAddress').value;
+      this.useContractForm.patchValue({
+        contractABI: JSON.stringify(ABI),
+      }, {
+        emitEvent: false,
+      });
+      if (addr.length === 42 && ABI.length) {
+        this.initiateContract(ABI, addr);
+      }
     });
-    if (addr.length === 42 && ABI.length) {
-      this.initiateContract(ABI, addr);
-    }
   }
 }

@@ -12,6 +12,10 @@
           <p>Token address</p>
           <b><a routerLink="/token/{{contractAddr}}">{{contractAddr}}</a></b>
         </li>
+        <li *ngIf="metadata.ownerAddr">
+          <p>Owner address</p>
+          <b><a routerLink="/addr/{{metadata.ownerAddr}}">{{metadata.ownerAddr}}</a></b>
+        </li>
         <li>
           <p>Token ID</p>
           <b>{{tokenId}}</b>
