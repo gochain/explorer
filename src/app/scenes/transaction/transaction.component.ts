@@ -93,7 +93,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
         finalTx.value = tx.value;
         finalTx.gas_price = tx.gasPrice;
         finalTx.gas_limit = '' + tx.gas;
-        finalTx.nonce = '' + tx.nonce;
+        finalTx.nonce = tx.nonce;
         finalTx.input_data = tx.input.replace(/^0x/, '');
         finalTx.from = tx.from;
         finalTx.to = tx.to;

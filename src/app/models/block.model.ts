@@ -9,6 +9,6 @@ export class Block {
   difficulty: any;
   sha3_uncles: any;
   extra_data: any;
-  nonce: any;
+  nonce: number;
   gas_limit: number;
 }
