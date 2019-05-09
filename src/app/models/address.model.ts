@@ -14,5 +14,6 @@ export class Address {
   number_of_transactions: number;
   number_of_token_holders: number;
   number_of_internal_transactions: number;
+  number_of_token_transactions: number;
   updated_at: Date;
 }

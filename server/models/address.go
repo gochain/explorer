@@ -25,6 +25,7 @@ type Address struct {
 	NumberOfTransactions         int             `json:"number_of_transactions" bson:"number_of_transactions"`
 	NumberOfTokenHolders         int             `json:"number_of_token_holders,omitempty" bson:"number_of_token_holders"`
 	NumberOfInternalTransactions int             `json:"number_of_internal_transactions,omitempty" bson:"number_of_internal_transactions"`
+	NumberOfTokenTransactions    int             `json:"number_of_token_transactions,omitempty" bson:"number_of_token_transactions"`
 }
 
 type AddressesList struct {

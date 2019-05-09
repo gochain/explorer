@@ -319,6 +319,12 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 
 	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+
+	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
@@ -339,13 +345,13 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
+		NumberOfTokenTransactions:    tokenTransactionsCounter,
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
 	return addressM
-
 }
 
 func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {

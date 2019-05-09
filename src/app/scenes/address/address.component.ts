@@ -94,7 +94,8 @@ export class AddressComponent implements OnInit, OnDestroy {
       this._layoutService.offLoading();
       this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
       this.getTransactionData();
-
+      this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions);
+      this.getTokenTransactions();
       if (this.addr.contract) {
         if (this.addr.go20) {
           this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
