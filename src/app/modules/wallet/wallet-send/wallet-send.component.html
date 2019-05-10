@@ -149,10 +149,8 @@
                      class="uk-margin">
                   <div class="uk-form-controls">
                     <ng-container *ngIf="selectedFunction.name === 'transfer' && functionInput.name === 'value' && addr.token_symbol; else regularFunctionInput">
-                      <input type="number" class="uk-input" placeholder="Value ({{addr.token_symbol}})" formControlName="{{i}}" #valueInput>
-                      <p *ngIf="valueInput.value">
-                        Raw value: {{valueInput.value * ('1e' + addr.decimals)}}
-                      </p>
+                      <input type="number" class="uk-input" placeholder="Amount ({{addr.token_symbol}})" (keyup)="onTokenValueChange($event, i)">
+                      <input disabled class="uk-input" placeholder="Raw amount" formControlName="{{i}}">
                     </ng-container>
                     <ng-template #regularFunctionInput>
                       <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
