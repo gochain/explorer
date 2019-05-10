@@ -76,8 +76,6 @@ export class WalletSendComponent implements OnInit {
 
   addr: Address;
 
-  tokenInputValue;
-
   private _subsArr$: Subscription[] = [];
 
   /**
@@ -287,7 +285,6 @@ export class WalletSendComponent implements OnInit {
   }
 
   onTokenValueChange(event, controlIndex: number): void {
-    /*this.tokenInputValue += (<HTMLInputElement>event.target).value;*/
     let value: string = (<HTMLInputElement>event.target).value;
     if (value) {
       value = (new BigNumber(value)).multipliedBy('1e' + this.addr.decimals).toString();
