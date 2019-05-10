@@ -7,10 +7,8 @@ import {Contract} from '../models/contract.model';
 import {Badge} from '../models/badge.model';
 /*UTILS*/
 import {InterfaceName, StatusColor} from './enums';
-import {TOKEN_TYPES} from './constants';
+import {TOKEN_ABI_NAMES, TOKEN_TYPES} from './constants';
 import {ContractAbi} from './types';
-
-declare const window: any;
 
 /**
  * clears array from subscriptions
@@ -90,22 +88,71 @@ export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAb
 }
 
 /**
+ *
+ * @param val
+ * @param showUnit
+ * @param removeTrailingZeros
+ * @param decimals
+ */
+export function convertWithDecimals(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18, unitName: string = 'GO'): string {
+  if (!val) {
+    return;
+  }
+  const parts = val.toString().split('.');
+  if (parts[0].length > decimals) {
+    parts[0] = parts[0].slice(0, parts[0].length - decimals) + '.' + parts[0].slice(parts[0].length - decimals, parts[0].length);
+  } else {
+    parts[0] = '0.' + '0'.repeat(decimals - parts[0].length) + parts[0];
+  }
+  let value: string = parts.join('').toString();
+
+  if (removeTrailingZeros) {
+    // replace trailing zeros with exact amount of spaces
+    value = value.replace(/0(?=(0+$|$))/g, ` `);
+    value = value.replace(/\.(?=\s)/g, ` `);
+  } else {
+    // delete trailing zeros
+    value = value.replace(/\.?0+$/, '');
+  }
+
+  if (showUnit) {
+    value += ' ' + unitName;
+  }
+  // remove dot in the end
+  value = value.replace(/\.$/, '');
+  return value;
+}
+
+export function numberWithCommas(val: string): string {
+  if (val == null) {
+    return val;
+  }
+  const parts = val.toString().split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
+/**
  * get appropriate data from function result
  * @param decoded
  */
-export function getDecodedData(decoded: object): any[][] {
+export function getDecodedData(decoded: object, abi: ABIDefinition, addr: Address): any[][] {
   const arrR: any[][] = [];
   // let mapR: Map<any,any> = new Map<any,any>();
   // for (let j = 0; j < decoded.__length__; j++){
   //   mapR.push([decoded[0], decoded[1]])
   // }
   Object.keys(decoded).forEach((key) => {
+    let val = decoded[key];
+    if (addr && addr.decimals && TOKEN_ABI_NAMES.includes(abi.name)) {
+      val = numberWithCommas(convertWithDecimals(val, true, true, addr.decimals, addr.token_symbol));
+    }
     // mapR[key] = decoded[key];
     if (key.startsWith('__')) {
       return;
     }
     if (!decoded[key].payable || decoded[key].constant) {
-      arrR.push([key, decoded[key]]);
+      arrR.push([key, val]);
     }
   });
   return arrR;

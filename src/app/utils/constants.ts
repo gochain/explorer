@@ -90,3 +90,5 @@ export const ERC_INTERFACE_IDENTIFIERS = {
   [ErcName.Erc20]: [InterfaceName.Allowance, InterfaceName.Approve, InterfaceName.BalanceOf, InterfaceName.TotalSupply, InterfaceName.Transfer, InterfaceName.TransferFrom],
   [ErcName.Erc721]: [InterfaceName.Approve, InterfaceName.BalanceOf, InterfaceName.GetApproved, InterfaceName.IsApprovedForAll, InterfaceName.OwnerOf, InterfaceName.SafeTransferFrom, InterfaceName.SafeTransferFrom1, InterfaceName.SetApprovalForAll, InterfaceName.TransferFrom],
 };
+
+export const TOKEN_ABI_NAMES: string[] = ['totalSupply', 'balanceOf'];

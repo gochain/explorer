@@ -72,7 +72,7 @@
       </div>
     </div>
     <div class="uk-margin ta-r">
-      <button routerLink="/wallet" class="btn btn--default m-r--10" type="button">Back</button>
+      <button *ngIf="!hasData" routerLink="/wallet" class="btn btn--default m-r--10" type="button">Back</button>
       <button class="btn btn--default m-r--10" type="reset">Reset</button>
       <button *ngIf="useContractForm.controls['contractAddress'].value as addrHash" routerLink="/wallet/send" [queryParams]="{send_tx_tab: 'use_contract',address: addrHash}"
               type="button" class="btn btn--default m-r--10">Use wallet
