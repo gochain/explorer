@@ -24,6 +24,26 @@ const TOKEN_URL_ABI: ABIDefinition = {
   'type': 'function'
 };
 
+const OWNER_OF_ABI: ABIDefinition = {
+  'constant': true,
+  'inputs': [
+    {
+      'name': 'tokenId',
+      'type': 'uint256'
+    }
+  ],
+  'name': 'ownerOf',
+  'outputs': [
+    {
+      'name': 'owner',
+      'type': 'address'
+    }
+  ],
+  'payable': false,
+  'stateMutability': 'view',
+  'type': 'function'
+};
+
 @Component({
   selector: 'app-token-asset',
   templateUrl: './token-asset.component.html',
@@ -53,7 +73,6 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
         this.contractAddr = params.id;
         this.tokenId = params.tokenId;
         this.metadata = null;
-        this._layoutService.onLoading();
         this.getData();
       })
     );
@@ -64,33 +83,15 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
   }
 
   getData() {
-    let funcABI: string;
-    try {
-      funcABI = this._walletService.w3.eth.abi.encodeFunctionCall(TOKEN_URL_ABI, [this.tokenId]);
-    } catch (err) {
-      this._toastrService.danger(err);
-      return;
-    }
-    this._walletService.w3.eth.call({
-      to: this.contractAddr,
-      data: funcABI,
-    }).then((result: string) => {
-      if (!result) {
-        this._layoutService.offLoading();
-        return;
-      }
-      const decoded: object = this._walletService.w3.eth.abi.decodeLog(TOKEN_URL_ABI.outputs, result, []);
-      if (!decoded || !decoded[0]) {
-        this._layoutService.offLoading();
-        return;
-      }
-      const url: string = decoded[0];
-      this._apiService.get(url, null, true).subscribe(res => {
-        this._layoutService.offLoading();
-        if (!res) {
-          return;
-        }
-        const metadata = new TokenMetadata();
+    this._layoutService.onLoading();
+    Promise.all([
+      this._walletService.call(this.contractAddr, TOKEN_URL_ABI, [this.tokenId]),
+      this._walletService.call(this.contractAddr, OWNER_OF_ABI, [this.tokenId]),
+    ]).then(([tokenUrl, ownerData]: [object, object]) => {
+      const url: string = tokenUrl[0];
+      const metadata = new TokenMetadata();
+      metadata.ownerAddr = ownerData['owner'];
+      this._apiService.get(url, null, true).subscribe((res: any) => {
         metadata.name = res.name || null;
         metadata.description = res.description || null;
         metadata.image = res.image || null;
@@ -98,9 +99,11 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
         metadata.origin_data = JSON.stringify(res, null, 4);
         this.metadata = metadata;
       });
+
     }).catch(err => {
-      this._layoutService.offLoading();
       this._toastrService.danger(err);
+    }).then(() => {
+      this._layoutService.offLoading();
     });
 
     // checking if contract is erc721metadata

@@ -11,6 +11,7 @@ export enum StatusColor {
 }
 
 export enum InterfaceName {
+  AddPauser = 'AddPauser',
   AddVerified = 'AddVerified',
   Allowance = 'Allowance',
   Approve = 'Approve',
@@ -41,6 +42,7 @@ export enum InterfaceName {
   IncreaseSupply = 'IncreaseSupply',
   IsApprovedForAll = 'IsApprovedForAll',
   IsHolder = 'IsHolder',
+  IsPauser = 'IsPauser',
   IsOperatorFor = 'IsOperatorFor',
   IsSuperseded = 'IsSuperseded',
   IsVerified = 'IsVerified',
@@ -53,6 +55,7 @@ export enum InterfaceName {
   OperatorSend = 'OperatorSend',
   OwnerOf = 'OwnerOf',
   RemoveVerified = 'RemoveVerified',
+  RenouncePauser = 'RenouncePauser',
   RevokeOperator = 'RevokeOperator',
   SafeBatchTransferFrom = 'SafeBatchTransferFrom',
   SafeTransferFrom = 'SafeTransferFrom',
@@ -75,6 +78,10 @@ export enum InterfaceName {
   TransferFromAndCall = 'TransferFromAndCall',
   UpdateVerified = 'UpdateVerified',
   URI = 'URI',
+  Pause = 'Pause',
+  Paused = 'Paused',
+  Unpause = 'Unpause',
+  MintWithTokenURI = 'MintWithTokenURI',
 }
 
 export enum ErcName {
@@ -89,6 +96,9 @@ export enum ErcName {
   Erc721Receiver = 'Erc721Receiver',
   Erc721Metadata = 'Erc721Metadata',
   Erc721Enumerable = 'Erc721Enumerable',
+  Erc721Pausable = 'Erc721Pausable',
+  Erc721Mintable = 'Erc721Mintable',
+  Erc721MetadataMintable = 'Erc721MetadataMintable',
   Erc820 = 'Erc820',
   Erc1155 = 'Erc1155',
   Erc1155Receiver = 'Erc1155Receiver',

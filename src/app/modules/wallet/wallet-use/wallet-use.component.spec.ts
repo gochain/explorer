@@ -1,8 +1,12 @@
+/*CORE*/
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
-
-import {WalletUseComponent} from './wallet-use.component';
-import {WalletModule} from '../wallet.module';
 import {RouterTestingModule} from '@angular/router/testing';
+/*MODULES*/
+import {WalletModule} from '../wallet.module';
+import {AppModule} from '../../../app.module';
+/*COMPONENTS*/
+import {WalletUseComponent} from './wallet-use.component';
+
 
 describe('WalletUseComponent', () => {
   let component: WalletUseComponent;
@@ -10,7 +14,7 @@ describe('WalletUseComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [RouterTestingModule, WalletModule]
+      imports: [RouterTestingModule, AppModule, WalletModule]
     })
       .compileComponents();
   }));

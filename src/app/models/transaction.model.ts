@@ -6,7 +6,7 @@ export class Transaction {
   gas_fee: string;
   gas_limit: string;
   block_number: number;
-  nonce: string;
+  nonce: number;
   input_data: string;
   from: string;
   to: string;

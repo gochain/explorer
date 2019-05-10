@@ -1,3 +1,5 @@
+import {InterfaceName} from '../utils/enums';
+
 export class Address {
   address: string;
   balance: number;
@@ -9,6 +11,7 @@ export class Address {
   contract: boolean;
   go20: boolean;
   erc_types: string[];
+  interfaces: InterfaceName[];
   ercObj: object;
   supplyOwned?: string;
   number_of_transactions: number;

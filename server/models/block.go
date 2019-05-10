@@ -12,7 +12,7 @@ type Block struct {
 	ParentHash      string    `json:"parent_hash" bson:"parent_hash"`
 	TxHash          string    `json:"tx_hash" bson:"tx_hash"`
 	GasUsed         string    `json:"gas_used" bson:"gas_used"`
-	Nonce           string    `json:"nonce" bson:"nonce"`
+	Nonce           uint64    `json:"nonce" bson:"nonce"`
 	Miner           string    `json:"miner" bson:"miner"`
 	TxCount         int       `json:"tx_count" bson:"tx_count"`
 	Difficulty      int64     `json:"difficulty" bson:"difficulty"`
