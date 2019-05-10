@@ -22,6 +22,7 @@ import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/const
 import {ErcName} from '../../../utils/enums';
 import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
+import BigNumber from 'bignumber.js';
 
 @Component({
   selector: 'app-wallet-send',
@@ -74,6 +75,8 @@ export class WalletSendComponent implements OnInit {
   abiTemplates = [ErcName.Erc20, ErcName.Erc721];
 
   addr: Address;
+
+  tokenInputValue;
 
   private _subsArr$: Subscription[] = [];
 
@@ -281,6 +284,26 @@ export class WalletSendComponent implements OnInit {
 
     this._toastrService.danger('Given private key is not valid');
     this.isOpening = false;
+  }
+
+  onTokenValueChange(event, controlIndex: number): void {
+    /*this.tokenInputValue += (<HTMLInputElement>event.target).value;*/
+    let value: string = (<HTMLInputElement>event.target).value;
+    if (value) {
+      value = (new BigNumber(value)).multipliedBy('1e' + this.addr.decimals).toString();
+      if (/e+/.test(value)) {
+        const parts = value.split('e+');
+        let first = parts[0].replace('.', '');
+        const zeroes = parseInt(parts[1], 10) - (first.length - 1);
+        for (let i = 0; i < zeroes; i++) {
+          first += '0';
+        }
+        value = first;
+      }
+    }
+    this.functionParameters.controls[controlIndex].patchValue(value, {
+      emitEvent: false,
+    });
   }
 
   updateBalance() {
