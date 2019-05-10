@@ -340,7 +340,8 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
 	tokenTransactions := false
-	if r.URL.Query().Get("token_transactions") != "" {
+	token_transactions_param := r.URL.Query().Get("token_transactions")
+	if token_transactions_param != "" && token_transactions_param != "false" {
 		tokenTransactions = true
 	}
 	skip, limit := parseSkipLimit(r)

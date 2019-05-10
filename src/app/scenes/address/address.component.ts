@@ -1,8 +1,8 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {Observable, Subscription} from 'rxjs';
-import {filter, tap} from 'rxjs/operators';
+import {forkJoin, of, Subscription} from 'rxjs';
+import {concatMap, filter, map} from 'rxjs/operators';
 import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
@@ -37,7 +37,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   internalTransactionQueryParams: QueryParams = new QueryParams();
   tokenTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
-  tokensQueryParams: QueryParams = new QueryParams();
+  tokensQueryParams: QueryParams = new QueryParams(100);
   addrHash: string;
   tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
@@ -94,7 +94,8 @@ export class AddressComponent implements OnInit, OnDestroy {
       this._layoutService.offLoading();
       this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
       this.getTransactionData();
-
+      this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions);
+      this.getTokenTransactions();
       if (this.addr.contract) {
         if (this.addr.go20) {
           this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
@@ -109,6 +110,7 @@ export class AddressComponent implements OnInit, OnDestroy {
 
         this.getContractData();
       } else {
+        this.tokensQueryParams.setTotalPage(100);
         this.getTokenData();
       }
     });
@@ -145,8 +147,28 @@ export class AddressComponent implements OnInit, OnDestroy {
     this._commonService.getAddressInternalTransaction(this.addrHash, {
       ...this.tokenTransactionQueryParams.params,
       token_transactions: true,
-    }).subscribe((data: any) => {
-      this.token_transactions = data.internal_transactions || [];
+    }).pipe(
+      concatMap((data: any) => {
+        if (!data.internal_transactions.length) {
+          return of(null);
+        }
+        const contractAddresses = {};
+        data.internal_transactions.forEach((tx: InternalTransaction) => {
+          contractAddresses[tx.contract_address] = null;
+        });
+        return forkJoin(Object.keys(contractAddresses).map((addr: string) => {
+          return this._commonService.getAddress(addr);
+        })).pipe(
+          map((addrs: Address[]) => {
+            data.internal_transactions.forEach((tx: InternalTransaction) => {
+              tx.address = addrs.find((addr: Address) => addr.address === tx.contract_address);
+            });
+            return data.internal_transactions;
+          })
+        );
+      })
+    ).subscribe((data: any) => {
+      this.token_transactions = data || [];
     });
   }
 
