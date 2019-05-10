@@ -1,12 +1,12 @@
 /*CORE*/
 import {Inject, Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, throwError} from 'rxjs';
-import {concatMap, map, tap} from 'rxjs/operators';
+import {BehaviorSubject, forkJoin, Observable, of, throwError} from 'rxjs';
+import {concatMap, filter, map, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
 import {WEB3} from './web3';
-import {Tx} from 'web3/eth/types';
+import {Transaction as Web3Tx, Tx} from 'web3/eth/types';
 import {Account, TxSignature} from 'web3/eth/accounts';
 import {TransactionReceipt} from 'web3/types';
 /*SERVICES*/
@@ -17,6 +17,7 @@ import {ABIDefinition} from 'web3/eth/abi';
 /*UTILS*/
 import {objIsEmpty} from '../../utils/functions';
 import {ContractAbi} from '../../utils/types';
+import {Transaction} from '../../models/transaction.model';
 
 @Injectable()
 export class WalletService {
@@ -38,7 +39,10 @@ export class WalletService {
   constructor(@Inject(WEB3) public _web3: Web3,
               private _toastrService: ToastrService,
               private _commonService: CommonService) {
-    const provider = new Web3.providers.HttpProvider(this._commonService.rpcProvider);
+    if (!this._web3) {
+      return;
+    }
+    const provider = new this._web3.providers.HttpProvider(this._commonService.rpcProvider);
     this._web3.setProvider(provider);
   }
 
@@ -120,5 +124,42 @@ export class WalletService {
     } catch (err) {
       throw err;
     }
+  }
+
+  /**
+   * getting tx from node in case of server haven't processed yet
+   * @param txHash
+   */
+  getTxData(txHash: string): Observable<Transaction> {
+    if (!this._web3) {
+      return of(null);
+    }
+    return forkJoin([
+      fromPromise<Web3Tx>(this._web3.eth.getTransaction(txHash)),
+      fromPromise<TransactionReceipt>(this._web3.eth.getTransactionReceipt(txHash)),
+    ]).pipe(
+      filter((res: [Web3Tx, TransactionReceipt]) => !!res[0]),
+      map((res: [Web3Tx, TransactionReceipt]) => {
+        const tx: Web3Tx = res[0];
+        const txReceipt = res[1];
+        const finalTx: Transaction = new Transaction();
+        finalTx.tx_hash = tx.hash;
+        finalTx.value = tx.value;
+        finalTx.gas_price = tx.gasPrice;
+        finalTx.gas_limit = '' + tx.gas;
+        finalTx.nonce = tx.nonce;
+        finalTx.input_data = tx.input.replace(/^0x/, '');
+        finalTx.from = tx.from;
+        finalTx.to = tx.to;
+        if (txReceipt) {
+          finalTx.block_number = tx.blockNumber;
+          finalTx.gas_fee = '' + (+tx.gasPrice * txReceipt.gasUsed);
+          finalTx.contract_address = txReceipt.contractAddress;
+          finalTx.status = txReceipt.status;
+          finalTx.created_at = new Date();
+        }
+        return finalTx;
+      }),
+    );
   }
 }

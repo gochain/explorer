@@ -1,6 +1,7 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { TokenAssetComponent } from './token-asset.component';
+import {TokenAssetComponent} from './token-asset.component';
+import {AppModule} from '../../app.module';
 
 describe('TokenAssetComponent', () => {
   let component: TokenAssetComponent;
@@ -8,9 +9,9 @@ describe('TokenAssetComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TokenAssetComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {
