@@ -73,6 +73,8 @@ export class WalletSendComponent implements OnInit {
 
   abiTemplates = [ErcName.Erc20, ErcName.Erc721];
 
+  addr: Address;
+
   private _subsArr$: Subscription[] = [];
 
   /**
@@ -152,6 +154,7 @@ export class WalletSendComponent implements OnInit {
   }
 
   private handleContractData(address: Address, contract: Contract) {
+    this.addr = address;
     this.contractBadges = makeContractBadges(address, contract);
     if (contract.abi && contract.abi.length) {
       this.useContractForm.patchValue({
@@ -223,7 +226,7 @@ export class WalletSendComponent implements OnInit {
    */
   callABIFunction(func: ABIDefinition, params: string[]): void {
     this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
-      this.functionResult = getDecodedData(decoded);
+      this.functionResult = getDecodedData(decoded, func, this.addr);
     }).catch(err => {
       this._toastrService.danger(err);
     });

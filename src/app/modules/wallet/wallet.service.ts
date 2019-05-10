@@ -1,7 +1,7 @@
 /*CORE*/
 import {Inject, Injectable} from '@angular/core';
 import {BehaviorSubject, forkJoin, Observable, of, throwError} from 'rxjs';
-import {concatMap, filter, map, tap} from 'rxjs/operators';
+import {concatMap, map, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
@@ -138,8 +138,10 @@ export class WalletService {
       fromPromise<Web3Tx>(this._web3.eth.getTransaction(txHash)),
       fromPromise<TransactionReceipt>(this._web3.eth.getTransactionReceipt(txHash)),
     ]).pipe(
-      filter((res: [Web3Tx, TransactionReceipt]) => !!res[0]),
       map((res: [Web3Tx, TransactionReceipt]) => {
+        if (!res[0]) {
+          return null;
+        }
         const tx: Web3Tx = res[0];
         const txReceipt = res[1];
         const finalTx: Transaction = new Transaction();

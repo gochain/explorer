@@ -66,14 +66,10 @@ export class TransactionComponent implements OnInit, OnDestroy {
     return this._commonService.getTransaction(txHash).pipe(
       mergeMap((tx: Transaction | null) => {
         if (!tx) {
-          return this.getPendingTx(txHash);
+          return this._walletService.getTxData(txHash);
         }
         return of(tx);
       }),
     );
-  }
-
-  private getPendingTx(txHash: string): Observable<Transaction | null> {
-    return this._walletService.getTxData(txHash);
   }
 }
