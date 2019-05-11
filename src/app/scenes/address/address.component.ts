@@ -94,7 +94,7 @@ export class AddressComponent implements OnInit, OnDestroy {
       this._layoutService.offLoading();
       this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
       this.getTransactionData();
-      this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions);
+      this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions || 0);
       this.getTokenTransactions();
       if (this.addr.contract) {
         if (this.addr.go20) {
@@ -149,7 +149,7 @@ export class AddressComponent implements OnInit, OnDestroy {
       token_transactions: true,
     }).pipe(
       concatMap((data: any) => {
-        if (!data.internal_transactions.length) {
+        if (!data.internal_transactions || !data.internal_transactions.length) {
           return of(null);
         }
         const contractAddresses = {};
