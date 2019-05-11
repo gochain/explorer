@@ -1,7 +1,7 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {forkJoin, of, Subscription} from 'rxjs';
+import {forkJoin, Observable, of, Subscription} from 'rxjs';
 import {concatMap, filter, map} from 'rxjs/operators';
 import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
@@ -42,6 +42,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
   tokenId: string;
+
   private _subsArr$: Subscription[] = [];
 
   constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
@@ -152,16 +153,21 @@ export class AddressComponent implements OnInit, OnDestroy {
         if (!data.internal_transactions || !data.internal_transactions.length) {
           return of(null);
         }
-        const contractAddresses = {};
+        const contractAddresses: string[] = [];
         data.internal_transactions.forEach((tx: InternalTransaction) => {
-          contractAddresses[tx.contract_address] = null;
+          if (!this._commonService.contractsCache[tx.contract_address]) {
+            contractAddresses.push(tx.contract_address);
+          }
         });
-        return forkJoin(Object.keys(contractAddresses).map((addr: string) => {
+        return forkJoin<Observable<any>[]>(contractAddresses.map((addr: string) => {
           return this._commonService.getAddress(addr);
         })).pipe(
           map((addrs: Address[]) => {
+            addrs.forEach((item: Address) => {
+              this._commonService.contractsCache[item.address] = item;
+            });
             data.internal_transactions.forEach((tx: InternalTransaction) => {
-              tx.address = addrs.find((addr: Address) => addr.address === tx.contract_address);
+              tx.address = this._commonService.contractsCache[tx.contract_address];
             });
             return data.internal_transactions;
           })
