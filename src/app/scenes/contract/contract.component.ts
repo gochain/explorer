@@ -26,7 +26,7 @@ export class ContractComponent implements OnInit {
   /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 
   form: FormGroup = this._fb.group({
-    address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
+    address: ['', [Validators.required, Validators.minLength(42), Validators.maxLength(42)]],
     contract_name: ['', Validators.required],
     compiler_version: ['', Validators.required],
     optimization: [true, Validators.required],
@@ -74,17 +74,26 @@ export class ContractComponent implements OnInit {
   }
 
   onSubmit() {
-    /*if (!this.form.valid) {
+    if (!this.form.valid) {
       this.toastrService.danger('Some field is not correct');
       return;
-    }*/
+    }
     const data = this.form.getRawValue();
-    this.contactService.compile(data).subscribe((contract: Contract) => {
+    this.contactService.compile(data).pipe(
+      filter((contract: Contract) => !!contract)
+    ).subscribe((contract: Contract) => {
       this.contract = contract;
       if (this.contract.valid) {
         this.toastrService.success('Contract has been successfully verified');
         this.form.reset();
-        this._router.navigate([`/${ROUTES.ADDRESS}/`, this.contract.address]);
+        this._router.navigate(
+          [`/${ROUTES.ADDRESS}/`, this.contract.address],
+          {
+            queryParams: {
+              addr_tab: 'contract_source',
+            },
+          },
+        );
       }
     });
   }
