@@ -32,7 +32,7 @@ func TestImportAddress(t *testing.T) {
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
-	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, false, 0)
+	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, 0)
 	address := testBackend.GetAddressByHash(addrHash)
 
 	if address.BalanceWei != "1000" {
@@ -159,9 +159,9 @@ func TestRichList(t *testing.T) {
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
-	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, false, 0)
+	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, 0)
 
-	testBackend.ImportAddress("0x0000000000000000000000000000000000000001", big.NewInt(999), token, false, false, 0)
+	testBackend.ImportAddress("0x0000000000000000000000000000000000000001", big.NewInt(999), token, false, 0)
 
 	richList := testBackend.GetRichlist(0, 100)
 

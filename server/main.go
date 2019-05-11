@@ -388,6 +388,12 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(contractData.Address) != 42 {
+		err := errors.New("contract address is wrong")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
 	compilerVersions, err := backendInstance.GetCompilerVersion()
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)

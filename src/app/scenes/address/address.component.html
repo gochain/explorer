@@ -16,7 +16,7 @@
           <p>Balance:</p>
           <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
         </li>
-        <ng-container *ngIf="addr.contract && addr.go20">
+        <ng-container *ngIf="addr.contract">
           <li>
             <ul>
               <li *ngIf="addr.token_name">
@@ -44,7 +44,7 @@
               <p>Total transactions:</p>
               <b>{{addr.number_of_transactions || 0}}</b>
             </li>
-            <ng-container *ngIf="addr.contract && addr.go20">
+            <ng-container *ngIf="addr.contract">
               <li>
                 <p>Total internal transactions:</p>
                 <b>{{addr.number_of_internal_transactions || 0}}</b>
@@ -219,7 +219,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20" name="internal_transactions"
+      <tab *ngIf="addr.contract" name="internal_transactions"
            [title]="(addr.token_symbol || 'Internal')  + ' Transactions'">
         <tab-content>
           <ng-container *ngIf="!!internal_transactions.length; else emptyInternalTxs">
@@ -380,7 +380,7 @@
           </ng-template>
         </tab-content>
       </tab>
-      <tab *ngIf="addr.contract && addr.go20" name="holders" title="Holders">
+      <tab *ngIf="addr.contract" name="holders" title="Holders">
         <tab-content>
           <ng-container *ngIf="token_holders.length; else emptyHolders">
             <ng-container *ifViewportSize="['small']">

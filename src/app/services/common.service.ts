@@ -21,6 +21,7 @@ import {ContractAbi} from '../utils/types';
 @Injectable()
 export class CommonService implements Resolve<string> {
   rpcProvider: string;
+  contractsCache = {};
 
   constructor(private _apiService: ApiService) {
   }

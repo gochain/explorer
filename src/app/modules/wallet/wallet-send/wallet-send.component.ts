@@ -44,7 +44,7 @@ export class WalletSendComponent implements OnInit {
 
   deployContractForm: FormGroup = this._fb.group({
     byteCode: ['', Validators.required],
-    gasLimit: [DEFAULT_GAS_LIMIT, Validators.required],
+    gasLimit: ['', Validators.required],
   });
 
   useContractForm: FormGroup = this._fb.group({
@@ -53,7 +53,7 @@ export class WalletSendComponent implements OnInit {
     contractABI: ['', []],
     contractFunction: [''],
     functionParameters: this._fb.array([]),
-    gasLimit: [DEFAULT_GAS_LIMIT, Validators.required],
+    gasLimit: ['', Validators.required],
   });
 
 
@@ -487,9 +487,9 @@ export class WalletSendComponent implements OnInit {
     this.sendGoForm.reset();
     this.sendGoForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
     this.deployContractForm.reset();
-    this.deployContractForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
+    this.deployContractForm.get('gasLimit').setValue('');
     this.useContractForm.reset();
-    this.useContractForm.get('gasLimit').setValue(DEFAULT_GAS_LIMIT);
+    this.useContractForm.get('gasLimit').setValue('');
   }
 
   resetProcessing() {
