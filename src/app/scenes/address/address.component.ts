@@ -93,17 +93,15 @@ export class AddressComponent implements OnInit, OnDestroy {
     ).subscribe((addr: Address) => {
       this.addr = addr;
       this._layoutService.offLoading();
-      this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
+      this.transactionQueryParams.setTotalPage(addr.number_of_transactions || 0);
       this.getTransactionData();
       this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions || 0);
       this.getTokenTransactions();
       if (this.addr.contract) {
-        if (this.addr.go20) {
-          this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
-          this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
-          this.getHolderData();
-          this.getInternalTransactions();
-        }
+        this.holderQueryParams.setTotalPage(addr.number_of_token_holders || 0);
+        this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions || 0);
+        this.getHolderData();
+        this.getInternalTransactions();
         this.addr.ercObj = this.addr.erc_types.reduce((acc, val) => {
           acc[val] = true;
           return acc;

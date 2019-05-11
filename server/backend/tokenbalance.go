@@ -123,16 +123,14 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	}
 
 	tb.Types, tb.Interfaces = token.GetInfo(byteCode)
-Loop:
 	for _, interfaceName := range tb.Interfaces {
-		// to-do: this part of code need refactor
 		if utils.InterfaceIdentifiers[interfaceName].Callable {
 			switch interfaceName {
 			case utils.Decimals:
 				decimals, err := token.Decimals(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
-					continue Loop
+					continue
 				}
 				tb.Decimals = decimals.Int64()
 			case utils.TotalSupply:
@@ -140,7 +138,7 @@ Loop:
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
 					tb.TotalSupply = big.NewInt(0)
-					continue Loop
+					continue
 				}
 				tb.TotalSupply = totalSupply
 			case utils.Symbol:

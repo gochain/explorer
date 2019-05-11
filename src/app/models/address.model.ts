@@ -9,7 +9,6 @@ export class Address {
   token_symbol: string;
   total_supply: number;
   contract: boolean;
-  go20: boolean;
   erc_types: string[];
   interfaces: InterfaceName[];
   ercObj: object;

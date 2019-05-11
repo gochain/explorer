@@ -309,7 +309,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	log.Debug().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
@@ -338,7 +338,6 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Decimals:       token.Decimals,
 		TotalSupply:    token.TotalSupply.String(),
 		Contract:       contract,
-		GO20:           go20,
 		ErcTypes:       token.Types,
 		Interfaces:     token.Interfaces,
 		BalanceFloat:   balanceGoFloat,
