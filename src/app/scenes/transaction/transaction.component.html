@@ -41,7 +41,7 @@
           <p>Processed at</p>
           <b>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
         </li>
-        <li *ngIf="tx.status && tx.contract_address">
+        <li *ngIf="tx.contract_address">
           <p>Contract address</p>
           <b>
             <a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>

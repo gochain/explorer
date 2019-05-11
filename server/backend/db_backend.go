@@ -254,7 +254,10 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		log.Info().Str("hash", transaction.TxHash).Msg("Hash doesn't have an address")
 		receipt, err := self.goClient.TransactionReceipt(context.Background(), tx.Hash())
 		if err == nil {
-			transaction.ContractAddress = receipt.ContractAddress.String()
+			contractAddress := receipt.ContractAddress.String()
+			if contractAddress != "0x0000000000000000000000000000000000000000" {
+				transaction.ContractAddress = contractAddress
+			}
 			transaction.Status = false
 			if receipt.Status == 1 {
 				transaction.Status = true
@@ -487,7 +490,8 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		log.Debug().Str("Transaction", transactionHash).Err(err).Msg("GetTransactionByHash")
 		return nil
 	}
-	//lazy calculation for receipt
+	// this part need refactor, why we need it since grabber does same thing
+	// lazy calculation for receipt
 	receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 	if err != nil {
 		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")

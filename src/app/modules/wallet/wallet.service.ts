@@ -156,7 +156,9 @@ export class WalletService {
         if (txReceipt) {
           finalTx.block_number = tx.blockNumber;
           finalTx.gas_fee = '' + (+tx.gasPrice * txReceipt.gasUsed);
-          finalTx.contract_address = txReceipt.contractAddress;
+          finalTx.contract_address = (txReceipt.contractAddress && txReceipt.contractAddress !== '0x0000000000000000000000000000000000000000')
+            ? txReceipt.contractAddress
+            : null;
           finalTx.status = txReceipt.status;
           finalTx.created_at = new Date();
         }
