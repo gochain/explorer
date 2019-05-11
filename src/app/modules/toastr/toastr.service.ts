@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Toastr } from './toastr.interface';
 
+const CLOSE_TIME = 10000;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,7 +36,7 @@ export class ToastrService {
     };
     this.items = [...this.items, item];
     this.apply();
-    setTimeout(() => this.delete(item.id), 3500);
+    setTimeout(() => this.delete(item.id), CLOSE_TIME);
   }
 
   delete(id: number) {
