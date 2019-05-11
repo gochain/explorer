@@ -14,10 +14,10 @@ import {ToastrService} from '../toastr/toastr.service';
 import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {ABIDefinition} from 'web3/eth/abi';
+import {Transaction} from '../../models/transaction.model';
 /*UTILS*/
 import {objIsEmpty} from '../../utils/functions';
 import {ContractAbi} from '../../utils/types';
-import {Transaction} from '../../models/transaction.model';
 
 @Injectable()
 export class WalletService {
@@ -163,5 +163,9 @@ export class WalletService {
         return finalTx;
       }),
     );
+  }
+
+  estimateGas(tx: Tx): Observable<number> {
+    return fromPromise(this._web3.eth.estimateGas(tx));
   }
 }

@@ -157,3 +157,12 @@ export function getDecodedData(decoded: object, abi: ABIDefinition, addr: Addres
   });
   return arrR;
 }
+
+/**
+ *
+ * @param value
+ */
+export function isHex(val: string): boolean {
+  return /^[0-9A-F]+$/i.test(val);
+}
+

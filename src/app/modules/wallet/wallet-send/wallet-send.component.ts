@@ -20,7 +20,7 @@ import {Badge} from '../../../models/badge.model';
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
 import {ErcName} from '../../../utils/enums';
-import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
+import {getAbiMethods, getDecodedData, isHex, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
 import BigNumber from 'bignumber.js';
 
@@ -141,9 +141,26 @@ export class WalletSendComponent implements OnInit {
     this._subsArr$.push(this.useContractForm.get('contractFunction').valueChanges.subscribe(value => {
       this.loadFunction(value);
     }));
+
+    this._subsArr$.push(this.deployContractForm.get('byteCode').valueChanges.pipe(
+      debounceTime(250),
+      distinctUntilChanged(),
+    ).subscribe((value: string) => {
+      this.estimateDeploymentGas(value);
+    }));
+
+    this._subsArr$.push((this.useContractForm.get('functionParameters') as FormArray).valueChanges.pipe(
+      debounceTime(1200),
+      distinctUntilChanged(),
+    ).subscribe((values) => {
+      this.estimateFunctionGas(values);
+    }));
   }
 
   private getContractData(addrHash: string) {
+    if (!addrHash && addrHash.length !== 42) {
+      return;
+    }
     forkJoin([
       this._commonService.getAddress(addrHash),
       this._commonService.getContract(addrHash),
@@ -299,7 +316,7 @@ export class WalletSendComponent implements OnInit {
       }
     }
     this.functionParameters.controls[controlIndex].patchValue(value, {
-      emitEvent: false,
+      emitEvent: true,
     });
   }
 
@@ -418,28 +435,15 @@ export class WalletSendComponent implements OnInit {
         params.push(control.value);
       });
     }
-
     let tx: Tx;
 
-    const m = this.contract.methods[this.selectedFunction.name](...params);
-    if (this.selectedFunction.payable) {
-      let amount = this.useContractForm.get('contractAmount').value;
+    if (this.selectedFunction.payable || !this.selectedFunction.constant) {
       try {
-        amount = this._walletService.w3.utils.toWei(amount, 'ether');
+        tx = this.formTx(params);
       } catch (e) {
-        this._toastrService.danger('Cannot convert amount,' + e);
+        this._toastrService.danger(e);
         return;
       }
-      tx = {
-        to: this.useContractForm.get('contractAddress').value,
-        value: amount,
-        data: m.encodeABI(),
-      };
-    } else if (!this.selectedFunction.constant) {
-      tx = {
-        to: this.useContractForm.get('contractAddress').value,
-        data: m.encodeABI(),
-      };
     } else {
       this.callABIFunction(this.selectedFunction, params);
       return;
@@ -448,6 +452,27 @@ export class WalletSendComponent implements OnInit {
     tx.gas = this.useContractForm.get('gasLimit').value;
 
     this.sendAndWait(tx);
+  }
+
+  formTx(params: string[]): Tx {
+    const m = this.contract.methods[this.selectedFunction.name](...params);
+
+    const tx: Tx = {
+      to: this.contract.options.address,
+      data: m.encodeABI(),
+      from: this.address,
+    };
+
+    if (this.selectedFunction.payable) {
+      const amount = this.useContractForm.get('contractAmount').value;
+      try {
+        tx.value = this._walletService.w3.utils.toWei(amount, 'ether');
+      } catch (e) {
+        throw Error('Cannot convert amount,' + e);
+      }
+    }
+
+    return tx;
   }
 
   sendAndWait(tx: Tx) {
@@ -509,6 +534,50 @@ export class WalletSendComponent implements OnInit {
       if (addr.length === 42 && ABI.length) {
         this.initiateContract(ABI, addr);
       }
+    });
+  }
+
+  private estimateDeploymentGas(byteCode: string): void {
+    if (!byteCode) {
+      this.deployContractForm.get('gasLimit').patchValue('');
+      return;
+    }
+    if (!isHex(byteCode)) {
+      this._toastrService.danger('bytecode is not correct');
+      return;
+    }
+    if (!byteCode.startsWith('0x')) {
+      byteCode = '0x' + byteCode;
+    }
+    const tx: Tx = {data: byteCode};
+    this._walletService.estimateGas(tx).pipe(
+      filter((gasLimit: number) => !this.isProcessing),
+    ).subscribe((gasLimit: number) => {
+      this.deployContractForm.get('gasLimit').patchValue(gasLimit);
+    });
+  }
+
+  private estimateFunctionGas(values: string[]): void {
+    if (!this.selectedFunction.payable && this.selectedFunction.constant) {
+      return;
+    }
+    if (values.some(value => !value)) {
+      this.useContractForm.get('gasLimit').patchValue('');
+      return;
+    }
+
+    let tx: Tx;
+
+    try {
+      tx = this.formTx(values);
+    } catch (e) {
+      return;
+    }
+
+    this._walletService.estimateGas(tx).pipe(
+      filter((gasLimit: number) => !this.isProcessing),
+    ).subscribe((gasLimit: number) => {
+      this.useContractForm.get('gasLimit').patchValue(gasLimit);
     });
   }
 }
