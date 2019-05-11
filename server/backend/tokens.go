@@ -144,9 +144,9 @@ func (_Token *TokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
 	return *ret0, err
 }
 
-func (_Token *TokenCaller) GetInfo(byteCode string) ([]utils.ErcName, []utils.InterfaceName) {
-	identifiers := map[utils.InterfaceName]bool{}
-	var interfaces []utils.InterfaceName
+func (_Token *TokenCaller) GetInfo(byteCode string) ([]utils.ErcName, []utils.FunctionName) {
+	identifiers := map[utils.FunctionName]bool{}
+	var interfaces []utils.FunctionName
 	for k, v := range utils.InterfaceIdentifiers {
 		if strings.Contains(byteCode, v.Value) {
 			identifiers[k] = true

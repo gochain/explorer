@@ -13,7 +13,7 @@ type Transaction struct {
 	GasFee          string    `json:"gas_fee" bson:"gas_fee"`
 	GasLimit        uint64    `json:"gas_limit" bson:"gas_limit"`
 	BlockNumber     int64     `json:"block_number" bson:"block_number"`
-	Nonce           string    `json:"nonce" bson:"nonce"`
+	Nonce           uint64    `json:"nonce,string" bson:"nonce"`
 	BlockHash       string    `json:"block_hash" bson:"hash"`
 	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
 	InputData       string    `json:"input_data" bson:"input_data"`

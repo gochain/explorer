@@ -1,6 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
+import {map} from 'rxjs/operators';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -14,6 +15,8 @@ import {Holder} from '../models/holder.model';
 import {InternalTransaction} from '../models/internal-transaction.model';
 import {Stats} from '../models/stats.model';
 import {Contract} from '../models/contract.model';
+/*UTILS*/
+import {ContractAbi} from '../utils/types';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -29,6 +32,10 @@ export class CommonService implements Resolve<string> {
   async getRpcProvider() {
     this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
     return this.rpcProvider;
+  }
+
+  getAbi(): Observable<ContractAbi> {
+    return this._apiService.get('/assets/data/abi.json', null, true);
   }
 
   getApiUrl(): string {
@@ -61,6 +68,10 @@ export class CommonService implements Resolve<string> {
 
   getAddressHolders(addrHash: string, data?: any): Observable<Holder[]> {
     return this._apiService.get('/address/' + addrHash + '/holders', data);
+  }
+
+  getAddressTokens(addrHash: string, data?: any): Observable<any> {
+    return this._apiService.get(`/address/${addrHash}/owned_tokens`, data);
   }
 
   getAddressInternalTransaction(addrHash: string, data?: any): Observable<InternalTransaction[]> {

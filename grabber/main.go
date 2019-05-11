@@ -213,6 +213,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			}
 			contractDataArray, err := importer.CodeAt(normalizedAddress)
 			contractData := string(contractDataArray[:])
+			// to-do: depreciated
 			go20 := false
 			var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 			contract := false
@@ -256,7 +257,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 								go20 = false
 								continue
 							}
-							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder)
+							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
 						}
 					}
 				}

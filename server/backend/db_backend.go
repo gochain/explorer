@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -75,7 +75,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		GasLimit:       tx.Gas(),
 		BlockNumber:    block.Number().Int64(),
 		GasFee:         new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:          strconv.Itoa(int(tx.Nonce())),
+		Nonce:          uint64(tx.Nonce()),
 		BlockHash:      block.Hash().Hex(),
 		CreatedAt:      time.Unix(block.Time().Int64(), 0),
 		InputData:      hex.EncodeToString(tx.Data()[:]),
@@ -94,7 +94,7 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		ParentHash: block.ParentHash().Hex(),
 		TxHash:     block.Header().TxHash.Hex(),
 		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
-		Nonce:      strconv.Itoa(int((block.Nonce()))),
+		Nonce:      uint64(block.Nonce()),
 		Miner:      block.Coinbase().Hex(),
 		TxCount:    int(uint64(len(block.Transactions()))),
 		Difficulty: block.Difficulty().Int64(),
@@ -179,6 +179,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -188,7 +193,15 @@ func (self *MongoBackend) createIndexes() {
 	if err != nil {
 		panic(err)
 	}
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"from_address", "block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
 
+	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"to_address", "block_number"}, Background: true})
+	if err != nil {
+		panic(err)
+	}
 	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -306,6 +319,12 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 
 	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+
+	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
@@ -321,24 +340,27 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Contract:       contract,
 		GO20:           go20,
 		ErcTypes:       token.Types,
+		Interfaces:     token.Interfaces,
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
+		NumberOfTokenTransactions:    tokenTransactionsCounter,
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
 	return addressM
-
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails) *models.TokenHolder {
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
 	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
 	log.Info().Str("contractAddress", contractAddress).Str("tokenAddress", tokenHolderAddress).Str("balance", token.Balance.String()).Str("Balance int", balanceInt.String()).Msg("Updating token holder")
 	tokenHolder := &models.TokenHolder{
+		TokenName:          address.TokenName,
+		TokenSymbol:        address.TokenSymbol,
 		ContractAddress:    contractAddress,
 		TokenHolderAddress: tokenHolderAddress,
 		Balance:            token.Balance.String(),
@@ -509,16 +531,20 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 	}
 	return tokenHoldersList
 }
+func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit int) []*models.TokenHolder {
+	var tokenHoldersList []*models.TokenHolder
+	err := self.mongo.C("TokensHolders").Find(bson.M{"token_holder_address": ownerAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
+	if err != nil {
+		log.Debug().Str("token_holder_address", ownerAddress).Err(err).Msg("getOwnedTokensList")
+	}
+	return tokenHoldersList
+}
 
-func (self *MongoBackend) getInternalTransactionsList(contractAddress, fromAddress, toAddress string, skip, limit int) []*models.InternalTransaction {
+func (self *MongoBackend) getInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) []*models.InternalTransaction {
 	var internalTransactionsList []*models.InternalTransaction
 	var query bson.M
-	if fromAddress != "" && toAddress != "" {
-		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress, "to_address": toAddress}
-	} else if fromAddress == "" && toAddress != "" {
-		query = bson.M{"contract_address": contractAddress, "to_address": toAddress}
-	} else if fromAddress != "" && toAddress == "" {
-		query = bson.M{"contract_address": contractAddress, "from_address": fromAddress}
+	if tokenTransactions {
+		query = bson.M{"$or": []bson.M{bson.M{"from_address": contractAddress}, bson.M{"to_address": contractAddress}}}
 	} else {
 		query = bson.M{"contract_address": contractAddress}
 	}

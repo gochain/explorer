@@ -20,7 +20,9 @@ import {PipesModule} from '../pipes/pipes.module';
     ReactiveFormsModule,
     RouterModule,
   ],
-  providers: [WalletService],
+  providers: [
+    WalletService
+  ],
   exports: [
     WalletUseComponent,
   ],

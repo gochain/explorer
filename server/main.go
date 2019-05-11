@@ -20,7 +20,7 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
@@ -212,6 +212,7 @@ func main() {
 					r.Get("/{address}", getAddress)
 					r.Get("/{address}/transactions", getAddressTransactions)
 					r.Get("/{address}/holders", getTokenHolders)
+					r.Get("/{address}/owned_tokens", getOwnedTokens)
 					r.Get("/{address}/internal_transactions", getInternalTransactions)
 					r.Get("/{address}/contract", getContract)
 					r.Get("/{address}/qr", getQr)
@@ -326,15 +327,28 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tokenHolders)
 }
 
+func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
+	contractAddress := chi.URLParam(r, "address")
+	skip, limit := parseSkipLimit(r)
+	tokens := &models.OwnedTokenList{
+		OwnedTokens: []*models.TokenHolder{},
+	}
+	tokens.OwnedTokens = backendInstance.GetOwnedTokensList(contractAddress, skip, limit)
+	writeJSON(w, http.StatusOK, tokens)
+}
+
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	fromAddr := r.URL.Query().Get("from_address")
-	toAddr := r.URL.Query().Get("to_address")
+	tokenTransactions := false
+	token_transactions_param := r.URL.Query().Get("token_transactions")
+	if token_transactions_param != "" && token_transactions_param != "false" {
+		tokenTransactions = true
+	}
 	skip, limit := parseSkipLimit(r)
 	internalTransactions := &models.InternalTransactionsList{
 		Transactions: []*models.InternalTransaction{},
 	}
-	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, fromAddr, toAddr, skip, limit)
+	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
 	writeJSON(w, http.StatusOK, internalTransactions)
 }
 

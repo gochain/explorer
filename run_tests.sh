@@ -7,7 +7,7 @@ cleanup_containers() {
             docker rm --force $imagename
         else
             echo "'$imagename' does not exist."
-        fi        
+        fi
     done
 }
 set -e

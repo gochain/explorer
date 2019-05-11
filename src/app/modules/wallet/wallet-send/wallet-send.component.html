@@ -148,7 +148,13 @@
                      *ngFor="let functionInput of selectedFunction.inputs; let i=index"
                      class="uk-margin">
                   <div class="uk-form-controls">
-                    <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
+                    <ng-container *ngIf="selectedFunction.name === 'transfer' && functionInput.name === 'value' && addr.token_symbol; else regularFunctionInput">
+                      <input type="number" class="uk-input" placeholder="Amount ({{addr.token_symbol}})" (keyup)="onTokenValueChange($event, i)">
+                      <input disabled class="uk-input" placeholder="Raw amount" formControlName="{{i}}">
+                    </ng-container>
+                    <ng-template #regularFunctionInput>
+                      <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
+                    </ng-template>
                   </div>
                 </div>
                 <div *ngIf="selectedFunction.payable" class="uk-margin">

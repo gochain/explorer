@@ -1,8 +1,8 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {Observable, Subscription} from 'rxjs';
-import {filter, tap} from 'rxjs/operators';
+import {forkJoin, of, Subscription} from 'rxjs';
+import {concatMap, filter, map} from 'rxjs/operators';
 import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
@@ -18,7 +18,6 @@ import {Contract} from '../../models/contract.model';
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {TOKEN_TYPES} from '../../utils/constants';
 
-
 @Component({
   selector: 'app-address',
   templateUrl: './address.component.html',
@@ -26,14 +25,19 @@ import {TOKEN_TYPES} from '../../utils/constants';
 })
 @AutoUnsubscribe('_subsArr$')
 export class AddressComponent implements OnInit, OnDestroy {
-  address: Observable<Address>;
+  addr: Address;
   transactions: Transaction[] = [];
   token_holders: Holder[] = [];
+  // address owned tokens
+  tokens: Holder[] = [];
   internal_transactions: InternalTransaction[] = [];
+  token_transactions: InternalTransaction[] = [];
   contract: Contract;
   transactionQueryParams: QueryParams = new QueryParams();
   internalTransactionQueryParams: QueryParams = new QueryParams();
+  tokenTransactionQueryParams: QueryParams = new QueryParams();
   holderQueryParams: QueryParams = new QueryParams();
+  tokensQueryParams: QueryParams = new QueryParams(100);
   addrHash: string;
   tokenTypes = TOKEN_TYPES;
   apiUrl = this._commonService.getApiUrl();
@@ -60,8 +64,14 @@ export class AddressComponent implements OnInit, OnDestroy {
     this._subsArr$.push(this.holderQueryParams.state.subscribe(() => {
       this.getHolderData();
     }));
+    this._subsArr$.push(this.tokensQueryParams.state.subscribe(() => {
+      this.getTokenData();
+    }));
     this._subsArr$.push(this.internalTransactionQueryParams.state.subscribe(() => {
       this.getInternalTransactions();
+    }));
+    this._subsArr$.push(this.tokenTransactionQueryParams.state.subscribe(() => {
+      this.getTokenTransactions();
     }));
   }
 
@@ -70,7 +80,7 @@ export class AddressComponent implements OnInit, OnDestroy {
   }
 
   getAddress() {
-    this.address = this._commonService.getAddress(this.addrHash).pipe(
+    this._commonService.getAddress(this.addrHash).pipe(
       filter(value => {
         if (!value) {
           this._layoutService.offLoading();
@@ -79,26 +89,31 @@ export class AddressComponent implements OnInit, OnDestroy {
 
         return true;
       }),
-      // getting token holder data if address is contract
-      tap((addr: Address) => {
-        this._layoutService.offLoading();
-        this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
-        if (addr.contract && addr.go20) {
+    ).subscribe((addr: Address) => {
+      this.addr = addr;
+      this._layoutService.offLoading();
+      this.transactionQueryParams.setTotalPage(addr.number_of_transactions);
+      this.getTransactionData();
+      this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions || 0);
+      this.getTokenTransactions();
+      if (this.addr.contract) {
+        if (this.addr.go20) {
           this.holderQueryParams.setTotalPage(addr.number_of_token_holders);
           this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions);
           this.getHolderData();
           this.getInternalTransactions();
-          addr.ercObj = addr.erc_types.reduce((acc, val) => {
-            acc[val] = true;
-            return acc;
-          }, {});
         }
-        if (addr.contract) {
-          this.getContractData();
-        }
-        this.getTransactionData();
-      })
-    );
+        this.addr.ercObj = this.addr.erc_types.reduce((acc, val) => {
+          acc[val] = true;
+          return acc;
+        }, {});
+
+        this.getContractData();
+      } else {
+        this.tokensQueryParams.setTotalPage(100);
+        this.getTokenData();
+      }
+    });
   }
 
   getTransactionData() {
@@ -113,9 +128,47 @@ export class AddressComponent implements OnInit, OnDestroy {
     });
   }
 
+  getTokenData() {
+    this._commonService.getAddressTokens(this.addrHash, this.tokensQueryParams.params).subscribe((data: any) => {
+      this.tokens = data.owned_tokens || [];
+    });
+  }
+
   getInternalTransactions() {
-    this._commonService.getAddressInternalTransaction(this.addrHash, this.internalTransactionQueryParams.params).subscribe((data: any) => {
+    this._commonService.getAddressInternalTransaction(this.addrHash, {
+      ...this.internalTransactionQueryParams.params,
+      token_transactions: false,
+    }).subscribe((data: any) => {
       this.internal_transactions = data.internal_transactions || [];
+    });
+  }
+
+  getTokenTransactions() {
+    this._commonService.getAddressInternalTransaction(this.addrHash, {
+      ...this.tokenTransactionQueryParams.params,
+      token_transactions: true,
+    }).pipe(
+      concatMap((data: any) => {
+        if (!data.internal_transactions || !data.internal_transactions.length) {
+          return of(null);
+        }
+        const contractAddresses = {};
+        data.internal_transactions.forEach((tx: InternalTransaction) => {
+          contractAddresses[tx.contract_address] = null;
+        });
+        return forkJoin(Object.keys(contractAddresses).map((addr: string) => {
+          return this._commonService.getAddress(addr);
+        })).pipe(
+          map((addrs: Address[]) => {
+            data.internal_transactions.forEach((tx: InternalTransaction) => {
+              tx.address = addrs.find((addr: Address) => addr.address === tx.contract_address);
+            });
+            return data.internal_transactions;
+          })
+        );
+      })
+    ).subscribe((data: any) => {
+      this.token_transactions = data || [];
     });
   }
 
