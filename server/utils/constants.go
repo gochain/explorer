@@ -178,63 +178,63 @@ type ErcName string
 type ErcData []FunctionName
 
 const (
-	Erc20                  ErcName = "Go20"
-	Erc20Burnable          ErcName = "Go20Burnable"
-	Erc20Capped            ErcName = "Go20Capped"
-	Erc20Detailed          ErcName = "Go20Detailed"
-	Erc20Mintable          ErcName = "Go20Mintable"
-	Erc20Pausable          ErcName = "Go20Pausable"
-	Erc165                 ErcName = "Go165"
-	Erc721                 ErcName = "Go721"
-	Erc721Burnable         ErcName = "Go721Burnable"
-	Erc721Receiver         ErcName = "Go721Receiver"
-	Erc721Metadata         ErcName = "Go721Metadata"
-	Erc721Enumerable       ErcName = "Go721Enumerable"
-	Erc721Pausable         ErcName = "Go721Pausable"
-	Erc721Mintable         ErcName = "Go721Mintable"
-	Erc721MetadataMintable ErcName = "Go721MetadataMintable"
-	Erc721Full             ErcName = "Go721Full"
-	Erc820                 ErcName = "Go820"
-	Erc1155                ErcName = "Go1155"
-	Erc1155Receiver        ErcName = "Go1155Receiver"
-	Erc1155Metadata        ErcName = "Go1155Metadata"
-	Erc223                 ErcName = "Go223"
-	Erc223Receiver         ErcName = "Go223Receiver"
-	Erc621                 ErcName = "Go621"
-	Erc777                 ErcName = "Go777"
-	Erc777Receiver         ErcName = "Go777Receiver"
-	Erc777Sender           ErcName = "Go777Sender"
-	Erc827                 ErcName = "Go827"
-	Erc884                 ErcName = "Go884"
+	Go20                  ErcName = "Go20"
+	Go20Burnable          ErcName = "Go20Burnable"
+	Go20Capped            ErcName = "Go20Capped"
+	Go20Detailed          ErcName = "Go20Detailed"
+	Go20Mintable          ErcName = "Go20Mintable"
+	Go20Pausable          ErcName = "Go20Pausable"
+	Go165                 ErcName = "Go165"
+	Go721                 ErcName = "Go721"
+	Go721Burnable         ErcName = "Go721Burnable"
+	Go721Receiver         ErcName = "Go721Receiver"
+	Go721Metadata         ErcName = "Go721Metadata"
+	Go721Enumerable       ErcName = "Go721Enumerable"
+	Go721Pausable         ErcName = "Go721Pausable"
+	Go721Mintable         ErcName = "Go721Mintable"
+	Go721MetadataMintable ErcName = "Go721MetadataMintable"
+	Go721Full             ErcName = "Go721Full"
+	Go820                 ErcName = "Go820"
+	Go1155                ErcName = "Go1155"
+	Go1155Receiver        ErcName = "Go1155Receiver"
+	Go1155Metadata        ErcName = "Go1155Metadata"
+	Go223                 ErcName = "Go223"
+	Go223Receiver         ErcName = "Go223Receiver"
+	Go621                 ErcName = "Go621"
+	Go777                 ErcName = "Go777"
+	Go777Receiver         ErcName = "Go777Receiver"
+	Go777Sender           ErcName = "Go777Sender"
+	Go827                 ErcName = "Go827"
+	Go884                 ErcName = "Go884"
 )
 
 var ErcInterfaceIdentifiers = map[ErcName]ErcData{
-	Erc20:                  {Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom},
-	Erc20Burnable:          {Burn, BurnFrom},
-	Erc20Capped:            {Mint, Cap},
-	Erc20Detailed:          {Decimals, Name, Symbol},
-	Erc20Mintable:          {Mint},
-	Erc20Pausable:          {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
-	Erc165:                 {SupportsInterface},
-	Erc721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
-	Erc721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
-	Erc721Receiver:         {OnErc721Received},
-	Erc721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
-	Erc721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
-	Erc721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
-	Erc721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
-	Erc721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
-	Erc721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
-	Erc820:                 {CanImplementInterfaceForAddress},
-	Erc1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
-	Erc1155Receiver:        {OnErc1155BatchReceived, OnErc1155Received},
-	Erc1155Metadata:        {URI},
-	Erc223:                 {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
-	Erc223Receiver:         {TokenFallback},
-	Erc621:                 {DecreaseSupply, IncreaseSupply},
-	Erc777:                 {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name, OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
-	Erc777Receiver:         {TokensReceived},
-	Erc777Sender:           {TokensToSend},
-	Erc827:                 {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
-	Erc884:                 {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
+	Go20:                  {Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom},
+	Go20Burnable:          {Burn, BurnFrom},
+	Go20Capped:            {Mint, Cap},
+	Go20Detailed:          {Decimals, Name, Symbol},
+	Go20Mintable:          {Mint},
+	Go20Pausable:          {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
+	Go165:                 {SupportsInterface},
+	Go721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
+	Go721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
+	Go721Receiver:         {OnErc721Received},
+	Go721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
+	Go721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
+	Go721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
+	Go721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
+	Go721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
+	Go721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
+	Go820:                 {CanImplementInterfaceForAddress},
+	Go1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
+	Go1155Receiver:        {OnErc1155BatchReceived, OnErc1155Received},
+	Go1155Metadata:        {URI},
+	Go223:                 {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
+	Go223Receiver:         {TokenFallback},
+	Go621:                 {DecreaseSupply, IncreaseSupply},
+	Go777:                 {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name, OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
+	Go777Receiver:         {TokensReceived},
+	Go777Sender:           {TokensToSend},
+	Go827:                 {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
+	Go884:                 {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
 }

@@ -61,7 +61,7 @@ export class WalletUseComponent implements OnInit {
 
   contractBadges: Badge[] = [];
 
-  abiTemplates = [ErcName.Erc20, ErcName.Erc721];
+  abiTemplates = [ErcName.Go20, ErcName.Go721];
 
   addr: Address;
 
