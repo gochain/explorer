@@ -15,7 +15,11 @@ import {ROUTES} from '../../utils/constants';
 export class SearchComponent {
   value = '';
 
-  constructor(private router: Router, public layoutService: LayoutService, private toastrService: ToastrService) {
+  constructor(
+    private router: Router,
+    public layoutService: LayoutService,
+    private toastrService: ToastrService,
+  ) {
   }
 
   async search() {

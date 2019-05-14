@@ -8,6 +8,7 @@ import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
 import {CommonService} from '../../../services/common.service';
+import {MetaService} from '../../../services/meta.service';
 /*MODELS*/
 import Web3Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
@@ -18,7 +19,7 @@ import {Address} from '../../../models/address.model';
 import {Badge} from '../../../models/badge.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import {DEFAULT_GAS_LIMIT, ERC_INTERFACE_IDENTIFIERS, META_TITLES} from '../../../utils/constants';
 import {ErcName} from '../../../utils/enums';
 import {getAbiMethods, getDecodedData, isHex, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
@@ -106,10 +107,12 @@ export class WalletSendComponent implements OnInit {
     private _toastrService: ToastrService,
     private _activatedRoute: ActivatedRoute,
     private _commonService: CommonService,
+    private _metaService: MetaService,
   ) {
   }
 
   ngOnInit() {
+    this._metaService.setTitle(META_TITLES.OPEN_WALLET.title);
     this._subsArr$.push(
       this._activatedRoute.queryParamMap.pipe(
         filter((params: ParamMap) => params.has('address'))
@@ -290,6 +293,7 @@ export class WalletSendComponent implements OnInit {
         this.fromAccount = this._walletService.w3.eth.accounts.privateKeyToAccount(val);
         this.address = this.fromAccount.address;
         this.updateBalance();
+        this._metaService.setTitle(META_TITLES.WALLET.title);
       } catch (e) {
         this._toastrService.danger(e);
         this.isOpening = false;

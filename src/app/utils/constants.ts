@@ -92,3 +92,57 @@ export const ERC_INTERFACE_IDENTIFIERS = {
 };
 
 export const TOKEN_ABI_NAMES: string[] = ['totalSupply', 'balanceOf'];
+
+export const META_TITLES = {
+  DEFAULT: {
+    title: 'GoChain Explorer',
+  },
+  HOME: {
+    title: 'Home',
+  },
+  BLOCK: {
+    title: 'Block',
+  },
+  ADDRESS: {
+    title: 'Address',
+  },
+  CONTRACT: {
+    title: 'Contract',
+  },
+  TOKEN: {
+    title: 'Token',
+  },
+  RICHLISLT: {
+    title: 'Richlist',
+  },
+  TRANSACTION: {
+    title: 'Transaction',
+  },
+  VERIFY: {
+    title: 'Verify contract',
+  },
+  SEND_TX: {
+    title: 'Send transaction',
+  },
+  WALLET: {
+    title: 'Wallet',
+  },
+  CREATE_WALLET: {
+    title: 'Create account',
+  },
+  SEND_WALLET: {
+    title: 'Send GO',
+  },
+  DEPLOY_CONTRACT: {
+    title: 'Deploy contract',
+  },
+  USE_CONTRACT: {
+    title: 'Interact with a Smart Contract',
+  },
+  OPEN_WALLET: {
+    title: 'Open wallet',
+  },
+  NOT_FOUND: {
+    title: 'Not found',
+  },
+};

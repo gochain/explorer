@@ -7,6 +7,7 @@ import {Params} from '@angular/router/src/shared';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Address} from '../../models/address.model';
 import {Transaction} from '../../models/transaction.model';
@@ -16,7 +17,7 @@ import {InternalTransaction} from '../../models/internal-transaction.model';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {TOKEN_TYPES} from '../../utils/constants';
+import {META_TITLES, TOKEN_TYPES} from '../../utils/constants';
 
 @Component({
   selector: 'app-address',
@@ -45,7 +46,12 @@ export class AddressComponent implements OnInit, OnDestroy {
 
   private _subsArr$: Subscription[] = [];
 
-  constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
+  constructor(
+    private _commonService: CommonService,
+    private _route: ActivatedRoute,
+    private _layoutService: LayoutService,
+    private _metaService: MetaService,
+  ) {
   }
 
   ngOnInit() {
@@ -98,6 +104,11 @@ export class AddressComponent implements OnInit, OnDestroy {
       this.tokenTransactionQueryParams.setTotalPage(addr.number_of_token_transactions || 0);
       this.getTokenTransactions();
       if (this.addr.contract) {
+        if (this.addr.token_symbol && this.addr.token_name) {
+          this._metaService.setTitle(`${this.addr.token_symbol} - ${this.addr.token_name}`);
+        } else {
+          this._metaService.setTitle(META_TITLES.CONTRACT.title);
+        }
         this.holderQueryParams.setTotalPage(addr.number_of_token_holders || 0);
         this.internalTransactionQueryParams.setTotalPage(addr.number_of_internal_transactions || 0);
         this.getHolderData();
@@ -109,6 +120,7 @@ export class AddressComponent implements OnInit, OnDestroy {
 
         this.getContractData();
       } else {
+        this._metaService.setTitle(META_TITLES.ADDRESS.title);
         this.tokensQueryParams.setTotalPage(100);
         this.getTokenData();
       }
