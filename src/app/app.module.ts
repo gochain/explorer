@@ -29,6 +29,7 @@ import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
 import {LayoutService} from './services/layout.service';
 import {WalletService} from './modules/wallet/wallet.service';
+import {MetaService} from './services/meta.service';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes/pipes.module';
@@ -96,6 +97,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     CommonService,
     LayoutService,
     WalletService,
+    MetaService,
   ],
   bootstrap: [AppComponent]
 })

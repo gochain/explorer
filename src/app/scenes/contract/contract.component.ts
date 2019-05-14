@@ -7,11 +7,12 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 /*SERVICES*/
 import {ContractService} from '../../services/contract.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {ROUTES} from '../../utils/constants';
+import {META_TITLES, ROUTES} from '../../utils/constants';
 
 // import {Compiler} from '../../models/compiler.model';
 
@@ -42,7 +43,9 @@ export class ContractComponent implements OnInit {
               private _fb: FormBuilder,
               private contactService: ContractService,
               private toastrService: ToastrService,
-              private _router: Router) {
+              private _router: Router,
+              private _metaService: MetaService,
+  ) {
   }
 
   ngOnInit() {
@@ -61,6 +64,7 @@ export class ContractComponent implements OnInit {
         }
       })
     );
+    this._metaService.setTitle(META_TITLES.VERIFY.title);
   }
 
   getContract(addrHash: string) {

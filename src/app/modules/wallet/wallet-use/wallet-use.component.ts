@@ -8,6 +8,7 @@ import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
 import {CommonService} from '../../../services/common.service';
+import {MetaService} from '../../../services/meta.service';
 /*MODELS*/
 import Web3Contract from 'web3/eth/contract';
 import {ABIDefinition} from 'web3/eth/abi';
@@ -16,7 +17,7 @@ import {Badge} from '../../../models/badge.model';
 import {Address} from '../../../models/address.model';
 /*UTILS*/
 import {ErcName} from '../../../utils/enums';
-import {ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import {ERC_INTERFACE_IDENTIFIERS, META_TITLES} from '../../../utils/constants';
 import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ContractAbi} from '../../../utils/types';
 
@@ -76,10 +77,12 @@ export class WalletUseComponent implements OnInit {
     private _toastrService: ToastrService,
     private _activatedRoute: ActivatedRoute,
     private _commonService: CommonService,
+    private metaService: MetaService,
   ) {
   }
 
   ngOnInit() {
+    this.metaService.setTitle(META_TITLES.USE_CONTRACT.title);
     this._subsArr$.push(
       this._activatedRoute.queryParamMap.pipe(
         filter((params: ParamMap) => params.has('address'))

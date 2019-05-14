@@ -9,10 +9,13 @@ import {ApiService} from '../../services/api.service';
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
+import {MetaService} from '../../services/meta.service';
+/*MODELS*/
+import {TokenMetadata} from '../../models/token-metadata';
+import {ABIDefinition} from 'web3/eth/abi';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {ABIDefinition} from 'web3/eth/abi';
-import {TokenMetadata} from '../../models/token-metadata';
+import {META_TITLES} from '../../utils/constants';
 
 const TOKEN_URL_ABI: ABIDefinition = {
   'constant': true,
@@ -62,6 +65,7 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
               private _walletService: WalletService,
               private _apiService: ApiService,
               private _toastrService: ToastrService,
+              private _metaService: MetaService,
   ) {
   }
 
@@ -76,6 +80,7 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
         this.getData();
       })
     );
+    this._metaService.setTitle(META_TITLES.TOKEN.title);
   }
 
   ngOnDestroy(): void {
@@ -93,6 +98,9 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
       metadata.ownerAddr = ownerData['owner'];
       this._apiService.get(url, null, true).subscribe((res: any) => {
         metadata.name = res.name || null;
+        if (metadata.name) {
+          this._metaService.setTitle(`${META_TITLES.TOKEN.title} ${metadata.name}`);
+        }
         metadata.description = res.description || null;
         metadata.image = res.image || null;
         metadata.external_url = res.external_url || null;

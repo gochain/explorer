@@ -8,10 +8,12 @@ import {fromPromise} from 'rxjs/internal-compatibility';
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
 import {WalletService} from '../../modules/wallet/wallet.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Transaction} from '../../models/transaction.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {META_TITLES} from '../../utils/constants';
 
 @Component({
   selector: 'app-transaction',
@@ -35,6 +37,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
               private _route: ActivatedRoute,
               private _layoutService: LayoutService,
               private _walletService: WalletService,
+              private _metaService: MetaService,
   ) {
   }
 
@@ -52,6 +55,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
         this._layoutService.offLoading();
       })
     );
+    this._metaService.setTitle(META_TITLES.TRANSACTION.title);
   }
 
   ngOnDestroy(): void {
