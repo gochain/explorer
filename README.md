@@ -231,7 +231,7 @@ GET /api/address/{address_hash}
   "decimals": 18,
   "total_supply": "1000000000000000000000000",
   "contract": true,
-  "erc_types": ["Erc20","Erc20Detailed"],
+  "erc_types": ["Go20","Go20Detailed"],
   "interfaces": null,
   "number_of_transactions": 3,
   "number_of_token_holders": 3,
