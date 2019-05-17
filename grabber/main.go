@@ -246,10 +246,17 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 							// }
 						}
 						for index, tokenHolderAddress := range tokenHoldersList {
+							if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
+								continue
+							}
+							log.Info().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
 							tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
-							log.Debug().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
 							if err != nil {
 								log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
+								continue
+							}
+							if contractFromDB == nil {
+								log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot find contract in DB")
 								continue
 							}
 							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
