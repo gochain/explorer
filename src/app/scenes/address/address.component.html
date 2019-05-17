@@ -235,6 +235,7 @@
                     ({{tx.updated_at | timeAgo }})
                   </ng-template>
                 </div>
+                <div class="uk-text-truncate">From: <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></div>
                 <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
                 <div>Value ({{addr.token_symbol}}
                   ): {{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}</div>
