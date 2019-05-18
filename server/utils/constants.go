@@ -1,15 +1,16 @@
 package utils
 
-import (
-	"github.com/gochain-io/gochain/v3/accounts/abi"
-)
+type AbiArgument struct {
+	Name    string `json:"name" bson:"name"`
+	Indexed bool   `json:"indexes" bson:"indexes"`
+}
 
 type AbiItem struct {
 	Anonymous       bool          `json:"anonymous" bson:"anonymous"`
 	Constant        bool          `json:"constant" bson:"constant"`
-	Inputs          abi.Arguments `json:"inputs" bson:"inputs"`
+	Inputs          []AbiArgument `json:"inputs" bson:"inputs"`
 	Name            string        `json:"name" bson:"name"`
-	Outputs         abi.Arguments `json:"outputs" bson:"outputs"`
+	Outputs         []AbiArgument `json:"outputs" bson:"outputs"`
 	Payable         bool          `json:"payable" bson:"payable"`
 	StateMutability string        `json:"stateMutability" bson:"stateMutability"`
 	Type            string        `json:"type" bson:"type"`
