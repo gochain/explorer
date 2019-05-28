@@ -20,6 +20,6 @@ frontend:
 	node patch.js
 	rm -rf dist/explorer
 	npm rebuild node-sass
-	ng build --prod
+	./node_modules/@angular/cli/bin/ng build --prod
 
 build: backend frontend
