@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -68,18 +69,19 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	log.Debug().Interface("TX:", tx).Msg("parseTx")
 	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
-		To:             to,
-		From:           from.Hex(),
-		Value:          tx.Value().String(),
-		GasPrice:       tx.GasPrice().String(),
-		GasLimit:       tx.Gas(),
-		BlockNumber:    block.Number().Int64(),
-		GasFee:         new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:          uint64(tx.Nonce()),
-		BlockHash:      block.Hash().Hex(),
-		CreatedAt:      time.Unix(block.Time().Int64(), 0),
-		InputData:      hex.EncodeToString(tx.Data()[:]),
-		InputDataEmpty: InputDataEmpty,
+		To:              to,
+		From:            from.Hex(),
+		Value:           tx.Value().String(),
+		GasPrice:        tx.GasPrice().String(),
+		ReceiptReceived: false,
+		GasLimit:        tx.Gas(),
+		BlockNumber:     block.Number().Int64(),
+		GasFee:          new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
+		Nonce:           uint64(tx.Nonce()),
+		BlockHash:       block.Hash().Hex(),
+		CreatedAt:       time.Unix(block.Time().Int64(), 0),
+		InputData:       hex.EncodeToString(tx.Data()[:]),
+		InputDataEmpty:  InputDataEmpty,
 	}
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
@@ -490,24 +492,35 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		log.Debug().Str("Transaction", transactionHash).Err(err).Msg("GetTransactionByHash")
 		return nil
 	}
-	// this part need refactor, why we need it since grabber does same thing
 	// lazy calculation for receipt
-	receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
-	if err != nil {
-		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
-	} else {
-		gasPrice := new(big.Int)
-		_, err := fmt.Sscan(c.GasPrice, gasPrice)
+	if !c.ReceiptReceived {
+		receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 		if err != nil {
-			log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
+			log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
+		} else {
+			gasPrice := new(big.Int)
+			_, err := fmt.Sscan(c.GasPrice, gasPrice)
+			if err != nil {
+				log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
+			}
+			c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+			c.ContractAddress = receipt.ContractAddress.String()
+			c.Status = false
+			if receipt.Status == 1 {
+				c.Status = true
+			}
+			c.ReceiptReceived = true
+			jsonValue, err := json.Marshal(receipt.Logs)
+			if err != nil {
+				log.Error().Err(err).Msg("getTransactionByHash")
+			}
+			c.Logs = string(jsonValue)
+			log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
+			_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": c.TxHash}, c)
+			if err != nil {
+				log.Error().Err(err).Msg("getTransactionByHash")
+			}
 		}
-		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
-		c.ContractAddress = receipt.ContractAddress.String()
-		c.Status = false
-		if receipt.Status == 1 {
-			c.Status = true
-		}
-		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
 	}
 	return &c
 }

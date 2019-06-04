@@ -51,7 +51,8 @@ export class TransactionComponent implements OnInit, OnDestroy {
         map((params: ParamMap) => params.get('id')),
         mergeMap((txHash: string) => this.getTx(txHash)),
       ).subscribe((tx: (Transaction | null)) => {
-        this.tx = tx;
+        tx.logs = JSON.stringify(JSON.parse(tx.logs),null, "\t");
+        this.tx = tx;        
         this._layoutService.offLoading();
       })
     );
