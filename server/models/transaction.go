@@ -17,6 +17,8 @@ type Transaction struct {
 	BlockHash       string    `json:"block_hash" bson:"hash"`
 	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
 	InputData       string    `json:"input_data" bson:"input_data"`
+	Logs            string    `json:"logs" bson:"logs"`
+	ReceiptReceived bool      `json:"-" bson:"receipt_received"`
 	InputDataEmpty  bool      `json:"-" bson:"input_data_empty"`
 }
 
