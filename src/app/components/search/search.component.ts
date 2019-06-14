@@ -4,6 +4,7 @@ import {Router} from '@angular/router';
 /*SERVICES*/
 import {LayoutService} from '../../services/layout.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
+import {CommonService} from '../../services/common.service';
 /*UTILS*/
 import {ROUTES} from '../../utils/constants';
 
@@ -19,6 +20,7 @@ export class SearchComponent {
     private router: Router,
     public layoutService: LayoutService,
     private toastrService: ToastrService,
+    private commonService: CommonService,
   ) {
   }
 
@@ -27,9 +29,17 @@ export class SearchComponent {
     if (value.length === 42) {
       this.layoutService.mobileSearchState.next(false);
       await this.router.navigate([`/${ROUTES.ADDRESS}/`, value]);
-    } else if (value.length === 66) {
-      this.layoutService.mobileSearchState.next(false);
-      await this.router.navigate([`/${ROUTES.TRANSACTION}/`, value]);
+    } else if (value.length === 66) {            
+      this.commonService.checkBlockExist(value).subscribe(resp =>  {        
+        this.router.navigate([`/${ROUTES.BLOCK}/`, value]);        
+      }, error => {                      
+        this.commonService.checkTransactionExist(value).subscribe(resp =>  {                  
+            this.router.navigate([`/${ROUTES.TRANSACTION}/`, value]);      
+          }, error => {                
+            this.toastrService.warning('the data you entered is not valid');
+        });        
+      });
+      
     } else if (value.length < 8 && /^\d+$/.test(value)) {
       await this.router.navigate([`/${ROUTES.BLOCK}/`, value]);
     } else {

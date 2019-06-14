@@ -50,6 +50,15 @@ export class CommonService implements Resolve<string> {
   getBlock(blockNum: number | string, data?: any): Observable<Block> {
     return this._apiService.get('/blocks/' + blockNum, data);
   }
+  
+  checkBlockExist(blockHash: string){
+    return this._apiService.head('/blocks/' + blockHash);
+  }
+
+  checkTransactionExist(blockHash: string){
+    return this._apiService.head('/transaction/' + blockHash);
+  }
+
 
   getBlockTransactions(blockNum: number | string, data?: any) {
     return this._apiService.get('/blocks/' + blockNum + '/transactions', data);
