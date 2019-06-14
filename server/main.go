@@ -304,7 +304,7 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 
 func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")	
-	block := backendInstance.GetTransactionByHash(hash)
+	tx := backendInstance.GetTransactionByHash(hash)
 	if block != nil {		
 		writeJSON(w, http.StatusOK, nil)
 	} else {		
