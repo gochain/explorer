@@ -205,6 +205,7 @@ func main() {
 				r.Route("/blocks", func(r chi.Router) {
 					r.Get("/", getListBlocks)
 					r.Get("/{num}", getBlock)
+					r.Head("/{hash}", checkBlockExist)
 					r.Get("/{num}/transactions", getBlockTransactions)
 				})
 
@@ -219,6 +220,7 @@ func main() {
 				})
 
 				r.Route("/transaction", func(r chi.Router) {
+					r.Head("/{hash}", checkTransactionExist)
 					r.Get("/{hash}", getTransaction)
 				})
 			})
@@ -284,7 +286,7 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 	address := backendInstance.GetAddressByHash(addressHash)
 	balance, err := backendInstance.BalanceAt(addressHash, "latest")
 	if err == nil {
-		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet TODO:move it to backend, but need to filter out genesis			
+		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet TODO:move it to backend, but need to filter out genesis
 			address = &models.Address{Address: addressHash, UpdatedAt: time.Now()}
 		}
 		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
@@ -299,6 +301,17 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 	transaction := backendInstance.GetTransactionByHash(transactionHash)
 	writeJSON(w, http.StatusOK, transaction)
 }
+
+func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")	
+	tx := backendInstance.GetTransactionByHash(hash)
+	if tx != nil {		
+		writeJSON(w, http.StatusOK, nil)
+	} else {		
+		writeJSON(w, http.StatusNotFound, nil)
+	}
+}
+
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
@@ -472,6 +485,16 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
+}
+
+func checkBlockExist(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")	
+	block := backendInstance.GetBlockByHash(hash)
+	if block != nil {		
+		writeJSON(w, http.StatusOK, nil)
+	} else {		
+		writeJSON(w, http.StatusNotFound, nil)
+	}
 }
 
 func pingDB(w http.ResponseWriter, r *http.Request) {
