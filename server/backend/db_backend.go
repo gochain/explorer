@@ -96,7 +96,7 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		ParentHash: block.ParentHash().Hex(),
 		TxHash:     block.Header().TxHash.Hex(),
 		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
-		Nonce:      uint64(block.Nonce()),
+		Nonce:      block.Nonce(),
 		Miner:      block.Coinbase().Hex(),
 		TxCount:    int(uint64(len(block.Transactions()))),
 		Difficulty: block.Difficulty().Int64(),
