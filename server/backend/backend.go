@@ -11,6 +11,7 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/consensus/clique"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
@@ -146,8 +147,8 @@ func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit
 
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
-	if block == nil {
-		log.Info().Int64("blockNumber", number).Msg("cannot get block from db, importing it")
+	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		log.Info().Int64("blockNumber", number).Msg("cannot get block from db or block is not up to date, importing it")
 		blockEth, err := self.goClient.BlockByNumber(context.Background(), big.NewInt(number))
 		if err != nil {
 			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
@@ -155,11 +156,11 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 		}
 		block = self.ImportBlock(blockEth)
 	}
-	return block
+	return fillExtra(block)
 }
 
 func (self *Backend) GetBlockByHash(hash string) *models.Block {
-	return self.mongo.getBlockByHash(hash)
+	return fillExtra(self.mongo.getBlockByHash(hash))
 }
 
 func (self *Backend) GetCompilerVersion() ([]string, error) {
@@ -300,4 +301,17 @@ func (self *Backend) GetFirstBlockNumber() (int64, error) {
 		return err
 	})
 	return value, err
+}
+
+func fillExtra(block *models.Block) *models.Block {
+	if block == nil {
+		return block
+	}
+	extra := []byte(block.ExtraData)
+	block.ExtraAuth = (block.NonceBool != nil && *block.NonceBool)//workaround for get old block by hash
+	block.ExtraVanity = string(clique.ExtraVanity(extra))
+	block.ExtraHasVote = clique.ExtraHasVote(extra)
+	block.ExtraCandidate = clique.ExtraCandidate(extra).String()
+	block.ExtraIsVoterElection = clique.ExtraIsVoterElection(extra)
+	return block
 }

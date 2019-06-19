@@ -11,4 +11,9 @@ export class Block {
   extra_data: any;
   nonce: number;
   gas_limit: number;
+  extra_auth: boolean;
+	extra_vanity: string;
+	extra_has_vote: boolean;
+	extra_candidate: string;
+	extra_is_voter_election: boolean;
 }

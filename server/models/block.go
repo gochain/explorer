@@ -12,7 +12,7 @@ type Block struct {
 	ParentHash      string    `json:"parent_hash" bson:"parent_hash"`
 	TxHash          string    `json:"tx_hash" bson:"tx_hash"`
 	GasUsed         string    `json:"gas_used" bson:"gas_used"`
-	Nonce           uint64    `json:"nonce" bson:"nonce"`
+	NonceBool       *bool     `json:"-" bson:"nonce_bool"`
 	Miner           string    `json:"miner" bson:"miner"`
 	TxCount         int       `json:"tx_count" bson:"tx_count"`
 	Difficulty      int64     `json:"difficulty" bson:"difficulty"`
@@ -20,6 +20,12 @@ type Block struct {
 	Sha3Uncles      string    `json:"sha3_uncles" bson:"sha3_uncles"`
 	ExtraData       string    `json:"extra_data" bson:"extra_data"`
 	// Transactions    []string  `json:"transactions" bson:"transactions"`
+
+	ExtraAuth            bool   `json:"extra_auth" bson:"-"`
+	ExtraVanity          string `json:"extra_vanity" bson:"-"`
+	ExtraHasVote         bool   `json:"extra_has_vote" bson:"-"`
+	ExtraCandidate       string `json:"extra_candidate" bson:"-"`
+	ExtraIsVoterElection bool   `json:"extra_is_voter_election" bson:"-"`
 }
 
 type LightBlock struct {
