@@ -41,11 +41,7 @@
             <li>
               <p>Gas Used</p>
               <b>{{block.gas_used | bigNumber}}</b>
-            </li>
-            <li>
-              <p>Nonce</p>
-              <b>{{block.nonce }}</b>
-            </li>
+            </li>            
           </ul>
         </li>
         <li>
@@ -61,10 +57,21 @@
           </ul>
         </li>
         <li>
-          <p>Extra Data</p>
-          <b>{{block.extra_data }}</b>
-        </li>
-      </ul>
+        <ul>
+          <li>
+            <p>Extra Data</p>
+            <b>{{block.extra.vanity }}</b>
+          </li>                          
+        </ul>
+      </li>
+        <ng-container *ngIf="block.extra.has_vote; else empty">
+          <br/>
+              <li>
+                <p>Vote</p>
+                <b>{{block.extra.auth ? "Add" : "Remove"}} {{block.extra.is_voter_election ? "voter" : "signer"}} {{block.extra.candidate}}</b>
+              </li>  
+        </ng-container>
+      </ul>    
     </div>
   </div>
   <div class="p-b--20 p-t--20">

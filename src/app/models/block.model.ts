@@ -1,3 +1,11 @@
+export class Extra{
+  auth: boolean;
+	vanity: string;
+	has_vote: boolean;
+	candidate: string;
+	is_voter_election: boolean;
+}
+
 export class Block {
   number: number;
   created_at: Date;
@@ -11,4 +19,5 @@ export class Block {
   extra_data: any;
   nonce: number;
   gas_limit: number;
+  extra:  Extra;
 }

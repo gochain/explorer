@@ -11,6 +11,7 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/consensus/clique"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
@@ -138,7 +139,11 @@ func (self *Backend) GetContract(contractAddress string) *models.Contract {
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
-	return self.mongo.getLatestsBlocks(skip, limit)
+	var lightBlocks []*models.LightBlock	
+	for _, block := range self.mongo.getLatestsBlocks(skip, limit) {
+		lightBlocks = append(lightBlocks,fillExtraLight(block))
+	}
+	return lightBlocks
 }
 func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
 	return self.mongo.getBlockTransactionsByNumber(blockNumber, skip, limit)
@@ -146,8 +151,8 @@ func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit
 
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
-	if block == nil {
-		log.Info().Int64("blockNumber", number).Msg("cannot get block from db, importing it")
+	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		log.Info().Int64("blockNumber", number).Msg("cannot get block from db or block is not up to date, importing it")
 		blockEth, err := self.goClient.BlockByNumber(context.Background(), big.NewInt(number))
 		if err != nil {
 			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
@@ -155,11 +160,11 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 		}
 		block = self.ImportBlock(blockEth)
 	}
-	return block
+	return fillExtra(block)
 }
 
 func (self *Backend) GetBlockByHash(hash string) *models.Block {
-	return self.mongo.getBlockByHash(hash)
+	return fillExtra(self.mongo.getBlockByHash(hash))
 }
 
 func (self *Backend) GetCompilerVersion() ([]string, error) {
@@ -300,4 +305,22 @@ func (self *Backend) GetFirstBlockNumber() (int64, error) {
 		return err
 	})
 	return value, err
+}
+
+func fillExtra(block *models.Block) *models.Block {
+	if block == nil {
+		return block
+	}
+	extra := []byte(block.ExtraData)
+	block.Extra.Auth = (block.NonceBool != nil && *block.NonceBool) //workaround for get old block by hash
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	block.Extra.HasVote = clique.ExtraHasVote(extra)
+	block.Extra.Candidate = clique.ExtraCandidate(extra).String()
+	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
+	return block
+}
+func fillExtraLight(block *models.LightBlock) *models.LightBlock {	
+	extra := []byte(block.ExtraData)
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))	
+	return block
 }
