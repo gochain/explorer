@@ -139,7 +139,11 @@ func (self *Backend) GetContract(contractAddress string) *models.Contract {
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
-	return self.mongo.getLatestsBlocks(skip, limit)
+	var lightBlocks []*models.LightBlock	
+	for _, block := range self.mongo.getLatestsBlocks(skip, limit) {
+		lightBlocks = append(lightBlocks,fillExtraLight(block))
+	}
+	return lightBlocks
 }
 func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
 	return self.mongo.getBlockTransactionsByNumber(blockNumber, skip, limit)
@@ -308,10 +312,15 @@ func fillExtra(block *models.Block) *models.Block {
 		return block
 	}
 	extra := []byte(block.ExtraData)
-	block.ExtraAuth = (block.NonceBool != nil && *block.NonceBool)//workaround for get old block by hash
-	block.ExtraVanity = string(clique.ExtraVanity(extra))
-	block.ExtraHasVote = clique.ExtraHasVote(extra)
-	block.ExtraCandidate = clique.ExtraCandidate(extra).String()
-	block.ExtraIsVoterElection = clique.ExtraIsVoterElection(extra)
+	block.Extra.Auth = (block.NonceBool != nil && *block.NonceBool) //workaround for get old block by hash
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	block.Extra.HasVote = clique.ExtraHasVote(extra)
+	block.Extra.Candidate = clique.ExtraCandidate(extra).String()
+	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
+	return block
+}
+func fillExtraLight(block *models.LightBlock) *models.LightBlock {	
+	extra := []byte(block.ExtraData)
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))	
 	return block
 }

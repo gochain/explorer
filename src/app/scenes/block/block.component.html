@@ -60,15 +60,15 @@
         <ul>
           <li>
             <p>Extra Data</p>
-            <b>{{block.extra_vanity }}</b>
+            <b>{{block.extra.vanity }}</b>
           </li>                          
         </ul>
       </li>
-        <ng-container *ngIf="block.extra_has_vote; else empty">
+        <ng-container *ngIf="block.extra.has_vote; else empty">
           <br/>
               <li>
                 <p>Vote</p>
-                <b>{{block.extra_auth ? "Add" : "Remove"}} {{block.extra_candidate}}</b> to <b>{{block.extra_is_voter_election ? "vote" : "sign"}}</b>
+                <b>{{block.extra.auth ? "Add" : "Remove"}} {{block.extra.is_voter_election ? "voter" : "signer"}} {{block.extra.candidate}}</b>
               </li>  
         </ng-container>
       </ul>    
