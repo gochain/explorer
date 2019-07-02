@@ -139,9 +139,9 @@ func (self *Backend) GetContract(contractAddress string) *models.Contract {
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
-	var lightBlocks []*models.LightBlock	
+	var lightBlocks []*models.LightBlock
 	for _, block := range self.mongo.getLatestsBlocks(skip, limit) {
-		lightBlocks = append(lightBlocks,fillExtraLight(block))
+		lightBlocks = append(lightBlocks, fillExtraLight(block))
 	}
 	return lightBlocks
 }
@@ -203,7 +203,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 	reg := regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
 	sourceBin = reg.ReplaceAllString(sourceBin, ``)
 	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
-	if sourceBin == contractBin {
+	//for 0.4.* compiler version the last 69 symbols could be ignored
+	if (sourceBin == contractBin) || (len(sourceBin) == len(contractBin) && len(sourceBin) > 69 && sourceBin[0:len(sourceBin)-69] == contractBin[0:len(contractBin)-69]) {
 		contract.Valid = true
 		contract.Optimization = contractData.Optimization
 		contract.ContractName = contractData.ContractName
@@ -219,6 +220,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		return contract, nil
 	} else {
 		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
+		log.Info().Str("sourceBin", sourceBin[0:len(sourceBin)-69]).Msg("Compilation result doesn't match")
+		log.Info().Str("contractBin", contractBin[0:len(contractBin)-69]).Msg("Compilation result doesn't match")
 		return nil, err
 	}
 }
@@ -319,8 +322,8 @@ func fillExtra(block *models.Block) *models.Block {
 	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
 	return block
 }
-func fillExtraLight(block *models.LightBlock) *models.LightBlock {	
+func fillExtraLight(block *models.LightBlock) *models.LightBlock {
 	extra := []byte(block.ExtraData)
-	block.Extra.Vanity = string(clique.ExtraVanity(extra))	
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))
 	return block
 }
