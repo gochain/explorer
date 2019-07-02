@@ -35,14 +35,14 @@ export class ContractComponent implements OnInit {
     /*recaptcha_token: null,*/
   });
 
-  compilers$: Observable<any[]> = this.contactService.getCompilersList();
+  compilers$: Observable<any[]> = this._contactService.getCompilersList();
 
   private _subsArr$: Subscription[] = [];
 
   constructor(private _activatedRoute: ActivatedRoute,
               private _fb: FormBuilder,
-              private contactService: ContractService,
-              private toastrService: ToastrService,
+              private _contactService: ContractService,
+              private _toastrService: ToastrService,
               private _router: Router,
               private _metaService: MetaService,
   ) {
@@ -60,7 +60,7 @@ export class ContractComponent implements OnInit {
             address: addr
           });
         } else {
-          this.toastrService.warning('Contract address is invalid');
+          this._toastrService.warning('Contract address is invalid');
         }
       })
     );
@@ -68,9 +68,9 @@ export class ContractComponent implements OnInit {
   }
 
   getContract(addrHash: string) {
-    this._subsArr$.push(this.contactService.getContract(addrHash).subscribe((contract: Contract) => {
+    this._subsArr$.push(this._contactService.getContract(addrHash).subscribe((contract: Contract) => {
       if (!contract) {
-        this.toastrService.danger('Contract address not found');
+        this._toastrService.danger('Contract address not found');
       } else {
         this.contract = contract;
       }
@@ -79,16 +79,16 @@ export class ContractComponent implements OnInit {
 
   onSubmit() {
     if (!this.form.valid) {
-      this.toastrService.danger('Some field is not correct');
+      this._toastrService.danger('Some field is not correct');
       return;
     }
     const data = this.form.getRawValue();
-    this.contactService.compile(data).pipe(
+    this._contactService.compile(data).pipe(
       filter((contract: Contract) => !!contract)
     ).subscribe((contract: Contract) => {
       this.contract = contract;
       if (this.contract.valid) {
-        this.toastrService.success('Contract has been successfully verified');
+        this._toastrService.success('Contract has been successfully verified');
         this.form.reset();
         this._router.navigate(
           [`/${ROUTES.ADDRESS}/`, this.contract.address],

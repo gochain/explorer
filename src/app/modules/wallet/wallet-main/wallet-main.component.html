@@ -1,49 +1,61 @@
-<div class="card m-t--10 m-b--60">
-  <div class="f f-j--sb wallet-intro">
-    <div>
-      <div class="wallet-intro__title">
-        Simple wallet for your gochain
-      </div>
-      <div class="wallet-intro__description">
-        Create wallet for free now!
-      </div>
-    </div>
-    <div class="wallet-intro__image">
-      <img src="../../../../assets/images/wallet_image.png" height="300">
-    </div>
-  </div>
-  <div class="f f--equal wallet-menu">
-    <div routerLink="/wallet/create" class="wallet-menu__item item">
-      <div class="item__icon">
-        <img src="../../../../assets/images/create_account.png" alt="Create Account">
-      </div>
-      <div class="item__title">
-        Create Account
-      </div>
-      <div class="item__description">
-        The first thing you need is an account.
-      </div>
-    </div>
-    <div routerLink="/wallet/send" class="wallet-menu__item item">
-      <div class="item__icon">
-        <img src="../../../../assets/images/open_wallet.png" alt="Open Wallet">
-      </div>
-      <div class="item__title">
-        Open Wallet
-      </div>
-      <div class="item__description">
-        Use your wallet to send GO, deploy contracts and use contracts/DApps.
-      </div>
-    </div>
-    <div routerLink="/wallet/use" class="wallet-menu__item item">
-      <div class="item__icon">
-        <img src="../../../../assets/images/use_contract.png" alt="Use Contract">
-      </div>
-      <div class="item__title">
-        Use Contract
-      </div>
-      <div class="item__description">
-        Use free functions of contract.
+<div class="container">
+  <div class="card f-h">
+    <div class="card-body">
+      <div class="row justify-content-center align-items-center h-100 mt-5">
+        <div class="col-md-6">
+          <h4 class="text-center text-primary">
+            ENTER YOUR PRIVATE KEY TO PERFORM OPERATIONS
+          </h4>
+          <form
+              class="mt-4"
+              [formGroup]="privateKeyForm"
+              (submit)="onPrivateKeySubmit()"
+          >
+            <input
+                type="password"
+                class="form-control"
+                placeholder="Private Key"
+                formControlName="privateKey"
+                autofocus
+                required
+                [readOnly]="walletService.isProcessing$ | async"
+            >
+            <button
+                type="submit"
+                class="btn btn-primary btn-block mt-4"
+                [disabled]="walletService.isProcessing$ | async"
+            >
+              <ng-container *ngIf="walletService.isProcessing$ | async; else open">
+                OPENING...
+              </ng-container>
+              <ng-template #open>
+                OPEN WALLET
+              </ng-template>
+            </button>
+          </form>
+          <div class="row mt-4">
+            <div class="col-6">
+              <button
+                  routerLink="create"
+                  type="button"
+                  class="btn btn-light btn-block"
+                  [disabled]="walletService.isProcessing$ | async"
+              >
+                Create Account
+              </button>
+            </div>
+            <div class="col-6">
+              <button
+                  routerLink="use"
+                  type="button"
+                  class="btn btn-light btn-block"
+                  [disabled]="walletService.isProcessing$ | async"
+              >
+                Use Contract
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

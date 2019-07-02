@@ -8,7 +8,7 @@ import {ViewportSizeService} from './viewport-size.service';
 import {ViewportSizeEnum} from './viewport-size.enum';
 
 
-@Directive({selector: '[ifViewportSize]'})
+@Directive({selector: '[appViewportSize]'})
 export class ViewportSizeDirective implements OnInit, OnDestroy {
   private _visibleSize: ViewportSizeEnum[];
   private _embedded = false;
@@ -20,7 +20,7 @@ export class ViewportSizeDirective implements OnInit, OnDestroy {
   ) {
   }
 
-  @Input() set ifViewportSize(sizes: ViewportSizeEnum[]) {
+  @Input() set appViewportSize(sizes: ViewportSizeEnum[]) {
     this._visibleSize = sizes;
   }
 

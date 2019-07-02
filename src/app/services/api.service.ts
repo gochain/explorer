@@ -22,7 +22,7 @@ export class ApiService {
   }
 
   constructor(private http: HttpClient, private toastrService: ToastrService) {
-    this.apiURL = ApiService.getApiURL();
+    this.apiURL = /*ApiService.getApiURL()*/ 'https://testnet-explorer.gochain.io/api';
   }
 
   get(url: string, params?: HttpParams, manualUrl = false): Observable<any> {

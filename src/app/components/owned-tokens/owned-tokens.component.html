@@ -1,0 +1,42 @@
+<ng-container *ngIf="tokens.length; else emptyTokens">
+  <!--<ng-container *appViewportSize="['small']">
+    <div class="tr-card" *ngFor="let token of tokens">
+      <div>Balance: {{token.balance_int}} {{token.token_symbol}}</div>
+      <div>Token name: {{token.token_name}}</div>
+      <div class="uk-text-truncate">Contract: <a
+          routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a></div>
+    </div>
+  </ng-container>-->
+  <ng-container *appViewportSize="['large']">
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th class="w-20 text-nowrap">Balance</th>
+        <th class="w-20">Balance (raw)</th>
+        <th class="w-20 text-nowrap">Token name</th>
+        <th class="w-20">Contract</th>
+        <th class="w-20 text-nowrap">Updated at</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let token of tokens">
+        <td class="text-nowrap">{{token.balance_int}} {{token.token_symbol}}</td>
+        <td class="text-nowrap">{{token.balance}}</td>
+        <td class="text-nowrap">{{token.token_name}}</td>
+        <td class="text-nowrap text-monospace">
+          <a class="ws-p" routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a>
+        </td>
+        <td class="text-nowrap">{{token.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+          ({{token.updated_at | timeAgo }})
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <div class="mt-4">
+    <app-pagination [queryParam]="tokensQueryParams"></app-pagination>
+  </div>
+</ng-container>
+<ng-template #emptyTokens>
+  <div class="empty">No tokens</div>
+</ng-template>

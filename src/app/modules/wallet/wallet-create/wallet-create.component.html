@@ -1,8 +1,9 @@
-<div class="wal f f-j--c">
-  <div class="card m-t--10">
-    <h3 class="center m-b--40 t--upp font-w--500">Account</h3>
+<!--
+<div class="wal f f-j&#45;&#45;c">
+  <div class="card m-t&#45;&#45;10">
+    <h3 class="center m-b&#45;&#45;40 t&#45;&#45;upp font-w&#45;&#45;500">Account</h3>
     <ng-container *ngIf="account; else error">
-      <p class="m-b--30">
+      <p class="m-b&#45;&#45;30">
         NOTE: Once you leave this page, you cannot recover the address or private key.
       </p>
       <p>Please copy this somewhere safe!</p>
@@ -16,12 +17,50 @@
           <img height="150" width="150" src="{{apiUrl}}/address/{{account.address}}/qr" alt="{{account.address}}" />
         </a>
       </p>
-      <div class="center m-t--20">
-        <button routerLink="/wallet" class="btn btn--sm btn--round">Back</button>
+      <div class="center m-t&#45;&#45;20">
+        <button routerLink="/wallet" class="btn btn&#45;&#45;sm btn&#45;&#45;round">Back</button>
       </div>
     </ng-container>
     <ng-template #error>
-      <h3 class="center m-b--40 t--upp font-w--500">An error occurred while processing request. Please try again later.</h3>
+      <h3 class="center m-b&#45;&#45;40 t&#45;&#45;upp font-w&#45;&#45;500">An error occurred while processing request. Please try again later.</h3>
     </ng-template>
+  </div>
+</div>
+-->
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title"><img src="../../../../assets/icons/user.svg"> Create Account</div>
+      <div class="row">
+        <div class="col-md-9">
+          <div class="form-group">
+            <label for="private-key">Private key</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="private-key" [value]="account.privateKey" readonly>
+              <div class="input-group-append">
+                <button class="btn" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group input-group">
+            <label for="address">Address</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="address" [value]="account.address" readonly>
+              <div class="input-group-append">
+                <button class="btn" type="button">Copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 text-right">
+          <a href="{{apiUrl}}/address/{{account.address}}/qr" target="_blank">
+            <img class="img-thumbnail" height="150" width="150" src="{{apiUrl}}/address/{{account.address}}/qr"
+                 alt="{{account.address}}"/>
+          </a>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary">Use wallet</button>
+      <button type="button" class="btn btn-primary">Back</button>
+    </div>
   </div>
 </div>

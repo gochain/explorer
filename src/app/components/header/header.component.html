@@ -1,33 +1,25 @@
-<nav class="topbar bg-gradient">
-  <div class="topbar__left">
-    <div class="topbar__icon">
-      <a routerLink="/">
-        <img *ngIf="logoSrc$ | async as logoSrc" src="../../../assets/images/{{logoSrc}}" alt="Gochain Explorer" />
-      </a>
-    </div>
-    <div class="topbar__theme">
-      <app-toggle-switch></app-toggle-switch>
-    </div>
-  </div>
-  <div class="topbar__right">
-    <div class="topbar__menu">
-      <ng-container *ngFor="let navItem of navItems">
-        <a
-            *ngIf="!navItem.external"
-            routerLinkActive="menu__item--active"
-            [routerLink]="navItem.link"
-            class="menu__item"
+<nav class="navbar sticky-top navbar-expand-lg navbar-light">
+  <div class="container">
+    <a class="navbar-brand" routerLink="/">
+      <img src="../../../assets/images/logo_fullcolor.svg" alt="Gochain Explorer"/>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li
+            *ngFor="let navItem of navItems"
+            class="nav-item"
         >
-          <div class="menu__item_title">
+          <a class="nav-link" [routerLink]="navItem.link" routerLinkActive="active">
             {{navItem.title}}
-          </div>
-        </a>
-        <a *ngIf="navItem.external" class="menu__item" href="{{navItem.link}}">
-          <div class="menu__item_title">
-            {{navItem.title}}
-          </div>
-        </a>
-      </ng-container>
+          </a>
+        </li>
+      </ul>
     </div>
+    <app-search></app-search>
   </div>
 </nav>

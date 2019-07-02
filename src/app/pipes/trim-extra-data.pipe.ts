@@ -1,4 +1,4 @@
-import { PipeTransform, Pipe } from '@angular/core';
+import {PipeTransform, Pipe} from '@angular/core';
 
 @Pipe({
   name: 'trimExtra'
@@ -9,6 +9,6 @@ export class TrimExtra implements PipeTransform {
     if (!val) {
       return '';
     }
-    return val.substring(0, val.indexOf("\u0000"));
+    return val.substring(0, val.indexOf('\u0000'));
   }
 }

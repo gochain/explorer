@@ -1,461 +1,112 @@
-<div class="main-top">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
-  </div>
-</div>
-<ng-container *ngIf="addr; else addressNotFound">
-  <div class="uk-margin">
-    <div class="uk-overflow-auto list-holder">
-      <ul>
-        <li>
-          <p>Address hash:</p>
-          <b>{{addr.address}}</b>
-        </li>
-        <li>
-          <p>Balance:</p>
-          <b>{{addr.balance_wei | weiToGO | bigNumber}}</b>
-        </li>
-        <ng-container *ngIf="addr.contract">
-          <li>
-            <ul>
-              <li *ngIf="addr.token_name">
-                <p>Token name:</p>
-                <b>{{addr.token_name}}</b>
-              </li>
-              <li *ngIf="addr.token_symbol">
-                <p>Token symbol:</p>
-                <b>{{addr.token_symbol}}</b>
-              </li>
-              <li *ngIf="addr.total_supply">
-                <p>Total supply:</p>
-                <b>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</b>
-              </li>
-            </ul>
-          </li>
-          <li *ngIf="addr.decimals">
-            <p>Decimals:</p>
-            <b>{{addr.decimals}}</b>
-          </li>
-        </ng-container>
-        <li>
-          <ul>
-            <li>
-              <p>Total transactions:</p>
-              <b>{{addr.number_of_transactions || 0}}</b>
-            </li>
-            <ng-container *ngIf="addr.contract">
-              <li>
-                <p>Total internal transactions:</p>
-                <b>{{addr.number_of_internal_transactions || 0}}</b>
-              </li>
-              <li>
-                <p>Total holders:</p>
-                <b>{{addr.number_of_token_holders || 0}}</b>
-              </li>
-            </ng-container>
-          </ul>
-        </li>
-        <li *ngIf="addr.erc_types && !!addr.erc_types.length">
-          <p>Token type:</p>
-          <b><span class="badge c--info m-r--20" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></b>
-        </li>
-        <li>
-          <p>Updated at:</p>
-          <b>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</b>
-        </li>
-        <li>
-          <p>QR:</p>
-          <b>
+<div class="container">
+  <ng-container *ngIf="addr; else addressNotFound">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><img src="../../../assets/icons/hash.svg"> Address</div>
+        <div class="row">
+          <div class="col-md-10">
+            <dl>
+              <dt>Address hash:</dt>
+              <dd>{{addr.address}}</dd>
+              <dt>Balance:</dt>
+              <dd>{{addr.balance_wei | weiToGO | bigNumber}}</dd>
+              <ng-container *ngIf="addr.contract">
+                <ng-container *ngIf="addr.token_name">
+                  <dt>Token name:</dt>
+                  <dd>{{addr.token_name}}</dd>
+                </ng-container>
+                <ng-container *ngIf="addr.token_symbol">
+                  <dt>Token symbol:</dt>
+                  <dd>{{addr.token_symbol}}</dd>
+                </ng-container>
+                <ng-container *ngIf="addr.total_supply">
+                  <dt>Total supply:</dt>
+                  <dd>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</dd>
+                </ng-container>
+                <ng-container *ngIf="addr.decimals">
+                  <dt>Decimals:</dt>
+                  <dd>{{addr.decimals}}</dd>
+                </ng-container>
+                <dt>Total internal transactions:</dt>
+                <dd>{{addr.number_of_internal_transactions || 0}}</dd>
+                <dt>Total holders:</dt>
+                <dd>{{addr.number_of_token_holders || 0}}</dd>
+              </ng-container>
+              <dt>Total transactions:</dt>
+              <dd>{{addr.number_of_transactions || 0}}</dd>
+              <ng-container *ngIf="addr.erc_types && !!addr.erc_types.length">
+                <dt>Token type:</dt>
+                <dd><span class="badge badge-pill badge-primary mr-1" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
+              </ng-container>
+              <dt>Updated at:</dt>
+              <dd>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</dd>
+            </dl>
+          </div>
+          <div class="col-md-2">
             <a href="{{apiUrl}}/address/{{addr.address}}/qr" target="_blank">
-              <img height="150" width="150" src="{{apiUrl}}/address/{{addr.address}}/qr" alt="{{addr.address}}"/>
+              <img class="img-thumbnail" src="{{apiUrl}}/address/{{addr.address}}/qr" alt="{{addr.address}}"/>
             </a>
-          </b>
-        </li>
-      </ul>
-    </div>
-    <div class="list-holder__footer" *ngIf="addr.contract && addr.ercObj && addr.ercObj['Erc721Metadata']">
-      <div>
-        <dl class="uk-description-list uk-description-list-divider">
+          </div>
+        </div>
+      </div>
+      <div class="card-footer" *ngIf="addr.contract && addr.ercObj && addr.ercObj['Erc721Metadata']">
+        <dl>
           <dt>Look for an assets</dt>
           <dd>
-            <div class="m-t--10">
-              <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Enter Token ID"
-                     [(ngModel)]="tokenId">
+            <div class="mt-1">
+              <input class="" type="text" placeholder="Enter Token ID" [(ngModel)]="tokenId">
               <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
-                      class="uk-button uk-button-small uk-button-primary m-l--10">Search
+                      class="uk-button uk-button-small uk-button-primary m-l&#45;&#45;10">Search
               </button>
             </div>
           </dd>
         </dl>
       </div>
     </div>
-  </div>
-  <div class="p-b--60">
-    <app-tabs name="addr_tab">
-      <tab name="transactions" title="Transactions">
-        <tab-content>
-          <ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
-            <ng-container *ifViewportSize="['small']">
-              <div class="tr-card" *ngFor="let tx of transactions">
-                <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
-                </div>
-                <div class="uk-text-truncate">Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                  ({{tx.created_at | timeAgo}})
-                </div>
-                <div class="uk-text-truncate">Associate:
-                  <ng-container *ngIf="addr.address === tx.to; else out">
-                    <i class="fas fa-arrow-left fa-fw"></i>
-                    <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
-                  </ng-container>
-                  <ng-template #out>
-                    <i class="fas fa-arrow-right fa-fw"></i>
-                    <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
-                  </ng-template>
-                </div>
-                <div>Value (GO): {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false |
-                  bigNumber}}
-                </div>
-              </div>
-            </ng-container>
-            <ng-container *ifViewportSize="['large']">
-              <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-small uk-table-striped">
-                  <thead>
-                  <tr>
-                    <th class="w_2_6">Transaction hash</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Processed at</th>
-                    <th class="uk-table-shrink"></th>
-                    <th class="w_2_6">Associate</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Value (GO)</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let tx of transactions">
-                    <td class="uk-text-truncate"><a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
-                    <td class="uk-text-nowrap">
-                      {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
-                    </td>
-                    <ng-container *ngIf="addr.address === tx.to; else out">
-                      <td>
-                        <i class="fas fa-arrow-left fa-fw"></i>
-                      </td>
-                      <td class="uk-text-truncate">
-                        <a class="ws-p" routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
-                      </td>
-                    </ng-container>
-                    <ng-template #out>
-                      <td>
-                        <i class="fas fa-arrow-right fa-fw"></i>
-                      </td>
-                      <td class="uk-text-truncate">
-                        <a class="ws-p" routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
-                      </td>
-                    </ng-template>
-                    <td class="uk-text-nowrap ta-r ws-p">
-                      {{addr.address === tx.to ? '+' : tx.value === '0' ? '' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ng-container>
-            <div class="p-b--40 p-t--40">
-              <app-pagination [total]="transactionQueryParams.totalPage"
-                              (onSelect)="transactionQueryParams.toPage($event)"></app-pagination>
-            </div>
-          </ng-container>
-          <ng-template #emptyTransactions>
-            <div class="empty">No transactions</div>
-          </ng-template>
-        </tab-content>
-      </tab>
-      <tab *ngIf="!addr.contract" name="owned_tokens" title="Owned Tokens">
-        <tab-content>
-          <ng-container *ngIf="tokens.length; else emptyTokens">
-            <ng-container *ifViewportSize="['small']">
-              <div class="tr-card" *ngFor="let token of tokens">
-                <div>Balance: {{token.balance_int}} {{token.token_symbol}}</div>
-                <div>Token name: {{token.token_name}}</div>
-                <div class="uk-text-truncate">Contract: <a
-                    routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a></div>
-              </div>
-            </ng-container>
-            <ng-container *ifViewportSize="['large']">
-              <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-small uk-table-striped">
-                  <thead>
-                  <tr>
-                    <th class="uk-text-nowrap uk-table-shrink">Balance</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Balance (raw)</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Token name</th>
-                    <th class="w_2_6">Contract</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Updated at</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let token of tokens">
-                    <td class="uk-text-nowrap">{{token.balance_int}} {{token.token_symbol}}</td>
-                    <td class="uk-text-nowrap">{{token.balance}}</td>
-                    <td class="uk-text-nowrap">{{token.token_name}}</td>
-                    <td class="uk-text-nowrap">
-                      <a class="ws-p" routerLink="/addr/{{token.contract_address}}">{{token.contract_address}}</a>
-                    </td>
-                    <td class="uk-text-nowrap">{{token.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                      ({{token.updated_at | timeAgo }})
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ng-container>
-            <div class="p-b--40 p-t--40">
-              <app-pagination [total]="tokensQueryParams.totalPage"
-                              (onSelect)="tokensQueryParams.toPage($event)"></app-pagination>
-            </div>
-          </ng-container>
-          <ng-template #emptyTokens>
-            <div class="empty">No tokens</div>
-          </ng-template>
-        </tab-content>
-      </tab>
-      <tab *ngIf="addr.contract" name="internal_transactions"
-           [title]="(addr.token_symbol || 'Internal')  + ' Transactions'">
-        <tab-content>
-          <ng-container *ngIf="!!internal_transactions.length; else emptyInternalTxs">
-            <ng-container *ifViewportSize="['small']">
-              <div class="tr-card" *ngFor="let tx of internal_transactions">
-                <div class="uk-text-truncate"><a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
-                </div>
-                <div class="uk-text-truncate">
-                  <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                    Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-                  </ng-container>
-                  <ng-template #updated_at>Processed: {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                    ({{tx.updated_at | timeAgo }})
-                  </ng-template>
-                </div>
-                <div class="uk-text-truncate">From: <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></div>
-                <div class="uk-text-truncate">To: <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></div>
-                <div>Value ({{addr.token_symbol}}
-                  ): {{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}</div>
-              </div>
-            </ng-container>
-            <ng-container *ifViewportSize="['medium', 'large']">
-              <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
-                  <thead>
-                  <tr>
-                    <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
-                    <th class="uk-width-1-5">Transaction hash</th>
-                    <th class="uk-width-1-5 uk-text-nowrap uk-table-shrink">Processed at</th>
-                    <th class="uk-width-1-5">From</th>
-                    <th class="uk-width-1-5">To</th>
-                    <th class="uk-width-1-5 uk-text-nowrap">Value ({{addr.token_symbol}})</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let tx of internal_transactions">
-                    <td class="uk-text-truncate"><a class="ws-p"
-                                                    routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
-                    </td>
-                    <td>
-                      <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                        {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-                      </ng-container>
-                      <ng-template #updated_at>
-                        {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
-                      </ng-template>
-                    </td>
-                    <td class="uk-text-truncate"><a class="ws-p"
-                                                    routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a></td>
-                    <td class="uk-text-truncate"><a class="ws-p"
-                                                    routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a></td>
-                    <td class="uk-text-nowrap ta-r ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
-                      bigNumber}}</td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ng-container>
-            <div class="p-b--40 p-t--40">
-              <app-pagination [total]="internalTransactionQueryParams.totalPage"
-                              (onSelect)="internalTransactionQueryParams.toPage($event)"></app-pagination>
-            </div>
-          </ng-container>
-          <ng-template #emptyInternalTxs>
-            <div class="empty">No transactions</div>
-          </ng-template>
-        </tab-content>
-      </tab>
-      <tab name="token_transactions" title="Token Transactions">
-        <tab-content>
-          <ng-container *ngIf="!!token_transactions.length; else emptyTokenTx">
-            <ng-container *ifViewportSize="['small']">
-              <div class="tr-card" *ngFor="let tx of token_transactions">
-                <div class="uk-text-truncate">Tx hash: <a
-                    routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
-                </div>
-                <div class="uk-text-truncate">
-                  <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                    Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-                  </ng-container>
-                  <ng-template #updated_at>Processed: {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                    ({{tx.updated_at | timeAgo }})
-                  </ng-template>
-                </div>
-                <div class="uk-text-truncate">Associate:
-                  <ng-container *ngIf="addr.address === tx.to_address; else out">
-                    <i class="fas fa-arrow-left fa-fw"></i>
-                    <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
-                  </ng-container>
-                  <ng-template #out>
-                    <i class="fas fa-arrow-right fa-fw"></i>
-                    <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
-                  </ng-template>
-                </div>
-                <div>Value ({{tx.address.token_symbol}}
-                  ): {{tx.value | weiToGO: false : true : tx.address.decimals | bigNumber}}</div>
-              </div>
-            </ng-container>
-            <ng-container *ifViewportSize="['medium', 'large']">
-              <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
-                  <thead>
-                  <tr>
-                    <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
-                    <th class="uk-table-shrink">Transaction hash</th>
-                    <th class="uk-table-shrink">Processed at</th>
-                    <th class="uk-table-shrink"></th>
-                    <th class="uk-table-shrink">Associate</th>
-                    <th class="uk-table-shrink">Token</th>
-                    <th class="uk-text-nowrap uk-table-shrink">Value</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let tx of token_transactions">
-                    <td class="uk-text-truncate"><a class="ws-p"
-                                                    routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
-                    </td>
-                    <td>
-                      <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-                        {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
-                      </ng-container>
-                      <ng-template #updated_at>
-                        {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
-                      </ng-template>
-                    </td>
-                    <ng-container *ngIf="addr.address === tx.to_address; else out">
-                      <td>
-                        <i class="fas fa-arrow-left fa-fw"></i>
-                      </td>
-                      <td class="uk-text-truncate">
-                        <a class="ws-p" routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
-                      </td>
-                    </ng-container>
-                    <ng-template #out>
-                      <td>
-                        <i class="fas fa-arrow-right fa-fw"></i>
-                      </td>
-                      <td class="uk-text-truncate">
-                        <a class="ws-p" routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
-                      </td>
-                    </ng-template>
-                    <td class="uk-text-truncate">{{tx.address.token_symbol}}</td>
-                    <td class="uk-text-nowrap ta-r ws-p">
-                      {{addr.address === tx.to_address ? '+' : tx.value === 0 ? '' : '-'}} {{tx.value | weiToGO: false : true : tx.address.decimals | bigNumber}}
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ng-container>
-            <div class="p-b--40 p-t--40">
-              <app-pagination [total]="tokenTransactionQueryParams.totalPage"
-                              (onSelect)="tokenTransactionQueryParams.toPage($event)"></app-pagination>
-            </div>
-          </ng-container>
-          <ng-template #emptyTokenTx>
-            <div class="empty">No transactions</div>
-          </ng-template>
-        </tab-content>
-      </tab>
-      <tab *ngIf="addr.contract" name="holders" title="Holders">
-        <tab-content>
-          <ng-container *ngIf="token_holders.length; else emptyHolders">
-            <ng-container *ifViewportSize="['small']">
-              <div class="tr-card" *ngFor="let holder of token_holders">
-                <div class="uk-text-truncate">Token holder: <a
-                    routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
-                </div>
-                <div class="uk-text-truncate">Balance ({{addr.token_symbol}}): {{holder.balance | weiToGO: false : true
-                  : addr.decimals | bigNumber}}
-                </div>
-              </div>
-            </ng-container>
-            <ng-container *ifViewportSize="['medium', 'large']">
-              <div class="uk-overflow-auto">
-                <table class="uk-table uk-table-small uk-table-striped" style="table-layout: fixed;">
-                  <thead>
-                  <tr>
-                    <th class="uk-width-1-2">Token holder</th>
-                    <th class="uk-width-1-2">Balance ({{addr.token_symbol}})</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr *ngFor="let holder of token_holders">
-                    <td class="uk-text-truncate">
-                      <a class="ws-p"
-                         routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
-                    </td>
-                    <td class="uk-text-nowrap ta-r ws-p">{{holder.balance | weiToGO: false : true : addr.decimals |
-                      bigNumber}}</td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </ng-container>
-            <div class="p-b--40 p-t--40">
-              <app-pagination [total]="holderQueryParams.totalPage"
-                              (onSelect)="holderQueryParams.toPage($event)"></app-pagination>
-            </div>
-          </ng-container>
-          <ng-template #emptyHolders>
-            <div class="empty">No holders</div>
-          </ng-template>
-        </tab-content>
-      </tab>
-      <tab *ngIf="addr.contract" name="interact" title="Interact">
-        <tab-content>
-          <app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>
-        </tab-content>
-      </tab>
-      <tab *ngIf="addr.contract" name="contract_source" title="Contract Source">
-        <tab-content>
-          <ng-container *ngIf="contract">
-            <ng-container *ngIf="!contract.valid">
-              <h5 class="uk-margin uk-margin-top"><i class="fas fa-exclamation-triangle"></i> Contract Source Code
-                Unverified</h5>
-              <a routerLink="/verify" [queryParams]="{address: addr.address}" class="btn">Verify And Publish Source
-                Code</a>
-            </ng-container>
-            <ng-container *ngIf="contract.valid">
-              <h5 class="uk-margin uk-margin-top"><i class="fas fa-thumbs-up"></i> Contract Source Code Verified</h5>
-              <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-code"></i> Contract Source Code</h5>
-              <p>Contract Name: {{contract.contract_name}}</p>
-              <p>Compiler Version: {{contract.compiler_version}}</p>
-              <p>Optimization: {{contract.optimization}}</p>
-              <p>Verified: {{contract.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{contract.updated_at | timeAgo}})</p>
-              <pre class="code">{{contract.source_code}}</pre>
-            </ng-container>
-            <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-microchip"></i> Contract Bytecode</h5>
-            <pre class="code">{{contract.byte_code}}</pre>
-          </ng-container>
-        </tab-content>
-      </tab>
-    </app-tabs>
-  </div>
-</ng-container>
-<ng-template #addressNotFound>
-  <app-info text="Address not found"></app-info>
-</ng-template>
+    <div class="card mt-4 mb-5">
+      <div class="card-body">
+        <app-tabs name="addr_tab">
+          <tab name="transactions" title="Transactions">
+            <tab-content>
+              <app-addr-transactions [addr]="addr"></app-addr-transactions>
+            </tab-content>
+          </tab>
+          <tab *ngIf="!addr.contract" name="owned_tokens" title="Owned Tokens">
+            <tab-content>
+              <app-owned-tokens [addrHash]="addrHash"></app-owned-tokens>
+            </tab-content>
+          </tab>
+          <tab *ngIf="addr.contract" name="internal_transactions"
+               [title]="(addr.token_symbol || 'Internal')  + ' Transactions'">
+            <tab-content>
+              <app-addr-internal-txs [addr]="addr"></app-addr-internal-txs>
+            </tab-content>
+          </tab>
+          <tab name="token_transactions" title="Token Transactions">
+            <tab-content>
+              <app-token-txs [addr]="addr"></app-token-txs>
+            </tab-content>
+          </tab>
+          <tab *ngIf="addr.contract" name="holders" title="Holders">
+            <tab-content>
+              <app-token-holders [addr]="addr"></app-token-holders>
+            </tab-content>
+          </tab>
+          <tab *ngIf="addr.contract" name="interact" title="Interact">
+            <tab-content>
+              <!--<app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>-->
+            </tab-content>
+          </tab>
+          <tab *ngIf="addr.contract" name="contract_source" title="Contract Source">
+            <tab-content>
+              <app-contract-source [addr]="addr"></app-contract-source>
+            </tab-content>
+          </tab>
+        </app-tabs>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template #addressNotFound>
+    <app-info text="Address not found"></app-info>
+  </ng-template>
+</div>

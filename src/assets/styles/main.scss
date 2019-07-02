@@ -1,3 +1,43 @@
+/*
+!*@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+@import "~bootstrap/scss/mixins";
+@import "~bootstrap/scss/root";
+@import "~bootstrap/scss/reboot";*!
+!*@import "~bootstrap/scss/type";*!
+!*@import "~bootstrap/scss/images";*!
+!*@import "~bootstrap/scss/code";*!
+//@import "~bootstrap/scss/grid";
+!*@import "~bootstrap/scss/tables";
+@import "~bootstrap/scss/forms";
+@import "~bootstrap/scss/buttons";
+@import "~bootstrap/scss/transitions";
+@import "~bootstrap/scss/dropdown";
+@import "~bootstrap/scss/button-group";
+@import "~bootstrap/scss/input-group";
+@import "~bootstrap/scss/custom-forms";
+@import "~bootstrap/scss/nav";
+@import "~bootstrap/scss/navbar";
+@import "~bootstrap/scss/card";
+@import "~bootstrap/scss/breadcrumb";
+@import "~bootstrap/scss/pagination";
+@import "~bootstrap/scss/badge";
+@import "~bootstrap/scss/jumbotron";
+@import "~bootstrap/scss/alert";
+@import "~bootstrap/scss/progress";
+@import "~bootstrap/scss/media";
+@import "~bootstrap/scss/list-group";
+@import "~bootstrap/scss/close";
+@import "~bootstrap/scss/toasts";
+@import "~bootstrap/scss/modal";
+@import "~bootstrap/scss/tooltip";
+@import "~bootstrap/scss/popover";
+@import "~bootstrap/scss/carousel";
+@import "~bootstrap/scss/spinners";
+@import "~bootstrap/scss/utilities";
+@import "~bootstrap/scss/print";*!
+@import "~bootstrap/scss/bootstrap-grid";
+
 @import "./mixins";
 @import "./atomic";
 @import "./buttons";
@@ -6,7 +46,7 @@ body, input[text], button {
   font-family: 'Roboto', Cambria, Georgia;
 }
 
-/* everywhere else */
+!* everywhere else *!
 * {
   font-family: 'Roboto', Arial, Helvetica, sans-serif;
 }
@@ -24,7 +64,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
 }
 
-/* This fills the remaining space, by using flexbox. Every toolbar row uses a flexbox row layout. */
+!* This fills the remaining space, by using flexbox. Every toolbar row uses a flexbox row layout. *!
 .fill-remaining-space {
   flex: 1 1 auto;
 }
@@ -163,19 +203,6 @@ body {
 
 .empty {
   padding: 20px 0;
-}
-
-.code {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background-color: #f5f5f5;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  display: block;
-  word-break: break-all;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-  line-height: 1.42857;
-  color: #333;
 }
 
 * + .uk-h1, * + .uk-h2, * + .uk-h3, * + .uk-h4, * + .uk-h5, * + .uk-h6, * + h1, * + h2, * + h3, * + h4, * + h5, * + h6 {
@@ -439,4 +466,71 @@ body {
   white-space: nowrap;
   border-radius: .25rem;
   outline: none;
+}
+*/
+// @import "~uikit/src/scss/uikit.scss";
+
+
+
+@import "scss/functions";
+@import "scss/variables";
+@import "scss/mixins";
+@import "scss/root";
+@import "scss/reboot";
+@import "scss/type";
+@import "scss/images";
+@import "scss/code";
+@import "scss/grid";
+@import "scss/tables";
+@import "scss/forms";
+@import "scss/buttons";
+@import "scss/transitions";
+@import "scss/dropdown";
+@import "scss/button-group";
+@import "scss/input-group";
+@import "scss/custom-forms";
+@import "scss/nav";
+@import "scss/navbar";
+@import "scss/card";
+@import "scss/breadcrumb";
+@import "scss/pagination";
+@import "scss/badge";
+@import "scss/jumbotron";
+@import "scss/alert";
+@import "scss/progress";
+@import "scss/media";
+@import "scss/list-group";
+@import "scss/close";
+@import "scss/toasts";
+@import "scss/modal";
+@import "scss/tooltip";
+@import "scss/popover";
+@import "scss/carousel";
+@import "scss/spinners";
+@import "scss/utilities";
+
+/*html {
+  font-family: Roboto;
+}*/
+
+
+.ws {
+  &-p {
+    white-space: pre !important;
+    // font-family: monospace;
+  }
+}
+
+
+.code {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  display: block;
+  word-break: break-all;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  line-height: 1.42857;
+  color: #333;
 }

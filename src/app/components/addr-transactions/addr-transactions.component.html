@@ -1,0 +1,72 @@
+<ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
+  <!--<ng-container *appViewportSize="['small']">
+    <div class="tr-card" *ngFor="let tx of transactions">
+      <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+      </div>
+      <div class="uk-text-truncate">Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+        ({{tx.created_at | timeAgo}})
+      </div>
+      <div class="uk-text-truncate">Associate:
+        <ng-container *ngIf="addr.address === tx.to; else out">
+          <i class="fas fa-arrow-left fa-fw"></i>
+          <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+        </ng-container>
+        <ng-template #out>
+          <i class="fas fa-arrow-right fa-fw"></i>
+          <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+        </ng-template>
+      </div>
+      <div>Value (GO): {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false |
+        bigNumber}}
+      </div>
+    </div>
+  </ng-container>-->
+  <ng-container *appViewportSize="['large']">
+    <table class="table table-striped">
+      <thead>
+      <tr>
+        <th class="w-25">Transaction hash</th>
+        <th class="">Processed at</th>
+        <th class=""></th>
+        <th class="w-25">Associate</th>
+        <th class="text-right">Value (GO)</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let tx of transactions">
+        <td class="text-monospace text-truncate"><a class="ws-p"
+                                                    routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+        </td>
+        <td class="text-nowrap">{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+          ({{tx.created_at | timeAgo}})
+        </td>
+        <ng-container *ngIf="addr.address === tx.to; else out">
+          <td>
+            <img src="../../../assets/icons/left.svg" alt="From">
+          </td>
+          <td class="text-monospace text-truncate">
+            <a class="ws-p" routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+          </td>
+        </ng-container>
+        <ng-template #out>
+          <td>
+            <img src="../../../assets/icons/right.svg" alt="To">
+          </td>
+          <td class="text-monospace text-truncate">
+            <a class="ws-p" routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+          </td>
+        </ng-template>
+        <td class="text-nowrap text-right text-monospace ws-p">
+          {{addr.address === tx.to ? '+' : tx.value === '0' ? '' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <div class="mt-4">
+    <app-pagination [queryParam]="transactionQueryParams"></app-pagination>
+  </div>
+</ng-container>
+<ng-template #emptyTransactions>
+  <div class="empty">No transactions</div>
+</ng-template>

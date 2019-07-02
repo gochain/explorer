@@ -1,10 +1,14 @@
+/*CORE*/
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
+/*SERVICES*/
+import {WalletGuard} from '../../guards/wallet.guard';
+/*COMPONENTS*/
 import {WalletMainComponent} from './wallet-main/wallet-main.component';
 import {WalletCreateComponent} from './wallet-create/wallet-create.component';
-import {WalletSendComponent} from './wallet-send/wallet-send.component';
+import {WalletAccountComponent} from './wallet-account/wallet-account.component';
 import {WalletComponent} from './wallet/wallet.component';
-import {WalletUseComponent} from './wallet-use/wallet-use.component';
+import {WalletAccountComponentt} from './wallet-account1/wallet-account-componentt.component';
 
 const routes: Routes = [
   {
@@ -13,8 +17,16 @@ const routes: Routes = [
     children: [
       {path: '', component: WalletMainComponent},
       {path: 'create', component: WalletCreateComponent},
-      {path: 'send', component: WalletSendComponent},
-      {path: 'use', component: WalletUseComponent},
+      {
+        path: 'send',
+        redirectTo: 'account',
+      },
+      {
+        path: 'account',
+        component: WalletAccountComponent,
+        canActivate: [WalletGuard],
+      },
+      // {path: 'use', component: WalletAccountComponentt},
     ]
   },
 ];

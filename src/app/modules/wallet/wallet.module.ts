@@ -1,37 +1,35 @@
 /*CORE*/
 import {NgModule} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 /*MODULES*/
 import {WalletRoutingModule} from './wallet-routing.module';
-import {TabsModule} from '../tabs/tabs.module';
 /*COMPONENTS*/
 import {WalletMainComponent} from './wallet-main/wallet-main.component';
 import {WalletComponent} from './wallet/wallet.component';
 import {WalletCreateComponent} from './wallet-create/wallet-create.component';
-import {WalletSendComponent} from './wallet-send/wallet-send.component';
+import {WalletAccountComponent} from './wallet-account/wallet-account.component';
 /*SERVICES*/
+import {WalletGuard} from '../../guards/wallet.guard';
+import {DeployerComponent} from './deployer/deployer.component';
+import {SenderComponent} from './sender/sender.component';
+import {SharedModule} from '../shared/shared.module';
+import {WalletSharedModule} from './wallet-shared.modules';
 import {WalletService} from './wallet.service';
-import {PipesModule} from '../pipes/pipes.module';
-import {WalletCommonModule} from './wallet-common.module';
 
 @NgModule({
   declarations: [
     WalletComponent,
     WalletMainComponent,
     WalletCreateComponent,
-    WalletSendComponent,
+    WalletAccountComponent,
+    DeployerComponent,
+    SenderComponent,
   ],
   imports: [
-    CommonModule,
-    FormsModule,
-    PipesModule,
-    ReactiveFormsModule,
-    TabsModule,
+    SharedModule,
+    WalletSharedModule,
     WalletRoutingModule,
-    WalletCommonModule,
   ],
-  providers: [WalletService],
+  providers: [WalletService, WalletGuard],
 })
 export class WalletModule {
 }

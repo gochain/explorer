@@ -1,14 +1,13 @@
 <div class="tabs">
-  <div class="tabs__titles">
-    <div class="tabs__title"
-         *ngFor="let tab of tabs"
-         [ngClass]="{'tabs__title--active': tab === activeTab,
-                     'single': tabs.length === 1}"
-         [ngStyle]="{'border-radius': tabs.length === 1  ? '100px' : ''}"
-         (click)="onTabSelect(tab)"
-         [innerHTML]="tab.title"
-    >
-    </div>
+  <div class="tabs__titles mb-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item"
+          *ngFor="let tab of tabs"
+          (click)="onTabSelect(tab)"
+      >
+        <div class="nav-link" [ngClass]="{'active': tab === activeTab}">{{tab.title}}</div>
+      </li>
+    </ul>
   </div>
   <div class="tabs__content">
     <ng-content></ng-content>

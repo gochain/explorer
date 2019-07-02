@@ -1,14 +1,33 @@
-<ul class="uk-pagination uk-flex-center">
-  <li [ngClass]="{'uk-disabled': current === 1}"><span><i class="fa fa-chevron-left" (click)="previous()"></i></span></li>
-  <ng-container *ngFor="let item of items">
-    <li
-        *ngIf="item.type === 'page'"
-        (click)="onPageSelect(item.value)"
-        [ngClass]="{'uk-active': current == item.value}"
-    >
-      <span>{{item.value}}</span>
-    </li>
-    <li *ngIf="item.type === 'dot'" class="uk-disabled"><span>{{item.value}}</span></li>
-  </ng-container>
-  <li [ngClass]="{'uk-disabled': current === _total}"><span><i class="fa fa-chevron-right" (click)="next()"></i></span></li>
-</ul>
+<div class="paginator d-flex justify-content-end align-items-center">
+  <div class="paginator__selector mr-3">
+    Items per page:
+    <select [(ngModel)]="_queryParam.limit">
+      <option *ngFor="let page of perPage" [ngValue]="page">{{page}}</option>
+    </select>
+  </div>
+  <div class="paginator__pager">
+    <ul class="pagination pagination-sm">
+      <li class="page-item" [ngClass]="{'disabled': current === 1}">
+        <span class="page-link" aria-label="Previous" (click)="previous()">
+          <span aria-hidden="true">&laquo;</span>
+        </span>
+      </li>
+      <ng-container *ngFor="let item of items">
+        <li
+            *ngIf="item.type === 'page'"
+            (click)="onPageSelect(item.value)"
+            [ngClass]="{'active': current == item.value}"
+            class="page-item"
+        >
+          <span class="page-link">{{item.value}}</span>
+        </li>
+        <li *ngIf="item.type === 'dot'" class="page-item disabled"><span class="page-link">{{item.value}}</span></li>
+      </ng-container>
+      <li class="page-item" [ngClass]="{'disabled': current === _total}">
+        <span class="page-link" aria-label="Next" (click)="next()">
+          <span aria-hidden="true">&raquo;</span>
+        </span>
+      </li>
+    </ul>
+  </div>
+</div>

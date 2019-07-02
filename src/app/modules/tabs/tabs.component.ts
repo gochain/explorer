@@ -34,7 +34,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
 
   ngAfterContentInit(): void {
     // subscribing for tabs change if tabs will be added or deleted
-    this._subsArr$.push(this.tabs.changes.subscribe(this.onTabsChange));
+    this._subsArr$.push(this.tabs.changes.subscribe(() => this.onTabsChange()));
     // asynchronous update preventing ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
       this.findTab();
@@ -51,13 +51,13 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this.onTabSelect(activeTab, false);
   }
 
-  onTabsChange = () => {
+  onTabsChange(): void {
     if (this.tabs.length) {
       this.findTab();
     } else {
       this.activeTab = null;
     }
-  };
+  }
 
   /**
    * replacing url so query params won't affect url history

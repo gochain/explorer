@@ -9,5 +9,5 @@ export class TabComponent {
   @Input() name: string;
   @Input() title: string;
   /*@ContentChild(TabTitleComponent) title: TabTitleComponent;*/
-  @ContentChild(TabContentComponent) content: TabContentComponent;
+  @ContentChild(TabContentComponent, {static: true}) content: TabContentComponent;
 }

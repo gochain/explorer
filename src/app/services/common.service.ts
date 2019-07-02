@@ -27,11 +27,13 @@ export class CommonService implements Resolve<string> {
   }
 
   resolve(): Observable<string> | Promise<string> | string {
-    return this.rpcProvider || this.getRpcProvider();
+    return this.getRpcProvider();
   }
 
   async getRpcProvider() {
-    this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
+    if (!this.rpcProvider) {
+      this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
+    }
     return this.rpcProvider;
   }
 

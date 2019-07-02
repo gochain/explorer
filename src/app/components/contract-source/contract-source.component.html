@@ -1,0 +1,29 @@
+<ng-container *ngIf="contract">
+  <ng-container *ngIf="!contract.valid">
+    <div class="text-center">
+      <img src="../../../assets/icons/alert-circle.svg" alt="Alert">
+      <p>Contract Source Code Unverified</p>
+      <button
+          class="btn btn-primary text-uppercase"
+          routerLink="/verify"
+          [queryParams]="{address: addr.address}"
+      >
+        Verify And Publish Source Code
+      </button>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="contract.valid">
+    <h5 class="uk-margin uk-margin-top">
+      Contract Source Code Verified
+    </h5>
+    <h5 class="uk-margin uk-margin-large-top"><i class="fas fa-code"></i> Contract Source Code</h5>
+    <p>Contract Name: {{contract.contract_name}}</p>
+    <p>Compiler Version: {{contract.compiler_version}}</p>
+    <p>Optimization: {{contract.optimization}}</p>
+    <p>Verified: {{contract.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{contract.updated_at | timeAgo}}
+      )</p>
+    <pre class="code">{{contract.source_code}}</pre>
+  </ng-container>
+  <p>Contract Bytecode</p>
+  <pre class="code">{{contract.byte_code}}</pre>
+</ng-container>
