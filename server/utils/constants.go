@@ -3,6 +3,7 @@ package utils
 type AbiArgument struct {
 	Name    string `json:"name" bson:"name"`
 	Indexed bool   `json:"indexes" bson:"indexes"`
+	Type    string `json:"type" bson:"type"`
 }
 
 type AbiItem struct {
