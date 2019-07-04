@@ -118,7 +118,18 @@ func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 
 }
 func (self *Backend) GetAddressByHash(hash string) *models.Address {
-	return self.mongo.getAddressByHash(common.HexToAddress(hash).Hex())
+	addressHash := common.HexToAddress(hash).Hex()
+	address := self.mongo.getAddressByHash(addressHash)
+	balance, err := self.BalanceAt(addressHash, "latest")
+	if err == nil {
+		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet
+			self.mongo.UpdateActiveAddress(addressHash)
+			address = &models.Address{Address: addressHash, UpdatedAt: time.Now()}
+		}
+		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
+		address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
+	}
+	return address
 }
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)

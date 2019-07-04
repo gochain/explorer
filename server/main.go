@@ -283,15 +283,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
 	log.Info().Str("address", addressHash).Msg("looking up address")
-	address := backendInstance.GetAddressByHash(addressHash)
-	balance, err := backendInstance.BalanceAt(addressHash, "latest")
-	if err == nil {
-		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet TODO:move it to backend, but need to filter out genesis
-			address = &models.Address{Address: addressHash, UpdatedAt: time.Now()}
-		}
-		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
-		address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
-	}
+	address := backendInstance.GetAddressByHash(addressHash)	
 	writeJSON(w, http.StatusOK, address)
 }
 
@@ -303,15 +295,14 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")	
+	hash := chi.URLParam(r, "hash")
 	tx := backendInstance.GetTransactionByHash(hash)
-	if tx != nil {		
+	if tx != nil {
 		writeJSON(w, http.StatusOK, nil)
-	} else {		
+	} else {
 		writeJSON(w, http.StatusNotFound, nil)
 	}
 }
-
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
@@ -488,11 +479,11 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkBlockExist(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")	
+	hash := chi.URLParam(r, "hash")
 	block := backendInstance.GetBlockByHash(hash)
-	if block != nil {		
+	if block != nil {
 		writeJSON(w, http.StatusOK, nil)
-	} else {		
+	} else {
 		writeJSON(w, http.StatusNotFound, nil)
 	}
 }

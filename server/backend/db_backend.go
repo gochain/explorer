@@ -244,13 +244,18 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 	for _, tx := range block.Transactions() {
 		self.importTx(tx, block)
 	}
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importBlock")
-	}
+	self.UpdateActiveAddress(block.Coinbase().Hex())
 	return b
 
 }
+
+func (self *MongoBackend) UpdateActiveAddress(address string) {
+	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("UpdateActiveAddress")
+	}
+}
+
 func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
@@ -279,16 +284,8 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		log.Fatal().Err(err).Msg("importTx")
 	}
 
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": toAddress}, &models.ActiveAddress{Address: toAddress, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
+	self.UpdateActiveAddress(toAddress)
+	self.UpdateActiveAddress(transaction.From)
 }
 func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
