@@ -237,15 +237,24 @@ func main() {
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
-	total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
-	w.Write([]byte(total.FloatString(18)))
+	totalSupply, err := backendInstance.TotalSupply()
+	if err != nil {
+		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
+		w.Write([]byte(total.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
-	circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
-	w.Write([]byte(circulating.FloatString(18)))
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err != nil {
+		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
+		w.Write([]byte(circulating.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
+
 }
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
@@ -268,16 +277,20 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
+	totalSupply, err := backendInstance.TotalSupply()
 	skip, limit := parseSkipLimit(r)
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
-	bl := &models.Richlist{
-		Rankings:          []*models.Address{},
-		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
-		CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err == nil {
+		bl := &models.Richlist{
+			Rankings:          []*models.Address{},
+			TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
+			CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
+		}
+		bl.Rankings = backendInstance.GetRichlist(skip, limit)
+		writeJSON(w, http.StatusOK, bl)
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
 	}
-	bl.Rankings = backendInstance.GetRichlist(skip, limit)
-	writeJSON(w, http.StatusOK, bl)
 }
 
 func getAddress(w http.ResponseWriter, r *http.Request) {
@@ -303,15 +316,14 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")	
+	hash := chi.URLParam(r, "hash")
 	tx := backendInstance.GetTransactionByHash(hash)
-	if tx != nil {		
+	if tx != nil {
 		writeJSON(w, http.StatusOK, nil)
-	} else {		
+	} else {
 		writeJSON(w, http.StatusNotFound, nil)
 	}
 }
-
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
@@ -488,11 +500,11 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkBlockExist(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")	
+	hash := chi.URLParam(r, "hash")
 	block := backendInstance.GetBlockByHash(hash)
-	if block != nil {		
+	if block != nil {
 		writeJSON(w, http.StatusOK, nil)
-	} else {		
+	} else {
 		writeJSON(w, http.StatusNotFound, nil)
 	}
 }
