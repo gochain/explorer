@@ -278,18 +278,22 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
 	totalSupply, err := backendInstance.TotalSupply()
-	skip, limit := parseSkipLimit(r)
-	circulatingSupply, err := backendInstance.CirculatingSupply()
-	if err == nil {
-		bl := &models.Richlist{
-			Rankings:          []*models.Address{},
-			TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
-			CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
-		}
-		bl.Rankings = backendInstance.GetRichlist(skip, limit)
-		writeJSON(w, http.StatusOK, bl)
-	} else {
+	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, err)
+	} else {
+		skip, limit := parseSkipLimit(r)
+		circulatingSupply, err := backendInstance.CirculatingSupply()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, err)
+		} else {
+			bl := &models.Richlist{
+				Rankings:          []*models.Address{},
+				TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
+				CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
+			}
+			bl.Rankings = backendInstance.GetRichlist(skip, limit)
+			writeJSON(w, http.StatusOK, bl)
+		}
 	}
 }
 
