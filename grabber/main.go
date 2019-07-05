@@ -225,7 +225,10 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 					// continue
 				} else {
 					var fromBlock int64
-					contractFromDB := importer.GetAddressByHash(normalizedAddress)
+					contractFromDB, err := importer.GetAddressByHash(normalizedAddress)
+					if err != nil {
+						log.Fatal().Err(err).Msg("updateAddresses")
+					}
 					if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
 						fromBlock = contractFromDB.UpdatedAtBlock
 					} else {

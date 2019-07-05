@@ -283,7 +283,11 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
 	log.Info().Str("address", addressHash).Msg("looking up address")
-	address := backendInstance.GetAddressByHash(addressHash)	
+	address, err := backendInstance.GetAddressByHash(addressHash)
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, address)
 }
 
