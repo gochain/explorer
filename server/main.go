@@ -248,7 +248,7 @@ func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
 	circulatingSupply, err := backendInstance.CirculatingSupply()
-	if err != nil {
+	if err == nil {
 		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
 		w.Write([]byte(circulating.FloatString(18)))
 	} else {
