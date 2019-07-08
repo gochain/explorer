@@ -237,15 +237,24 @@ func main() {
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
-	total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
-	w.Write([]byte(total.FloatString(18)))
+	totalSupply, err := backendInstance.TotalSupply()
+	if err == nil {
+		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
+		w.Write([]byte(total.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
-	circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
-	w.Write([]byte(circulating.FloatString(18)))
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err == nil {
+		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
+		w.Write([]byte(circulating.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
+
 }
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
@@ -268,9 +277,17 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
+	totalSupply, err := backendInstance.TotalSupply()
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	skip, limit := parseSkipLimit(r)
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err != nil {		
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	bl := &models.Richlist{
 		Rankings:          []*models.Address{},
 		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
