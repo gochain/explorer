@@ -238,7 +238,7 @@ func main() {
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 	totalSupply, err := backendInstance.TotalSupply()
-	if err != nil {
+	if err == nil {
 		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
 		w.Write([]byte(total.FloatString(18)))
 	} else {
