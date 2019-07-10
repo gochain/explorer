@@ -1,5 +1,5 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ActivatedRoute, ParamMap} from '@angular/router';
 import {forkJoin, Subscription} from 'rxjs';
@@ -21,14 +21,15 @@ import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {ContractAbi} from '../../../utils/types';
 import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
 import {ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import BigNumber from 'bignumber.js';
 
 @Component({
-  selector: 'app-contract-interactor',
-  templateUrl: './contract-interactor.component.html',
-  styleUrls: ['./contract-interactor.component.css']
+  selector: 'app-interactor',
+  templateUrl: './interactor.component.html',
+  styleUrls: ['./interactor.component.css']
 })
 @AutoUnsubscribe('_subsArr$')
-export class ContractInteractorComponent implements OnInit {
+export class InteractorComponent implements OnInit {
 
   form: FormGroup = this._fb.group({
     contractAddress: ['', Validators.required],
@@ -46,6 +47,23 @@ export class ContractInteractorComponent implements OnInit {
   abiFunctions: ABIDefinition[];
   selectedFunction: ABIDefinition;
   functionResult: any[][];
+  addr: Address;
+
+  hasData = false;
+
+  @Input('contractData')
+  set address([addr, contract]: [Address, Contract]) {
+    this.hasData = true;
+    this.form.patchValue({
+      contractAddress: addr.address,
+    }, {
+      emitEvent: false,
+    });
+    console.log(addr, contract);
+    if (contract) {
+      this.handleContractData(addr, contract);
+    }
+  }
 
   private _subsArr$: Subscription[] = [];
 
@@ -71,8 +89,9 @@ export class ContractInteractorComponent implements OnInit {
         if (addr.length === 42) {
           this.form.patchValue({
             contractAddress: addr
+          }, {
+            emitEvent: true,
           });
-          // this.getContractData(addr);
         } else {
           this._toastrService.warning('Contract address is invalid');
         }
@@ -82,9 +101,8 @@ export class ContractInteractorComponent implements OnInit {
       debounceTime(500),
       distinctUntilChanged(),
     ).subscribe(val => {
-      console.log(val);
       this.updateContract();
-      // this.getContractData(val);
+      this.getContractData(val);
     }));
     this._subsArr$.push(this.form.get('contractABI').valueChanges.pipe(
       debounceTime(500),
@@ -105,7 +123,7 @@ export class ContractInteractorComponent implements OnInit {
 
   /**
    *
-   * @param abiFunction
+   * @param functionIndex
    */
   onDefinitionSelect(functionIndex: number): void {
     this.selectedFunction = null;
@@ -118,11 +136,10 @@ export class ContractInteractorComponent implements OnInit {
     if (this.selectedFunction.constant && !this.selectedFunction.inputs.length) {
       // There's a bug in the response here: https://github.com/ethereum/web3.js/issues/1566
       // So doing it myself... :frowning:
-      this.callABIFunction(this.selectedFunction, []);
+      this.callABIFunction(this.selectedFunction);
     } else {
       // must write a tx to get do this
       this.selectedFunction.inputs.forEach(() => {
-        console.log(234);
         this.functionParameters.push(this._fb.control(''));
       });
     }
@@ -130,7 +147,7 @@ export class ContractInteractorComponent implements OnInit {
 
 
   onTokenValueChange(event, controlIndex: number): void {
-    /*let value: string = (<HTMLInputElement>event.target).value;
+    let value: string = (<HTMLInputElement>event.target).value;
     if (value) {
       value = (new BigNumber(value)).multipliedBy('1e' + this.addr.decimals).toString();
       if (/e+/.test(value)) {
@@ -145,7 +162,7 @@ export class ContractInteractorComponent implements OnInit {
     }
     this.functionParameters.controls[controlIndex].patchValue(value, {
       emitEvent: true,
-    });*/
+    });
   }
 
   /**
@@ -153,9 +170,9 @@ export class ContractInteractorComponent implements OnInit {
    * @param func
    * @param params
    */
-  callABIFunction(func: ABIDefinition, params: string[]): void {
+  callABIFunction(func: ABIDefinition, params: string[] = []): void {
     this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
-      // this.functionResult = getDecodedData(decoded, func, this.addr);
+      this.functionResult = getDecodedData(decoded, func, this.addr);
     }).catch(err => {
       this._toastrService.danger(err);
     });
@@ -176,15 +193,14 @@ export class ContractInteractorComponent implements OnInit {
   }
 
   private handleContractData(address: Address, contract: Contract) {
-    // this.addr = address;
+    this.addr = address;
     this.contractBadges = makeContractBadges(address, contract);
     if (contract.abi && contract.abi.length) {
       this.form.patchValue({
-        contractABI: JSON.stringify(contract.abi),
+        contractABI: JSON.stringify(contract.abi, null, 2),
       }, {
-        emitEvent: false,
+        emitEvent: true,
       });
-      // this.initiateContract(contract.abi, address.address);
     } else if (address.interfaces && address.interfaces.length) {
       this._walletService.abi$.subscribe((abiDefinitions: ContractAbi) => {
         const abi: ABIDefinition[] = address.interfaces.reduce((acc, abiName) => {
@@ -194,11 +210,10 @@ export class ContractInteractorComponent implements OnInit {
           return acc;
         }, []);
         this.form.patchValue({
-          contractABI: JSON.stringify(abi),
+          contractABI: JSON.stringify(abi, null, 2),
         }, {
-          emitEvent: false,
+          emitEvent: true,
         });
-        // this.initContract(abi, address.address);
       });
     }
   }
@@ -211,7 +226,6 @@ export class ContractInteractorComponent implements OnInit {
       this.form.get('gasLimit').patchValue('');
       return;
     }
-
     let tx: Tx;
 
     try {
@@ -296,6 +310,7 @@ export class ContractInteractorComponent implements OnInit {
       try {
         tx = this.formTx(params);
       } catch (e) {
+        console.log(e);
         this._toastrService.danger(e);
         return;
       }
@@ -304,21 +319,19 @@ export class ContractInteractorComponent implements OnInit {
       return;
     }
 
-    // this.sendTx(tx);
+    tx.gas = this.form.get('gasLimit').value;
+    console.log(111);
+    this._walletService.sendTx(tx);
   }
 
   onAbiTemplateClick(ercName: ErcName) {
     this._walletService.abi$.subscribe((abi: ContractAbi) => {
       const ABI: ABIDefinition[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
-      const addr: string = this.form.get('contractAddress').value;
       this.form.patchValue({
-        contractABI: JSON.stringify(ABI,  null, 2),
+        contractABI: JSON.stringify(ABI, null, 2),
       }, {
         emitEvent: true,
       });
-      /*if (addr.length === 42 && ABI.length) {
-        this.updateContract(ABI, addr);
-      }*/
     });
   }
 }

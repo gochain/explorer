@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ContractInteractorComponent } from './contract-interactor.component';
+import { InteractorComponent } from './interactor.component';
 
 describe('ContractInteractorComponent', () => {
-  let component: ContractInteractorComponent;
-  let fixture: ComponentFixture<ContractInteractorComponent>;
+  let component: InteractorComponent;
+  let fixture: ComponentFixture<InteractorComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ContractInteractorComponent ]
+      declarations: [ InteractorComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ContractInteractorComponent);
+    fixture = TestBed.createComponent(InteractorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

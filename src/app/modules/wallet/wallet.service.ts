@@ -28,17 +28,13 @@ export class WalletService {
   private _abi: ContractAbi;
 
   isProcessing = false;
-  isProcessing$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
   // ACCOUNT INFO
   account: Account;
-  accountBalance$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   private accountBalance: string;
 
   receipt: TransactionReceipt;
   contract: Web3Contract;
-  selectedFunction: ABIDefinition;
-  functionResult: any[][];
 
   get abi$() {
     if (!this._abi) {
@@ -63,7 +59,6 @@ export class WalletService {
       const provider = new this._web3.providers.HttpProvider(rpcProvider);
       this._web3.setProvider(provider);
     });
-    this.openAccount('0x88298bb04dc5fd2821bf62dffca38fca108b2949e920800a5976ca495d57e848');
   }
 
   getAbi(): Observable<ContractAbi> {
@@ -81,21 +76,6 @@ export class WalletService {
 
   sendSignedTx(signed: TxSignature): Observable<TransactionReceipt> {
     return fromPromise(this._web3.eth.sendSignedTransaction(signed.rawTransaction));
-  }
-
-  getBalance(address: string): Observable<string> {
-    console.log(3);
-    try {
-      const p = this._web3.eth.getBalance(address);
-      console.log(4);
-      return fromPromise(p).pipe(
-        map((balance: string) => this._web3.utils.fromWei(balance, 'ether')),
-        tap(bal => console.log(bal)),
-      );
-    } catch (e) {
-      console.log(e);
-      return throwError(e);
-    }
   }
 
   /**
@@ -155,9 +135,10 @@ export class WalletService {
         if (txReceipt) {
           finalTx.block_number = tx.blockNumber;
           finalTx.gas_fee = '' + (+tx.gasPrice * txReceipt.gasUsed);
-          finalTx.contract_address = (txReceipt.contractAddress && txReceipt.contractAddress !== '0x0000000000000000000000000000000000000000')
-            ? txReceipt.contractAddress
-            : null;
+          finalTx.contract_address =
+            (txReceipt.contractAddress && txReceipt.contractAddress !== '0x0000000000000000000000000000000000000000')
+              ? txReceipt.contractAddress
+              : null;
           finalTx.status = txReceipt.status;
           finalTx.created_at = new Date();
         }
@@ -168,14 +149,6 @@ export class WalletService {
 
   estimateGas(tx: Tx): Observable<number> {
     return fromPromise(this._web3.eth.estimateGas(tx));
-  }
-
-  callABIFunction(contract: Web3Contract, contractFunc: ABIDefinition, params: string[]): any[][] {
-    return this.call(contract.options.address, contractFunc, params).then((decoded: object) => {
-      this.functionResult = getDecodedData(decoded, func, this.addr);
-    }).catch(err => {
-      this._toastrService.danger(err);
-    });
   }
 
   // WALLET METHODS
@@ -218,7 +191,7 @@ export class WalletService {
    * @param gas
    */
   deployContract(byteCode: string, gas: string): void {
-    if (!byteCode) {
+    if (!byteCode || !gas) {
       this._toastrService.danger('ERROR: Invalid data provided.');
       return;
     }
@@ -231,36 +204,9 @@ export class WalletService {
       gas
     };
 
+    console.log(1);
+
     this.sendTx(tx);
-  }
-
-  useContract(selectedFunction: ABIDefinition, ): void {
-    /*if (this.isProcessing) {
-      return;
-    }*/
-
-    /*const params: string[] = [];
-
-    if (this.selectedFunction.inputs.length) {
-      this.functionParameters.controls.forEach(control => {
-        params.push(control.value);
-      });
-    }
-    let tx: Tx;
-
-    if (this.selectedFunction.payable || !this.selectedFunction.constant) {
-      try {
-        tx = this.formTx(params);
-      } catch (e) {
-        this._toastrService.danger(e);
-        return;
-      }
-    } else {
-      this.callABIFunction(this.selectedFunction, params);
-      return;
-    }
-
-    this.sendTx(tx);*/
   }
 
   /**
@@ -268,7 +214,7 @@ export class WalletService {
    * @param tx
    */
   sendTx(tx: Tx): void {
-    console.log(tx);
+    this.isProcessing = true;
     const p: Promise<number> = this._web3.eth.getTransactionCount(this.account.address);
     fromPromise(p).pipe(
       concatMap(nonce => {
@@ -281,13 +227,16 @@ export class WalletService {
       })
     ).subscribe((receipt: TransactionReceipt) => {
         this.receipt = receipt;
-        console.log(receipt);
-        // this.updateBalance();
+        this.getBalance();
       },
       err => {
         this._toastrService.danger(err);
-        this.isProcessing = false;
       });
+  }
+
+  resetProccesing(): void {
+    this.isProcessing = false;
+    this.receipt = null;
   }
 
   // ACCOUNT METHODS
@@ -297,21 +246,23 @@ export class WalletService {
   }
 
   openAccount(privateKey: string): boolean {
-    this.isProcessing$.next(true);
+    this.isProcessing = true;
     if (privateKey.length === 64 && privateKey.indexOf('0x') !== 0) {
       privateKey = '0x' + privateKey;
     }
     if (privateKey.length === 66) {
       try {
         this.account = this.w3.eth.accounts.privateKeyToAccount(privateKey);
-        this.updateBalance();
+        this.getBalance();
+        return true;
       } catch (e) {
         this._toastrService.danger(e);
-        this.isProcessing$.next(false);
+        return false;
+      } finally {
+        this.isProcessing = false;
       }
-      this.isProcessing$.next(false);
-      return true;
     }
+    this.isProcessing = false;
     this._toastrService.danger('Given private key is not valid');
     return false;
   }
@@ -322,17 +273,17 @@ export class WalletService {
     this._router.navigate(['wallet']);
   }
 
-  updateBalance() {
-    this.getBalance(this.account.address).subscribe(balance => {
-        console.log(balance);
+  getBalance() {
+    try {
+      const p = this._web3.eth.getBalance(this.account.address);
+      fromPromise(p).pipe(
+        map((balance: string) => this._web3.utils.fromWei(balance, 'ether')),
+      ).subscribe(balance => {
         this._toastrService.info('Updated balance.');
         this.accountBalance = balance.toString();
-        console.log(this.accountBalance);
-      },
-      err => {
-        this._toastrService.danger(err);
-        // this.isOpening = false;
       });
-    /*, () => this.isOpening = false);*/
+    } catch (e) {
+      this._toastrService.danger(e);
+    }
   }
 }

@@ -26,6 +26,9 @@ export class OwnedTokensComponent implements OnInit {
     return this._addrHash;
   }
 
+  @Input()
+  showPagination = true;
+
 
   tokens: Holder[] = [];
   tokensQueryParams: QueryParams = new QueryParams(100);

@@ -14,12 +14,29 @@ import {TokenAssetComponent} from '../scenes/token-asset/token-asset.component';
 import {CommonService} from '../services/common.service';
 /*UTILS*/
 import {ROUTES} from './constants';
+import {WalletMainComponent} from '../modules/wallet/wallet-main/wallet-main.component';
+import {WalletCreateComponent} from '../modules/wallet/wallet-create/wallet-create.component';
+import {WalletAccountComponent} from '../modules/wallet/wallet-account/wallet-account.component';
+import {WalletGuard} from '../guards/wallet.guard';
 
 export const APP_ROUTES: Routes = [
   {
     path: 'wallet',
-    loadChildren: './modules/wallet/wallet.module#WalletModule',
     resolve: {rpcProvider: CommonService},
+    children: [
+      {path: '', component: WalletMainComponent},
+      {path: 'create', component: WalletCreateComponent},
+      {
+        path: 'send',
+        redirectTo: 'account',
+      },
+      {
+        path: 'account',
+        component: WalletAccountComponent,
+        canActivate: [WalletGuard],
+      },
+      // {path: 'use', component: WalletAccountComponentt},
+    ]
   },
   {path: ROUTES.BLOCK + '/:id', component: BlockComponent},
   {

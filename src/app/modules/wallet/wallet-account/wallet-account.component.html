@@ -1,235 +1,3 @@
-<!--
-<div class="wal" [ngClass]="{'wal&#45;&#45;sm': balance != null && balance !=''}">
-  <div class="f f-j&#45;&#45;c p-b&#45;&#45;20">
-    <div class="card">
-      <form [formGroup]="privateKeyForm" (submit)="onPrivateKeySubmit()">
-        <div class="uk-margin">
-          <label class="uk-form-label">Enter your private key to perform operations.</label>
-          <div class="uk-form-controls">
-            &lt;!&ndash;<div class="uk-inline">
-              <span class="uk-form-icon uk-form-icon-flip"><i class="fas fa-eye"></i></span>&ndash;&gt;
-            <input class="uk-input" type="password" placeholder="Private Key" formControlName="privateKey" autofocus>
-            &lt;!&ndash;</div>&ndash;&gt;
-          </div>
-        </div>
-        <div class="uk-margin" *ngIf="balance == null || balance ==''">
-          <div class="center p-b&#45;&#45;60">
-            <button routerLink="/wallet" type="button" class="btn btn&#45;&#45;sm btn&#45;&#45;round btn&#45;&#45;light m-r&#45;&#45;20">Back</button>
-            <button type="submit" class="btn btn&#45;&#45;sm btn&#45;&#45;round">
-              <ng-container *ngIf="!isOpening; else opening;">
-                Open
-              </ng-container>
-              <ng-template #opening>
-                Opening <i class="fas fa-spinner fa-spin m-l&#45;&#45;10"></i>
-              </ng-template>
-            </button>
-          </div>
-        </div>
-      </form>
-      <div class="m-t&#45;&#45;20" *ngIf="balance != null && balance !=''">
-        <p>Address for key: {{address}}</p>
-        <p>Your current balance is: <span style="font-weight: bold; color: greenyellow;">{{balance | number}}</span></p>
-        <p><a routerLink="/addr/{{address}}">View address</a></p>
-        <div class="center">
-          <button type="button" class="btn btn&#45;&#45;sm btn&#45;&#45;round" (click)="closeWallet()">Close wallet</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="p-b&#45;&#45;60" *ngIf="balance != null && balance !=''">
-  <app-tabs name="send_tx_tab" (changeEmitter)="onTabChange($event)">
-    <tab name="send_go" title="Send GO">
-      <tab-content [hidden]="isProcessing">
-        <div class="form-card">
-          <h5>Perform a regular transaction, send GO to another account</h5>
-          <form class="uk-form-horizontal" [formGroup]="sendGoForm">
-            <div class="uk-margin">
-              <label class="uk-form-label">To*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input" type="text" placeholder="To" formControlName="to">
-              </div>
-            </div>
-            <div class="uk-margin">
-              <label class="uk-form-label">Amount*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" type="text" placeholder="Amount" formControlName="amount">
-              </div>
-            </div>
-            <div class="uk-margin">
-              <label class="uk-form-label">Gas Limit*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
-                       type="number">
-              </div>
-            </div>
-            <div class="uk-margin ta-r">
-              <button class="btn btn&#45;&#45;default m-r&#45;&#45;10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="sendGo()" [disabled]="isProcessing">Send</button>
-            </div>
-          </form>
-        </div>
-      </tab-content>
-    </tab>
-    <tab name="deploy_contract" title="Deploy Contract">
-      <tab-content [hidden]="isProcessing">
-        <div class="form-card">
-          <h5>Deploy a Smart Contract to GoChain</h5>
-          <form class="uk-form-horizontal" [formGroup]="deployContractForm">
-            <div class="uk-margin">
-              <label class="uk-form-label">Bytecode*:</label>
-              <div class="uk-form-controls">
-              <textarea class="uk-textarea" rows="5" formControlName="byteCode"
-                        placeholder="Bytecode"></textarea>
-                <p>Must start with 0x!</p>
-              </div>
-            </div>
-            <div class="uk-margin">
-              <label class="uk-form-label">Gas Limit*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
-                       type="number">
-              </div>
-            </div>
-            <div class="uk-margin ta-r">
-              <button class="btn btn&#45;&#45;default m-r&#45;&#45;10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="deployContract()" [disabled]="isProcessing">Deploy</button>
-            </div>
-          </form>
-        </div>
-      </tab-content>
-    </tab>
-    <tab name="use_contract" title="Use Contract">
-      <tab-content [hidden]="isProcessing">
-        <div class="form-card">
-          <h5>Interact with a Smart Contract on GoChain</h5>
-          <form class="uk-form-horizontal" [formGroup]="useContractForm">
-            <div class="uk-margin">
-              <label class="uk-form-label">Contract Address*:</label>
-              <div class="uk-form-controls">
-                <input class="uk-input" placeholder="Contract Address" formControlName="contractAddress">
-                <span *ngFor="let badge of contractBadges"
-                      class="badge c&#45;&#45;{{badge.type}} m-r&#45;&#45;10 m-t&#45;&#45;10">{{badge.text}}</span>
-              </div>
-            </div>
-            <div class="uk-margin">
-              <label class="uk-form-label">ABI / JSON Interface:</label>
-              <div class="uk-form-controls">
-              <textarea class="uk-textarea" placeholder="ABI / JSON Interface" formControlName="contractABI"
-                        rows="5"></textarea>
-                <div class="m-t&#45;&#45;10">
-                  or select template: <button *ngFor="let value of abiTemplates" (click)="onAbiTemplateClick(value)" type="button" class="badge m-r&#45;&#45;10 c&#45;&#45;primary">{{value}}</button>
-                </div>
-              </div>
-            </div>
-            <ng-container *ngIf="contract != null">
-              <div class="uk-margin">
-                <label class="uk-form-label">Choose Contract Function</label>
-                <div class="uk-form-controls">
-                  <select class="uk-select" formControlName="contractFunction">
-                    <optgroup label="Free">
-                      <ng-container *ngFor="let selectableFunction of funcsToSelect(); let index = index;">
-                        <option *ngIf="!selectableFunction.payable && selectableFunction.constant" [value]="index">
-                          {{selectableFunction | abiMethod}}
-                        </option>
-                      </ng-container>
-                    </optgroup>
-                    <optgroup label="Wallet Required">
-                      <ng-container *ngFor="let selectableFunction of funcsToSelect(); let index = index;">
-                        <option *ngIf="selectableFunction.payable || !selectableFunction.constant" [value]="index">
-                          {{selectableFunction | abiMethod}}
-                        </option>
-                      </ng-container>
-                    </optgroup>
-                  </select>
-                </div>
-              </div>
-              <ng-container *ngIf="selectedFunction">
-                <div formArrayName="functionParameters"
-                     *ngFor="let functionInput of selectedFunction.inputs; let i=index"
-                     class="uk-margin">
-                  <div class="uk-form-controls">
-                    <ng-container *ngIf="selectedFunction.name === 'transfer' && functionInput.name === 'value' && addr.token_symbol; else regularFunctionInput">
-                      <input type="number" class="uk-input" placeholder="Amount ({{addr.token_symbol}})" (keyup)="onTokenValueChange($event, i)">
-                      <input disabled class="uk-input" placeholder="Raw amount" formControlName="{{i}}">
-                    </ng-container>
-                    <ng-template #regularFunctionInput>
-                      <input class="uk-input" placeholder="{{functionInput.name}}" formControlName="{{i}}">
-                    </ng-template>
-                  </div>
-                </div>
-                <div *ngIf="selectedFunction.payable" class="uk-margin">
-                  <div class="uk-form-controls">
-                    <input class="uk-input" placeholder="Amount" formControlName="contractAmount">
-                  </div>
-                </div>
-                <div *ngIf="!selectedFunction.constant || selectedFunction.payable" class="uk-margin">
-                  <label class="uk-form-label">Gas Limit*:</label>
-                  <div class="uk-form-controls">
-                    <input class="uk-input uk-form-width-medium" placeholder="Gas Limit" formControlName="gasLimit"
-                           type="number">
-                  </div>
-                </div>
-              </ng-container>
-            </ng-container>
-            <div *ngIf="functionResult">
-              <h4>Response</h4>
-              <div *ngFor="let k of functionResult">
-                {{k[0]}}: <span style="font-weight: bold;">{{k[1]}}</span>
-              </div>
-            </div>
-            <div class="uk-margin ta-r">
-              <button class="btn btn&#45;&#45;default m-r&#45;&#45;10" type="reset" [disabled]="isProcessing">Reset</button>
-              <button class="btn" type="submit" (click)="useContract()" [disabled]="isProcessing">Submit</button>
-            </div>
-          </form>
-        </div>
-      </tab-content>
-    </tab>
-  </app-tabs>
-  <ng-container *ngIf="isProcessing">
-    <div *ngIf="!receipt; else result;" class="processing">
-      <div class="processing__icon">
-        <i class="fas fa-spinner fa-spin"></i>
-      </div>
-      <div class="processing__content">
-        Transaction submitted, waiting for receipt...
-      </div>
-    </div>
-    <ng-template #result>
-      <div class="receipt">
-        <div class="receipt__header">
-          Transaction complete!
-        </div>
-        <div class="receipt__content">
-          <ul>
-            <li>
-              <p>Transaction Hash:</p>
-              <b><a routerLink="/tx/{{receipt.transactionHash}}" target="_blank">{{receipt.transactionHash}}</a></b>
-            </li>
-            <li>
-              <p>Block Hash:</p>
-              <b><a routerLink="/block/{{receipt.blockHash}}" target="_blank">{{receipt.blockHash}}</a></b>
-            </li>
-            <li *ngIf="receipt.contractAddress">
-              <p>Contract Address:</p>
-              <b><a routerLink="/address/{{ receipt.contractAddress}}" target="_blank">{{ receipt.contractAddress }}</a></b>
-            </li>
-            <li>
-              <p>Gas Used:</p>
-              <b>{{receipt.gasUsed}}</b>
-            </li>
-          </ul>
-        </div>
-        <div class="receipt__footer">
-          <button (click)="resetProcessing()" class="btn btn&#45;&#45;sm btn&#45;&#45;round">Return back</button>
-        </div>
-      </div>
-    </ng-template>
-  </ng-container>
-</div>
--->
-
 <div class="container">
   <div class="card">
     <div class="card-body">
@@ -255,33 +23,75 @@
   </div>
   <div class="card mt-4 mb-5">
     <div class="card-body">
-      <app-tabs name="account_tab">
+      <app-tabs name="account_tab" [disabled]="walletService.isProcessing">
         <tab name="owned_tokens" title="Owned Tokens">
           <tab-content>
-            <!--<app-owned-tokens [addrHash]="address"></app-owned-tokens>-->
+            <app-owned-tokens [addrHash]="walletService.account.address" [showPagination]="false"></app-owned-tokens>
           </tab-content>
         </tab>
         <tab name="transactions" title="Transactions">
           <tab-content>
-            <!--<app-addr-transactions [addr]="addr"></app-addr-transactions>-->
+            <app-addr-transactions *ngIf="addr" [addr]="addr"></app-addr-transactions>
           </tab-content>
         </tab>
         <tab name="send_go" title="Send GO">
-          <tab-content>
+          <tab-content [hidden]="walletService.isProcessing">
             <app-sender></app-sender>
           </tab-content>
         </tab>
         <tab name="deploy_contract" title="Deploy Contract">
-          <tab-content>
+          <tab-content [hidden]="walletService.isProcessing">
             <app-deployer></app-deployer>
           </tab-content>
         </tab>
         <tab name="use_contract" title="Use Contract">
-          <tab-content>
-            <app-contract-interactor></app-contract-interactor>
+          <tab-content [hidden]="walletService.isProcessing">
+            <app-interactor></app-interactor>
           </tab-content>
         </tab>
       </app-tabs>
+      <ng-container *ngIf="walletService.isProcessing">
+        <div *ngIf="!walletService.receipt; else result;" class="processing">
+          <div class="processing__icon">
+            <img src="../../../../assets/icons/loader.svg" alt="Processing">
+          </div>
+          <div class="processing__content mt-4">
+            Transaction submitted, waiting for receipt...
+          </div>
+        </div>
+        <ng-template #result>
+          <div class="receipt">
+            <div class="receipt__header text-center h4 text-primary mb-4">
+              Transaction complete!
+            </div>
+            <div class="receipt__content mb-4">
+              <div class="row">
+                <div class="col-md-2">Transaction Hash:</div>
+                <div class="col-md-10">
+                  <a routerLink="/tx/{{walletService.receipt.transactionHash}}" target="_blank">{{walletService.receipt.transactionHash}}</a>
+                </div>
+                <div class="col-md-2">Block Hash:</div>
+                <div class="col-md-10">
+                  <a routerLink="/block/{{walletService.receipt.blockHash}}" target="_blank">{{walletService.receipt.blockHash}}</a>
+                </div>
+                <ng-container *ngIf="walletService.receipt.contractAddress">
+                  <div class="col-md-2">Contract Address:</div>
+                  <div class="col-md-10">
+                    <a routerLink="/address/{{ walletService.receipt.contractAddress}}" target="_blank">{{ walletService.receipt.contractAddress }}</a>
+                  </div>
+                </ng-container>
+                <div class="col-md-2">Gas Used:</div>
+                <div class="col-md-10">
+                  {{walletService.receipt.gasUsed}}
+                </div>
+              </div>
+            </div>
+            <div class="receipt__footer text-right">
+              <button (click)="walletService.resetProccesing()" class="btn btn-primary">Cancel</button>
+            </div>
+          </div>
+        </ng-template>
+      </ng-container>
     </div>
   </div>
 </div>

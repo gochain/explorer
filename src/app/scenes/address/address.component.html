@@ -36,7 +36,7 @@
               <dd>{{addr.number_of_transactions || 0}}</dd>
               <ng-container *ngIf="addr.erc_types && !!addr.erc_types.length">
                 <dt>Token type:</dt>
-                <dd><span class="badge badge-pill badge-primary mr-1" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
+                <dd><span class="badge badge-primary mr-1" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
               </ng-container>
               <dt>Updated at:</dt>
               <dd>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</dd>
@@ -73,7 +73,7 @@
           </tab>
           <tab *ngIf="!addr.contract" name="owned_tokens" title="Owned Tokens">
             <tab-content>
-              <app-owned-tokens [addrHash]="addrHash"></app-owned-tokens>
+              <app-owned-tokens [addrHash]="addrHash" [showPagination]="false"></app-owned-tokens>
             </tab-content>
           </tab>
           <tab *ngIf="addr.contract" name="internal_transactions"
@@ -94,7 +94,7 @@
           </tab>
           <tab *ngIf="addr.contract" name="interact" title="Interact">
             <tab-content>
-              <!--<app-wallet-use [contractData]="[addr, contract]"></app-wallet-use>-->
+              <app-interactor [contractData]="[addr, contract]"></app-interactor>
             </tab-content>
           </tab>
           <tab *ngIf="addr.contract" name="contract_source" title="Contract Source">

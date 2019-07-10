@@ -64,6 +64,7 @@ export class DeployerComponent implements OnInit {
   }
 
   deployContract() {
+    console.log(2);
     if (!this.form.valid) {
       this._toastrService.warning('Some field is wrong');
       return;
@@ -71,6 +72,8 @@ export class DeployerComponent implements OnInit {
 
     const byteCode = this.form.get('byteCode').value;
     const gas = this.form.get('gasLimit').value;
+
+    console.log('deployContract');
 
     this._walletService.deployContract(byteCode, gas);
   }

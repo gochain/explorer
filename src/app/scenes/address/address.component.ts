@@ -76,6 +76,10 @@ export class AddressComponent implements OnInit, OnDestroy {
           acc[val] = true;
           return acc;
         }, {});
+
+        this._commonService.getContract(this.addrHash).subscribe(value => {
+          this.contract = value;
+        });
       } else {
         this._metaService.setTitle(META_TITLES.ADDRESS.title);
       }

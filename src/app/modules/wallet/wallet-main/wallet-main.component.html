@@ -11,22 +11,29 @@
               [formGroup]="privateKeyForm"
               (submit)="onPrivateKeySubmit()"
           >
-            <input
-                type="password"
-                class="form-control"
-                placeholder="Private Key"
-                formControlName="privateKey"
-                autofocus
-                required
-                [readOnly]="walletService.isProcessing$ | async"
-            >
+            <div class="input-group">
+              <input
+                  type="password"
+                  class="form-control"
+                  placeholder="Private Key"
+                  formControlName="privateKey"
+                  autofocus
+                  required
+                  [readOnly]="walletService.isProcessing"
+              >
+              <!--<div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button">
+                  <img src="../../../../assets/icons/eye-off.svg" alt="Hidden">
+                </button>
+              </div>-->
+            </div>
             <button
                 type="submit"
                 class="btn btn-primary btn-block mt-4"
-                [disabled]="walletService.isProcessing$ | async"
+                [disabled]="walletService.isProcessing"
             >
-              <ng-container *ngIf="walletService.isProcessing$ | async; else open">
-                OPENING...
+              <ng-container *ngIf="walletService.isProcessing; else open">
+                OPENING <img src="../../../../assets/icons/loader.svg" alt="Opening">
               </ng-container>
               <ng-template #open>
                 OPEN WALLET
@@ -34,26 +41,26 @@
             </button>
           </form>
           <div class="row mt-4">
-            <div class="col-6">
+            <div class="col-12">
               <button
                   routerLink="create"
                   type="button"
-                  class="btn btn-light btn-block"
-                  [disabled]="walletService.isProcessing$ | async"
+                  class="btn btn-outline-primary btn-block"
+                  [disabled]="walletService.isProcessing"
               >
                 Create Account
               </button>
             </div>
-            <div class="col-6">
+            <!--<div class="col-6">
               <button
                   routerLink="use"
                   type="button"
                   class="btn btn-light btn-block"
-                  [disabled]="walletService.isProcessing$ | async"
+                  [disabled]="walletService.isProcessing"
               >
                 Use Contract
               </button>
-            </div>
+            </div>-->
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ export class WalletMainComponent implements OnInit {
   onPrivateKeySubmit() {
     const privateKey: string = this.privateKeyForm.get('privateKey').value;
     if (this.walletService.openAccount(privateKey)) {
-      this._router.navigate(['/wallet/send']);
+      this._router.navigate(['/wallet/account']);
     }
   }
 }

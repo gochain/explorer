@@ -1,11 +1,12 @@
 /*CORE*/
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 /*SERVICES*/
 import {WalletService} from '../wallet.service';
 import {MetaService} from '../../../services/meta.service';
+import {CommonService} from '../../../services/common.service';
 /*MODELS*/
+import {Address} from '../../../models/address.model';
 /*UTILS*/
-import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../../utils/constants';
 
 @Component({
@@ -13,15 +14,24 @@ import {META_TITLES} from '../../../utils/constants';
   templateUrl: './wallet-account.component.html',
   styleUrls: ['./wallet-account.component.scss']
 })
-@AutoUnsubscribe('_subsArr$')
-export class WalletAccountComponent implements OnInit {
+export class WalletAccountComponent implements OnInit, OnDestroy {
+  addr: Address;
+
   constructor(
     public walletService: WalletService,
     private _metaService: MetaService,
+    private _commonService: CommonService,
   ) {
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this._metaService.setTitle(META_TITLES.WALLET.title);
+    this._commonService.getAddress(this.walletService.account.address).subscribe((addr => {
+      this.addr = addr;
+    }));
+  }
+
+  ngOnDestroy(): void {
+    this.walletService.resetProccesing();
   }
 }

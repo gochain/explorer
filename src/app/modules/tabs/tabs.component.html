@@ -5,7 +5,7 @@
           *ngFor="let tab of tabs"
           (click)="onTabSelect(tab)"
       >
-        <div class="nav-link" [ngClass]="{'active': tab === activeTab}">{{tab.title}}</div>
+        <div class="nav-link" [ngClass]="{'active': tab === activeTab, 'disabled': disabled}">{{tab.title}}</div>
       </li>
     </ul>
   </div>

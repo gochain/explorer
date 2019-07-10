@@ -12,6 +12,7 @@
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
+  text-transform: uppercase;
   @include border-radius($badge-border-radius);
   @include transition($badge-transition);
 

@@ -33,7 +33,7 @@
       </tbody>
     </table>
   </ng-container>
-  <div class="mt-4">
+  <div class="mt-4" *ngIf="showPagination">
     <app-pagination [queryParam]="tokensQueryParams"></app-pagination>
   </div>
 </ng-container>

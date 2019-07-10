@@ -25,12 +25,28 @@ import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.compo
 // import {SettingsComponent} from './scenes/settings/settings.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
+
+import {AddrTransactionsComponent} from './components/addr-transactions/addr-transactions.component';
+import {AddrInternalTxsComponent} from './components/addr-internal-txs/addr-internal-txs.component';
+import {ContractSourceComponent} from './components/contract-source/contract-source.component';
+import {TokenTxsComponent} from './components/token-txs/token-txs.component';
+import {TokenHoldersComponent} from './components/token-holders/token-holders.component';
+
+import {WalletComponent} from './modules/wallet/wallet/wallet.component';
+import {WalletMainComponent} from './modules/wallet/wallet-main/wallet-main.component';
+import {WalletCreateComponent} from './modules/wallet/wallet-create/wallet-create.component';
+import {WalletAccountComponent} from './modules/wallet/wallet-account/wallet-account.component';
+import {DeployerComponent} from './modules/wallet/deployer/deployer.component';
+import {SenderComponent} from './modules/wallet/sender/sender.component';
+import {InteractorComponent} from './modules/wallet/interactor/interactor.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
 import {LayoutService} from './services/layout.service';
 import {WalletService} from './modules/wallet/wallet.service';
 import {MetaService} from './services/meta.service';
+/*GUARDS*/
+import {WalletGuard} from './guards/wallet.guard';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes/pipes.module';
@@ -44,14 +60,9 @@ import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
-import {APP_BASE_HREF} from '@angular/common';
+import {APP_BASE_HREF, CommonModule} from '@angular/common';
 // import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
-import { AddrTransactionsComponent } from './components/addr-transactions/addr-transactions.component';
-import { AddrInternalTxsComponent } from './components/addr-internal-txs/addr-internal-txs.component';
-import { ContractSourceComponent } from './components/contract-source/contract-source.component';
-import { TokenTxsComponent } from './components/token-txs/token-txs.component';
-import { TokenHoldersComponent } from './components/token-holders/token-holders.component';
-import {SharedModule} from './modules/shared/shared.module';
+import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
 
 @NgModule({
   declarations: [
@@ -80,9 +91,32 @@ import {SharedModule} from './modules/shared/shared.module';
     ContractSourceComponent,
     TokenTxsComponent,
     TokenHoldersComponent,
+    WalletComponent,
+    WalletMainComponent,
+    WalletCreateComponent,
+    WalletAccountComponent,
+    DeployerComponent,
+    SenderComponent,
+    InteractorComponent,
   ],
   imports: [
-    SharedModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+    PipesModule,
+    DirectiveModule,
+    TabsModule,
+    SliderModule,
+    ViewportSizeModule.forRoot(VIEWPORT_SIZES),
+    NgProgressModule.withConfig({
+      trickleSpeed: 200,
+      min: 20,
+      meteor: false,
+      spinner: false
+    }),
+    NgProgressHttpModule,
+    ToastrModule.forRoot(),
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
@@ -94,6 +128,7 @@ import {SharedModule} from './modules/shared/shared.module';
     LayoutService,
     MetaService,
     WalletService,
+    WalletGuard,
   ],
   bootstrap: [AppComponent]
 })

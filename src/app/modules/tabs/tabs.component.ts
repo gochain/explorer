@@ -15,6 +15,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements OnInit, AfterContentInit {
   @Input() name: string;
+  @Input() disabled = false;
   @Output() changeEmitter = new EventEmitter<any>();
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
@@ -66,6 +67,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
    * @param replaceUrl
    */
   onTabSelect(tab: TabComponent, emit = true, replaceUrl = true) {
+    if (this.disabled) {
+      return;
+    }
     if (emit && this.changeEmitter) {
       this.changeEmitter.emit(this.activeTab.name);
     }
