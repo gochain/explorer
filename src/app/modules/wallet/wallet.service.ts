@@ -31,7 +31,7 @@ export class WalletService {
 
   // ACCOUNT INFO
   account: Account;
-  private accountBalance: string;
+  accountBalance: string;
 
   receipt: TransactionReceipt;
   contract: Web3Contract;

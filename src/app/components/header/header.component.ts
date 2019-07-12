@@ -12,8 +12,18 @@ import {MENU_ITEMS} from '../../utils/constants';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent {
+  showMenu = false;
+  showSearch = false;
   navItems: MenuItem[] = MENU_ITEMS;
 
   constructor() {
+  }
+
+  toggleMenu(): void {
+    this.showMenu = !this.showMenu;
+  }
+
+  toggleSearch(): void {
+    this.showSearch = !this.showSearch;
   }
 }

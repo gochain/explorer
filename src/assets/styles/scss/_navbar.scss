@@ -59,6 +59,39 @@
   }
 }
 
+.navbar-search {
+  @include media-breakpoint-up(sm) {
+    width: 50%;
+    padding-left: 15px;
+    input {
+      border-top-left-radius: 25px;
+      border-bottom-left-radius: 25px;
+    }
+    button {
+      border-top-right-radius: 25px;
+      border-bottom-right-radius: 25px;
+    }
+  }
+
+  @include media-breakpoint-down(sm) {
+    display: none;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  input {
+    padding: 0.5rem 0 0.5rem 1rem;
+  }
+
+  button {
+    width: 3.5em;
+  }
+
+  &.show {
+    display: block;
+  }
+}
+
 
 // Navbar nav
 //

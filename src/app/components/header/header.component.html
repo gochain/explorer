@@ -1,26 +1,26 @@
 <nav class="navbar sticky-top navbar-expand-lg navbar-light">
   <div class="container">
-    <button class="navbar-toggler" type="button">
-      <img src="../../../assets/icons/menu.svg" alt="Menu">
-    </button>
-    <a class="navbar-brand" routerLink="/">
-      <img src="../../../assets/images/logo_fullcolor.svg" alt="Gochain Explorer"/>
-    </a>
-    <button class="navbar-toggler" type="button">
-      <img src="../../../assets/icons/search.svg" alt="Search">
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        <li
-            *ngFor="let navItem of navItems"
-            class="nav-item"
-        >
-          <a class="nav-link" [routerLink]="navItem.link" routerLinkActive="active">
-            {{navItem.title}}
-          </a>
-        </li>
-      </ul>
-    </div>
-    <!--<app-search></app-search>-->
+      <button class="navbar-toggler" type="button" (click)="toggleMenu()">
+        <img src="../../../assets/icons/menu.svg" alt="Menu">
+      </button>
+      <a class="navbar-brand" routerLink="/">
+        <img src="../../../assets/images/logo_fullcolor.svg" alt="Gochain Explorer"/>
+      </a>
+      <button class="navbar-toggler" type="button" (click)="toggleSearch()">
+        <img [src]="showSearch ? '../../../assets/icons/close.svg' : '../../../assets/icons/search-dark.svg'" alt="Search">
+      </button>
+      <div class="collapse navbar-collapse" [ngClass]="{'show': showMenu}">
+        <ul class="navbar-nav mr-auto">
+          <li
+              *ngFor="let navItem of navItems"
+              class="nav-item"
+          >
+            <a class="nav-link" [routerLink]="navItem.link" routerLinkActive="active" (click)="toggleMenu()">
+              {{navItem.title}}
+            </a>
+          </li>
+        </ul>
+      </div>
+    <app-search class="navbar-search" [ngClass]="{'show': showSearch}"></app-search>
   </div>
 </nav>

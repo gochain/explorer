@@ -23,7 +23,7 @@
       <div class="text-center">
         <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-outline-primary"
             [disabled]="isMoreDisabled || isLoading"
             (click)="richListQueryParams.next()"
         >
@@ -31,7 +31,7 @@
             More
           </ng-container>
           <ng-template #loading>
-            Loading
+            Loading ...
           </ng-template>
         </button>
       </div>

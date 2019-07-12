@@ -42,37 +42,58 @@
         <div class="card-body">
           <div class="card-title"><img src="../../../assets/icons/tx.svg"> TRANSACTIONS <!--(Updated every 5 minutes)-->
           </div>
-          <div class="card-deck" *ngIf="stats$ | async as stats">
-            <div class="card h-100 shadow-none">
-              <div class="card-body text-center">
-                <div><img src="../../../assets/icons/circle.svg" alt="Total"></div>
-                <div class="mt-3">Total</div>
-                <div class="mt-3">{{stats.total_transactions_count | bigNumber}}</div>
+          <ng-container *ngIf="stats$ | async as stats">
+            <ng-container *appViewportSize="['small']">
+              <div>
+                Total: {{stats.total_transactions_count | bigNumber}}
               </div>
-            </div>
-            <div class="card h-100 shadow-none">
-              <div class="card-body text-center">
-                <div><img src="../../../assets/icons/disc.svg" alt="Last 7 days"></div>
-                <div class="mt-3">Last 7 days</div>
-                <div class="mt-3">{{stats.last_week_transactions_count | bigNumber}}</div>
+              <div>
+                Last 7 days: {{stats.last_week_transactions_count | bigNumber}}
               </div>
-            </div>
-            <div class="card h-100 shadow-none">
-              <div class="card-body text-center">
-                <div><img src="../../../assets/icons/target.svg" alt="Last 24 hours"></div>
-                <div class="mt-3">Last 24 hours</div>
-                <div class="mt-3">{{stats.last_day_transactions_count | bigNumber}}</div>
+              <div>
+                Last 24 hours: {{stats.last_day_transactions_count | bigNumber}}
               </div>
-            </div>
-          </div>
+            </ng-container>
+            <ng-container *appViewportSize="['large']">
+              <div class="row">
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/circle.svg" alt="Total"></div>
+                      <div class="mt-3">Total</div>
+                      <div class="mt-3">{{stats.total_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/disc.svg" alt="Last 7 days"></div>
+                      <div class="mt-3">Last 7 days</div>
+                      <div class="mt-3">{{stats.last_week_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/target.svg" alt="Last 24 hours"></div>
+                      <div class="mt-3">Last 24 hours</div>
+                      <div class="mt-3">{{stats.last_day_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
         </div>
       </div>
     </div>
   </div>
   <div class="card mt-4">
     <div class="card-body">
-      <div class="card-title"
-      ><img src="../../../assets/icons/blocks.svg"> RECENT BLOCKS
+      <div class="card-title">
+        <img src="../../../assets/icons/blocks.svg"> RECENT BLOCKS
       </div>
       <ng-container *ngIf="recentBlocks$ | async as recentBlocks">
         <ng-container *appViewportSize="['small']">

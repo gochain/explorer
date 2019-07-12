@@ -320,7 +320,6 @@ export class InteractorComponent implements OnInit {
     }
 
     tx.gas = this.form.get('gasLimit').value;
-    console.log(111);
     this._walletService.sendTx(tx);
   }
 
