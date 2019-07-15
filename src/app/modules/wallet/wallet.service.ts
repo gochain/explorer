@@ -1,24 +1,25 @@
 /*CORE*/
 import {Inject, Injectable} from '@angular/core';
 import {Router} from '@angular/router';
-import {BehaviorSubject, forkJoin, Observable, of, throwError} from 'rxjs';
+import {BehaviorSubject, forkJoin, Observable, of} from 'rxjs';
 import {concatMap, map, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
-import {WEB3} from './web3';
-import {Transaction as Web3Tx, Tx} from 'web3/eth/types';
-import {Account, TxSignature} from 'web3/eth/accounts';
-import {TransactionReceipt} from 'web3/types';
-import Web3Contract from 'web3/eth/contract';
-import {ABIDefinition} from 'web3/eth/abi';
+/*import {WEB3} from './web3';*/
+import {Transaction as Web3Tx} from 'web3-core';
+import {Account} from 'web3-eth-accounts';
+import {TransactionReceipt, TransactionConfig, SignedTransaction} from 'web3-core';
+import {Contract as Web3Contract} from 'web3-eth-contract';
+import {AbiItem} from 'web3-utils';
+import {HttpProvider} from 'web3-providers';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
 import {CommonService} from '../../services/common.service';
 /*MODELS*/
 import {Transaction} from '../../models/transaction.model';
 /*UTILS*/
-import {getDecodedData, objIsEmpty} from '../../utils/functions';
+import {objIsEmpty} from '../../utils/functions';
 import {ContractAbi} from '../../utils/types';
 
 @Injectable()
@@ -47,17 +48,20 @@ export class WalletService {
     return this._web3;
   }
 
-  constructor(@Inject(WEB3) public _web3: Web3,
+  _web3: Web3;
+
+  constructor(
               private _toastrService: ToastrService,
               private _commonService: CommonService,
               private _router: Router,
   ) {
-    if (!this._web3) {
+    /*if (!this._web3) {
       return;
-    }
+    }*/
     this._commonService.getRpcProvider().then((rpcProvider: string) => {
-      const provider = new this._web3.providers.HttpProvider(rpcProvider);
-      this._web3.setProvider(provider);
+      const provider = new HttpProvider(rpcProvider);
+      this._web3 = new Web3(provider);
+      // this._web3.setProvider(provider);
     });
   }
 
@@ -74,7 +78,7 @@ export class WalletService {
     return this._web3.utils.isAddress(address);
   }
 
-  sendSignedTx(signed: TxSignature): Observable<TransactionReceipt> {
+  sendSignedTx(signed: SignedTransaction): Observable<TransactionReceipt> {
     return fromPromise(this._web3.eth.sendSignedTransaction(signed.rawTransaction));
   }
 
@@ -84,7 +88,7 @@ export class WalletService {
    * @param abi
    * @param params
    */
-  call(addr: string, abi: ABIDefinition, params: any[]): Promise<object> | null {
+  call(addr: string, abi: AbiItem, params: any[]): Promise<object> | null {
     try {
       const encoded: string = this._web3.eth.abi.encodeFunctionCall(abi, params);
       return this._web3.eth.call({
@@ -147,7 +151,7 @@ export class WalletService {
     );
   }
 
-  estimateGas(tx: Tx): Observable<number> {
+  estimateGas(tx: TransactionConfig): Observable<number> {
     return fromPromise(this._web3.eth.estimateGas(tx));
   }
 
@@ -176,7 +180,7 @@ export class WalletService {
       return;
     }
 
-    const tx: Tx = {
+    const tx: TransactionConfig = {
       to,
       value,
       gas
@@ -199,12 +203,10 @@ export class WalletService {
       byteCode = '0x' + byteCode;
     }
 
-    const tx: Tx = {
+    const tx: TransactionConfig = {
       data: byteCode,
       gas
     };
-
-    console.log(1);
 
     this.sendTx(tx);
   }
@@ -213,16 +215,16 @@ export class WalletService {
    *
    * @param tx
    */
-  sendTx(tx: Tx): void {
+  sendTx(tx: TransactionConfig): void {
     this.isProcessing = true;
     const p: Promise<number> = this._web3.eth.getTransactionCount(this.account.address);
     fromPromise(p).pipe(
       concatMap(nonce => {
         tx.nonce = nonce;
-        const p2: Promise<TxSignature> = this._web3.eth.accounts.signTransaction(tx, this.account.privateKey);
+        const p2: Promise<SignedTransaction> = this._web3.eth.accounts.signTransaction(tx, this.account.privateKey);
         return fromPromise(p2);
       }),
-      concatMap((signed: TxSignature) => {
+      concatMap((signed: SignedTransaction) => {
         return this.sendSignedTx(signed);
       })
     ).subscribe((receipt: TransactionReceipt) => {
@@ -234,7 +236,7 @@ export class WalletService {
       });
   }
 
-  resetProccesing(): void {
+  resetProcessing(): void {
     this.isProcessing = false;
     this.receipt = null;
   }

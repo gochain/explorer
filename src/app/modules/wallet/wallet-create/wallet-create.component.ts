@@ -6,7 +6,7 @@ import {WalletService} from '../wallet.service';
 import {CommonService} from '../../../services/common.service';
 import {MetaService} from '../../../services/meta.service';
 /*MODELS*/
-import {Account} from 'web3/eth/accounts';
+import {Account} from 'web3-eth-accounts';
 /*UTILS*/
 import {META_TITLES} from '../../../utils/constants';
 

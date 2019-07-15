@@ -1,6 +1,7 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { TokenHoldersComponent } from './token-holders.component';
+import {TokenHoldersComponent} from './token-holders.component';
+import {AppModule} from '../../app.module';
 
 describe('TokenHoldersComponent', () => {
   let component: TokenHoldersComponent;
@@ -8,9 +9,9 @@ describe('TokenHoldersComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TokenHoldersComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

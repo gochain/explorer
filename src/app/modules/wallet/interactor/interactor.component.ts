@@ -12,9 +12,9 @@ import {CommonService} from '../../../services/common.service';
 import {Badge} from '../../../models/badge.model';
 import {Address} from '../../../models/address.model';
 import {Contract} from '../../../models/contract.model';
-import {Tx} from 'web3/eth/types';
-import {ABIDefinition} from 'web3/eth/abi';
-import Web3Contract from 'web3/eth/contract';
+import {TransactionConfig} from 'web3-core';
+import {AbiItem} from 'web3-utils';
+import {Contract as Web3Contract} from 'web3-eth-contract';
 /*UTILS*/
 import {ErcName} from '../../../utils/enums';
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
@@ -44,8 +44,8 @@ export class InteractorComponent implements OnInit {
   abiTemplates = [ErcName.Go20, ErcName.Go721];
 
   contract: Web3Contract;
-  abiFunctions: ABIDefinition[];
-  selectedFunction: ABIDefinition;
+  abiFunctions: AbiItem[];
+  selectedFunction: AbiItem;
   functionResult: any[][];
   addr: Address;
 
@@ -59,7 +59,6 @@ export class InteractorComponent implements OnInit {
     }, {
       emitEvent: false,
     });
-    console.log(addr, contract);
     if (contract) {
       this.handleContractData(addr, contract);
     }
@@ -130,7 +129,6 @@ export class InteractorComponent implements OnInit {
     this.functionResult = null;
     this.functionParameters.reset();
     this.selectedFunction = this.abiFunctions[functionIndex];
-    console.log(this.selectedFunction);
     // TODO: IF ANY INPUTS, add a sub formgroup
     // if constant, just show value immediately
     if (this.selectedFunction.constant && !this.selectedFunction.inputs.length) {
@@ -170,7 +168,7 @@ export class InteractorComponent implements OnInit {
    * @param func
    * @param params
    */
-  callABIFunction(func: ABIDefinition, params: string[] = []): void {
+  callABIFunction(func: AbiItem, params: string[] = []): void {
     this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
       this.functionResult = getDecodedData(decoded, func, this.addr);
     }).catch(err => {
@@ -203,7 +201,7 @@ export class InteractorComponent implements OnInit {
       });
     } else if (address.interfaces && address.interfaces.length) {
       this._walletService.abi$.subscribe((abiDefinitions: ContractAbi) => {
-        const abi: ABIDefinition[] = address.interfaces.reduce((acc, abiName) => {
+        const abi: AbiItem[] = address.interfaces.reduce((acc, abiName) => {
           if (abiDefinitions[abiName]) {
             acc.push(abiDefinitions[abiName]);
           }
@@ -226,7 +224,7 @@ export class InteractorComponent implements OnInit {
       this.form.get('gasLimit').patchValue('');
       return;
     }
-    let tx: Tx;
+    let tx: TransactionConfig;
 
     try {
       tx = this.formTx(values);
@@ -241,10 +239,10 @@ export class InteractorComponent implements OnInit {
     });
   }
 
-  formTx(params: string[]): Tx {
+  formTx(params: string[]): TransactionConfig {
     const m = this.contract.methods[this.selectedFunction.name](...params);
 
-    const tx: Tx = {
+    const tx: TransactionConfig = {
       to: this.contract.options.address,
       data: m.encodeABI(),
       from: this._walletService.account.address,
@@ -253,7 +251,7 @@ export class InteractorComponent implements OnInit {
     if (this.selectedFunction.payable) {
       const amount = this.form.get('contractAmount').value;
       try {
-        tx.value = this._walletService.w3.utils.toWei(amount, 'ether');
+        tx.value = this._walletService.w3.utils.toWei(amount, 'ether').toString(10);
       } catch (e) {
         throw Error('Cannot convert amount,' + e);
       }
@@ -273,22 +271,25 @@ export class InteractorComponent implements OnInit {
     }
 
     this.contract = null;
-    let abiDefinitions: ABIDefinition[];
+    let abiItem: AbiItem[];
 
     try {
-      abiDefinitions = JSON.parse(abi);
+      abiItem = JSON.parse(abi);
     } catch (e) {
       this._toastrService.danger('Can\'t parse contract abi');
       return;
     }
 
-    this.initContract(addrHash, abiDefinitions);
+    this.initContract(addrHash, abiItem);
   }
 
-  private initContract(addrHash: string, abi: ABIDefinition[]) {
+  private initContract(addrHash: string, abi: AbiItem[]) {
     try {
       this.contract = new this._walletService.w3.eth.Contract(abi, addrHash);
-      this.abiFunctions = getAbiMethods(this.contract.options.jsonInterface);
+      console.log('initContract');
+      console.log(this.contract.methods);
+      console.log(this.contract.jsonInterface.getMethods());
+      this.abiFunctions = this.contract.methods;
     } catch (e) {
       this._toastrService.danger('Can]\'t initiate contract, check entered data');
       return;
@@ -304,13 +305,12 @@ export class InteractorComponent implements OnInit {
       });
     }
 
-    let tx: Tx;
+    let tx: TransactionConfig;
 
     if (this.selectedFunction.payable || !this.selectedFunction.constant) {
       try {
         tx = this.formTx(params);
       } catch (e) {
-        console.log(e);
         this._toastrService.danger(e);
         return;
       }
@@ -325,7 +325,7 @@ export class InteractorComponent implements OnInit {
 
   onAbiTemplateClick(ercName: ErcName) {
     this._walletService.abi$.subscribe((abi: ContractAbi) => {
-      const ABI: ABIDefinition[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
+      const ABI: AbiItem[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
       this.form.patchValue({
         contractABI: JSON.stringify(ABI, null, 2),
       }, {

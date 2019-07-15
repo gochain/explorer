@@ -44,19 +44,19 @@
             formControlName="contractFunction"
         >
           <optgroup label="Free">
-            <ng-container *ngFor="let abiDefinition of abiFunctions; let i = index;">
+            <ng-container *ngFor="let abiItem of abiFunctions; let i = index;">
               <option
-                  *ngIf="!abiDefinition.payable && abiDefinition.constant"
+                  *ngIf="!abiItem.payable && abiItem.constant"
                   [value]="i"
               >
-                {{abiDefinition | abiMethod}}
+                {{abiItem | abiMethod}}
               </option>
             </ng-container>
           </optgroup>
           <optgroup label="Paid (wallet required)" [disabled]="!_walletService.account">
-            <ng-container *ngFor="let abiDefinition of abiFunctions; let i = index;">
+            <ng-container *ngFor="let abiItem of abiFunctions; let i = index;">
               <option
-                  *ngIf="abiDefinition.payable || !abiDefinition.constant"
+                  *ngIf="abiItem.payable || !abiItem.constant"
                   [value]="i"
               >
                 {{abiDefinition | abiMethod}}

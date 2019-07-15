@@ -1,6 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AddrInternalTxsComponent } from './addr-internal-txs.component';
+import {AppModule} from '../../app.module';
 
 describe('AddrInternalTxsComponent', () => {
   let component: AddrInternalTxsComponent;
@@ -8,7 +9,7 @@ describe('AddrInternalTxsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ AddrInternalTxsComponent ]
+      imports: [AppModule]
     })
     .compileComponents();
   }));

@@ -7,7 +7,7 @@ import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {WalletService} from '../wallet.service';
 import {ToastrService} from '../../toastr/toastr.service';
 /*MODELS*/
-import {Tx} from 'web3/eth/types';
+import {TransactionConfig} from 'web3-core';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
 import {isHex} from '../../../utils/functions';
@@ -55,7 +55,7 @@ export class DeployerComponent implements OnInit {
     if (!byteCode.startsWith('0x')) {
       byteCode = '0x' + byteCode;
     }
-    const tx: Tx = {data: byteCode};
+    const tx: TransactionConfig = {data: byteCode};
     this._walletService.estimateGas(tx).pipe(
       // filter((gasLimit: number) => !this.isProcessing),
     ).subscribe((gasLimit: number) => {
@@ -64,7 +64,6 @@ export class DeployerComponent implements OnInit {
   }
 
   deployContract() {
-    console.log(2);
     if (!this.form.valid) {
       this._toastrService.warning('Some field is wrong');
       return;
@@ -72,8 +71,6 @@ export class DeployerComponent implements OnInit {
 
     const byteCode = this.form.get('byteCode').value;
     const gas = this.form.get('gasLimit').value;
-
-    console.log('deployContract');
 
     this._walletService.deployContract(byteCode, gas);
   }

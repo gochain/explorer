@@ -12,12 +12,12 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {TokenMetadata} from '../../models/token-metadata';
-import {ABIDefinition} from 'web3/eth/abi';
+import {AbiItem} from 'web3-utils';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
 
-const TOKEN_URL_ABI: ABIDefinition = {
+const TOKEN_URL_ABI: AbiItem = {
   'constant': true,
   'inputs': [{'name': '_tokenId', 'type': 'uint256'}],
   'name': 'tokenURI',
@@ -27,7 +27,7 @@ const TOKEN_URL_ABI: ABIDefinition = {
   'type': 'function'
 };
 
-const OWNER_OF_ABI: ABIDefinition = {
+const OWNER_OF_ABI: AbiItem = {
   'constant': true,
   'inputs': [
     {
@@ -96,8 +96,7 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
       const url: string = tokenUrl[0];
       const metadata = new TokenMetadata();
       metadata.ownerAddr = ownerData['owner'];
-      const res = JSON.parse('{"attributes":[{"trait_type":"base","value":"goldfish"},{"trait_type":"eyes","value":"big"},{"trait_type":"mouth","value":"surprised"},{"trait_type":"level","value":5},{"trait_type":"stamina","value":1.4},{"trait_type":"personality","value":"sad"},{"display_type":"boost_number","trait_type":"aqua_power","value":30},{"display_type":"boost_percentage","trait_type":"stamina_increase","value":15},{"display_type":"number","trait_type":"generation","value":2}],"description":"Friendly OpenSea Creature that enjoys long swims in the ocean.","external_url":"https://openseacreatures.io/5","image":"https://storage.googleapis.com/opensea-prod.appspot.com/creature/5.png","name":"Captain McCoy"}');
-      /*this._apiService.get(url, null, true).subscribe((res: any) => {*/
+      this._apiService.get(url, null, true).subscribe((res: any) => {
         metadata.name = res.name || null;
         if (metadata.name) {
           this._metaService.setTitle(`${META_TITLES.TOKEN.title} ${metadata.name}`);
@@ -107,7 +106,7 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
         metadata.external_url = res.external_url || null;
         metadata.origin_data = JSON.stringify(res, null, 4);
         this.metadata = metadata;
-      /*});*/
+      });
 
     }).catch(err => {
       this._toastrService.danger(err);

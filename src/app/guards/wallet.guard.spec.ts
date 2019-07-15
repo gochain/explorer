@@ -1,11 +1,12 @@
-import { TestBed, async, inject } from '@angular/core/testing';
+import {inject, TestBed} from '@angular/core/testing';
 
-import { WalletGuard } from './wallet.guard';
+import {WalletGuard} from './wallet.guard';
+import {AppModule} from '../app.module';
 
 describe('WalletGuard', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [WalletGuard]
+      imports: [AppModule],
     });
   });
 

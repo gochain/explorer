@@ -1,6 +1,7 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { SenderComponent } from './sender.component';
+import {SenderComponent} from './sender.component';
+import {AppModule} from '../../../app.module';
 
 describe('SenderComponent', () => {
   let component: SenderComponent;
@@ -8,9 +9,9 @@ describe('SenderComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SenderComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

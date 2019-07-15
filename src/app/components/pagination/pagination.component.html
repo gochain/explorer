@@ -1,4 +1,4 @@
-<div class="paginator d-flex justify-content-end align-items-center">
+<div class="paginator d-flex justify-content-end align-items-center" *ngIf="_queryParam">
   <div class="paginator__selector mr-3">
     Items per page:
     <select [(ngModel)]="_queryParam.limit">

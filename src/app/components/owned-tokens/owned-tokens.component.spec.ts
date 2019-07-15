@@ -1,6 +1,7 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { OwnedTokensComponent } from './owned-tokens.component';
+import {OwnedTokensComponent} from './owned-tokens.component';
+import {AppModule} from '../../app.module';
 
 describe('OwnedTokensComponent', () => {
   let component: OwnedTokensComponent;
@@ -8,9 +9,9 @@ describe('OwnedTokensComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ OwnedTokensComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

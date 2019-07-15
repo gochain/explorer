@@ -15,12 +15,9 @@ import {PageNotFoundComponent} from './scenes/page-not-found/page-not-found.comp
 import {RichlistComponent} from './scenes/richlist/richlist.component';
 import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
-import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
-import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
 import {TokenAssetComponent} from './scenes/token-asset/token-asset.component';
 import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.component';
-// import {SettingsComponent} from './scenes/settings/settings.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
 
@@ -59,7 +56,6 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF, CommonModule} from '@angular/common';
-// import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
 
 @NgModule({

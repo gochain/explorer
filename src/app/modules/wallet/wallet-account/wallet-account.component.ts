@@ -26,12 +26,15 @@ export class WalletAccountComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._metaService.setTitle(META_TITLES.WALLET.title);
+    if (!this.walletService.account) {
+      return;
+    }
     this._commonService.getAddress(this.walletService.account.address).subscribe((addr => {
       this.addr = addr;
     }));
   }
 
   ngOnDestroy(): void {
-    this.walletService.resetProccesing();
+    this.walletService.resetProcessing();
   }
 }

@@ -1,6 +1,6 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { InteractorComponent } from './interactor.component';
+import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import {InteractorComponent} from './interactor.component';
+import {AppModule} from '../../../app.module';
 
 describe('ContractInteractorComponent', () => {
   let component: InteractorComponent;
@@ -8,9 +8,9 @@ describe('ContractInteractorComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ InteractorComponent ]
+      imports: [AppModule]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

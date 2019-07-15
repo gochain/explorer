@@ -1,6 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AddrTransactionsComponent } from './addr-transactions.component';
+import {AppModule} from '../../app.module';
 
 describe('AddrTransactionsComponent', () => {
   let component: AddrTransactionsComponent;
@@ -8,7 +9,7 @@ describe('AddrTransactionsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ AddrTransactionsComponent ]
+      imports: [AppModule]
     })
     .compileComponents();
   }));
