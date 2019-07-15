@@ -1,10 +1,10 @@
 <div class="container">
   <div class="row align-items-stretch">
-    <div class="col-md-6 col-sm-12">
+    <div class="col-lg-6 col-xs-12">
       <div class="card h-100">
         <div class="card-body">
           <div class="card-title"><img src="../../../assets/icons/comparison.svg"> BLOCKCHAIN COMPARISON</div>
-          <table class="table">
+          <table class="table table-sm table-bordered">
             <thead>
             <tr>
               <th scope="col">Network</th>
@@ -37,25 +37,42 @@
         </div>
       </div>
     </div>
-    <div class="col-md-6 col-xs-12 mt-4 mt-md-0">
+    <div class="col-lg-6 col-xs-12 mt-4 mt-lg-0">
       <div class="card h-100">
         <div class="card-body">
           <div class="card-title"><img src="../../../assets/icons/tx.svg"> TRANSACTIONS <!--(Updated every 5 minutes)-->
           </div>
           <ng-container *ngIf="stats$ | async as stats">
             <ng-container *appViewportSize="['small']">
-              <div>
-                Total: {{stats.total_transactions_count | bigNumber}}
-              </div>
-              <div>
-                Last 7 days: {{stats.last_week_transactions_count | bigNumber}}
-              </div>
-              <div>
-                Last 24 hours: {{stats.last_day_transactions_count | bigNumber}}
+              <div class="font-small">
+                <div class="row mb-2">
+                  <div class="col text-uppercase">
+                    Total:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.total_transactions_count | bigNumber}}
+                  </div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col text-uppercase">
+                    Last 7 days:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.last_week_transactions_count | bigNumber}}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col text-uppercase">
+                    Last 24 hours:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.last_day_transactions_count | bigNumber}}
+                  </div>
+                </div>
               </div>
             </ng-container>
-            <ng-container *appViewportSize="['large']">
-              <div class="row">
+            <ng-container *appViewportSize="['medium', 'large']">
+              <div class="row font-small">
                 <div class="col">
                   <div class="card h-100 shadow-none">
                     <div class="card-body text-center">
@@ -97,26 +114,48 @@
       </div>
       <ng-container *ngIf="recentBlocks$ | async as recentBlocks">
         <ng-container *appViewportSize="['small']">
-          <div class="tr-card" *ngFor="let block of recentBlocks.blocks">
-            <div>
-              <b>Block</b>
-              <a routerLink="/block/{{block.number}}">{{block.number}}</a>
-            </div>
-            <div>
-              <b>Signer</b>
-              <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-            </div>
-            <div>
-              <b>Created</b>
-              <span>{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})</span>
-            </div>
-            <div>
-              <b>Transactions</b>
-              <span>{{block.tx_count}}</span>
-            </div>
-            <div>
-              <b>Extra Data</b>
-              <span>{{block.extra_data | trimExtra}}</span>
+          <div class="data-list">
+            <div class="data-list-item" *ngFor="let block of recentBlocks.blocks">
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Block
+                </div>
+                <div class="data-list-desc">
+                  <a routerLink="/block/{{block.number}}">{{block.number}}</a>
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Signer
+                </div>
+                <div class="data-list-desc text-monospace">
+                  <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Created
+                </div>
+                <div class="data-list-desc">
+                  {{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Transactions
+                </div>
+                <div class="data-list-desc">
+                  {{block.tx_count}}
+                </div>
+              </div>
+              <div class="data-list-row" *ngIf="block.extra_data">
+                <div class="data-list-term">
+                  Extra Data
+                </div>
+                <div class="data-list-desc">
+                  {{block.extra_data | trimExtra}}
+                </div>
+              </div>
             </div>
           </div>
         </ng-container>
@@ -124,20 +163,23 @@
           <table class="table table-striped">
             <thead>
             <tr>
-              <th>Block</th>
-              <th>TXs</th>
-              <th>Signer</th>
-              <th>Extra data</th>
-              <th>Created</th>
+              <th class="w-10">Block</th>
+              <th class="w-10">TXs</th>
+              <th class="w-40">Signer</th>
+              <th class="w-15">Extra data</th>
+              <th class="w-25">Created</th>
             </tr>
             </thead>
             <tbody>
             <tr *ngFor="let block of recentBlocks?.blocks">
               <td class="text-monospace"><a routerLink="/block/{{block.number}}">{{block.number}}</a></td>
               <td>{{block.tx_count}}</td>
-              <td class="text-monospace"><a class="ws-p" routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
-              <td>{{block.extra_data | trimExtra}}</td>
-              <td>{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})</td>
+              <td class="text-monospace text-truncate"><a class="ws-p"
+                                                          routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
+              <td class="text-truncate">{{block.extra_data | trimExtra}}</td>
+              <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+                ({{block.created_at | timeAgo}})
+              </td>
             </tr>
             </tbody>
           </table>

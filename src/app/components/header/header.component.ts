@@ -21,9 +21,11 @@ export class HeaderComponent {
 
   toggleMenu(): void {
     this.showMenu = !this.showMenu;
+    this.showSearch = false;
   }
 
   toggleSearch(): void {
     this.showSearch = !this.showSearch;
+    this.showMenu = false;
   }
 }

@@ -12,6 +12,7 @@
 .text-wrap     { white-space: normal !important; }
 .text-nowrap   { white-space: nowrap !important; }
 .text-truncate { @include text-truncate; }
+.text-shrink {width: 1px;}
 
 // Responsive alignment
 
@@ -39,6 +40,14 @@
 .font-weight-bold    { font-weight: $font-weight-bold !important; }
 .font-weight-bolder  { font-weight: $font-weight-bolder !important; }
 .font-italic         { font-style: italic !important; }
+
+.font-small {
+  font-size: 0.75rem;
+}
+
+.font-large {
+  font-size: 1.25rem;
+}
 
 // Contextual colors
 

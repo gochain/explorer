@@ -96,7 +96,8 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
       const url: string = tokenUrl[0];
       const metadata = new TokenMetadata();
       metadata.ownerAddr = ownerData['owner'];
-      this._apiService.get(url, null, true).subscribe((res: any) => {
+      const res = JSON.parse('{"attributes":[{"trait_type":"base","value":"goldfish"},{"trait_type":"eyes","value":"big"},{"trait_type":"mouth","value":"surprised"},{"trait_type":"level","value":5},{"trait_type":"stamina","value":1.4},{"trait_type":"personality","value":"sad"},{"display_type":"boost_number","trait_type":"aqua_power","value":30},{"display_type":"boost_percentage","trait_type":"stamina_increase","value":15},{"display_type":"number","trait_type":"generation","value":2}],"description":"Friendly OpenSea Creature that enjoys long swims in the ocean.","external_url":"https://openseacreatures.io/5","image":"https://storage.googleapis.com/opensea-prod.appspot.com/creature/5.png","name":"Captain McCoy"}');
+      /*this._apiService.get(url, null, true).subscribe((res: any) => {*/
         metadata.name = res.name || null;
         if (metadata.name) {
           this._metaService.setTitle(`${META_TITLES.TOKEN.title} ${metadata.name}`);
@@ -106,7 +107,7 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
         metadata.external_url = res.external_url || null;
         metadata.origin_data = JSON.stringify(res, null, 4);
         this.metadata = metadata;
-      });
+      /*});*/
 
     }).catch(err => {
       this._toastrService.danger(err);

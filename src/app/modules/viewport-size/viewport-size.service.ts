@@ -31,8 +31,10 @@ export class ViewportSizeService {
   onWindowResize = (windowWidth: number) => {
     let currentSize: ViewportSizeEnum;
 
-    if (windowWidth > this._config.small) {
+    if (windowWidth >= this._config.large) {
       currentSize = ViewportSizeEnum.large;
+    } else if (windowWidth >= this._config.medium) {
+      currentSize = ViewportSizeEnum.medium;
     } else {
       currentSize = ViewportSizeEnum.small;
     }

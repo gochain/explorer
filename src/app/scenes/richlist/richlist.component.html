@@ -2,24 +2,68 @@
   <div class="card">
     <div class="card-body">
       <div class="card-title"><img src="../../../assets/icons/award.svg"> Richlist</div>
-      <table class="table">
-        <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Address</th>
-          <th class="text-right">Balance (GO)</th>
-          <th>Supply owned</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let address of richList.rankings; let rankI = index;">
-          <td>{{rankI + 1}}</td>
-          <td class="text-monospace ws-p"><a routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
-          <td class="text-right text-monospace ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
-          <td>{{address.supplyOwned}}%</td>
-        </tr>
-        </tbody>
-      </table>
+      <ng-container *appViewportSize="['small']">
+        <div class="data-list">
+          <div
+              class="data-list-item"
+              *ngFor="let address of richList.rankings; let rankI = index;"
+          >
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Rank:
+              </div>
+              <div class="data-list-desc">
+                {{rankI + 1}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Address:
+              </div>
+              <div class="data-list-desc text-monospace">
+                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Balance (GO):
+              </div>
+              <div class="data-list-desc text-monospace">
+                {{address.balance_wei | weiToGO: false : true | bigNumber}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Supply owned:
+              </div>
+              <div class="data-list-desc">
+                {{address.supplyOwned}}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *appViewportSize="['medium', 'large']">
+        <table class="table">
+          <thead>
+          <tr>
+            <th class="text-shrink">Rank</th>
+            <th>Address</th>
+            <th class="text-right text-shrink">Balance (GO)</th>
+            <th class="text-shrink text-nowrap">Supply owned</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let address of richList.rankings; let rankI = index;">
+            <td>{{rankI + 1}}</td>
+            <td class="text-truncate text-monospace ws-p"><a
+                routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
+            <td class="text-right text-monospace ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
+            <td>{{address.supplyOwned}}%</td>
+          </tr>
+          </tbody>
+        </table>
+      </ng-container>
       <div class="text-center">
         <button
             type="button"

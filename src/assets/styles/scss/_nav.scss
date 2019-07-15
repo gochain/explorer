@@ -34,6 +34,8 @@
 
 .nav-tabs {
   border-bottom: $nav-tabs-border-width solid $nav-tabs-border-color;
+  /*flex-wrap: nowrap;
+  overflow-x: scroll;*/
 
   .nav-item {
     margin-bottom: -$nav-tabs-border-width;

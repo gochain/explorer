@@ -1,0 +1,24 @@
+.data-list {
+  font-size: 0.75rem;
+}
+
+.data-list-item {
+  border-bottom: 1px solid #EBEBEB;
+  margin-bottom: 1.5rem;
+}
+
+.data-list-row {
+  margin-bottom: 0.75rem;
+  display: flex;
+}
+
+.data-list-term {
+  width: 30%;
+}
+
+.data-list-desc {
+  width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,44 +1,67 @@
 <ng-container *ngIf="transactions && !!transactions.length; else emptyTransactions">
-  <!--<ng-container *appViewportSize="['small']">
-    <div class="tr-card" *ngFor="let tx of transactions">
-      <div class="uk-text-truncate">Tx hash: <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
-      </div>
-      <div class="uk-text-truncate">Processed: {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-        ({{tx.created_at | timeAgo}})
-      </div>
-      <div class="uk-text-truncate">Associate:
-        <ng-container *ngIf="addr.address === tx.to; else out">
-          <i class="fas fa-arrow-left fa-fw"></i>
-          <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
-        </ng-container>
-        <ng-template #out>
-          <i class="fas fa-arrow-right fa-fw"></i>
-          <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
-        </ng-template>
-      </div>
-      <div>Value (GO): {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false |
-        bigNumber}}
+  <ng-container *appViewportSize="['small']">
+    <div class="data-list">
+      <div class="data-list-item" *ngFor="let tx of transactions">
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Tx hash:
+          </div>
+          <div class="data-list-desc">
+            <a routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Processed:
+          </div>
+          <div class="data-list-desc">
+            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Associate:
+          </div>
+          <div class="data-list-desc">
+            <ng-container *ngIf="addr.address === tx.to; else out">
+              <img src="../../../assets/icons/left.svg" alt="From">
+              <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
+            </ng-container>
+            <ng-template #out>
+              <img src="../../../assets/icons/right.svg" alt="To">
+              <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+            </ng-template>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Value (GO):
+          </div>
+          <div class="data-list-desc">
+            {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false | bigNumber}}
+          </div>
+        </div>
       </div>
     </div>
-  </ng-container>-->
-  <ng-container *appViewportSize="['large']">
+  </ng-container>
+  <ng-container *appViewportSize="['medium', 'large']">
     <table class="table table-striped">
       <thead>
       <tr>
-        <th class="w-25">Transaction hash</th>
-        <th class="">Processed at</th>
-        <th class=""></th>
-        <th class="w-25">Associate</th>
-        <th class="text-right">Value (GO)</th>
+        <th class="w-20">Transaction hash</th>
+        <th class="w-20">Processed at</th>
+        <th class="text-shrink"></th>
+        <th class="w-20">Associate</th>
+        <th class="text-nowrap text-center">Value (GO)</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let tx of transactions">
-        <td class="text-monospace text-truncate"><a class="ws-p"
-                                                    routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
+        <td class="text-monospace text-truncate">
+          <a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
         </td>
-        <td class="text-nowrap">{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-          ({{tx.created_at | timeAgo}})
+        <td class="text-truncate">
+          {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
         </td>
         <ng-container *ngIf="addr.address === tx.to; else out">
           <td>

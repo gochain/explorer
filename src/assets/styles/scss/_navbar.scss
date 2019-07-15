@@ -60,7 +60,7 @@
 }
 
 .navbar-search {
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up(md) {
     width: 50%;
     padding-left: 15px;
     input {
@@ -73,7 +73,7 @@
     }
   }
 
-  @include media-breakpoint-down(sm) {
+  @include media-breakpoint-down(md) {
     display: none;
     width: 100%;
     margin-top: 1rem;

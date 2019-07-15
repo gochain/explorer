@@ -4,7 +4,7 @@
       <div class="card-body">
         <div class="card-title"><img src="../../../assets/icons/hash.svg"> Address</div>
         <div class="row">
-          <div class="col-md-10">
+          <div class="col-lg-10 col-md-9">
             <dl>
               <dt>Address hash:</dt>
               <dd>{{addr.address}}</dd>
@@ -42,25 +42,36 @@
               <dd>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</dd>
             </dl>
           </div>
-          <div class="col-md-2">
+          <div class="col-lg-2 col-md-3">
             <a href="{{apiUrl}}/address/{{addr.address}}/qr" target="_blank">
               <img class="img-thumbnail" src="{{apiUrl}}/address/{{addr.address}}/qr" alt="{{addr.address}}"/>
             </a>
           </div>
         </div>
       </div>
-      <div class="card-footer" *ngIf="addr.contract && addr.ercObj && addr.ercObj['Erc721Metadata']">
-        <dl>
-          <dt>Look for an assets</dt>
-          <dd>
-            <div class="mt-1">
-              <input class="" type="text" placeholder="Enter Token ID" [(ngModel)]="tokenId">
-              <button routerLink="/token/{{addrHash}}/asset/{{tokenId}}" type="button"
-                      class="uk-button uk-button-small uk-button-primary m-l&#45;&#45;10">Search
-              </button>
+      <div class="card-footer" *ngIf="addr.contract && addr.ercObj && (addr.ercObj['Go721Metadata'] || addr.ercObj['Go721Receiver'])">
+        <form class="mt-3" (submit)="searchToken()">
+          <div class="form-group">
+            <!--<label for="asset">Asset:</label>-->
+            <div class="input-group">
+              <input
+                  type="text"
+                  class="form-control"
+                  id="asset"
+                  placeholder="Enter token ID"
+                  name="token"
+                  [(ngModel)]="tokenId"
+              >
+              <div class="input-group-append">
+                <button
+                    type="submit"
+                    class="btn btn btn-outline-primary">
+                  Search
+                </button>
+              </div>
             </div>
-          </dd>
-        </dl>
+          </div>
+        </form>
       </div>
     </div>
     <div class="card mt-4 mb-5">

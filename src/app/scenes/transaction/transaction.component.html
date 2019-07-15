@@ -1,15 +1,15 @@
 <div class="container">
-  <div class="card mt-4">
-    <div class="card-body">
-      <div class="card-title"><img src="../../../assets/icons/tx.svg"> Transaction</div>
-      <ng-container *ngIf="tx; else transactionNotFound">
+  <ng-container *ngIf="tx; else transactionNotFound">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><img src="../../../assets/icons/tx.svg"> Transaction</div>
         <dl>
           <dt>Transaction hash</dt>
           <dd>{{tx.tx_hash}}</dd>
           <dt>Status</dt>
           <dd>
             <ng-container *ngIf="tx.block_number ; else pendingTx;">
-              <div class="badge {{tx.status ? 'c--success' : 'c--danger'}}">
+              <div class="badge {{tx.status ? 'badge-success' : 'badge-danger'}}">
                 {{tx.status ? 'Success' : 'Failed'}}
               </div>
             </ng-container>
@@ -21,11 +21,13 @@
           </dd>
           <ng-container *ngIf="tx.block_number">
             <dt>Block number</dt>
-            <dd><a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
-              <div class="badge c--info m-l--20"
-                   *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}}
-                Block
-                Confirmations
+            <dd>
+              <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
+              <div
+                  class="badge badge-info ml-1"
+                  *ngIf="(recentBlockNumber$ | async) as recentBlockNumber"
+              >
+                {{recentBlockNumber - tx.block_number}} Block Confirmations
               </div>
             </dd>
           </ng-container>
@@ -62,32 +64,36 @@
           <dt></dt>
           <dd></dd>
         </dl>
-        <!--<div class="uk-padding">
-          <div class="list-holder__footer">
-            <div>
-              <p>Input data
-                <span class="pull-r btn-group">
-            <button class="btn btn&#45;&#45;sm" [ngClass]="{'btn&#45;&#45;active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
-            <button class="btn btn&#45;&#45;sm" [ngClass]="{'btn&#45;&#45;active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
-          </span>
-              </p>
-              <b>
-                <pre class="code">{{tx.input_data | hex2str: showUtf8}}</pre>
-              </b>
+      </div>
+      <div class="card-footer">
+        <form>
+          <div class="form-group">
+            <label for="input_data">Input data</label>
+            <div class="btn-group btn-group-sm float-right">
+              <button class="btn btn-primary" [ngClass]="{'active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
+              <button class="btn btn-primary" [ngClass]="{'active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
             </div>
-            <div>
-              <p>Receipt Logs
-              </p>
-              <b>
-                <pre class="code">{{tx.logs}}</pre>
-              </b>
-            </div>
+            <textarea
+                class="form-control code"
+                id="input_data"
+                readonly
+                rows="5"
+            >{{tx.input_data | hex2str: showUtf8}}</textarea>
           </div>
-        </div>-->
-      </ng-container>
-      <ng-template #transactionNotFound>
-        <app-info text="Transaction not found."></app-info>
-      </ng-template>
+          <div class="form-group">
+            <label for="receipt_logs">Receipt Logs</label>
+            <textarea
+                class="form-control code"
+                id="receipt_logs"
+                readonly
+                rows="5"
+            >{{tx.logs}}</textarea>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
+  </ng-container>
+  <ng-template #transactionNotFound>
+    <app-info text="Transaction not found."></app-info>
+  </ng-template>
 </div>

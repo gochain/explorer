@@ -17,9 +17,7 @@ import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
 import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
-import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.component';
 import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
-import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
 import {TokenAssetComponent} from './scenes/token-asset/token-asset.component';
 import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.component';
 // import {SettingsComponent} from './scenes/settings/settings.component';
@@ -76,12 +74,10 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     RichlistComponent,
     HeaderComponent,
     SearchComponent,
-    LoaderComponent,
+    /*LoaderComponent,*/
     PaginationComponent,
     /*SettingsComponent,*/
-    ToggleSwitchComponent,
-    MobileHeaderComponent,
-    MobileMenuComponent,
+    /*ToggleSwitchComponent,*/
     InfoComponent,
     ContractComponent,
     TokenAssetComponent,
@@ -107,7 +103,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     PipesModule,
     DirectiveModule,
     TabsModule,
-    SliderModule,
+    /*SliderModule,*/
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     NgProgressModule.withConfig({
       trickleSpeed: 200,

@@ -1,16 +1,9 @@
 <ng-progress></ng-progress>
 <app-toastr></app-toastr>
 <app-header></app-header>
-<!--<app-mobile-header *appViewportSize="['small']"></app-mobile-header>
-<app-mobile-menu *appViewportSize="['small']"></app-mobile-menu>-->
-<div class="app-container py-4" [ngClass]="{'app-container&#45;&#45;loading': isPageLoading}">
+<div class="app-container py-4" [ngClass]="{'app-container--loading': isPageLoading}">
   <div class="loader">
-    <div class="loader__content">
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-    </div>
+    <img src="../assets/icons/loader.svg" alt="Loading">
   </div>
   <div class="content">
     <router-outlet></router-outlet>

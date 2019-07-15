@@ -10,7 +10,7 @@ import {ViewportSizeEnum} from './viewport-size.enum';
 
 @Directive({selector: '[appViewportSize]'})
 export class ViewportSizeDirective implements OnInit, OnDestroy {
-  private _visibleSize: ViewportSizeEnum[];
+  private _visibleSizes: ViewportSizeEnum[];
   private _embedded = false;
   private _sub: Subscription;
 
@@ -21,7 +21,7 @@ export class ViewportSizeDirective implements OnInit, OnDestroy {
   }
 
   @Input() set appViewportSize(sizes: ViewportSizeEnum[]) {
-    this._visibleSize = sizes;
+    this._visibleSizes = sizes;
   }
 
   ngOnInit() {
@@ -39,7 +39,7 @@ export class ViewportSizeDirective implements OnInit, OnDestroy {
   }
 
   onResize(currentSize: ViewportSizeEnum) {
-    if (this._visibleSize.includes(currentSize)) {
+    if (this._visibleSizes.includes(currentSize)) {
       if (!this._embedded) {
         this._embedded = true;
         this._viewContainer.createEmbeddedView(this._templateRef);

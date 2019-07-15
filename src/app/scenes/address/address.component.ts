@@ -1,6 +1,6 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, Params} from '@angular/router';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 /*SERVICES*/
@@ -35,6 +35,7 @@ export class AddressComponent implements OnInit, OnDestroy {
     private _route: ActivatedRoute,
     private _layoutService: LayoutService,
     private _metaService: MetaService,
+    private _router: Router,
   ) {
   }
 
@@ -76,7 +77,6 @@ export class AddressComponent implements OnInit, OnDestroy {
           acc[val] = true;
           return acc;
         }, {});
-
         this._commonService.getContract(this.addrHash).subscribe(value => {
           this.contract = value;
         });
@@ -84,5 +84,9 @@ export class AddressComponent implements OnInit, OnDestroy {
         this._metaService.setTitle(META_TITLES.ADDRESS.title);
       }
     });
+  }
+
+  searchToken(): void {
+    this._router.navigate([`/token/${this.addrHash}/asset/${this.tokenId}`]);
   }
 }
