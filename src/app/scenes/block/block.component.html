@@ -25,7 +25,11 @@
           <dt>Difficulty</dt>
           <dd>{{block.difficulty}}</dd>
           <dt>Extra Data</dt>
-          <dd>{{block.extra_data}}</dd>
+          <dd>{{block.extra.vanity}}</dd>
+          <ng-container *ngIf="block.extra.has_vote; else empty">
+            <dt>Vote</dt>
+            <dd>{{block.extra.auth ? "Add" : "Remove"}} {{block.extra.is_voter_election ? "voter" : "signer"}} {{block.extra.candidate}}</dd>
+          </ng-container>
         </dl>
       </div>
     </div>

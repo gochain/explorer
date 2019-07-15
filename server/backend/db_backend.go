@@ -77,7 +77,7 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 		GasLimit:        tx.Gas(),
 		BlockNumber:     block.Number().Int64(),
 		GasFee:          new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:           uint64(tx.Nonce()),
+		Nonce:           tx.Nonce(),
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
 		InputData:       hex.EncodeToString(tx.Data()[:]),
@@ -89,6 +89,10 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	for _, tx := range block.Transactions() {
 		transactions = append(transactions, tx.Hash().Hex())
 	}
+	nonceBool := false
+	if block.Nonce() == 0xffffffffffffffff {
+		nonceBool = true
+	}
 	return &models.Block{Number: block.Header().Number.Int64(),
 		GasLimit:   int(block.Header().GasLimit),
 		BlockHash:  block.Hash().Hex(),
@@ -96,7 +100,7 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		ParentHash: block.ParentHash().Hex(),
 		TxHash:     block.Header().TxHash.Hex(),
 		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
-		Nonce:      uint64(block.Nonce()),
+		NonceBool:  &nonceBool,
 		Miner:      block.Coinbase().Hex(),
 		TxCount:    int(uint64(len(block.Transactions()))),
 		Difficulty: block.Difficulty().Int64(),
@@ -240,13 +244,18 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 	for _, tx := range block.Transactions() {
 		self.importTx(tx, block)
 	}
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importBlock")
-	}
+	self.UpdateActiveAddress(block.Coinbase().Hex())
 	return b
 
 }
+
+func (self *MongoBackend) UpdateActiveAddress(address string) {
+	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("UpdateActiveAddress")
+	}
+}
+
 func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
@@ -275,16 +284,8 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		log.Fatal().Err(err).Msg("importTx")
 	}
 
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": toAddress}, &models.ActiveAddress{Address: toAddress, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
+	self.UpdateActiveAddress(toAddress)
+	self.UpdateActiveAddress(transaction.From)
 }
 func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)

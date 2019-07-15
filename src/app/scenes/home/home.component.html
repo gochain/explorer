@@ -153,7 +153,7 @@
                   Extra Data
                 </div>
                 <div class="data-list-desc">
-                  {{block.extra_data | trimExtra}}
+                  {{block.extra.vanity}}
                 </div>
               </div>
             </div>
@@ -176,7 +176,7 @@
               <td>{{block.tx_count}}</td>
               <td class="text-monospace text-truncate"><a class="ws-p"
                                                           routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
-              <td class="text-truncate">{{block.extra_data | trimExtra}}</td>
+              <td class="text-truncate">{{block.extra.vanity}}</td>
               <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
                 ({{block.created_at | timeAgo}})
               </td>
