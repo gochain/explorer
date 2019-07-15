@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"io/ioutil"
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
@@ -102,6 +103,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 func main() {
 	var mongoUrl string
 	var dbName string
+	var configFile string
 	var loglevel string
 
 	app := cli.NewApp()
@@ -125,6 +127,12 @@ func main() {
 			Value:       "blocks",
 			Usage:       "mongo database name",
 			Destination: &dbName,
+		},
+		cli.StringFlag{
+			Name:        "config-file, config",
+			Value:       "./settings.json",
+			Usage:       "settings file name",
+			Destination: &configFile,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
@@ -164,7 +172,17 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
+		data, err := ioutil.ReadFile(configFile)
+		if err != nil {
+			return err
+		}
+	    var nodes []models.Node
+		err = json.Unmarshal(data, &nodes)
+		if err != nil {
+			return err
+		}
+
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nodes)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -200,6 +218,7 @@ func main() {
 				r.Get("/compiler", getCompilerVersion)
 				r.Get("/rpc_provider", getRpcProvider)
 				r.Get("/stats", getCurrentStats)
+				r.Get("/signers_stats", getSignersStats)
 				r.Get("/richlist", getRichlist)
 
 				r.Route("/blocks", func(r chi.Router) {
@@ -226,7 +245,7 @@ func main() {
 			})
 		})
 
-		err := http.ListenAndServe(":8080", r)
+		err = http.ListenAndServe(":8080", r)
 		return err
 	}
 	err := app.Run(os.Args)
@@ -274,6 +293,10 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 
 func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, backendInstance.GetStats())
+}
+
+func getSignersStats(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, backendInstance.GetSignersStats())
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {

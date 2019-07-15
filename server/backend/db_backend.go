@@ -157,6 +157,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -648,6 +653,47 @@ func (self *MongoBackend) getStats() *models.Stats {
 		}
 	}
 	return s
+}
+func (self *MongoBackend) getSignerStatsForRange(rangeDays int) []models.SignerStats {
+	var resp []bson.M
+	var stat []models.SignerStats
+	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
+	pipe := self.mongo.C("Blocks").Pipe(queryDayStats)
+	err := pipe.All(&resp)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot run pipe")
+	}
+	log.Info().Time("Date", time.Now().AddDate(0, 0, rangeDays)).Msg("stats")
+	for _, el := range resp {
+		stat = append(stat, models.SignerStats{Signer: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)})
+	}
+	return stat
+}
+
+func (self *MongoBackend) getBlockRange(rangeDays int) models.BlockRange {
+	var startBlock, endBlock models.Block
+	var resp models.BlockRange
+	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot get block number")
+	}
+	log.Info().Interface("element", startBlock).Msg("startBlock")
+	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot get block number")
+	}
+	resp.StartBlock = startBlock.Number
+	resp.EndBlock = endBlock.Number
+	return resp
+}
+
+func (self *MongoBackend) getSignersStats() []models.SignersStats {
+	var stats []models.SignersStats
+	kvs := map[string]int{"daily": -1, "weekly": -7, "monthly": -30}
+	for k, v := range kvs {		
+		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(v), SignerStats: self.getSignerStatsForRange(v),Range:k})
+	}
+	return stats
 }
 
 func (self *MongoBackend) cleanUp() {
