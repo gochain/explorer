@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"io/ioutil"
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
@@ -176,8 +176,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-	    var nodes []models.Node
-		err = json.Unmarshal(data, &nodes)
+		nodes, err := models.ParseConfig(data)
 		if err != nil {
 			return err
 		}
@@ -307,7 +306,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 	}
 	skip, limit := parseSkipLimit(r)
 	circulatingSupply, err := backendInstance.CirculatingSupply()
-	if err != nil {		
+	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
