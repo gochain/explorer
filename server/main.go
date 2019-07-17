@@ -176,7 +176,8 @@ func main() {
 		if err != nil {
 			return err
 		}
-		nodes, err := models.ParseConfig(data)
+		nodes := make(map[common.Address]models.Node)
+		err = json.Unmarshal(data, &nodes)
 		if err != nil {
 			return err
 		}

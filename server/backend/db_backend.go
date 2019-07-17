@@ -667,9 +667,7 @@ func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Dur
 	for _, el := range resp {
 		signerStats := models.SignerStats{Signer: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
 		if val, ok := nodes[signerStats.Signer]; ok {
-			signerStats.Name = val.Name
-			signerStats.Region = val.Region
-			signerStats.URL = val.URL
+			signerStats.Node = val
 		}
 		stat = append(stat, signerStats)
 	}
