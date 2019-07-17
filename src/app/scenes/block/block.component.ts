@@ -3,7 +3,7 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {ActivatedRoute} from '@angular/router';
-import {Params} from '@angular/router/src/shared';
+import {Params} from '@angular/router';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
@@ -83,7 +83,7 @@ export class BlockComponent implements OnInit, OnDestroy {
     });
   }
 
-  onTransactionPageSelect(page: number) {
+  /*onTransactionPageSelect(page: number) {
     this.transactionQueryParams.toPage(page);
-  }
+  }*/
 }

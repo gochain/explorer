@@ -1,5 +1,6 @@
-@import "../../../assets/styles/mixins";
-/* The switch - the box around the slider */
+/*
+!*@import "../../../assets/styles/mixins";*!
+!* The switch - the box around the slider *!
 
 .switch {
   position: relative;
@@ -20,10 +21,10 @@
   }
 }
 
-/* Hide default HTML checkbox */
+!* Hide default HTML checkbox *!
 .switch input {display:none;}
 
-/* The slider */
+!* The slider *!
 .slider {
   position: absolute;
   cursor: pointer;
@@ -67,7 +68,7 @@ input:checked + .slider:before {
   transform: translate(-90%, -50%);
 }
 
-/* Rounded sliders */
+!* Rounded sliders *!
 .slider.round {
   border-radius: 34px;
   -webkit-tap-highlight-color: transparent;
@@ -108,3 +109,4 @@ svg {
     background-color: #7f00f6;
   }
 }
+*/

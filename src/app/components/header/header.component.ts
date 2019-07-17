@@ -1,13 +1,10 @@
 /*CORE*/
 import {Component} from '@angular/core';
-import {map} from 'rxjs/operators';
 /*MODELS*/
 import {MenuItem} from '../../models/menu_item.model';
 /*SERVICES*/
-import {LayoutService} from '../../services/layout.service';
 /*UTILS*/
-import {LOGO_NAMES, MENU_ITEMS} from '../../utils/constants';
-import {ThemeColor} from '../../utils/enums';
+import {MENU_ITEMS} from '../../utils/constants';
 
 @Component({
   selector: 'app-header',
@@ -15,11 +12,20 @@ import {ThemeColor} from '../../utils/enums';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent {
-  logoSrc$ = this._layoutService.themeColor$.pipe(
-    map((value: ThemeColor) => LOGO_NAMES[value]),
-  );
+  showMenu = false;
+  showSearch = false;
   navItems: MenuItem[] = MENU_ITEMS;
 
-  constructor(private _layoutService: LayoutService) {
+  constructor() {
+  }
+
+  toggleMenu(): void {
+    this.showMenu = !this.showMenu;
+    this.showSearch = false;
+  }
+
+  toggleSearch(): void {
+    this.showSearch = !this.showSearch;
+    this.showMenu = false;
   }
 }

@@ -27,23 +27,24 @@ export class SearchComponent {
   async search() {
     const value = this.value.trim();
     if (value.length === 42) {
-      this.layoutService.mobileSearchState.next(false);
       await this.router.navigate([`/${ROUTES.ADDRESS}/`, value]);
-    } else if (value.length === 66) {            
-      this.commonService.checkBlockExist(value).subscribe(resp =>  {        
-        this.router.navigate([`/${ROUTES.BLOCK}/`, value]);        
-      }, error => {                      
-        this.commonService.checkTransactionExist(value).subscribe(resp =>  {                  
-            this.router.navigate([`/${ROUTES.TRANSACTION}/`, value]);      
-          }, error => {                
+    } else if (value.length === 66) {
+      this.commonService.checkBlockExist(value).subscribe(resp =>  {
+        this.router.navigate([`/${ROUTES.BLOCK}/`, value]);
+      }, error => {
+        this.commonService.checkTransactionExist(value).subscribe(resp =>  {
+          this.router.navigate([`/${ROUTES.TRANSACTION}/`, value]);
+          }, error => {
             this.toastrService.warning('the data you entered is not valid');
-        });        
+        });
       });
-      
     } else if (value.length < 8 && /^\d+$/.test(value)) {
       await this.router.navigate([`/${ROUTES.BLOCK}/`, value]);
     } else {
       this.toastrService.warning('the data you entered is not valid');
+      return;
     }
+
+    this.layoutService.mobileSearchState.next(false);
   }
 }

@@ -1,4 +1,4 @@
-import { PipeTransform, Pipe } from '@angular/core';
+import {PipeTransform, Pipe} from '@angular/core';
 
 @Pipe({
   name: 'hex2str'
@@ -8,14 +8,14 @@ export class Hex2Str implements PipeTransform {
 
   transform(val: string, convert: boolean = true): string {
     if (convert) {
-      var tempstr = '';
-      var b = 0;
+      let tempstr = '';
+      let b = 0;
       while (b < val.length) {
         tempstr = tempstr + String.fromCharCode(parseInt(val.substr(b, 2), 16));
-        b = b + 2
+        b = b + 2;
       }
       return tempstr;
     }
-    return val
+    return val;
   }
 }

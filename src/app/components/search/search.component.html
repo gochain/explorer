@@ -1,15 +1,21 @@
-<form class="search" (submit)="search()">
+<form class="input-group" (submit)="search()">
   <input
       name="search"
-      type="search"
+      type="text"
+      class="form-control"
       autocomplete="off"
       placeholder="Search by transaction, address or block"
+      aria-label="Search by transaction, address or block"
+      aria-describedby="search"
       [(ngModel)]="value"
-  />
-  <button type="submit">
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11 21.8093C16.9535 21.8093 21.8093 16.9721 21.8093 11C21.8093 5.02791 16.9535 0.190697 11 0.190697C5.04649 0.190697 0.190674 5.04651 0.190674 11C0.190674 16.9535 5.04649 21.8093 11 21.8093ZM11 1.71628C16.1163 1.71628 20.2837 5.88372 20.2837 11C20.2837 16.1163 16.1163 20.2837 11 20.2837C5.8837 20.2837 1.71626 16.1163 1.71626 11C1.71626 5.88372 5.8837 1.71628 11 1.71628Z" fill="white"/>
-      <path d="M8.50695 16.3954C8.65578 16.5442 8.84183 16.6186 9.04648 16.6186C9.23253 16.6186 9.43718 16.5442 9.58602 16.3954L14.4976 11.4837C14.6465 11.3349 14.7209 11.1488 14.7209 10.9442C14.7209 10.7395 14.6465 10.5535 14.4976 10.4047L9.58602 5.49302C9.28834 5.19535 8.80462 5.19535 8.50695 5.49302C8.20927 5.7907 8.20927 6.27442 8.50695 6.57209L12.879 10.9442L8.50695 15.3163C8.20927 15.614 8.20927 16.0977 8.50695 16.3954Z" fill="white"/>
-    </svg>
-  </button>
+  >
+  <div class="input-group-append">
+    <button
+        class="btn btn-primary"
+        type="submit"
+        id="search"
+    >
+      <img src="../../../assets/icons/search.svg" alt="Search">
+    </button>
+  </div>
 </form>

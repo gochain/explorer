@@ -1,0 +1,55 @@
+<ng-container *ngIf="token_holders.length; else emptyHolders">
+  <ng-container *appViewportSize="['small']">
+    <div class="data-list">
+      <div class="data-list-item" *ngFor="let holder of token_holders">
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Token holder:
+          </div>
+          <div class="data-list-desc text-monospace">
+            <a routerLink="/addr/{{holder.token_holder_address}}">{{holder.token_holder_address}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Balance ({{addr.token_symbol}}):
+          </div>
+          <div class="data-list-desc text-monospace">
+            {{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *appViewportSize="['medium', 'large']">
+    <table class="table table-small table-striped" style="table-layout: fixed;">
+      <thead>
+      <tr>
+        <th class="w-50">Token holder</th>
+        <th class="w-50 text-center">Balance ({{addr.token_symbol}})</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let holder of token_holders">
+        <td class="text-truncate text-monospace">
+          <a
+              class="ws-p"
+              routerLink="/addr/{{holder.token_holder_address}}"
+          >
+            {{holder.token_holder_address}}
+          </a>
+        </td>
+        <td class="text-nowrap text-monospace text-right ws-p">
+          {{holder.balance | weiToGO: false : true : addr.decimals | bigNumber}}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <div class="mt-4">
+    <app-pagination [queryParam]="holderQueryParams"></app-pagination>
+  </div>
+</ng-container>
+<ng-template #emptyHolders>
+  <div class="empty">No holders</div>
+</ng-template>

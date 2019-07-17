@@ -12,12 +12,12 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {TokenMetadata} from '../../models/token-metadata';
-import {ABIDefinition} from 'web3/eth/abi';
+import {AbiItem} from 'web3-utils';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
 
-const TOKEN_URL_ABI: ABIDefinition = {
+const TOKEN_URL_ABI: AbiItem = {
   'constant': true,
   'inputs': [{'name': '_tokenId', 'type': 'uint256'}],
   'name': 'tokenURI',
@@ -27,7 +27,7 @@ const TOKEN_URL_ABI: ABIDefinition = {
   'type': 'function'
 };
 
-const OWNER_OF_ABI: ABIDefinition = {
+const OWNER_OF_ABI: AbiItem = {
   'constant': true,
   'inputs': [
     {
