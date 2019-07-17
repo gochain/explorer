@@ -1,18 +1,15 @@
 /*CORE*/
-import {Inject, Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {BehaviorSubject, forkJoin, Observable, of} from 'rxjs';
-import {concatMap, map, tap} from 'rxjs/operators';
+import {concatMap, filter, map, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
-/*import {WEB3} from './web3';*/
-import {Transaction as Web3Tx} from 'web3-core';
+import {SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
 import {Account} from 'web3-eth-accounts';
-import {TransactionReceipt, TransactionConfig, SignedTransaction} from 'web3-core';
 import {Contract as Web3Contract} from 'web3-eth-contract';
 import {AbiItem} from 'web3-utils';
-import {HttpProvider} from 'web3-providers';
 /*SERVICES*/
 import {ToastrService} from '../toastr/toastr.service';
 import {CommonService} from '../../services/common.service';
@@ -48,21 +45,23 @@ export class WalletService {
     return this._web3;
   }
 
-  _web3: Web3;
+  private _web3: Web3;
 
   constructor(
-              private _toastrService: ToastrService,
-              private _commonService: CommonService,
-              private _router: Router,
+    private _toastrService: ToastrService,
+    private _commonService: CommonService,
+    private _router: Router,
   ) {
-    /*if (!this._web3) {
-      return;
-    }*/
-    this._commonService.getRpcProvider().then((rpcProvider: string) => {
-      const provider = new HttpProvider(rpcProvider);
-      this._web3 = new Web3(provider);
-      // this._web3.setProvider(provider);
-    });
+    this._commonService.rpcProvider$
+      .pipe(
+        filter(value => !!value),
+      )
+      .subscribe((rpcProvider: string) => {
+        const provider = Web3.givenProvider || new Web3.providers.HttpProvider(rpcProvider);
+        this._web3 = new Web3(provider, null, {
+          transactionConfirmationBlocks: 1,
+        });
+      });
   }
 
   getAbi(): Observable<ContractAbi> {

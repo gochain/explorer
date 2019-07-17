@@ -1,7 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {Observable, of} from 'rxjs';
-import {map} from 'rxjs/operators';
+import {BehaviorSubject, Observable, of} from 'rxjs';
+import {filter, map, share, shareReplay, tap} from 'rxjs/operators';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -20,21 +20,29 @@ import {ContractAbi} from '../utils/types';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
-  rpcProvider: string;
+  private _rpcProvider$: BehaviorSubject<string>;
+
+  get rpcProvider$(): Observable<string> {
+    if (!this._rpcProvider$) {
+      this._rpcProvider$ = new BehaviorSubject(null);
+      return this.getRpcProvider().pipe(
+        tap(value => this._rpcProvider$.next(value)),
+      );
+    }
+    return this._rpcProvider$;
+  }
+
   contractsCache = {};
 
   constructor(private _apiService: ApiService) {
   }
 
   resolve(): Observable<string> | Promise<string> | string {
-    return this.getRpcProvider();
+    return this.rpcProvider$.pipe(filter(value => !value));
   }
 
-  async getRpcProvider() {
-    if (!this.rpcProvider) {
-      this.rpcProvider = await this._apiService.get('/rpc_provider').toPromise();
-    }
-    return this.rpcProvider;
+  getRpcProvider(): Observable<string> {
+    return this._apiService.get('/rpc_provider');
   }
 
   getAbi(): Observable<ContractAbi> {

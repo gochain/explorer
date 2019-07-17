@@ -23,7 +23,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     mergeMap(() => this._commonService.getStats())
   );
 
-  recentBlocks$: Observable<BlockList> = interval(500000).pipe(
+  recentBlocks$: Observable<BlockList> = interval(5000).pipe(
     startWith(0),
     tap(() => {
       this._layoutService.offLoading();

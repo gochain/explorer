@@ -38,6 +38,7 @@ export class InteractorComponent implements OnInit {
     contractFunction: [''],
     functionParameters: this._fb.array([]),
     gasLimit: [''],
+    erc: [''],
   });
 
   contractBadges: Badge[] = [];
@@ -117,6 +118,9 @@ export class InteractorComponent implements OnInit {
       distinctUntilChanged(),
     ).subscribe((values) => {
       this.estimateFunctionGas(values);
+    }));
+    this._subsArr$.push(this.form.get('erc').valueChanges.subscribe(value => {
+      this.onAbiTemplateSelect(value);
     }));
   }
 
@@ -283,13 +287,10 @@ export class InteractorComponent implements OnInit {
     this.initContract(addrHash, abiItem);
   }
 
-  private initContract(addrHash: string, abi: AbiItem[]) {
+  private initContract(addrHash: string, abiItems: AbiItem[]) {
     try {
-      this.contract = new this._walletService.w3.eth.Contract(abi, addrHash);
-      console.log('initContract');
-      console.log(this.contract.methods);
-      console.log(this.contract.jsonInterface.getMethods());
-      this.abiFunctions = this.contract.methods;
+      this.contract = new this._walletService.w3.eth.Contract(abiItems, addrHash);
+      this.abiFunctions = getAbiMethods(abiItems);
     } catch (e) {
       this._toastrService.danger('Can]\'t initiate contract, check entered data');
       return;
@@ -323,7 +324,7 @@ export class InteractorComponent implements OnInit {
     this._walletService.sendTx(tx);
   }
 
-  onAbiTemplateClick(ercName: ErcName) {
+  onAbiTemplateSelect(ercName: ErcName) {
     this._walletService.abi$.subscribe((abi: ContractAbi) => {
       const ABI: AbiItem[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
       this.form.patchValue({

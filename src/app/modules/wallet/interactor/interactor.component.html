@@ -28,7 +28,7 @@
       ></textarea>
       <div class="mt-1">
         or select template:
-        <select>
+        <select formControlName="erc">
           <option *ngFor="let value of abiTemplates" [value]="value">{{value}}</option>
         </select>
       </div>
@@ -59,7 +59,7 @@
                   *ngIf="abiItem.payable || !abiItem.constant"
                   [value]="i"
               >
-                {{abiDefinition | abiMethod}}
+                {{abiItem | abiMethod}}
               </option>
             </ng-container>
           </optgroup>

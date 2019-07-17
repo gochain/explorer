@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { Toastr } from './toastr.interface';
+import {Injectable} from '@angular/core';
+import {BehaviorSubject} from 'rxjs';
+import {Toastr} from './toastr.interface';
 
 const CLOSE_TIME = 10000;
 
@@ -18,12 +18,15 @@ export class ToastrService {
   success(msg: string) {
     this.add(msg, 'success');
   }
+
   warning(msg: string) {
     this.add(msg, 'warning');
   }
+
   danger(msg: string) {
     this.add(msg, 'danger');
   }
+
   info(msg: string) {
     this.add(msg, 'info');
   }
