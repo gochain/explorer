@@ -654,16 +654,16 @@ func (self *MongoBackend) getStats() *models.Stats {
 	}
 	return s
 }
-func (self *MongoBackend) getSignerStatsForRange(rangeDays int, nodes map[common.Address]models.Node) []models.SignerStats {
+func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration, nodes map[common.Address]models.Node) []models.SignerStats {
 	var resp []bson.M
 	var stat []models.SignerStats
-	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
+	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
 	pipe := self.mongo.C("Blocks").Pipe(queryDayStats)
 	err := pipe.All(&resp)
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot run pipe")
 	}
-	log.Info().Time("Date", time.Now().AddDate(0, 0, rangeDays)).Msg("stats")
+	log.Info().Time("Date", endTime.Add(dur)).Msg("stats")
 	for _, el := range resp {
 		signerStats := models.SignerStats{Signer: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
 		if val, ok := nodes[signerStats.Signer]; ok {
@@ -676,15 +676,15 @@ func (self *MongoBackend) getSignerStatsForRange(rangeDays int, nodes map[common
 	return stat
 }
 
-func (self *MongoBackend) getBlockRange(rangeDays int) models.BlockRange {
+func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) models.BlockRange {
 	var startBlock, endBlock models.Block
 	var resp models.BlockRange
-	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
+	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot get block number")
 	}
 	log.Info().Interface("element", startBlock).Msg("startBlock")
-	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, rangeDays)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
+	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot get block number")
 	}
@@ -695,9 +695,10 @@ func (self *MongoBackend) getBlockRange(rangeDays int) models.BlockRange {
 
 func (self *MongoBackend) getSignersStats(nodes map[common.Address]models.Node) []models.SignersStats {
 	var stats []models.SignersStats
-	kvs := map[string]int{"daily": -1, "weekly": -7, "monthly": -30}
+	kvs := map[string]time.Duration{"daily": -24 * time.Hour, "weekly": -7 * 24 * time.Hour, "monthly": -30 * 24 * time.Hour}
+	endTime := time.Now()
 	for k, v := range kvs {
-		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(v), SignerStats: self.getSignerStatsForRange(v, nodes), Range: k})
+		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v, nodes), Range: k})
 	}
 	return stats
 }
