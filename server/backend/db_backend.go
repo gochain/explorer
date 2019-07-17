@@ -695,7 +695,8 @@ func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) mo
 
 func (self *MongoBackend) getSignersStats(nodes map[common.Address]models.Node) []models.SignersStats {
 	var stats []models.SignersStats
-	kvs := map[string]time.Duration{"daily": -24 * time.Hour, "weekly": -7 * 24 * time.Hour, "monthly": -30 * 24 * time.Hour}
+	const day = -24 * time.Hour
+	kvs := map[string]time.Duration{"daily": day, "weekly": 7 * day, "monthly": 30 * day}
 	endTime := time.Now()
 	for k, v := range kvs {
 		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v, nodes), Range: k})
