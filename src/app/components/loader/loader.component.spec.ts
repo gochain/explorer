@@ -1,8 +1,9 @@
-/*CORE*/
+/*
+/!*CORE*!/
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
-/*MODULES*/
+/!*MODULES*!/
 import {AppModule} from '../../app.module';
-/*COMPONENTS*/
+/!*COMPONENTS*!/
 import {LoaderComponent} from './loader.component';
 
 describe('LoaderComponent', () => {
@@ -26,3 +27,4 @@ describe('LoaderComponent', () => {
     expect(component).toBeTruthy();
   });
 });
+*/

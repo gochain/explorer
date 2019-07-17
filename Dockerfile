@@ -11,7 +11,7 @@ ADD . $D
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
 
-FROM node:8-alpine  as frontend_builder
+FROM node:10-alpine  as frontend_builder
 WORKDIR /explorer
 RUN apk add --no-cache make git gcc g++ python
 ADD . /explorer

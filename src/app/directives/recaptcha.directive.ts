@@ -1,7 +1,6 @@
 /*CORE*/
 import {AfterViewInit, Directive, ElementRef, forwardRef, Injector, Input, NgZone, OnInit} from '@angular/core';
-import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators} from '@angular/forms';
-import {AbstractControl} from '@angular/forms/src/model';
+import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators, AbstractControl} from '@angular/forms';
 import {interval, Subscription} from 'rxjs';
 import {startWith} from 'rxjs/operators';
 /*UTILS*/

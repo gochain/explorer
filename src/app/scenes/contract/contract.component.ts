@@ -7,11 +7,12 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 /*SERVICES*/
 import {ContractService} from '../../services/contract.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {ROUTES} from '../../utils/constants';
+import {META_TITLES, ROUTES} from '../../utils/constants';
 
 // import {Compiler} from '../../models/compiler.model';
 
@@ -26,7 +27,7 @@ export class ContractComponent implements OnInit {
   /*recaptchaPublicKey = environment.RECAPTCHA_KEY;*/
 
   form: FormGroup = this._fb.group({
-    address: ['', Validators.required, Validators.minLength(42), Validators.maxLength(42)],
+    address: ['', [Validators.required, Validators.minLength(42), Validators.maxLength(42)]],
     contract_name: ['', Validators.required],
     compiler_version: ['', Validators.required],
     optimization: [true, Validators.required],
@@ -34,15 +35,17 @@ export class ContractComponent implements OnInit {
     /*recaptcha_token: null,*/
   });
 
-  compilers$: Observable<any[]> = this.contactService.getCompilersList();
+  compilers$: Observable<any[]> = this._contactService.getCompilersList();
 
   private _subsArr$: Subscription[] = [];
 
   constructor(private _activatedRoute: ActivatedRoute,
               private _fb: FormBuilder,
-              private contactService: ContractService,
-              private toastrService: ToastrService,
-              private _router: Router) {
+              private _contactService: ContractService,
+              private _toastrService: ToastrService,
+              private _router: Router,
+              private _metaService: MetaService,
+  ) {
   }
 
   ngOnInit() {
@@ -57,16 +60,17 @@ export class ContractComponent implements OnInit {
             address: addr
           });
         } else {
-          this.toastrService.warning('Contract address is invalid');
+          this._toastrService.warning('Contract address is invalid');
         }
       })
     );
+    this._metaService.setTitle(META_TITLES.VERIFY.title);
   }
 
   getContract(addrHash: string) {
-    this._subsArr$.push(this.contactService.getContract(addrHash).subscribe((contract: Contract) => {
+    this._subsArr$.push(this._contactService.getContract(addrHash).subscribe((contract: Contract) => {
       if (!contract) {
-        this.toastrService.danger('Contract address not found');
+        this._toastrService.danger('Contract address not found');
       } else {
         this.contract = contract;
       }
@@ -74,17 +78,26 @@ export class ContractComponent implements OnInit {
   }
 
   onSubmit() {
-    /*if (!this.form.valid) {
-      this.toastrService.danger('Some field is not correct');
+    if (!this.form.valid) {
+      this._toastrService.danger('Some field is not correct');
       return;
-    }*/
+    }
     const data = this.form.getRawValue();
-    this.contactService.compile(data).subscribe((contract: Contract) => {
+    this._contactService.compile(data).pipe(
+      filter((contract: Contract) => !!contract)
+    ).subscribe((contract: Contract) => {
       this.contract = contract;
       if (this.contract.valid) {
-        this.toastrService.success('Contract has been successfully verified');
+        this._toastrService.success('Contract has been successfully verified');
         this.form.reset();
-        this._router.navigate([`/${ROUTES.ADDRESS}/`, this.contract.address]);
+        this._router.navigate(
+          [`/${ROUTES.ADDRESS}/`, this.contract.address],
+          {
+            queryParams: {
+              addr_tab: 'contract_source',
+            },
+          },
+        );
       }
     });
   }

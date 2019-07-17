@@ -1,6 +1,6 @@
 /*CORE*/
 import {AfterContentInit, Component, ContentChildren, EventEmitter, Input, OnInit, Output, QueryList} from '@angular/core';
-import {ActivatedRoute, ParamMap, Router} from '@angular/router';
+import {ActivatedRoute, Params, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 /*COMPONENTS*/
 import {TabComponent} from './components/tab/tab.component';
@@ -15,51 +15,63 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 @AutoUnsubscribe('_subsArr$')
 export class TabsComponent implements OnInit, AfterContentInit {
   @Input() name: string;
-  @Output() onChangeEmitter = new EventEmitter<any>();
+  @Input() disabled = false;
+  @Output() changeEmitter = new EventEmitter<any>();
   @ContentChildren(TabComponent) tabs: QueryList<TabComponent>;
   activeTab: TabComponent;
 
-  private _initialTabName: string;
+  private _tabName: string;
   private _subsArr$: Subscription[] = [];
 
   constructor(private _activatedRoute: ActivatedRoute, private _router: Router) {
   }
 
   ngOnInit() {
-    this._subsArr$.push(this._activatedRoute.queryParamMap.subscribe((params: ParamMap) => {
-      if (params.has(this.name)) {
-        this._initialTabName = params.get(this.name);
-      }
+    // setting initial tab if query param provided
+    this._subsArr$.push(this._activatedRoute.queryParams.subscribe((params: Params) => {
+      this._tabName = params[this.name] || null;
     }));
   }
 
-  ngAfterContentInit() {
-    this._subsArr$.push(this.tabs.changes.subscribe(this.onTabsChange));
-    // Asynchronous update preventing ExpressionChangedAfterItHasBeenCheckedError
+  ngAfterContentInit(): void {
+    // subscribing for tabs change if tabs will be added or deleted
+    this._subsArr$.push(this.tabs.changes.subscribe(() => this.onTabsChange()));
+    // asynchronous update preventing ExpressionChangedAfterItHasBeenCheckedError
     setTimeout(() => {
-      if (this._initialTabName) {
-        const activeTab = this.tabs.find((tab: TabComponent) => tab.name === this._initialTabName) || this.tabs.first;
-        this.onTabSelect(activeTab, false);
-      } else {
-        this.onTabSelect(this.tabs.first, false);
-      }
+      this.findTab();
     });
   }
 
-  onTabsChange = () => {
+  findTab(): void {
+    let activeTab: TabComponent;
+    if (this._tabName) {
+      activeTab = this.tabs.find((tab: TabComponent) => tab.name === this._tabName) || this.tabs.first;
+    } else {
+      activeTab = this.tabs.first;
+    }
+    this.onTabSelect(activeTab, false);
+  }
+
+  onTabsChange(): void {
     if (this.tabs.length) {
-      const exist = this.tabs.some(tab => tab === this.activeTab);
-      if (!exist) {
-        this.activeTab = this.tabs.first;
-      }
+      this.findTab();
     } else {
       this.activeTab = null;
     }
   }
 
-  onTabSelect(tab: TabComponent, emit = true) {
-    if (emit && this.onChangeEmitter) {
-      this.onChangeEmitter.emit(this.activeTab.name);
+  /**
+   * replacing url so query params won't affect url history
+   * @param tab
+   * @param emit
+   * @param replaceUrl
+   */
+  onTabSelect(tab: TabComponent, emit = true, replaceUrl = true) {
+    if (this.disabled) {
+      return;
+    }
+    if (emit && this.changeEmitter) {
+      this.changeEmitter.emit(this.activeTab.name);
     }
     if (this.activeTab) {
       this.activeTab.content.active = false;
@@ -71,7 +83,8 @@ export class TabsComponent implements OnInit, AfterContentInit {
       queryParams: {
         ...this._activatedRoute.snapshot.queryParams,
         [this.name]: tab.name,
-      }
+      },
+      replaceUrl,
     });
   }
 }

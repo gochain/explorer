@@ -1,22 +1,15 @@
-<div class="main-top">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
-  </div>
-</div>
-<ng-container *ngIf="tx; else transactionNotFound">
-  <div class="uk-padding">
-    <div class="uk-overflow-auto list-holder">
-      <ul>
-        <li>
-          <p>Transaction hash</p>
-          <b>{{tx.tx_hash}}</b>
-        </li>
-        <li>
-          <p>Status</p>
-          <b>
+<div class="container">
+  <ng-container *ngIf="tx; else transactionNotFound">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title"><img src="../../../assets/icons/tx.svg"> Transaction</div>
+        <dl>
+          <dt>Transaction hash</dt>
+          <dd>{{tx.tx_hash}}</dd>
+          <dt>Status</dt>
+          <dd>
             <ng-container *ngIf="tx.block_number ; else pendingTx;">
-              <div class="badge {{tx.status ? 'c--success' : 'c--danger'}}">
+              <div class="badge {{tx.status ? 'badge-success' : 'badge-danger'}}">
                 {{tx.status ? 'Success' : 'Failed'}}
               </div>
             </ng-container>
@@ -25,90 +18,82 @@
                 Pending
               </div>
             </ng-template>
-          </b>
-        </li>
-        <li *ngIf="tx.block_number">
-          <p>Block number</p>
-          <b>
-            <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
-            <div class="badge c--info m-l--20"
-                 *ngIf="(recentBlockNumber$ | async) as recentBlockNumber">{{recentBlockNumber - tx.block_number}} Block
-              Confirmations
+          </dd>
+          <ng-container *ngIf="tx.block_number">
+            <dt>Block number</dt>
+            <dd>
+              <a routerLink="/block/{{tx.block_number}}">{{tx.block_number}}</a>
+              <div
+                  class="badge badge-info ml-1"
+                  *ngIf="(recentBlockNumber$ | async) as recentBlockNumber"
+              >
+                {{recentBlockNumber - tx.block_number}} Block Confirmations
+              </div>
+            </dd>
+          </ng-container>
+          <ng-container *ngIf="tx.created_at">
+            <dt>Processed at</dt>
+            <dd>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</dd>
+          </ng-container>
+          <ng-container *ngIf="tx.contract_address">
+            <dt>Contract address</dt>
+            <dd><a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a></dd>
+          </ng-container>
+          <dt>From</dt>
+          <dd><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></dd>
+          <ng-container *ngIf="tx.to">
+            <dt>To</dt>
+            <dd><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></dd>
+          </ng-container>
+          <dt>Value</dt>
+          <dd>{{tx.value | weiToGO | bigNumber}}</dd>
+          <dt>Gas price</dt>
+          <dd>{{tx.gas_price| toGwei}}</dd>
+          <dt>Gas limit</dt>
+          <dd>{{tx.gas_limit | bigNumber}}</dd>
+          <ng-container *ngIf="tx.gas_fee">
+            <dt>Gas used</dt>
+            <dd>{{tx.gas_fee / tx.gas_price | bigNumber}}</dd>
+          </ng-container>
+          <ng-container *ngIf="tx.gas_fee">
+            <dt>Gas fee</dt>
+            <dd>{{tx.gas_fee | weiToGO | bigNumber}}</dd>
+          </ng-container>
+          <dt>Nonce</dt>
+          <dd>{{tx.nonce}}</dd>
+          <dt></dt>
+          <dd></dd>
+        </dl>
+      </div>
+      <div class="card-footer">
+        <form>
+          <div class="form-group">
+            <label for="input_data">Input data</label>
+            <div class="btn-group btn-group-sm float-right">
+              <button class="btn btn-primary" [ngClass]="{'active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
+              <button class="btn btn-primary" [ngClass]="{'active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
             </div>
-          </b>
-        </li>
-        <li *ngIf="tx.created_at">
-          <p>Processed at</p>
-          <b>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</b>
-        </li>
-        <li *ngIf="tx.status && tx.contract_address">
-          <p>Contract address</p>
-          <b>
-            <a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>
-          </b>
-        </li>
-        <li>
-          <p>From</p>
-          <b>
-            <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
-          </b>
-        </li>
-        <li *ngIf="tx.to">
-          <p>To</p>
-          <b>
-            <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
-          </b>
-        </li>
-        <li>
-          <p>Value</p>
-          <b>{{tx.value | weiToGO | bigNumber}}</b>
-        </li>
-        <li>
-          <ul>
-            <li>
-              <p>Gas price</p>
-              <b>{{tx.gas_price| toGwei}}</b>
-            </li>
-            <li>
-              <p>Gas limit</p>
-              <b>{{tx.gas_limit | bigNumber}}</b>
-            </li>
-            <li *ngIf="tx.gas_fee">
-              <p>Gas used</p>
-              <b>{{tx.gas_fee / tx.gas_price | bigNumber}}</b>
-            </li>
-            <li *ngIf="tx.gas_fee">
-              <p>Gas fee</p>
-              <b>{{tx.gas_fee | weiToGO | bigNumber}}</b>
-            </li>
-          </ul>
-        </li>
-        <li>
-          <ul>
-            <li>
-              <p>Nonce</p>
-              <b>{{tx.nonce}}</b>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-    <div class="list-holder__footer">
-
-      <div>
-        <p>Input data
-          <span class="pull-r btn-group">
-            <button class="btn btn--sm" [ngClass]="{'btn--active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
-            <button class="btn btn--sm" [ngClass]="{'btn--active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
-          </span>
-        </p>
-        <b>
-          <pre class="code">{{tx.input_data | hex2str: showUtf8}}</pre>
-        </b>
+            <textarea
+                class="form-control code"
+                id="input_data"
+                readonly
+                rows="5"
+            >{{tx.input_data | hex2str: showUtf8}}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="receipt_logs">Receipt Logs</label>
+            <textarea
+                class="form-control code"
+                id="receipt_logs"
+                readonly
+                rows="5"
+            >{{tx.logs}}</textarea>
+          </div>
+        </form>
       </div>
     </div>
-  </div>
-</ng-container>
-<ng-template #transactionNotFound>
-  <app-info text="Transaction not found."></app-info>
-</ng-template>
+  </ng-container>
+  <ng-template #transactionNotFound>
+    <app-info text="Transaction not found."></app-info>
+  </ng-template>
+</div>

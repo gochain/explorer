@@ -22,6 +22,7 @@ type TokenDetails struct {
 	Decimals    int64
 	Block       int64
 	Types       []utils.ErcName
+	Interfaces  []utils.FunctionName
 }
 
 type TokenHolderDetails struct {
@@ -121,17 +122,15 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 		return err
 	}
 
-	var interfaces []utils.InterfaceName
-	tb.Types, interfaces = token.GetInfo(byteCode)
-Loop:
-	for _, interfaceName := range interfaces {
+	tb.Types, tb.Interfaces = token.GetInfo(byteCode)
+	for _, interfaceName := range tb.Interfaces {
 		if utils.InterfaceIdentifiers[interfaceName].Callable {
 			switch interfaceName {
 			case utils.Decimals:
 				decimals, err := token.Decimals(nil)
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
-					continue Loop
+					continue
 				}
 				tb.Decimals = decimals.Int64()
 			case utils.TotalSupply:
@@ -139,7 +138,7 @@ Loop:
 				if err != nil {
 					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
 					tb.TotalSupply = big.NewInt(0)
-					continue Loop
+					continue
 				}
 				tb.TotalSupply = totalSupply
 			case utils.Symbol:

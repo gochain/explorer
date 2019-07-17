@@ -5,12 +5,14 @@ import {filter, flatMap, tap} from 'rxjs/operators';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {RichList} from '../../models/rich_list.model';
 import {Address} from '../../models/address.model';
 import {QueryParams} from '../../models/query_params';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {META_TITLES} from '../../utils/constants';
 
 @Component({
   selector: 'app-richlist',
@@ -33,13 +35,18 @@ export class RichlistComponent implements OnInit, OnDestroy {
     });
   }
 
-  constructor(private _commonService: CommonService, private _layoutService: LayoutService) {
+  constructor(
+    private _commonService: CommonService,
+    private _layoutService: LayoutService,
+    private _metaService: MetaService,
+  ) {
     this.initSub();
   }
 
   ngOnInit(): void {
     this._layoutService.onLoading();
     this.richListQueryParams.init();
+    this._metaService.setTitle(META_TITLES.RICHLISLT.title);
   }
 
   ngOnDestroy(): void {

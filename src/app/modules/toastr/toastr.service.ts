@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { Toastr } from './toastr.interface';
+import {Injectable} from '@angular/core';
+import {BehaviorSubject} from 'rxjs';
+import {Toastr} from './toastr.interface';
+
+const CLOSE_TIME = 10000;
 
 @Injectable({
   providedIn: 'root'
@@ -16,12 +18,15 @@ export class ToastrService {
   success(msg: string) {
     this.add(msg, 'success');
   }
+
   warning(msg: string) {
     this.add(msg, 'warning');
   }
+
   danger(msg: string) {
     this.add(msg, 'danger');
   }
+
   info(msg: string) {
     this.add(msg, 'info');
   }
@@ -34,7 +39,7 @@ export class ToastrService {
     };
     this.items = [...this.items, item];
     this.apply();
-    setTimeout(() => this.delete(item.id), 3500);
+    setTimeout(() => this.delete(item.id), CLOSE_TIME);
   }
 
   delete(id: number) {

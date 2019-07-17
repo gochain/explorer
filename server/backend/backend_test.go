@@ -3,10 +3,11 @@
 package backend
 
 import (
-	"github.com/gochain-io/explorer/server/models"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/gochain-io/explorer/server/models"
 
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gochain-io/gochain/v3/core/types"
@@ -32,8 +33,8 @@ func TestImportAddress(t *testing.T) {
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
-	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, false, 0)
-	address := testBackend.GetAddressByHash(addrHash)
+	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, 0)
+	address := testBackend.mongo.getAddressByHash(addrHash)
 
 	if address.BalanceWei != "1000" {
 		t.Errorf("Balance was incorrect, got: %s, want: %d.", address.BalanceWei, 1000)
@@ -43,10 +44,10 @@ func TestImportAddress(t *testing.T) {
 	}
 	wrongAddressHash := "0x000"
 
-	address = testBackend.GetAddressByHash(wrongAddressHash)
+	address, err := testBackend.GetAddressByHash(wrongAddressHash)
 
-	if address.Address != addrHash {
-		t.Errorf("Address was incorrect, got: %s, want: %s.", address.Address, addrHash)
+	if err == nil {
+		t.Errorf("Address was incorrect, expected error, got: %v, want: %s.", address, addrHash)
 	}
 }
 
@@ -159,9 +160,9 @@ func TestRichList(t *testing.T) {
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
-	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, false, 0)
+	testBackend.ImportAddress(addrHash, big.NewInt(1000), token, false, 0)
 
-	testBackend.ImportAddress("0x0000000000000000000000000000000000000001", big.NewInt(999), token, false, false, 0)
+	testBackend.ImportAddress("0x0000000000000000000000000000000000000001", big.NewInt(999), token, false, 0)
 
 	richList := testBackend.GetRichlist(0, 100)
 

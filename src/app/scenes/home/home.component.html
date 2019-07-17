@@ -1,166 +1,190 @@
-<div class="main-top">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
+<div class="container">
+  <div class="row align-items-stretch">
+    <div class="col-lg-6 col-xs-12">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="card-title"><img src="../../../assets/icons/comparison.svg"> BLOCKCHAIN COMPARISON</div>
+          <table class="table table-sm table-bordered">
+            <thead>
+            <tr>
+              <th scope="col">Network</th>
+              <th scope="col">Speed</th>
+              <th scope="col">Volume</th>
+              <th scope="col">Fees</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>GoChain</td>
+              <td>5 sec</td>
+              <td>1300 tps</td>
+              <td>$0.000002</td>
+            </tr>
+            <tr>
+              <td>Bitcoin</td>
+              <td>10-60 min</td>
+              <td>6 tps</td>
+              <td>$0.07-$3.50</td>
+            </tr>
+            <tr>
+              <td>Ethereum</td>
+              <td>1-14 min</td>
+              <td>13 tps</td>
+              <td>$0.01-$0.50</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6 col-xs-12 mt-4 mt-lg-0">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="card-title"><img src="../../../assets/icons/tx.svg"> TRANSACTIONS <!--(Updated every 5 minutes)-->
+          </div>
+          <ng-container *ngIf="stats$ | async as stats">
+            <ng-container *appViewportSize="['small']">
+              <div class="font-small">
+                <div class="row mb-2">
+                  <div class="col text-uppercase">
+                    Total:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.total_transactions_count | bigNumber}}
+                  </div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col text-uppercase">
+                    Last 7 days:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.last_week_transactions_count | bigNumber}}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col text-uppercase">
+                    Last 24 hours:
+                  </div>
+                  <div class="col text-right">
+                    {{stats.last_day_transactions_count | bigNumber}}
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *appViewportSize="['medium', 'large']">
+              <div class="row font-small">
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/circle.svg" alt="Total"></div>
+                      <div class="mt-3">Total</div>
+                      <div class="mt-3">{{stats.total_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/disc.svg" alt="Last 7 days"></div>
+                      <div class="mt-3">Last 7 days</div>
+                      <div class="mt-3">{{stats.last_week_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="card h-100 shadow-none">
+                    <div class="card-body text-center">
+                      <div><img src="../../../assets/icons/target.svg" alt="Last 24 hours"></div>
+                      <div class="mt-3">Last 24 hours</div>
+                      <div class="mt-3">{{stats.last_day_transactions_count | bigNumber}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card mt-4">
+    <div class="card-body">
+      <div class="card-title">
+        <img src="../../../assets/icons/blocks.svg"> RECENT BLOCKS
+      </div>
+      <ng-container *ngIf="recentBlocks$ | async as recentBlocks">
+        <ng-container *appViewportSize="['small']">
+          <div class="data-list">
+            <div class="data-list-item" *ngFor="let block of recentBlocks.blocks">
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Block
+                </div>
+                <div class="data-list-desc">
+                  <a routerLink="/block/{{block.number}}">{{block.number}}</a>
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Signer
+                </div>
+                <div class="data-list-desc text-monospace">
+                  <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Created
+                </div>
+                <div class="data-list-desc">
+                  {{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})
+                </div>
+              </div>
+              <div class="data-list-row">
+                <div class="data-list-term">
+                  Transactions
+                </div>
+                <div class="data-list-desc">
+                  {{block.tx_count}}
+                </div>
+              </div>
+              <div class="data-list-row" *ngIf="block.extra_data">
+                <div class="data-list-term">
+                  Extra Data
+                </div>
+                <div class="data-list-desc">
+                  {{block.extra.vanity}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-container *appViewportSize="['medium', 'large']">
+          <table class="table table-striped">
+            <thead>
+            <tr>
+              <th class="w-10">Block</th>
+              <th class="w-10">TXs</th>
+              <th class="w-40">Signer</th>
+              <th class="w-15">Extra data</th>
+              <th class="w-25">Created</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let block of recentBlocks?.blocks">
+              <td class="text-monospace"><a routerLink="/block/{{block.number}}">{{block.number}}</a></td>
+              <td>{{block.tx_count}}</td>
+              <td class="text-monospace text-truncate"><a class="ws-p"
+                                                          routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
+              <td class="text-truncate">{{block.extra.vanity}}</td>
+              <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+                ({{block.created_at | timeAgo}})
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </ng-container>
+    </div>
   </div>
 </div>
-<ng-container *ngIf="stats$ | async as stats">
-  <div class="home__slider" *ifViewportSize="['small']">
-    <app-slider [stats]="stats" [options]="sliderOptions"></app-slider>
-  </div>
-  <div class="stat" *ifViewportSize="['large']">
-    <div class="stat__item">
-      Total <b>{{stats.total_transactions_count | bigNumber}}</b>
-    </div>
-    <div class="stat__item">
-      Last 7 days <b>{{stats.last_week_transactions_count | bigNumber}}</b>
-    </div>
-    <div class="stat__item">
-      Last 24 hours <b>{{stats.last_day_transactions_count | bigNumber}}</b>
-    </div>
-  </div>
-  <h5 class="sm stat__updated">(Updated every 5 minutes)</h5>
-</ng-container>
-<h3>Recent Blocks</h3>
-<ng-container *ifViewportSize="['small']">
-  <div class="uk-margin" *ngIf="recentBlocks$ | async as recentBlocks">
-    <div class="tr-card" *ngFor="let block of recentBlocks.blocks">
-      <div>
-        <div>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9.61545 10.245C9.70227 10.3318 9.8108 10.3752 9.93018 10.3752C10.0496 10.3752 10.1581 10.3318 10.2449 10.245L13.1751 7.31476C13.1968 7.29306 13.2186 7.27135 13.2294 7.24965C13.2294 7.24965 13.2403 7.23879 13.2403 7.22794C13.2511 7.20623 13.262 7.18453 13.2728 7.17368C13.2728 7.16282 13.2728 7.15197 13.2837 7.15197C13.2945 7.13027 13.2945 7.11941 13.3054 7.09771C13.3162 7.06515 13.3162 7.04344 13.3162 7.01089C13.3162 6.97833 13.3162 6.95662 13.3054 6.92406C13.3054 6.90236 13.2945 6.88065 13.2837 6.8698C13.2837 6.85895 13.2837 6.84809 13.2728 6.84809C13.262 6.82639 13.2511 6.80468 13.2403 6.78298C13.2403 6.78298 13.2403 6.77213 13.2294 6.77213C13.2186 6.75042 13.1968 6.72871 13.1751 6.70701L10.2449 3.77678C10.0713 3.60313 9.7891 3.60313 9.61545 3.77678C9.44181 3.95042 9.44181 4.23259 9.61545 4.40623L11.786 6.57678H4.06972C3.8201 6.57678 3.62476 6.77213 3.62476 7.02174C3.62476 7.27135 3.8201 7.4667 4.06972 7.4667H11.786L9.61545 9.63724C9.44181 9.78918 9.44181 10.0713 9.61545 10.245Z"
-              fill="white" />
-            <path d="M1.13954 13.2946H7C7.24962 13.2946 7.44497 13.0992 7.44497 12.8496V8.47597C7.44497 8.22636 7.24962 8.03101 7 8.03101C6.75039 8.03101 6.55504 8.22636 6.55504 8.47597V12.4047H1.5845V1.5845H6.55504V5.51318C6.55504 5.7628 6.75039 5.95815 7 5.95815C7.24962 5.95815 7.44497 5.7628 7.44497 5.51318V1.13954C7.44497 0.889929 7.24962 0.69458 7 0.69458H1.13954C0.889929 0.69458 0.69458 0.889929 0.69458 1.13954V12.8496C0.705433 13.0992 0.900782 13.2946 1.13954 13.2946Z"
-              fill="white" />
-          </svg>
-          <b>Block</b>
-        </div>
-        <a routerLink="/block/{{block.number}}">{{block.number}}</a>
-      </div>
-      <div>
-        <div>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6.55504 6.31628C6.72868 6.14264 6.72868 5.86047 6.55504 5.68682C6.3814 5.51318 6.09923 5.51318 5.92558 5.68682L3.57054 8.04186C3.16899 8.44341 2.95194 8.96434 2.95194 9.52868C2.95194 10.093 3.16899 10.614 3.57054 11.0155C4.39535 11.8403 5.73023 11.8403 6.54419 11.0155L11.862 5.69768C12.4155 5.14419 12.7194 4.4062 12.7194 3.62481C12.7194 2.84341 12.4155 2.10543 11.862 1.55194C10.7116 0.401551 8.85581 0.401551 7.70543 1.55194L2.39845 6.85892C1.68217 7.5752 1.29147 8.51938 1.29147 9.52868C1.29147 10.538 1.68217 11.493 2.39845 12.1985C3.11473 12.9147 4.05892 13.3054 5.06822 13.3054C6.07752 13.3054 7.03256 12.9147 7.73799 12.1985L10.093 9.84341C10.2667 9.66977 10.2667 9.3876 10.093 9.21395C9.91938 9.04031 9.63721 9.04031 9.46357 9.21395L7.10853 11.569C6.56589 12.1116 5.83876 12.4155 5.06822 12.4155C4.29768 12.4155 3.57054 12.1116 3.02791 11.569C2.48527 11.0264 2.1814 10.2992 2.1814 9.52868C2.1814 8.75814 2.48527 8.03101 3.02791 7.48837L8.33488 2.1814C8.72558 1.7907 9.23566 1.5845 9.7783 1.5845C10.3209 1.5845 10.8419 1.80155 11.2217 2.1814C11.6124 2.57209 11.8186 3.08217 11.8186 3.62481C11.8186 4.16744 11.6016 4.68837 11.2217 5.06822L5.90388 10.386C5.43721 10.8527 4.66667 10.8527 4.18915 10.386C3.96124 10.1581 3.83101 9.85427 3.83101 9.52868C3.83101 9.2031 3.96124 8.89923 4.18915 8.67132L6.55504 6.31628Z"
-              fill="white" />
-          </svg>
-          <b>Signer</b>
-        </div>
-        <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-      </div>
-      <div>
-        <div>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1.13954 12.817H12.8496C13.0992 12.817 13.2946 12.6217 13.2946 12.3721V2.44186C13.2946 2.19224 13.0992 1.99689 12.8496 1.99689H10.6465V1.61705C10.6465 1.36744 10.4512 1.17209 10.2016 1.17209C9.95195 1.17209 9.7566 1.36744 9.7566 1.61705V1.99689H4.30853V1.61705C4.30853 1.36744 4.11318 1.17209 3.86357 1.17209C3.61396 1.17209 3.41861 1.36744 3.41861 1.61705V1.99689H1.13954C0.889929 1.99689 0.69458 2.19224 0.69458 2.44186V12.3829C0.69458 12.6217 0.900782 12.817 1.13954 12.817ZM1.5845 2.88682H3.41861V3.12558C3.41861 3.37519 3.61396 3.57054 3.86357 3.57054C4.11318 3.57054 4.30853 3.37519 4.30853 3.12558V2.88682H9.7566V3.12558C9.7566 3.37519 9.95195 3.57054 10.2016 3.57054C10.4512 3.57054 10.6465 3.37519 10.6465 3.12558V2.88682H12.4155V4.0372H1.5845V2.88682ZM1.5845 4.92713H12.4047V11.938H1.5845V4.92713Z"
-              fill="white" />
-            <path d="M10.2015 6.96744H3.79845C3.54883 6.96744 3.35349 7.16279 3.35349 7.4124C3.35349 7.66201 3.54883 7.85736 3.79845 7.85736H10.2015C10.4512 7.85736 10.6465 7.66201 10.6465 7.4124C10.6465 7.16279 10.4512 6.96744 10.2015 6.96744Z"
-              fill="white" />
-            <path d="M7 9.11627H3.79845C3.54883 9.11627 3.35349 9.31162 3.35349 9.56123C3.35349 9.81085 3.54883 10.0062 3.79845 10.0062H7C7.24961 10.0062 7.44496 9.81085 7.44496 9.56123C7.44496 9.31162 7.24961 9.11627 7 9.11627Z"
-              fill="white" />
-          </svg>
-          <b>Created</b>
-        </div>
-        <span>{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})</span>
-      </div>
-      <div>
-        <div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3.7581 11.2837C3.68368 11.3581 3.59065 11.3953 3.48833 11.3953C3.386 11.3953 3.29298 11.3581 3.21856 11.2837C3.06972 11.1349 3.06972 10.893 3.21856 10.7442L7.96275 5.99999L3.21856 1.25581C3.06972 1.10697 3.06972 0.86511 3.21856 0.716273C3.3674 0.567435 3.60926 0.567435 3.7581 0.716273L8.77205 5.73023C8.92089 5.87906 8.92089 6.12092 8.77205 6.26976L3.7581 11.2837Z"
-              fill="white" />
-          </svg>
-          <b>Transactions</b>
-        </div>
-        <span>{{block.tx_count}}</span>
-      </div>
-      <div>
-        <div>
-          <b>Extra Data</b>
-        </div>
-        <span>{{block.extra_data | trimExtra}}</span>
-      </div>
-    </div>
-  </div>
-</ng-container>
-<ng-container *ifViewportSize="['medium', 'large']">
-  <div class="uk-overflow-auto p-b--60">
-    <table *ngIf="recentBlocks$ | async as recentBlocks" class="uk-table uk-table-small uk-table-striped home__table">
-      <thead>
-        <tr>
-          <th class="uk-text-nowrap w_1_6">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clip-path="url(#clip0)">
-                <path d="M9.61551 10.245C9.70233 10.3318 9.81086 10.3752 9.93024 10.3752C10.0496 10.3752 10.1581 10.3318 10.245 10.245L13.1752 7.31473C13.1969 7.29303 13.2186 7.27132 13.2295 7.24961C13.2295 7.24961 13.2403 7.23876 13.2403 7.22791C13.2512 7.2062 13.262 7.1845 13.2729 7.17365C13.2729 7.16279 13.2729 7.15194 13.2837 7.15194C13.2946 7.13023 13.2946 7.11938 13.3054 7.09768C13.3163 7.06512 13.3163 7.04341 13.3163 7.01085C13.3163 6.9783 13.3163 6.95659 13.3054 6.92403C13.3054 6.90233 13.2946 6.88062 13.2837 6.86977C13.2837 6.85892 13.2837 6.84806 13.2729 6.84806C13.262 6.82636 13.2512 6.80465 13.2403 6.78295C13.2403 6.78295 13.2403 6.7721 13.2295 6.7721C13.2186 6.75039 13.1969 6.72868 13.1752 6.70698L10.245 3.77675C10.0713 3.6031 9.78916 3.6031 9.61551 3.77675C9.44187 3.95039 9.44187 4.23256 9.61551 4.4062L11.7861 6.57675H4.06978C3.82017 6.57675 3.62482 6.77209 3.62482 7.02171C3.62482 7.27132 3.82017 7.46667 4.06978 7.46667H11.7861L9.61551 9.63721C9.44187 9.78915 9.44187 10.0713 9.61551 10.245Z"
-                  fill="white" />
-                <path d="M1.13954 13.2946H7C7.24962 13.2946 7.44497 13.0992 7.44497 12.8496V8.47597C7.44497 8.22636 7.24962 8.03101 7 8.03101C6.75039 8.03101 6.55504 8.22636 6.55504 8.47597V12.4047H1.5845V1.5845H6.55504V5.51318C6.55504 5.7628 6.75039 5.95815 7 5.95815C7.24962 5.95815 7.44497 5.7628 7.44497 5.51318V1.13954C7.44497 0.889929 7.24962 0.69458 7 0.69458H1.13954C0.889929 0.69458 0.69458 0.889929 0.69458 1.13954V12.8496C0.705433 13.0992 0.900782 13.2946 1.13954 13.2946Z"
-                  fill="white" />
-                <path d="M8.39999 -1.79999C9.99999 -3.39999 9.99999 -5.99999 8.39999 -7.59999C6.8 -9.19999 4.19999 -9.19999 2.59999 -7.59999L-19.1 14.1C-22.8 17.8 -24.8 22.6 -24.8 27.8C-24.8 33 -22.8 37.8 -19.1 41.5C-11.5 49.1 0.799995 49.1 8.3 41.5L57.3 -7.49999C62.4 -12.6 65.2 -19.4 65.2 -26.6C65.2 -33.8 62.4 -40.6 57.3 -45.7C46.7 -56.3 29.6 -56.3 19 -45.7L-29.9 3.20001C-36.5 9.80001 -40.1 18.5 -40.1 27.8C-40.1 37.1 -36.5 45.9 -29.9 52.4C-23.3 59 -14.6 62.6 -5.3 62.6C4 62.6 12.8 59 19.3 52.4L41 30.7C42.6 29.1 42.6 26.5 41 24.9C39.4 23.3 36.8 23.3 35.2 24.9L13.5 46.6C8.49999 51.6 1.8 54.4 -5.3 54.4C-12.4 54.4 -19.1 51.6 -24.1 46.6C-29.1 41.6 -31.9 34.9 -31.9 27.8C-31.9 20.7 -29.1 14 -24.1 9.00001L24.8 -39.9C28.4 -43.5 33.1 -45.4 38.1 -45.4C43.1 -45.4 47.9 -43.4 51.4 -39.9C55 -36.3 56.9 -31.6 56.9 -26.6C56.9 -21.6 54.9 -16.8 51.4 -13.3L2.39999 35.7C-1.90001 40 -9.00001 40 -13.4 35.7C-15.5 33.6 -16.7 30.8 -16.7 27.8C-16.7 24.8 -15.5 22 -13.4 19.9L8.39999 -1.79999Z"
-                  fill="black" />
-              </g>
-              <defs>
-                <clipPath id="clip0">
-                  <rect width="14" height="14" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-            <span>Block</span>
-          </th>
-          <th class="uk-text-nowrap w_1_6">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.7581 11.2837C3.68368 11.3581 3.59065 11.3953 3.48833 11.3953C3.386 11.3953 3.29298 11.3581 3.21856 11.2837C3.06972 11.1349 3.06972 10.893 3.21856 10.7442L7.96275 5.99999L3.21856 1.25581C3.06972 1.10697 3.06972 0.86511 3.21856 0.716273C3.3674 0.567435 3.60926 0.567435 3.7581 0.716273L8.77205 5.73023C8.92089 5.87906 8.92089 6.12092 8.77205 6.26976L3.7581 11.2837Z"
-                fill="white" />
-            </svg>
-            <span>Transactions</span>
-          </th>
-          <th class="uk-text-nowrap w_2_6">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6.55504 6.31628C6.72868 6.14264 6.72868 5.86047 6.55504 5.68682C6.3814 5.51318 6.09923 5.51318 5.92558 5.68682L3.57054 8.04186C3.16899 8.44341 2.95194 8.96434 2.95194 9.52868C2.95194 10.093 3.16899 10.614 3.57054 11.0155C4.39535 11.8403 5.73023 11.8403 6.54419 11.0155L11.862 5.69768C12.4155 5.14419 12.7194 4.4062 12.7194 3.62481C12.7194 2.84341 12.4155 2.10543 11.862 1.55194C10.7116 0.401551 8.85581 0.401551 7.70543 1.55194L2.39845 6.85892C1.68217 7.5752 1.29147 8.51938 1.29147 9.52868C1.29147 10.538 1.68217 11.493 2.39845 12.1985C3.11473 12.9147 4.05892 13.3054 5.06822 13.3054C6.07752 13.3054 7.03256 12.9147 7.73799 12.1985L10.093 9.84341C10.2667 9.66977 10.2667 9.3876 10.093 9.21395C9.91938 9.04031 9.63721 9.04031 9.46357 9.21395L7.10853 11.569C6.56589 12.1116 5.83876 12.4155 5.06822 12.4155C4.29768 12.4155 3.57054 12.1116 3.02791 11.569C2.48527 11.0264 2.1814 10.2992 2.1814 9.52868C2.1814 8.75814 2.48527 8.03101 3.02791 7.48837L8.33488 2.1814C8.72558 1.7907 9.23566 1.5845 9.7783 1.5845C10.3209 1.5845 10.8419 1.80155 11.2217 2.1814C11.6124 2.57209 11.8186 3.08217 11.8186 3.62481C11.8186 4.16744 11.6016 4.68837 11.2217 5.06822L5.90388 10.386C5.43721 10.8527 4.66667 10.8527 4.18915 10.386C3.96124 10.1581 3.83101 9.85427 3.83101 9.52868C3.83101 9.2031 3.96124 8.89923 4.18915 8.67132L6.55504 6.31628Z"
-                fill="white" />
-            </svg>
-            <span>Signer</span>
-          </th>
-          <th class="uk-text-nowrap w_1_6">
-            <svg width="14" height="14" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13.323,13.381c6.418,0,12.834,0,19.252,0c1.613,0,1.613-2.5,0-2.5c-6.418,0-12.834,0-19.252,0
-				C11.711,10.881,11.711,13.381,13.323,13.381z"/>
-              <path d="M32.577,16.798c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
-				C34.188,19.298,34.188,16.798,32.577,16.798z"/>
-              <path d="M32.577,22.281c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
-				C34.188,24.781,34.188,22.281,32.577,22.281z"/>
-              <path d="M32.577,28.197c-6.418,0-12.835,0-19.253,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.835,0,19.253,0
-				C34.188,30.697,34.188,28.197,32.577,28.197z"/>
-              <path d="M32.204,33.781c-6.418,0-12.834,0-19.252,0c-1.612,0-1.612,2.5,0,2.5c6.418,0,12.834,0,19.252,0
-				C33.817,36.281,33.817,33.781,32.204,33.781z"/>
-              <path d="M33.431,0H5.179v45.057h34.699V6.251L33.431,0z M36.878,42.056H8.179V3h23.707v4.76h4.992V42.056z"/>
-            </svg>
-            <span>Extra data</span>
-          </th>
-          <th class="uk-text-nowrap w_1_6">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1.13954 12.817H12.8496C13.0992 12.817 13.2946 12.6217 13.2946 12.3721V2.44186C13.2946 2.19224 13.0992 1.99689 12.8496 1.99689H10.6465V1.61705C10.6465 1.36744 10.4512 1.17209 10.2016 1.17209C9.95195 1.17209 9.7566 1.36744 9.7566 1.61705V1.99689H4.30853V1.61705C4.30853 1.36744 4.11318 1.17209 3.86357 1.17209C3.61396 1.17209 3.41861 1.36744 3.41861 1.61705V1.99689H1.13954C0.889929 1.99689 0.69458 2.19224 0.69458 2.44186V12.3829C0.69458 12.6217 0.900782 12.817 1.13954 12.817ZM1.5845 2.88682H3.41861V3.12558C3.41861 3.37519 3.61396 3.57054 3.86357 3.57054C4.11318 3.57054 4.30853 3.37519 4.30853 3.12558V2.88682H9.7566V3.12558C9.7566 3.37519 9.95195 3.57054 10.2016 3.57054C10.4512 3.57054 10.6465 3.37519 10.6465 3.12558V2.88682H12.4155V4.0372H1.5845V2.88682ZM1.5845 4.92713H12.4047V11.938H1.5845V4.92713Z"
-                fill="white" />
-              <path d="M10.2015 6.96744H3.79845C3.54883 6.96744 3.35349 7.16279 3.35349 7.4124C3.35349 7.66201 3.54883 7.85736 3.79845 7.85736H10.2015C10.4512 7.85736 10.6465 7.66201 10.6465 7.4124C10.6465 7.16279 10.4512 6.96744 10.2015 6.96744Z"
-                fill="white" />
-              <path d="M7 9.11627H3.79845C3.54883 9.11627 3.35349 9.31162 3.35349 9.56123C3.35349 9.81085 3.54883 10.0062 3.79845 10.0062H7C7.24961 10.0062 7.44496 9.81085 7.44496 9.56123C7.44496 9.31162 7.24961 9.11627 7 9.11627Z"
-                fill="white" />
-            </svg>
-            <span>Created</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let block of recentBlocks?.blocks">
-          <td class="uk-text-nowrap">
-            <a routerLink="/block/{{block.number}}">{{block.number}}</a>
-          </td>
-          <td>{{block.tx_count}}</td>
-          <td class="uk-text-truncate">
-            <a class="ws-p" routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
-          </td>
-          <td>{{block.extra_data | trimExtra}}</td>
-          <td class="uk-text-truncate">
-            {{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</ng-container>

@@ -1,4 +1,4 @@
-import {ABIDefinition} from 'web3/eth/abi';
+import {AbiItem} from 'web3-utils';
 
 export class Contract {
   address: string;
@@ -8,7 +8,7 @@ export class Contract {
   compiler_version: string;
   optimization: boolean;
   source_code: string;
-  abi: ABIDefinition[];
+  abi: AbiItem[];
   created_at: Date;
   updated_at: Date;
 }

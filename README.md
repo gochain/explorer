@@ -222,14 +222,20 @@ GET /api/address/{address_hash}
 **Response:**
 ```json
 {
-  "address": "0xeA224a724c08Ea862959AfE293C647c8671638f2",
-  "balance": "0.001059091847755743",
-  "balance_wei": "1059091847755743",
-  "updated_at": "2019-01-04T16:27:12.812Z",
-  "total_supply": "0",
-  "contract": false,
-  "go20": false,
-  "number_of_transactions": 1800373
+  "address": "0x1997eF6BeE5d61979E63d0c6b40F6d185Ab1156D",
+  "balance": "0.000000000000000000",
+  "balance_wei": "0",
+  "updated_at": "2019-05-11T00:53:47.478+06:00",
+  "token_name": "Example Fixed Supply Token",
+  "token_symbol": "FIXED",
+  "decimals": 18,
+  "total_supply": "1000000000000000000000000",
+  "contract": true,
+  "erc_types": ["Go20","Go20Detailed"],
+  "interfaces": null,
+  "number_of_transactions": 3,
+  "number_of_token_holders": 3,
+  "number_of_internal_transactions": 2,
 }
 ```
 
@@ -418,7 +424,6 @@ GET /api/richlist
       "updated_at": "2019-01-04T16:28:28.72Z",
       "total_supply": "0",
       "contract": false,
-      "go20": false,
       "number_of_transactions": 0
     }
   ]

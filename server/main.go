@@ -205,6 +205,7 @@ func main() {
 				r.Route("/blocks", func(r chi.Router) {
 					r.Get("/", getListBlocks)
 					r.Get("/{num}", getBlock)
+					r.Head("/{hash}", checkBlockExist)
 					r.Get("/{num}/transactions", getBlockTransactions)
 				})
 
@@ -219,6 +220,7 @@ func main() {
 				})
 
 				r.Route("/transaction", func(r chi.Router) {
+					r.Head("/{hash}", checkTransactionExist)
 					r.Get("/{hash}", getTransaction)
 				})
 			})
@@ -235,15 +237,24 @@ func main() {
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
-	total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
-	w.Write([]byte(total.FloatString(18)))
+	totalSupply, err := backendInstance.TotalSupply()
+	if err == nil {
+		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
+		w.Write([]byte(total.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
-	circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
-	w.Write([]byte(circulating.FloatString(18)))
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err == nil {
+		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
+		w.Write([]byte(circulating.FloatString(18)))
+	} else {
+		writeJSON(w, http.StatusInternalServerError, err)
+	}
+
 }
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
@@ -266,9 +277,17 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
-	totalSupply, _ := backendInstance.TotalSupply()
+	totalSupply, err := backendInstance.TotalSupply()
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	skip, limit := parseSkipLimit(r)
-	circulatingSupply, _ := backendInstance.CirculatingSupply()
+	circulatingSupply, err := backendInstance.CirculatingSupply()
+	if err != nil {		
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	bl := &models.Richlist{
 		Rankings:          []*models.Address{},
 		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
@@ -281,14 +300,10 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
 	log.Info().Str("address", addressHash).Msg("looking up address")
-	address := backendInstance.GetAddressByHash(addressHash)
-	balance, err := backendInstance.BalanceAt(addressHash, "latest")
-	if err == nil {
-		if address == nil { //edge case if the balance for the address found but we haven't imported the address yet TODO:move it to backend, but need to filter out genesis
-			address = &models.Address{Address: addressHash}
-		}
-		address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
-		address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
+	address, err := backendInstance.GetAddressByHash(addressHash)
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
 	}
 	writeJSON(w, http.StatusOK, address)
 }
@@ -298,6 +313,16 @@ func getTransaction(w http.ResponseWriter, r *http.Request) {
 	log.Info().Str("transaction", transactionHash).Msg("looking up transaction")
 	transaction := backendInstance.GetTransactionByHash(transactionHash)
 	writeJSON(w, http.StatusOK, transaction)
+}
+
+func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	tx := backendInstance.GetTransactionByHash(hash)
+	if tx != nil {
+		writeJSON(w, http.StatusOK, nil)
+	} else {
+		writeJSON(w, http.StatusNotFound, nil)
+	}
 }
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
@@ -340,7 +365,8 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
 	tokenTransactions := false
-	if r.URL.Query().Get("token_transactions") != "" {
+	token_transactions_param := r.URL.Query().Get("token_transactions")
+	if token_transactions_param != "" && token_transactions_param != "false" {
 		tokenTransactions = true
 	}
 	skip, limit := parseSkipLimit(r)
@@ -383,6 +409,12 @@ func verifyContract(w http.ResponseWriter, r *http.Request) {
 	}*/
 	if contractData.Address == "" || contractData.ContractName == "" || contractData.SourceCode == "" || contractData.CompilerVersion == "" {
 		err := errors.New("required field is empty")
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if len(contractData.Address) != 42 {
+		err := errors.New("contract address is wrong")
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
@@ -465,6 +497,16 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
+}
+
+func checkBlockExist(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	block := backendInstance.GetBlockByHash(hash)
+	if block != nil {
+		writeJSON(w, http.StatusOK, nil)
+	} else {
+		writeJSON(w, http.StatusNotFound, nil)
+	}
 }
 
 func pingDB(w http.ResponseWriter, r *http.Request) {

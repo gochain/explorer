@@ -1,0 +1,96 @@
+<ng-container *ngIf="!!internal_transactions.length; else emptyInternalTxs">
+  <ng-container *appViewportSize="['small']">
+    <div class="data-list">
+      <div class="data-list-item" *ngFor="let tx of internal_transactions">
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Tx hash:
+          </div>
+          <div class="data-list-desc">
+            <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Processed:
+          </div>
+          <div class="data-list-desc">
+            <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+              {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            </ng-container>
+            <ng-template #updated_at>
+              {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+            </ng-template>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            From:
+          </div>
+          <div class="data-list-desc">
+            <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            To:
+          </div>
+          <div class="data-list-desc">
+            <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Value ({{addr.token_symbol}}):
+          </div>
+          <div class="data-list-desc">
+            {{tx.value | weiToGO: false : true : addr.decimals | bigNumber}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *appViewportSize="['medium', 'large']">
+    <table class="table table-striped" style="table-layout: fixed;">
+      <thead>
+      <tr>
+        <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
+        <th class="w-20">Transaction hash</th>
+        <th class="w-20 text-nowrap">Processed at</th>
+        <th class="w-20">From</th>
+        <th class="w-20">To</th>
+        <th class="w-20 text-nowrap">Value ({{addr.token_symbol}})</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let tx of internal_transactions">
+        <td class="text-truncate text-monospace"><a class="ws-p"
+                                                    routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+        </td>
+        <td>
+          <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+          </ng-container>
+          <ng-template #updated_at>
+            {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+          </ng-template>
+        </td>
+        <td class="text-truncate text-monospace"><a class="ws-p"
+                                                    routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
+        </td>
+        <td class="text-truncate text-monospace"><a class="ws-p"
+                                                    routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
+        </td>
+        <td class="text-nowrap text-right text-monospace ws-p">{{tx.value | weiToGO: false : true : addr.decimals |
+          bigNumber}}</td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <div class="mt-4">
+    <app-pagination [queryParam]="internalTransactionQueryParams"></app-pagination>
+  </div>
+</ng-container>
+<ng-template #emptyInternalTxs>
+  <div class="empty">No transactions</div>
+</ng-template>

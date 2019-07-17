@@ -1,0 +1,97 @@
+<div class="container" *ngIf="walletService.account">
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title"><img src="../../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
+      <p>Address: {{walletService.account.address}}</p>
+      <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
+      <p>
+        <button
+            routerLink="/addr/{{walletService.account.address}}"
+            class="btn btn-outline-success btn-sm mr-2"
+        >
+          VIEW ADDRESS
+        </button>
+        <button
+            type="button"
+            class="btn btn-outline-info btn-sm"
+            (click)="walletService.closeAccount()"
+        >
+          CLOSE ACCOUNT
+        </button>
+      </p>
+    </div>
+  </div>
+  <div class="card mt-4 mb-5">
+    <div class="card-body">
+      <app-tabs name="account_tab" [disabled]="walletService.isProcessing">
+        <tab name="owned_tokens" title="Owned Tokens">
+          <tab-content>
+            <app-owned-tokens [addrHash]="walletService.account.address" [showPagination]="false"></app-owned-tokens>
+          </tab-content>
+        </tab>
+        <tab name="transactions" title="Transactions">
+          <tab-content>
+            <app-addr-transactions *ngIf="addr" [addr]="addr"></app-addr-transactions>
+          </tab-content>
+        </tab>
+        <tab name="send_go" title="Send GO">
+          <tab-content [hidden]="walletService.isProcessing">
+            <app-sender></app-sender>
+          </tab-content>
+        </tab>
+        <tab name="deploy_contract" title="Deploy Contract">
+          <tab-content [hidden]="walletService.isProcessing">
+            <app-deployer></app-deployer>
+          </tab-content>
+        </tab>
+        <tab name="use_contract" title="Use Contract">
+          <tab-content [hidden]="walletService.isProcessing">
+            <app-interactor></app-interactor>
+          </tab-content>
+        </tab>
+      </app-tabs>
+      <ng-container *ngIf="walletService.isProcessing">
+        <div *ngIf="!walletService.receipt; else result;" class="processing">
+          <div class="processing__icon">
+            <img src="../../../../assets/icons/loader.svg" alt="Processing">
+          </div>
+          <div class="processing__content mt-4">
+            Transaction submitted, waiting for receipt...
+          </div>
+        </div>
+        <ng-template #result>
+          <div class="receipt">
+            <div class="receipt__header text-center h4 text-primary mb-4">
+              Transaction complete!
+            </div>
+            <div class="receipt__content mb-4">
+              <div class="row">
+                <div class="col-md-2">Transaction Hash:</div>
+                <div class="col-md-10">
+                  <a routerLink="/tx/{{walletService.receipt.transactionHash}}" target="_blank">{{walletService.receipt.transactionHash}}</a>
+                </div>
+                <div class="col-md-2">Block Hash:</div>
+                <div class="col-md-10">
+                  <a routerLink="/block/{{walletService.receipt.blockHash}}" target="_blank">{{walletService.receipt.blockHash}}</a>
+                </div>
+                <ng-container *ngIf="walletService.receipt.contractAddress">
+                  <div class="col-md-2">Contract Address:</div>
+                  <div class="col-md-10">
+                    <a routerLink="/address/{{ walletService.receipt.contractAddress}}" target="_blank">{{ walletService.receipt.contractAddress }}</a>
+                  </div>
+                </ng-container>
+                <div class="col-md-2">Gas Used:</div>
+                <div class="col-md-10">
+                  {{walletService.receipt.gasUsed}}
+                </div>
+              </div>
+            </div>
+            <div class="receipt__footer text-right">
+              <button (click)="walletService.resetProcessing()" class="btn btn-primary">Cancel</button>
+            </div>
+          </div>
+        </ng-template>
+      </ng-container>
+    </div>
+  </div>
+</div>

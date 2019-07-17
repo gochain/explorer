@@ -25,6 +25,10 @@ export class ApiService {
     this.apiURL = ApiService.getApiURL();
   }
 
+  head(url: string, manualUrl = false) {
+    return this.http.head<any>(manualUrl ? url : (this.apiURL + url));
+  }
+
   get(url: string, params?: HttpParams, manualUrl = false): Observable<any> {
     return this.http.get<any>(manualUrl ? url : (this.apiURL + url), {
       params
@@ -63,6 +67,6 @@ export class ApiService {
     // return an observable with a user-facing error message
     // return throwError('Something bad happened; please try again later.');
     return of(null);
-  }
+  };
 }
 

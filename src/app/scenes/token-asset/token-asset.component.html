@@ -1,49 +1,51 @@
-<div class="main-top">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
-  </div>
-</div>
-<ng-container *ngIf="!!metadata; else notFound">
-  <div class="p--20">
-    <div class="list-holder">
-      <ul>
-        <li>
-          <p>Token address</p>
-          <b><a routerLink="/token/{{contractAddr}}">{{contractAddr}}</a></b>
-        </li>
-        <li>
-          <p>Token ID</p>
-          <b>{{tokenId}}</b>
-        </li>
-        <li *ngIf="metadata.name">
-          <p>Name</p>
-          <b>{{metadata.name}}</b>
-        </li>
-        <li *ngIf="metadata.description">
-          <p>Description</p>
-          <b>{{metadata.description}}</b>
-        </li>
-        <li *ngIf="metadata.image">
-          <p>Image</p>
-          <b><img class="token__img" [src]="metadata.image"></b>
-        </li>
-        <li *ngIf="metadata.external_url">
-          <p>URL</p>
-          <b><a [href]="metadata.external_url" target="_blank">{{metadata.external_url}}</a></b>
-        </li>
-      </ul>
-    </div>
-    <div class="list-holder__footer">
-      <div>
-        <p>Data</p>
-        <b>
-          <pre class="code">{{metadata.origin_data}}</pre>
-        </b>
+<div class="container" *ngIf="!!metadata; else notFound">
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title">
+        <img src="../../../assets/icons/token.svg" alt="Token"> Token
+      </div>
+      <div class="row">
+        <div class="col-lg-10 col-md-9">
+          <dl>
+            <dt>Token address</dt>
+            <dd><a routerLink="/token/{{contractAddr}}">{{contractAddr}}</a></dd>
+            <ng-container *ngIf="metadata.ownerAddr">
+              <dt>Owner address</dt>
+              <dd><a routerLink="/addr/{{metadata.ownerAddr}}">{{metadata.ownerAddr}}</a></dd>
+            </ng-container>
+            <ng-container>
+              <dt>Token ID</dt>
+              <dd>{{tokenId}}</dd>
+            </ng-container>
+            <ng-container *ngIf="metadata.name">
+              <dt>Name</dt>
+              <dd>{{metadata.name}}</dd>
+            </ng-container>
+            <ng-container *ngIf="metadata.description">
+              <dt>Description</dt>
+              <dd>{{metadata.description}}</dd>
+            </ng-container>
+            <ng-container *ngIf="metadata.external_url">
+              <dt>URL</dt>
+              <dd><a [href]="metadata.external_url" target="_blank">{{metadata.external_url}}</a></dd>
+            </ng-container>
+          </dl>
+        </div>
+        <div class="col-lg-2 col-md-3" *ngIf="metadata.image">
+          <img class="img-thumbnail" [src]="metadata.image"/>
+        </div>
       </div>
     </div>
+    <div class="card-footer">
+      <form>
+        <div class="form-group">
+          <label for="data">Data</label>
+          <textarea class="form-control code" id="data" rows="10">{{metadata.origin_data}}</textarea>
+        </div>
+      </form>
+    </div>
   </div>
-</ng-container>
+</div>
 <ng-template #notFound>
   <app-info text="Token metadata is not found"></app-info>
 </ng-template>

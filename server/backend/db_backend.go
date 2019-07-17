@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -68,24 +69,29 @@ func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *mo
 	log.Debug().Interface("TX:", tx).Msg("parseTx")
 	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
-		To:             to,
-		From:           from.Hex(),
-		Value:          tx.Value().String(),
-		GasPrice:       tx.GasPrice().String(),
-		GasLimit:       tx.Gas(),
-		BlockNumber:    block.Number().Int64(),
-		GasFee:         new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
-		Nonce:          uint64(tx.Nonce()),
-		BlockHash:      block.Hash().Hex(),
-		CreatedAt:      time.Unix(block.Time().Int64(), 0),
-		InputData:      hex.EncodeToString(tx.Data()[:]),
-		InputDataEmpty: InputDataEmpty,
+		To:              to,
+		From:            from.Hex(),
+		Value:           tx.Value().String(),
+		GasPrice:        tx.GasPrice().String(),
+		ReceiptReceived: false,
+		GasLimit:        tx.Gas(),
+		BlockNumber:     block.Number().Int64(),
+		GasFee:          new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
+		Nonce:           tx.Nonce(),
+		BlockHash:       block.Hash().Hex(),
+		CreatedAt:       time.Unix(block.Time().Int64(), 0),
+		InputData:       hex.EncodeToString(tx.Data()[:]),
+		InputDataEmpty:  InputDataEmpty,
 	}
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	var transactions []string
 	for _, tx := range block.Transactions() {
 		transactions = append(transactions, tx.Hash().Hex())
+	}
+	nonceBool := false
+	if block.Nonce() == 0xffffffffffffffff {
+		nonceBool = true
 	}
 	return &models.Block{Number: block.Header().Number.Int64(),
 		GasLimit:   int(block.Header().GasLimit),
@@ -94,7 +100,7 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		ParentHash: block.ParentHash().Hex(),
 		TxHash:     block.Header().TxHash.Hex(),
 		GasUsed:    strconv.Itoa(int(block.Header().GasUsed)),
-		Nonce:      uint64(block.Nonce()),
+		NonceBool:  &nonceBool,
 		Miner:      block.Coinbase().Hex(),
 		TxCount:    int(uint64(len(block.Transactions()))),
 		Difficulty: block.Difficulty().Int64(),
@@ -238,13 +244,18 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 	for _, tx := range block.Transactions() {
 		self.importTx(tx, block)
 	}
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": block.Coinbase().Hex()}, &models.ActiveAddress{Address: block.Coinbase().Hex(), UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importBlock")
-	}
+	self.UpdateActiveAddress(block.Coinbase().Hex())
 	return b
 
 }
+
+func (self *MongoBackend) UpdateActiveAddress(address string) {
+	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
+	if err != nil {
+		log.Fatal().Err(err).Msg("UpdateActiveAddress")
+	}
+}
+
 func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	log.Debug().Msg("Importing tx" + tx.Hash().Hex())
 	transaction := self.parseTx(tx, block)
@@ -254,7 +265,10 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		log.Info().Str("hash", transaction.TxHash).Msg("Hash doesn't have an address")
 		receipt, err := self.goClient.TransactionReceipt(context.Background(), tx.Hash())
 		if err == nil {
-			transaction.ContractAddress = receipt.ContractAddress.String()
+			contractAddress := receipt.ContractAddress.String()
+			if contractAddress != "0x0000000000000000000000000000000000000000" {
+				transaction.ContractAddress = contractAddress
+			}
 			transaction.Status = false
 			if receipt.Status == 1 {
 				transaction.Status = true
@@ -270,16 +284,8 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 		log.Fatal().Err(err).Msg("importTx")
 	}
 
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": toAddress}, &models.ActiveAddress{Address: toAddress, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
-	_, err = self.mongo.C("ActiveAddress").Upsert(bson.M{"address": transaction.From}, &models.ActiveAddress{Address: transaction.From, UpdatedAt: time.Now()})
-	if err != nil {
-		log.Fatal().Err(err).Msg("importTX")
-	}
-
+	self.UpdateActiveAddress(toAddress)
+	self.UpdateActiveAddress(transaction.From)
 }
 func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
@@ -309,7 +315,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	return true
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	log.Debug().Str("address", address).Str("precise balance", balanceGoString).Float64("balance float", balanceGoFloat).Msg("Updating address")
@@ -319,6 +325,12 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 
 	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("importAddress")
+	}
+
+	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
@@ -332,20 +344,20 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Decimals:       token.Decimals,
 		TotalSupply:    token.TotalSupply.String(),
 		Contract:       contract,
-		GO20:           go20,
 		ErcTypes:       token.Types,
+		Interfaces:     token.Interfaces,
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
 		NumberOfTokenHolders:         tokenHoldersCounter,
 		NumberOfInternalTransactions: internalTransactionsCounter,
+		NumberOfTokenTransactions:    tokenTransactionsCounter,
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
 		log.Fatal().Err(err).Msg("importAddress")
 	}
 	return addressM
-
 }
 
 func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
@@ -481,23 +493,35 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 		log.Debug().Str("Transaction", transactionHash).Err(err).Msg("GetTransactionByHash")
 		return nil
 	}
-	//lazy calculation for receipt
-	receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
-	if err != nil {
-		log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
-	} else {
-		gasPrice := new(big.Int)
-		_, err := fmt.Sscan(c.GasPrice, gasPrice)
+	// lazy calculation for receipt
+	if !c.ReceiptReceived {
+		receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 		if err != nil {
-			log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
+			log.Warn().Err(err).Str("TX hash", common.HexToHash(transactionHash).String()).Msg("TransactionReceipt")
+		} else {
+			gasPrice := new(big.Int)
+			_, err := fmt.Sscan(c.GasPrice, gasPrice)
+			if err != nil {
+				log.Error().Str("Cannot convert to bigint", c.GasPrice).Err(err).Msg("getTransactionByHash")
+			}
+			c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+			c.ContractAddress = receipt.ContractAddress.String()
+			c.Status = false
+			if receipt.Status == 1 {
+				c.Status = true
+			}
+			c.ReceiptReceived = true
+			jsonValue, err := json.Marshal(receipt.Logs)
+			if err != nil {
+				log.Error().Err(err).Msg("getTransactionByHash")
+			}
+			c.Logs = string(jsonValue)
+			log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
+			_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": c.TxHash}, c)
+			if err != nil {
+				log.Error().Err(err).Msg("getTransactionByHash")
+			}
 		}
-		c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
-		c.ContractAddress = receipt.ContractAddress.String()
-		c.Status = false
-		if receipt.Status == 1 {
-			c.Status = true
-		}
-		log.Info().Str("Transaction", transactionHash).Uint64("Got new gas used", receipt.GasUsed).Uint64("Old gas", c.GasLimit).Msg("GetTransactionByHash")
 	}
 	return &c
 }

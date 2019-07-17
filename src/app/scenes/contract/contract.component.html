@@ -1,58 +1,76 @@
-<div class="main-top main-top--sm">
-  <div class="main-top__search">
-    <h1>Explore your block</h1>
-    <app-search></app-search>
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title">
+        <img src="../../../assets/icons/check-square.svg" alt="Verify Contract">
+        Contract Verification
+      </div>
+      <p>
+        Verify and Publish Contract Source Code
+      </p>
+      <p>
+        If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be
+        published
+        online. (to build a contract you should either use
+        <a href="https://github.com/gochain-io/web3#build-a-smart-contract">web3 tool</a> or set the version of the solc
+        compiler in the contract source header using a 'pragma solidity' tag)
+      </p>
+      <form [formGroup]="form" (submit)="onSubmit()">
+        <div class="form-group">
+          <label for="contarct-address">Contract Address*</label>
+          <input
+              type="text"
+              class="form-control"
+              id="contarct-address"
+              placeholder="Contract Address"
+              formControlName="address"
+          >
+        </div>
+        <div class="form-group">
+          <label for="contract-name">Contract Name* (must match a contract from the source)</label>
+          <input
+              type="text"
+              class="form-control"
+              id="contract-name"
+              placeholder="Contract Name"
+              formControlName="contract_name"
+          >
+        </div>
+        <div class="form-group">
+          <label for="compiler">Compiler*</label>
+          <select
+              *ngIf="compilers$ | async as compilers"
+              class="form-control"
+              id="compiler"
+              formControlName="compiler_version">
+            <option value="" disabled selected>Select compiler</option>
+            <option *ngFor="let compiler of compilers">{{compiler}}</option>
+          </select>
+        </div>
+        <div class="form-group form-check">
+          <input
+              type="checkbox"
+              class="form-check-input"
+              id="optimization"
+              [value]="true"
+              formControlName="optimization"
+          >
+          <label class="form-check-label" for="optimization">Optimization*</label>
+        </div>
+        <div class="form-group">
+          <label for="contract-code">Contract Code*</label>
+          <textarea
+              class="form-control"
+              id="contract-code"
+              rows="9"
+              formControlName="source_code"
+          >
+          </textarea>
+        </div>
+        <!--<div appRecaptcha key="{{recaptchaPublicKey}}" actionName="contractVerification"
+             formControlName="recaptcha_token"></div>-->
+        <button type="submit" class="btn btn-primary">Verify Contract</button>
+      </form>
+    </div>
   </div>
 </div>
-<h3>Verify Contract: </h3>
-<p>
-  Verify and Publish Contract Source Code
-</p>
-<p>
-  If the compiled bytecode matches the Creation Address bytecode, the contract is then Verified and will be published
-  online. (to build a contract you should either use <a href="https://github.com/gochain-io/web3#build-a-smart-contract">web3 tool</a> or set the version of the solc compiler in the contract source header using a 'pragma solidity' tag)
-</p>
-
-<form class="uk-form-horizontal" style="overflow: auto" [formGroup]="form" (submit)="onSubmit()">
-  <div class="uk-margin">
-    <label class="uk-form-label">Contract Address*</label>
-    <div class="uk-form-controls">
-      <input class="uk-input" type="text" placeholder="" formControlName="address">
-    </div>
-  </div>
-  <div class="uk-margin">
-    <label class="uk-form-label">Contract Name*</label>
-    <div class="uk-form-controls">
-      <input class="uk-input" type="text" placeholder="" formControlName="contract_name">
-    </div>
-  </div>
-  <div class="uk-margin">
-    <label class="uk-form-label" for="form-horizontal-select">Compiler*</label>
-    <div class="uk-form-controls">
-      <select *ngIf="compilers$ | async as compilers" class="uk-select" id="form-horizontal-select" formControlName="compiler_version">
-        <option value="" disabled selected>Select compiler</option>
-        <option *ngFor="let compiler of compilers">{{compiler}}</option>
-      </select>
-    </div>
-  </div>
-  <div class="uk-margin">
-    <div class="uk-form-label">Optimization*</div>
-    <div class="uk-form-controls uk-form-controls-text">
-      <label><input class="uk-radio" type="radio" name="optimization" formControlName="optimization" [value]="true"> Enabled</label><br>
-      <label><input class="uk-radio" type="radio" name="optimization" formControlName="optimization" [value]="false"> Disabled</label>
-    </div>
-  </div>
-  <div class="uk-margin">
-    <div class="uk-form-label">Contract Code*</div>
-    <div class="uk-form-controls uk-form-controls-text">
-      <textarea class="uk-textarea" rows="9" placeholder="" formControlName="source_code"></textarea>
-    </div>
-  </div>
-  <!--<div appRecaptcha key="{{recaptchaPublicKey}}" actionName="contractVerification"
-       formControlName="recaptcha_token"></div>-->
-  <div class="uk-margin">
-    <div class="uk-form-controls">
-      <button class="btn" type="submit">Validate Code</button>
-    </div>
-  </div>
-</form>

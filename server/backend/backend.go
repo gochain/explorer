@@ -11,6 +11,7 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/consensus/clique"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
@@ -116,8 +117,24 @@ func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 	return self.mongo.getRichlist(skip, limit, self.lockedAccounts)
 
 }
-func (self *Backend) GetAddressByHash(hash string) *models.Address {
-	return self.mongo.getAddressByHash(common.HexToAddress(hash).Hex())
+func (self *Backend) GetAddressByHash(hash string) (*models.Address, error) {
+	if !common.IsHexAddress(hash) {
+		return nil, errors.New("wrong address format")
+	}
+	addressHash := common.HexToAddress(hash).Hex()
+	address := self.mongo.getAddressByHash(addressHash)
+	balance, err := self.BalanceAt(addressHash, "latest")
+	if err != nil {
+		return nil, err
+	}
+	if address == nil { //edge case if the balance for the address found but we haven't imported the address yet
+		self.mongo.UpdateActiveAddress(addressHash)
+		address = &models.Address{Address: addressHash, UpdatedAt: time.Now()}
+	}
+	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
+	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
+	return address, nil
+
 }
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
@@ -138,7 +155,11 @@ func (self *Backend) GetContract(contractAddress string) *models.Contract {
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) []*models.LightBlock {
-	return self.mongo.getLatestsBlocks(skip, limit)
+	var lightBlocks []*models.LightBlock
+	for _, block := range self.mongo.getLatestsBlocks(skip, limit) {
+		lightBlocks = append(lightBlocks, fillExtraLight(block))
+	}
+	return lightBlocks
 }
 func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
 	return self.mongo.getBlockTransactionsByNumber(blockNumber, skip, limit)
@@ -146,8 +167,8 @@ func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit
 
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
-	if block == nil {
-		log.Info().Int64("blockNumber", number).Msg("cannot get block from db, importing it")
+	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		log.Info().Int64("blockNumber", number).Msg("cannot get block from db or block is not up to date, importing it")
 		blockEth, err := self.goClient.BlockByNumber(context.Background(), big.NewInt(number))
 		if err != nil {
 			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
@@ -155,11 +176,11 @@ func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 		}
 		block = self.ImportBlock(blockEth)
 	}
-	return block
+	return fillExtra(block)
 }
 
 func (self *Backend) GetBlockByHash(hash string) *models.Block {
-	return self.mongo.getBlockByHash(hash)
+	return fillExtra(self.mongo.getBlockByHash(hash))
 }
 
 func (self *Backend) GetCompilerVersion() ([]string, error) {
@@ -198,7 +219,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 	reg := regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
 	sourceBin = reg.ReplaceAllString(sourceBin, ``)
 	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
-	if sourceBin == contractBin {
+	//for 0.4.* compiler version the last 69 symbols could be ignored
+	if (sourceBin == contractBin) || (len(sourceBin) == len(contractBin) && len(sourceBin) > 69 && sourceBin[0:len(sourceBin)-69] == contractBin[0:len(contractBin)-69]) {
 		contract.Valid = true
 		contract.Optimization = contractData.Optimization
 		contract.ContractName = contractData.ContractName
@@ -214,6 +236,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		return contract, nil
 	} else {
 		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
+		log.Info().Str("sourceBin", sourceBin[0:len(sourceBin)-69]).Msg("Compilation result doesn't match")
+		log.Info().Str("contractBin", contractBin[0:len(contractBin)-69]).Msg("Compilation result doesn't match")
 		return nil, err
 	}
 }
@@ -263,8 +287,8 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) [
 	}
 	return selectedAddresses
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract, go20 bool, updatedAtBlock int64) *models.Address {
-	return self.mongo.importAddress(address, balance, token, contract, go20, updatedAtBlock)
+func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) *models.Address {
+	return self.mongo.importAddress(address, balance, token, contract, updatedAtBlock)
 }
 func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token, address)
@@ -300,4 +324,22 @@ func (self *Backend) GetFirstBlockNumber() (int64, error) {
 		return err
 	})
 	return value, err
+}
+
+func fillExtra(block *models.Block) *models.Block {
+	if block == nil {
+		return block
+	}
+	extra := []byte(block.ExtraData)
+	block.Extra.Auth = (block.NonceBool != nil && *block.NonceBool) //workaround for get old block by hash
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	block.Extra.HasVote = clique.ExtraHasVote(extra)
+	block.Extra.Candidate = clique.ExtraCandidate(extra).String()
+	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
+	return block
+}
+func fillExtraLight(block *models.LightBlock) *models.LightBlock {
+	extra := []byte(block.ExtraData)
+	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	return block
 }

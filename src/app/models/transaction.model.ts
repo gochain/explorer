@@ -8,6 +8,7 @@ export class Transaction {
   block_number: number;
   nonce: number;
   input_data: string;
+  logs: string;
   from: string;
   to: string;
   contract_address: string;

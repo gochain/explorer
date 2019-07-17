@@ -213,7 +213,6 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 			}
 			contractDataArray, err := importer.CodeAt(normalizedAddress)
 			contractData := string(contractDataArray[:])
-			go20 := false
 			var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 			contract := false
 			if contractData != "" {
@@ -223,12 +222,13 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 				if err != nil {
 					log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
-					go20 = false
 					// continue
 				} else {
-					go20 = true
 					var fromBlock int64
-					contractFromDB := importer.GetAddressByHash(normalizedAddress)
+					contractFromDB, err := importer.GetAddressByHash(normalizedAddress)
+					if err != nil {
+						log.Fatal().Err(err).Msg("updateAddresses")
+					}
 					if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
 						fromBlock = contractFromDB.UpdatedAtBlock
 					} else {
@@ -249,11 +249,17 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 							// }
 						}
 						for index, tokenHolderAddress := range tokenHoldersList {
+							if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
+								continue
+							}
+							log.Info().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
 							tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
-							log.Debug().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
 							if err != nil {
 								log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
-								go20 = false
+								continue
+							}
+							if contractFromDB == nil {
+								log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot find contract in DB")
 								continue
 							}
 							importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
@@ -262,7 +268,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 				}
 			}
 			log.Info().Str("Balance of the address:", normalizedAddress).Int("Index", index).Int("Total number", len(addresses)).Str("Balance", balance.String()).Msg("updateAddresses")
-			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, go20, currentBlock)
+			importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
 		}
 		elapsed := time.Since(start)
 		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")

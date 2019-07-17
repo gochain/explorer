@@ -3,16 +3,18 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {ActivatedRoute} from '@angular/router';
-import {Params} from '@angular/router/src/shared';
+import {Params} from '@angular/router';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Block} from '../../models/block.model';
 import {QueryParams} from '../../models/query_params';
 import {Transaction} from '../../models/transaction.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {META_TITLES} from '../../utils/constants';
 
 @Component({
   selector: 'app-block',
@@ -29,7 +31,12 @@ export class BlockComponent implements OnInit, OnDestroy {
   private _blockNumber: number;
   private _subsArr$: Subscription[] = [];
 
-  constructor(private _commonService: CommonService, private _route: ActivatedRoute, private _layoutService: LayoutService) {
+  constructor(
+    private _commonService: CommonService,
+    private _route: ActivatedRoute,
+    private _layoutService: LayoutService,
+    private _metaService: MetaService,
+  ) {
   }
 
   ngOnInit() {
@@ -38,6 +45,7 @@ export class BlockComponent implements OnInit, OnDestroy {
     ).subscribe((params: Params) => {
       this.transactions = [];
       this._blockIdentifier = params.id;
+      this._metaService.setTitle(META_TITLES.BLOCK.title);
       this._layoutService.onLoading();
       this.getData();
     }));
@@ -75,7 +83,7 @@ export class BlockComponent implements OnInit, OnDestroy {
     });
   }
 
-  onTransactionPageSelect(page: number) {
+  /*onTransactionPageSelect(page: number) {
     this.transactionQueryParams.toPage(page);
-  }
+  }*/
 }

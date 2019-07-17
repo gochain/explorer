@@ -29,10 +29,10 @@ export class LayoutService {
     this.themeColor$.next(this.themeSettings.color);
 
     this.themeColor$.subscribe((value: ThemeColor) => {
-      document.body.classList.remove(ThemeColor.DARK, ThemeColor.LIGHT);
-      document.body.classList.add(value);
-      this.themeSettings.color = value;
-      localStorage.setItem('THEME_SETTINGS', JSON.stringify(this.themeSettings));
+      // document.body.classList.remove(ThemeColor.DARK, ThemeColor.LIGHT);
+      // document.body.classList.add(value);
+      // this.themeSettings.color = value;
+      // localStorage.setItem('THEME_SETTINGS', JSON.stringify(this.themeSettings));
     });
   }
 
