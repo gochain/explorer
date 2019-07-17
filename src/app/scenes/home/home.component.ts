@@ -31,12 +31,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     mergeMap(() => this._commonService.getRecentBlocks()),
   );
 
-  sliderOptions: ISliderOptions = {
-    start: 50,
-    step: 50,
-    sensitivity: 20
-  };
-
   constructor(
     private _commonService: CommonService,
     private _layoutService: LayoutService,

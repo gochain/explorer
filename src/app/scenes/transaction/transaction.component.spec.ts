@@ -4,7 +4,6 @@ import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 import {AppModule} from '../../app.module';
 /*COMPONENTS*/
 import {TransactionComponent} from './transaction.component';
-import {WalletCommonModule} from '../../modules/wallet/wallet-common.module';
 
 describe('TransactionComponent', () => {
   let component: TransactionComponent;
@@ -12,7 +11,7 @@ describe('TransactionComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      imports: [AppModule, WalletCommonModule]
+      imports: [AppModule]
     })
       .compileComponents();
   }));

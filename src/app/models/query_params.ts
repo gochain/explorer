@@ -1,4 +1,4 @@
-import {Subject} from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 
 interface IParams {
   limit: number;
@@ -18,16 +18,17 @@ export class QueryParams {
   }
 
   skip: number;
-  page: number;
+  page = 1;
+  page$: BehaviorSubject<number> = new BehaviorSubject(1);
   total: number;
   totalPage: number;
+  totalPage$: BehaviorSubject<number> = new BehaviorSubject<number>(null);
   currentTotal: number;
   state: Subject<IParams> = new Subject<IParams>();
 
   constructor(limit?: number) {
     this._limit = limit || 25;
     this.skip = 0;
-    this.page = 1;
     this.currentTotal = this._limit;
   }
 
@@ -38,6 +39,7 @@ export class QueryParams {
 
   calculateTotalPage() {
     this.totalPage = Math.ceil(this.total / this._limit);
+    this.totalPage$.next(this.totalPage);
   }
 
   init() {
@@ -59,6 +61,7 @@ export class QueryParams {
 
   toPage(page: number) {
     this.page = page;
+    this.page$.next(this.page);
     this.skip = (this.page - 1) * this._limit;
     this.state.next(this.params);
   }

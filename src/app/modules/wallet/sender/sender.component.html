@@ -1,0 +1,59 @@
+<h6 class="mb-4 text-center text-primary">Perform a regular transaction, send GO to another account</h6>
+<form [formGroup]="form">
+  <div class="form-group row">
+    <label for="to" class="col-sm-2 col-form-label">To*:</label>
+    <div class="col-sm-10">
+      <input
+          type="text"
+          class="form-control"
+          id="to"
+          placeholder="To"
+          formControlName="to"
+          required
+      >
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="amount" class="col-sm-2 col-form-label">Amount*:</label>
+    <div class="col-sm-10">
+      <input
+          type="text"
+          class="form-control"
+          id="amount"
+          placeholder="Amount"
+          formControlName="amount"
+          required
+      >
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="gasLimit" class="col-sm-2 col-form-label">Gas Limit*:</label>
+    <div class="col-sm-10">
+      <input
+          type="number"
+          min="0"
+          class="form-control"
+          id="gasLimit"
+          placeholder="Gas Limit"
+          formControlName="gasLimit"
+          required
+      >
+    </div>
+  </div>
+  <div class="form-group text-right">
+    <button
+        class="btn"
+        type="reset"
+    >
+      Reset
+    </button>
+    <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="!form.valid"
+        (click)="sendGo()"
+    >
+      Send
+    </button>
+  </div>
+</form>

@@ -1,5 +1,6 @@
 import { IConfig } from './config.interface';
 export const VIEWPORT_SIZES: IConfig = {
-  small: 960,
-  large: 1280,
-}
+  small: 576,
+  medium: 768,
+  large: 992,
+};

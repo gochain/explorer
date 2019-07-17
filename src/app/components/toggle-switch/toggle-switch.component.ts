@@ -1,3 +1,4 @@
+/*
 import {Component, OnInit} from '@angular/core';
 import {filter} from 'rxjs/operators';
 import {LayoutService} from '../../services/layout.service';
@@ -27,3 +28,4 @@ export class ToggleSwitchComponent implements OnInit {
     this._layoutService.themeColor$.next(color);
   }
 }
+*/

@@ -1,5 +1,5 @@
 import {PipeTransform, Pipe} from '@angular/core';
-import {ABIDefinition} from 'web3/eth/abi';
+import {AbiItem} from 'web3-utils';
 
 @Pipe({
   name: 'abiMethod'
@@ -7,7 +7,7 @@ import {ABIDefinition} from 'web3/eth/abi';
 
 export class AbiMethodPipe implements PipeTransform {
 
-  transform(val: ABIDefinition): string {
+  transform(val: AbiItem): string {
     if (!val) {
       return null;
     }

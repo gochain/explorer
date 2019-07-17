@@ -1,12 +1,8 @@
-<div class="toastr">
-  <ng-container *ngIf="(toastrService.items$ | async) as items;">
-    <div *ngFor="let item of items" class="toastr__item toastr--{{item.type}}">
-      <div class="toastr__content">
-        {{item.content}}
-      </div>
-      <div class="toastr__close" (click)="toastrService.delete(item.id)">
-        <i class="fas fa-times"></i>
-      </div>
-    </div>
-  </ng-container>
-</div>
+<ng-container *ngIf="(toastrService.items$ | async) as items;">
+  <div class="alert alert-{{item.type}} alert-dismissible fade show" *ngFor="let item of items">
+    <span class="text-uppercase">{{item.content}}</span>
+    <button type="button" class="close" (click)="toastrService.delete(item.id)">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</ng-container>

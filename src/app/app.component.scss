@@ -1,43 +1,11 @@
-@import "../assets/styles/mixins";
-
 .app-container {
-  padding: 70px 40px 0;
-  min-height: calc(100vh - 70px);
-
-  @include respond-to(small) {
-    padding: 70px 10px 0;
-    min-height: calc(100vh - 70px);
-  }
+  min-height: calc(100vh - 56px);
 
   .loader {
     display: none;
     padding-top: 30vh;
     transition: opacity .8s ease-out;
     text-align: center;
-    .loader__content {
-      div {
-        background: #151721;
-        margin: 2px;
-        border-radius: 50%;
-        height: 10px;
-        width: 10px;
-        display: inline-block;
-        box-sizing: border-box;
-
-        &:nth-of-type(1) {
-          animation: flash 0.8s -0.2s linear infinite;
-        }
-        &:nth-of-type(2) {
-          animation: flash 0.8s -0.1s linear infinite;
-        }
-        &:nth-of-type(3) {
-          animation: flash 0.8s linear infinite;
-        }
-        &:nth-of-type(4) {
-          animation: flash 0.8s 0.1s ease-in-out infinite;
-        }
-      }
-    }
   }
 
   &--loading {
@@ -46,21 +14,6 @@
     }
     .content {
       display: none;
-    }
-  }
-
-  .content {
-    /*min-height: calc(100vh - 70px);*/
-  }
-
-}
-
-:host-context(body.dark) {
-  .loader {
-    .loader__content {
-      div {
-        background: #f8f8f2 !important;
-      }
     }
   }
 }

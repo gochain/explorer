@@ -1,0 +1,107 @@
+<ng-container *ngIf="!!token_transactions.length; else emptyTokenTx">
+  <ng-container *appViewportSize="['small']">
+    <div class="data-list">
+      <div class="data-list-item" *ngFor="let tx of token_transactions">
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Tx hash:
+          </div>
+          <div class="data-list-desc">
+            <a routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Processed:
+          </div>
+          <div class="data-list-desc">
+            <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+              {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            </ng-container>
+            <ng-template #updated_at>
+              {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+            </ng-template>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Associate:
+          </div>
+          <div class="data-list-desc">
+            <ng-container *ngIf="addr.address === tx.to_address; else out">
+              <img src="../../../assets/icons/left.svg" alt="From">
+              <a routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
+            </ng-container>
+            <ng-template #out>
+              <img src="../../../assets/icons/right.svg" alt="To">
+              <a routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
+            </ng-template>
+          </div>
+        </div>
+        <div class="data-list-row">
+          <div class="data-list-term">
+            Value ({{tx.address.token_symbol}}):
+          </div>
+          <div class="data-list-desc">
+            {{tx.value | weiToGO: false : true : tx.address.decimals | bigNumber}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *appViewportSize="['medium', 'large']">
+    <table class="table table-striped" style="table-layout: fixed;">
+      <thead>
+      <tr>
+        <th class="w-20">Transaction hash</th>
+        <th class="">Processed at</th>
+        <th class="text-shrink"></th>
+        <th class="w-20">Associate</th>
+        <th class="w-10 text-nowrap">Token</th>
+        <th class="text-nowrap text-center">Value</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let tx of token_transactions">
+        <td class="text-truncate text-monospace">
+          <a class="ws-p" routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
+        </td>
+        <td class="text-truncate">
+          <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
+            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+          </ng-container>
+          <ng-template #updated_at>
+            {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+          </ng-template>
+        </td>
+        <ng-container *ngIf="addr.address === tx.to_address; else out">
+          <td>
+            <img src="../../../assets/icons/left.svg" alt="From">
+          </td>
+          <td class="text-truncate">
+            <a class="ws-p" routerLink="/addr/{{tx.from_address}}">{{tx.from_address}}</a>
+          </td>
+        </ng-container>
+        <ng-template #out>
+          <td>
+            <img src="../../../assets/icons/right.svg" alt="To">
+          </td>
+          <td class="text-truncate">
+            <a class="ws-p" routerLink="/addr/{{tx.to_address}}">{{tx.to_address}}</a>
+          </td>
+        </ng-template>
+        <td class="text-truncate">{{tx.address.token_symbol}}</td>
+        <td class="text-nowrap text-right ws-p text-monospace">
+          {{addr.address === tx.to_address ? '+' : tx.value === 0 ? '' : '-'}} {{tx.value | weiToGO: false : true : tx.address.decimals | bigNumber}}
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </ng-container>
+  <div class="mt-4">
+    <app-pagination [queryParam]="tokenTransactionQueryParams"></app-pagination>
+  </div>
+</ng-container>
+<ng-template #emptyTokenTx>
+  <div class="empty">No transactions</div>
+</ng-template>

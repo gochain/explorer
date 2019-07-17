@@ -1,5 +1,6 @@
 /*CORE*/
 import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {QueryParams} from '../../models/query_params';
 
 enum PaginationType {
   PAGE = 'page',
@@ -30,14 +31,25 @@ export class PaginationComponent {
 
   items: PaginationItem[] = [];
 
+  perPage: number[] = [10, 25, 50, 100];
+
+  _queryParam: QueryParams;
+
   @Input()
-  set total(total: number) {
-    this._total = total;
-    this.current = 1;
-    this.calculateItems();
+  set queryParam(queryParam: QueryParams) {
+    this._queryParam = queryParam;
+    this._queryParam.totalPage$.subscribe(value => {
+      this._total = value;
+      this.current = 1;
+      this.calculateItems();
+    });
+    this._queryParam.page$.subscribe((page: number) => {
+      this.current = page;
+    });
   }
 
-  @Output() onSelect = new EventEmitter<number>();
+  @Output()
+  onSelect = new EventEmitter<number>();
 
   onPageSelect(page: number) {
     if (page === this.current) {
@@ -45,7 +57,10 @@ export class PaginationComponent {
     }
     this.current = page;
     this.calculateItems();
-    this.onSelect.emit(this.current);
+    this._queryParam.toPage(page);
+    if (this.onSelect) {
+      this.onSelect.emit(this.current);
+    }
   }
 
   calculateItems() {

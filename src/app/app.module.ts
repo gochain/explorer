@@ -15,21 +15,33 @@ import {PageNotFoundComponent} from './scenes/page-not-found/page-not-found.comp
 import {RichlistComponent} from './scenes/richlist/richlist.component';
 import {HeaderComponent} from './components/header/header.component';
 import {SearchComponent} from './components/search/search.component';
-import {LoaderComponent} from './components/loader/loader.component';
 import {PaginationComponent} from './components/pagination/pagination.component';
-import {MobileMenuComponent} from './components/mobile-menu/mobile-menu.component';
-import {ToggleSwitchComponent} from './components/toggle-switch/toggle-switch.component';
-import {MobileHeaderComponent} from './components/mobile-header/mobile-header.component';
 import {TokenAssetComponent} from './scenes/token-asset/token-asset.component';
-// import {SettingsComponent} from './scenes/settings/settings.component';
+import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
+
+import {AddrTransactionsComponent} from './components/addr-transactions/addr-transactions.component';
+import {AddrInternalTxsComponent} from './components/addr-internal-txs/addr-internal-txs.component';
+import {ContractSourceComponent} from './components/contract-source/contract-source.component';
+import {TokenTxsComponent} from './components/token-txs/token-txs.component';
+import {TokenHoldersComponent} from './components/token-holders/token-holders.component';
+
+import {WalletComponent} from './modules/wallet/wallet/wallet.component';
+import {WalletMainComponent} from './modules/wallet/wallet-main/wallet-main.component';
+import {WalletCreateComponent} from './modules/wallet/wallet-create/wallet-create.component';
+import {WalletAccountComponent} from './modules/wallet/wallet-account/wallet-account.component';
+import {DeployerComponent} from './modules/wallet/deployer/deployer.component';
+import {SenderComponent} from './modules/wallet/sender/sender.component';
+import {InteractorComponent} from './modules/wallet/interactor/interactor.component';
 /*SERVICES*/
 import {ApiService} from './services/api.service';
 import {CommonService} from './services/common.service';
 import {LayoutService} from './services/layout.service';
 import {WalletService} from './modules/wallet/wallet.service';
 import {MetaService} from './services/meta.service';
+/*GUARDS*/
+import {WalletGuard} from './guards/wallet.guard';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes/pipes.module';
@@ -39,12 +51,11 @@ import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {SliderModule} from './modules/slider/slider.module';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
-import {WalletCommonModule} from './modules/wallet/wallet-common.module';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
-import {APP_BASE_HREF} from '@angular/common';
+import {APP_BASE_HREF, CommonModule} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
 
 @NgModule({
@@ -59,28 +70,37 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     RichlistComponent,
     HeaderComponent,
     SearchComponent,
-    LoaderComponent,
+    /*LoaderComponent,*/
     PaginationComponent,
     /*SettingsComponent,*/
-    ToggleSwitchComponent,
-    MobileHeaderComponent,
-    MobileMenuComponent,
+    /*ToggleSwitchComponent,*/
     InfoComponent,
     ContractComponent,
     TokenAssetComponent,
+    OwnedTokensComponent,
+    AddrTransactionsComponent,
+    AddrInternalTxsComponent,
+    ContractSourceComponent,
+    TokenTxsComponent,
+    TokenHoldersComponent,
+    WalletComponent,
+    WalletMainComponent,
+    WalletCreateComponent,
+    WalletAccountComponent,
+    DeployerComponent,
+    SenderComponent,
+    InteractorComponent,
   ],
   imports: [
-    RouterModule.forRoot(APP_ROUTES),
-    BrowserModule,
-    BrowserAnimationsModule,
+    CommonModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
     PipesModule,
     DirectiveModule,
-    ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     TabsModule,
-    SliderModule,
+    /*SliderModule,*/
+    ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     NgProgressModule.withConfig({
       trickleSpeed: 200,
       min: 20,
@@ -89,15 +109,18 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     }),
     NgProgressHttpModule,
     ToastrModule.forRoot(),
-    WalletCommonModule,
+    RouterModule.forRoot(APP_ROUTES),
+    BrowserModule,
+    BrowserAnimationsModule,
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},
     ApiService,
     CommonService,
     LayoutService,
-    WalletService,
     MetaService,
+    WalletService,
+    WalletGuard,
   ],
   bootstrap: [AppComponent]
 })

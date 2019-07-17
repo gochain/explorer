@@ -27,7 +27,7 @@ export const ROUTES = {
 
 export const MENU_ITEMS: MenuItem[] = [
   {
-    title: 'Blocks',
+    title: 'Main',
     link: ROUTES.HOME,
     icon: 'fa fa-link fa-fw'
   },
@@ -46,12 +46,12 @@ export const MENU_ITEMS: MenuItem[] = [
     link: ROUTES.WALLET,
     icon: 'fa fa-wallet fa-fw',
   },
-  {
+  /*{
     title: 'Network Stats',
     link: 'https://stats.gochain.io',
     icon: 'fa fa-broadcast-tower fa-fw',
     external: true
-  },
+  },*/
   /*{
     title: 'Settings',
     link: '/settings',

@@ -1,7 +1,7 @@
 /*CORE*/
 import {Subscription} from 'rxjs';
 /*MODELS*/
-import {ABIDefinition} from 'web3/eth/abi';
+import {AbiItem} from 'web3-utils';
 import {Address} from '../models/address.model';
 import {Contract} from '../models/contract.model';
 import {Badge} from '../models/badge.model';
@@ -39,8 +39,8 @@ export function objIsEmpty(obj: any): boolean {
  * returns only abi methods
  * @param abi
  */
-export function getAbiMethods(abi: ABIDefinition[]): ABIDefinition[] {
-  return abi.filter((abiDef: ABIDefinition) => abiDef.type === 'function');
+export function getAbiMethods(abi: AbiItem[]): AbiItem[] {
+  return abi.filter((abiDef: AbiItem) => abiDef.type === 'function');
 }
 
 /**
@@ -77,8 +77,8 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
  * @param interfaceNames
  * @param abi
  */
-export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAbi): ABIDefinition[] {
-  const contractAbi: ABIDefinition[] = [];
+export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAbi): AbiItem[] {
+  const contractAbi: AbiItem[] = [];
   interfaceNames.forEach((name: InterfaceName) => {
     if (abi[name]) {
       contractAbi.push(abi[name]);
@@ -93,6 +93,7 @@ export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAb
  * @param showUnit
  * @param removeTrailingZeros
  * @param decimals
+ * @param unitName
  */
 export function convertWithDecimals(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18, unitName: string = 'GO'): string {
   if (!val) {
@@ -100,7 +101,10 @@ export function convertWithDecimals(val: string, showUnit: boolean = true, remov
   }
   const parts = val.toString().split('.');
   if (parts[0].length > decimals) {
-    parts[0] = parts[0].slice(0, parts[0].length - decimals) + '.' + parts[0].slice(parts[0].length - decimals, parts[0].length);
+    parts[0] =
+      parts[0].slice(0, parts[0].length - decimals)
+      + '.'
+      + parts[0].slice(parts[0].length - decimals, parts[0].length);
   } else {
     parts[0] = '0.' + '0'.repeat(decimals - parts[0].length) + parts[0];
   }
@@ -135,8 +139,10 @@ export function numberWithCommas(val: string): string {
 /**
  * get appropriate data from function result
  * @param decoded
+ * @param abi
+ * @param addr
  */
-export function getDecodedData(decoded: object, abi: ABIDefinition, addr: Address): any[][] {
+export function getDecodedData(decoded: object, abi: AbiItem, addr: Address): any[][] {
   const arrR: any[][] = [];
   // let mapR: Map<any,any> = new Map<any,any>();
   // for (let j = 0; j < decoded.__length__; j++){
