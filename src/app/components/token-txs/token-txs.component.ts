@@ -2,7 +2,7 @@ import {Component, Input, OnInit} from '@angular/core';
 import {InternalTransaction} from '../../models/internal-transaction.model';
 import {QueryParams} from '../../models/query_params';
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {forkJoin, Observable, of, Subscription} from 'rxjs';
+import {forkJoin, of, Subscription} from 'rxjs';
 import {CommonService} from '../../services/common.service';
 import {Address} from '../../models/address.model';
 import {concatMap, map} from 'rxjs/operators';
@@ -57,21 +57,28 @@ export class TokenTxsComponent implements OnInit {
             contractAddresses.push(tx.contract_address);
           }
         });
-        return forkJoin<Observable<any>[]>(contractAddresses.map((addr: string) => {
-          return this._commonService.getAddress(addr);
-        })).pipe(
-          map((addrs: Address[]) => {
-            addrs.forEach((item: Address) => {
-              this._commonService.contractsCache[item.address] = item;
-            });
-            data.internal_transactions.forEach((tx: InternalTransaction) => {
-              tx.address = this._commonService.contractsCache[tx.contract_address];
-            });
-            return data.internal_transactions;
-          })
-        );
-      })
-    ).subscribe((data: any) => {
+        if (contractAddresses.length) {
+          return forkJoin<any>(contractAddresses.map((addr: string) => {
+            return this._commonService.getAddress(addr);
+          })).pipe(
+            map((addrs: Address[]) => {
+              addrs.forEach((item: Address) => {
+                this._commonService.contractsCache[item.address] = item;
+              });
+              return data.internal_transactions;
+            })
+          );
+        } else {
+          return of(data.internal_transactions);
+        }
+      }),
+      map((data: InternalTransaction[]) => {
+        data.forEach((tx: InternalTransaction) => {
+          tx.address = this._commonService.contractsCache[tx.contract_address];
+        });
+        return data;
+      }),
+    ).subscribe((data: InternalTransaction[]) => {
       this.token_transactions = data || [];
     });
   }

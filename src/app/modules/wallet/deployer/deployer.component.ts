@@ -60,6 +60,9 @@ export class DeployerComponent implements OnInit {
       // filter((gasLimit: number) => !this.isProcessing),
     ).subscribe((gasLimit: number) => {
       this.form.get('gasLimit').patchValue(gasLimit);
+    }, (err) => {
+      this._toastrService.danger(err);
+      this.form.get('gasLimit').patchValue('');
     });
   }
 
