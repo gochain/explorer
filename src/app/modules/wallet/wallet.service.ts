@@ -232,6 +232,7 @@ export class WalletService {
       },
       err => {
         this._toastrService.danger(err);
+        this.resetProcessing();
       });
   }
 
