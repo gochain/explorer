@@ -11,10 +11,14 @@ interface BlockRange {
   end_block: number;
 }
 
-export interface SignerData {
+interface SignerNode {
   name: string;
   url: string;
   region: string;
+}
+
+export interface SignerData {
+  node: SignerNode;
   signer: string;
   blocks_count: number;
   percent?: number | string;
