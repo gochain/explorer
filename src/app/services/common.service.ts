@@ -15,6 +15,7 @@ import {Holder} from '../models/holder.model';
 import {InternalTransaction} from '../models/internal-transaction.model';
 import {Stats} from '../models/stats.model';
 import {Contract} from '../models/contract.model';
+import {SignerStat} from '../models/signer-stats';
 /*UTILS*/
 import {ContractAbi} from '../utils/types';
 
@@ -108,5 +109,9 @@ export class CommonService implements Resolve<string> {
 
   getStats(): Observable<Stats> {
     return this._apiService.get('/stats');
+  }
+
+  getSignerStats(): Observable<SignerStat[]> {
+    return this._apiService.get('/signers_stats');
   }
 }

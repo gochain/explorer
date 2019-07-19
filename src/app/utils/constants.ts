@@ -23,39 +23,38 @@ export const ROUTES = {
   WALLET: 'wallet',
   CREATE_WALLET: 'create-account',
   SEND_TX: 'send-tx',
+  SIGNERS: 'signers',
 };
 
 export const MENU_ITEMS: MenuItem[] = [
   {
     title: 'Main',
     link: ROUTES.HOME,
-    icon: 'fa fa-link fa-fw'
   },
   {
     title: 'Rich List',
     link: ROUTES.RICHLIST,
-    icon: 'fa fa-list-ul fa-fw'
   },
   /*{
     title: 'Verify Contract',
     link: '/verify',
-    icon: 'fa fa-check-square fa-fw'
   },*/
   {
     title: 'Wallet',
     link: ROUTES.WALLET,
-    icon: 'fa fa-wallet fa-fw',
+  },
+  {
+    title: 'Signers',
+    link: ROUTES.SIGNERS,
   },
   /*{
     title: 'Network Stats',
     link: 'https://stats.gochain.io',
-    icon: 'fa fa-broadcast-tower fa-fw',
     external: true
   },*/
   /*{
     title: 'Settings',
     link: '/settings',
-    icon: 'fa fa-cogs fa-fw',
   },*/
 ];
 
