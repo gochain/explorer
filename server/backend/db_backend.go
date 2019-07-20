@@ -663,7 +663,6 @@ func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Dur
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot run pipe")
 	}
-	log.Info().Time("Date", endTime.Add(dur)).Msg("stats")
 	for _, el := range resp {
 		signerStats := models.SignerStats{Signer: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
 		if val, ok := nodes[signerStats.Signer]; ok {
@@ -681,7 +680,6 @@ func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) mo
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot get block number")
 	}
-	log.Info().Interface("element", startBlock).Msg("startBlock")
 	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot get block number")

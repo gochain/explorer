@@ -1,0 +1,12 @@
+{  
+    "0xdd7e460302a911f9162a208370cdcdc37b892453":{
+       "name":"Sample company",
+       "url":"https://sample.url/",
+       "region":"North America"
+    },
+    "0x7aeceb5d345a01f8014a4320ab1f3d467c0c086a":{  
+             "name":"Another company",
+       "url":"http://another.url/",
+       "region":"Asia"
+    }
+}

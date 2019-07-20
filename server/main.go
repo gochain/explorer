@@ -103,7 +103,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 func main() {
 	var mongoUrl string
 	var dbName string
-	var configFile string
+	var signersFile string
 	var loglevel string
 
 	app := cli.NewApp()
@@ -114,42 +114,49 @@ func main() {
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
 			Usage:       "rpc api url",
+			EnvVar:      "RPC_URL",
 			Destination: &rpcUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
 			Usage:       "mongo connection url",
+			EnvVar:      "MONGO_URL",
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
 			Value:       "blocks",
 			Usage:       "mongo database name",
+			EnvVar:      "MONGO_DBNAME",
 			Destination: &dbName,
 		},
 		cli.StringFlag{
-			Name:        "config-file, config",
-			Value:       "./settings.json",
-			Usage:       "settings file name",
-			Destination: &configFile,
+			Name:        "signers-file, signers",
+			Usage:       "signers file name",
+			EnvVar:      "SIGNERS_FILE",
+			Value:       "",
+			Destination: &signersFile,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
 			Value:       "info",
 			Usage:       "loglevel debug/info/warn/fatal, default is Info",
+			EnvVar:      "LOG_LEVEL",
 			Destination: &loglevel,
 		},
 		cli.StringFlag{
 			Name:        "dist, d",
 			Value:       "../dist/explorer/",
 			Usage:       "folder that should be served",
+			EnvVar:      "DIST",
 			Destination: &wwwRoot,
 		},
 		cli.StringFlag{
 			Name:        "recaptcha, r",
 			Value:       "",
 			Usage:       "secret key for google recaptcha v3",
+			EnvVar:      "RECAPTCHA",
 			Destination: &reCaptchaSecret,
 		},
 		cli.StringSliceFlag{
@@ -172,14 +179,18 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		data, err := ioutil.ReadFile(configFile)
-		if err != nil {
-			return err
-		}
-		nodes := make(map[common.Address]models.Node)
-		err = json.Unmarshal(data, &nodes)
-		if err != nil {
-			return err
+		var nodes map[common.Address]models.Node
+
+		if signersFile != "" {
+			data, err := ioutil.ReadFile(signersFile)
+			if err != nil {
+				return err
+			}
+			nodes = make(map[common.Address]models.Node)
+			err = json.Unmarshal(data, &nodes)
+			if err != nil {
+				return err
+			}
 		}
 
 		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nodes)
@@ -245,7 +256,7 @@ func main() {
 			})
 		})
 
-		err = http.ListenAndServe(":8080", r)
+		err := http.ListenAndServe(":8080", r)
 		return err
 	}
 	err := app.Run(os.Args)

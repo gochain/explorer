@@ -23,7 +23,6 @@ WORKDIR /explorer
 RUN apk add --no-cache ca-certificates docker
 COPY --from=backend_builder /tmp/gochain/* /usr/local/bin/
 COPY --from=frontend_builder /explorer/dist/* /explorer/
-COPY settings.json /explorer/
 
 EXPOSE 8080
 
