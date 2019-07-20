@@ -179,21 +179,21 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		var nodes map[common.Address]models.Node
+		var signers map[common.Address]models.Node
 
 		if signersFile != "" {
 			data, err := ioutil.ReadFile(signersFile)
 			if err != nil {
 				return err
 			}
-			nodes = make(map[common.Address]models.Node)
-			err = json.Unmarshal(data, &nodes)
+			signers = make(map[common.Address]models.Node)
+			err = json.Unmarshal(data, &signers)
 			if err != nil {
 				return err
 			}
 		}
 
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nodes)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)

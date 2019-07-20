@@ -25,7 +25,7 @@ type Backend struct {
 	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	lockedAccounts        []string
-	nodes                 map[common.Address]models.Node
+	signers                 map[common.Address]models.Node
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -43,7 +43,7 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, nodes map[common.Address]models.Node) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Node) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to gochain network")
@@ -57,7 +57,7 @@ func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, nodes 
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
 	importer.dockerhubAPI = new(DockerHubAPI)
 	importer.lockedAccounts = lockedAccounts
-	importer.nodes = nodes
+	importer.signers = signers
 	return importer
 }
 
@@ -117,7 +117,7 @@ func (self *Backend) GetStats() *models.Stats {
 }
 
 func (self *Backend) GetSignersStats() []models.SignersStats {
-	return self.mongo.getSignersStats(self.nodes)
+	return self.mongo.getSignersStats(self.signers)
 }
 
 func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
