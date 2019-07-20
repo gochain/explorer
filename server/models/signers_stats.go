@@ -4,16 +4,16 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 )
 
-type Node struct {
+type Signer struct {
 	Name   string `json:"name"`
 	URL    string `json:"url"`
 	Region string `json:"region"`
 }
 
 type SignerStats struct {
-	Node        Node           `json:"node"`
-	Signer      common.Address `json:"signer"`
-	BlocksCount int            `json:"blocks_count"`
+	Signer        Signer         `json:"signer"`
+	SignerAddress common.Address `json:"signer_address"`
+	BlocksCount   int            `json:"blocks_count"`
 }
 type BlockRange struct {
 	StartBlock, EndBlock int64

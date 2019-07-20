@@ -25,7 +25,7 @@ type Backend struct {
 	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	lockedAccounts        []string
-	signers                 map[common.Address]models.Node
+	signers                 map[common.Address]models.Signer
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -43,7 +43,7 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Node) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to gochain network")

@@ -179,14 +179,14 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		var signers map[common.Address]models.Node
+		var signers map[common.Address]models.Signer
 
 		if signersFile != "" {
 			data, err := ioutil.ReadFile(signersFile)
 			if err != nil {
 				return err
 			}
-			signers = make(map[common.Address]models.Node)
+			signers = make(map[common.Address]models.Signer)
 			err = json.Unmarshal(data, &signers)
 			if err != nil {
 				return err

@@ -654,7 +654,7 @@ func (self *MongoBackend) getStats() *models.Stats {
 	}
 	return s
 }
-func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration, signers map[common.Address]models.Node) []models.SignerStats {
+func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration, signers map[common.Address]models.Signer) []models.SignerStats {
 	var resp []bson.M
 	var stat []models.SignerStats
 	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
@@ -664,9 +664,9 @@ func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Dur
 		log.Info().Err(err).Msg("Cannot run pipe")
 	}
 	for _, el := range resp {
-		signerStats := models.SignerStats{Signer: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
-		if val, ok := signers[signerStats.Signer]; ok {
-			signerStats.Node = val
+		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
+		if val, ok := signers[signerStats.SignerAddress]; ok {
+			signerStats.Signer = val
 		}
 		stat = append(stat, signerStats)
 	}
@@ -689,7 +689,7 @@ func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) mo
 	return resp
 }
 
-func (self *MongoBackend) getSignersStats(signers map[common.Address]models.Node) []models.SignersStats {
+func (self *MongoBackend) getSignersStats(signers map[common.Address]models.Signer) []models.SignersStats {
 	var stats []models.SignersStats
 	const day = -24 * time.Hour
 	kvs := map[string]time.Duration{"daily": day, "weekly": 7 * day, "monthly": 30 * day}
