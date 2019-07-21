@@ -16,7 +16,8 @@ type SignerStats struct {
 	BlocksCount   int            `json:"blocks_count"`
 }
 type BlockRange struct {
-	StartBlock, EndBlock int64
+	StartBlock int64 `json:"start_block"`
+	EndBlock   int64 `json:"end_block"`
 }
 
 type SignersStats struct {

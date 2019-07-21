@@ -18,8 +18,8 @@ interface SignerNode {
 }
 
 export interface SignerData {
-  node: SignerNode;
-  signer: string;
+  signer: SignerNode;
+  signer_address: string;
   blocks_count: number;
   percent?: number | string;
 }
