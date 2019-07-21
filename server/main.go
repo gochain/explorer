@@ -227,10 +227,14 @@ func main() {
 				r.Head("/", pingDB)
 				r.Post("/verify", verifyContract)
 				r.Get("/compiler", getCompilerVersion)
-				r.Get("/rpc_provider", getRpcProvider)
-				r.Get("/stats", getCurrentStats)
-				r.Get("/signers_stats", getSignersStats)
+				r.Get("/rpc_provider", getRpcProvider)				
+				
 				r.Get("/richlist", getRichlist)
+
+				r.Route("/signers", func(r chi.Router) {
+					r.Get("/stats", getSignersStats)
+					r.Get("/list", getSignersList)
+				})
 
 				r.Route("/blocks", func(r chi.Router) {
 					r.Get("/", getListBlocks)
@@ -308,6 +312,10 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 
 func getSignersStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, backendInstance.GetSignersStats())
+}
+
+func getSignersList(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, backendInstance.GetSignersList())
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {

@@ -18,6 +18,7 @@ import {Contract} from '../models/contract.model';
 import {SignerStat} from '../models/signer-stats';
 /*UTILS*/
 import {ContractAbi} from '../utils/types';
+import { SignerNode } from '../models/signer-node';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -112,6 +113,10 @@ export class CommonService implements Resolve<string> {
   }
 
   getSignerStats(): Observable<SignerStat[]> {
-    return this._apiService.get('/signers_stats');
+    return this._apiService.get('/signers/stats');
+  }
+  
+  getSignerList(): Observable<SignerNode> {
+    return this._apiService.get('/signers/list');
   }
 }

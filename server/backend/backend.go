@@ -120,6 +120,10 @@ func (self *Backend) GetSignersStats() []models.SignersStats {
 	return self.mongo.getSignersStats(self.signers)
 }
 
+func (self *Backend) GetSignersList() map[common.Address]models.Signer {
+	return self.signers
+}
+
 func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 	return self.mongo.getRichlist(skip, limit, self.lockedAccounts)
 
