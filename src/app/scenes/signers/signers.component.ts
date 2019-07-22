@@ -36,7 +36,7 @@ export class SignersComponent implements OnInit {
 
   static formChartData(items: SignerData[]): ChartItem[] {
     return items.map((item: SignerData, index: number) => ({
-      name: item.signer ? item.signer.name : item.signer_address,
+      name: item.data && item.data.name ? item.data.name : item.signer_address,
       value: item.blocks_count,
       extra: {
         itemIndex: index,

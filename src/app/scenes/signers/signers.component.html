@@ -51,13 +51,16 @@
                       [ngClass]="{
                 'table-active': hoveredItem && hoveredItem.rangeIndex === rangeIndex && hoveredItem.itemIndex === itemIndex
                 }">
-                    <td class="text-monospace"><a routerLink="/addr/{{item.signer_address}}">{{item.signer_address}}</a>
+                    <td class="text-monospace">
+                      <a routerLink="/addr/{{item.signer_address}}">{{item.signer_address}}</a>
                     </td>
-                    <td>{{item.signer.name}}</td>
-                    <td>{{item.signer.region}}</td>
-                    <td><a href="{{item.signer.url}}" target="_blank">{{item.signer.url}}</a></td>
-                    <td>{{item.blocks_count}}</td>
-                    <td>{{item.percent}}</td>
+                    <td>{{item?.data?.name}}</td>
+                    <td>{{item?.data?.region}}</td>
+                    <td>
+                      <a href="{{item?.data?.url}}" target="_blank">{{item?.data?.url}}</a>
+                    </td>
+                    <td>{{item?.blocks_count}}</td>
+                    <td>{{item?.percent}}</td>
                   </tr>
                   </tbody>
                 </table>

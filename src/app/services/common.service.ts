@@ -1,7 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, of} from 'rxjs';
-import {filter, map, share, shareReplay, tap} from 'rxjs/operators';
+import {BehaviorSubject, Observable} from 'rxjs';
+import {filter, flatMap, tap} from 'rxjs/operators';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -15,10 +15,11 @@ import {Holder} from '../models/holder.model';
 import {InternalTransaction} from '../models/internal-transaction.model';
 import {Stats} from '../models/stats.model';
 import {Contract} from '../models/contract.model';
-import {SignerStat} from '../models/signer-stats';
+import {SignerData, SignerStat} from '../models/signer-stats';
+import {SignerNode} from '../models/signer-node';
 /*UTILS*/
 import {ContractAbi} from '../utils/types';
-import { SignerNode } from '../models/signer-node';
+import {objIsEmpty} from '../utils/functions';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -35,6 +36,8 @@ export class CommonService implements Resolve<string> {
   }
 
   contractsCache = {};
+
+  signers$: BehaviorSubject<any>;
 
   constructor(private _apiService: ApiService) {
   }
@@ -113,10 +116,31 @@ export class CommonService implements Resolve<string> {
   }
 
   getSignerStats(): Observable<SignerStat[]> {
-    return this._apiService.get('/signers/stats');
+    return this.getSignerList().pipe(
+      flatMap((signers: SignerNode) => {
+        return this._apiService.get('/signers/stats').pipe(
+          tap((stats: SignerStat[]) => {
+            if (objIsEmpty(signers)) {
+              return;
+            }
+            stats.forEach((stat: SignerStat) => {
+              stat.signer_stats.forEach((signer: SignerData) => {
+                signer.data = signers[signer.signer_address];
+              });
+            });
+          }),
+        );
+      }),
+    );
   }
-  
+
   getSignerList(): Observable<SignerNode> {
-    return this._apiService.get('/signers/list');
+    if (!this.signers$) {
+      this.signers$ = new BehaviorSubject<any>(null);
+      this._apiService.get('/signers/list').subscribe(value => {
+        this.signers$.next(value);
+      });
+    }
+    return this.signers$.pipe(filter(value => !!value));
   }
 }

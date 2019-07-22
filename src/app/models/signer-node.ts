@@ -1,10 +1,11 @@
 export interface SignerDetails {
-    name: string;
-    url: string;
-    region: string;
-  }
+  name: string;
+  url: string;
+  region: string;
+}
 
 
-  export class SignerNode {
-    [key: string]: SignerDetails;
-  }
+export class SignerNode {
+  [key: string]: SignerDetails;
+}
+

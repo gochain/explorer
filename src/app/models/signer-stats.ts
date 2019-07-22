@@ -1,4 +1,5 @@
 import {ChartItem} from './chart';
+import {SignerDetails} from './signer-node';
 
 export enum SignerStatRange {
   DAILY = 'daily',
@@ -11,14 +12,8 @@ interface BlockRange {
   end_block: number;
 }
 
-interface SignerNode {
-  name: string;
-  url: string;
-  region: string;
-}
-
 export interface SignerData {
-  signer: SignerNode;
+  data?: SignerDetails;
   signer_address: string;
   blocks_count: number;
   percent?: number | string;

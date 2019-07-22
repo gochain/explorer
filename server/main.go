@@ -179,14 +179,13 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		var signers map[common.Address]models.Signer
+		var signers = make(map[common.Address]models.Signer)
 
 		if signersFile != "" {
 			data, err := ioutil.ReadFile(signersFile)
 			if err != nil {
 				return err
 			}
-			signers = make(map[common.Address]models.Signer)
 			err = json.Unmarshal(data, &signers)
 			if err != nil {
 				return err
@@ -227,8 +226,8 @@ func main() {
 				r.Head("/", pingDB)
 				r.Post("/verify", verifyContract)
 				r.Get("/compiler", getCompilerVersion)
-				r.Get("/rpc_provider", getRpcProvider)				
-				
+				r.Get("/rpc_provider", getRpcProvider)
+
 				r.Get("/richlist", getRichlist)
 
 				r.Route("/signers", func(r chi.Router) {
