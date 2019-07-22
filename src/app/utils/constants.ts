@@ -129,6 +129,9 @@ export const META_TITLES = {
   SEND_TX: {
     title: 'Send transaction',
   },
+  SIGNERS: {
+    title: 'Signers',
+  },
   WALLET: {
     title: 'Wallet',
   },
