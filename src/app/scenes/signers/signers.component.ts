@@ -2,9 +2,11 @@
 import {Component, OnInit} from '@angular/core';
 /*SERVICE*/
 import {CommonService} from '../../services/common.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
 /*MODELS*/
 import {SignerData, SignerStat} from '../../models/signer-stats';
 import {ChartItem} from '../../models/chart';
+/*UTILS*/
 import {sortObjArrByKey} from '../../utils/functions';
 
 interface IHoveredItem {
@@ -44,6 +46,7 @@ export class SignersComponent implements OnInit {
 
   constructor(
     private _commonService: CommonService,
+    private _toastrService: ToastrService,
   ) {
   }
 
@@ -62,6 +65,10 @@ export class SignersComponent implements OnInit {
     this.statsData.forEach((stat: SignerStat) => {
       stat.totalBlocks = 0;
       stat.chartData = [];
+      if (!stat.signer_stats) {
+        this._toastrService.danger(`no data found for ${stat.range}`);
+        return;
+      }
       stat.signer_stats.forEach((signer: SignerData) => {
         stat.totalBlocks += signer.blocks_count;
         stat.chartData = SignersComponent.formChartData(stat.signer_stats);

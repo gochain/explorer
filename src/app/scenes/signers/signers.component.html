@@ -16,12 +16,21 @@
             <div class="chart mb-1">
               <ngx-charts-pie-chart
                   [labels]="true"
+                  [doughnut]="true"
+                  [gradient]="true"
+                  [arcWidth]="0.618"
                   [scheme]="colorScheme"
                   [results]="stat.chartData"
                   (activate)="onChartItemEnter($event, rangeIndex)"
                   (deactivate)="onChartItemLeave()"
               >
               </ngx-charts-pie-chart>
+            </div>
+            <div class="my-1">
+              <p>
+                Block signers for {{stat.block_range.end_block - stat.block_range.start_block}} blocks from
+                <a routerLink="/blocks/{{stat.block_range.start_block}}">#{{stat.block_range.start_block}}</a> to <a routerLink="/blocks/{{stat.block_range.end_block}}">#{{stat.block_range.end_block}}</a>.
+              </p>
             </div>
             <div>
               <div class="table-responsive">
@@ -42,7 +51,8 @@
                       [ngClass]="{
                 'table-active': hoveredItem && hoveredItem.rangeIndex === rangeIndex && hoveredItem.itemIndex === itemIndex
                 }">
-                    <td class="text-monospace"><a routerLink="/addr/{{item.signer_address}}">{{item.signer_address}}</a></td>
+                    <td class="text-monospace"><a routerLink="/addr/{{item.signer_address}}">{{item.signer_address}}</a>
+                    </td>
                     <td>{{item.signer.name}}</td>
                     <td>{{item.signer.region}}</td>
                     <td><a href="{{item.signer.url}}" target="_blank">{{item.signer.url}}</a></td>
