@@ -137,7 +137,7 @@ func (c *Client) Blocks(sl *SkipLimit) (*models.BlockList, error) {
 
 func (c *Client) Block(number uint64) (*models.Block, error) {
 	var data models.Block
-	err := c.get(fmt.Sprintf("/api/blocks/%d",number), nil, &data)
+	err := c.get(fmt.Sprintf("/api/blocks/%d", number), nil, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *Client) Block(number uint64) (*models.Block, error) {
 
 func (c *Client) BlockTransactions(number uint64, sl *SkipLimit) (*models.TransactionList, error) {
 	var data models.TransactionList
-	err := c.get(fmt.Sprintf("/api/blocks/%d/transactions",number), sl.vals, &data)
+	err := c.get(fmt.Sprintf("/api/blocks/%d/transactions", number), sl.vals, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (c *Client) BlockTransactions(number uint64, sl *SkipLimit) (*models.Transa
 
 func (c *Client) Transaction(hash string) (*models.Transaction, error) {
 	var data models.Transaction
-	err := c.get(fmt.Sprintf("/api/transaction/%s",hash), nil, &data)
+	err := c.get(fmt.Sprintf("/api/transaction/%s", hash), nil, &data)
 	if err != nil {
 		return nil, err
 	}

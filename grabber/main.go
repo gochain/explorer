@@ -73,8 +73,7 @@ func main() {
 			// Ensure canonical form, since queries are case-sensitive.
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil)
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"net/http"
 	"os"
@@ -102,6 +103,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 func main() {
 	var mongoUrl string
 	var dbName string
+	var signersFile string
 	var loglevel string
 
 	app := cli.NewApp()
@@ -112,36 +114,49 @@ func main() {
 			Name:        "rpc-url, u",
 			Value:       "https://rpc.gochain.io",
 			Usage:       "rpc api url",
+			EnvVar:      "RPC_URL",
 			Destination: &rpcUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
 			Usage:       "mongo connection url",
+			EnvVar:      "MONGO_URL",
 			Destination: &mongoUrl,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
 			Value:       "blocks",
 			Usage:       "mongo database name",
+			EnvVar:      "MONGO_DBNAME",
 			Destination: &dbName,
+		},
+		cli.StringFlag{
+			Name:        "signers-file, signers",
+			Usage:       "signers file name",
+			EnvVar:      "SIGNERS_FILE",
+			Value:       "",
+			Destination: &signersFile,
 		},
 		cli.StringFlag{
 			Name:        "log, l",
 			Value:       "info",
 			Usage:       "loglevel debug/info/warn/fatal, default is Info",
+			EnvVar:      "LOG_LEVEL",
 			Destination: &loglevel,
 		},
 		cli.StringFlag{
 			Name:        "dist, d",
 			Value:       "../dist/explorer/",
 			Usage:       "folder that should be served",
+			EnvVar:      "DIST",
 			Destination: &wwwRoot,
 		},
 		cli.StringFlag{
 			Name:        "recaptcha, r",
 			Value:       "",
 			Usage:       "secret key for google recaptcha v3",
+			EnvVar:      "RECAPTCHA",
 			Destination: &reCaptchaSecret,
 		},
 		cli.StringSliceFlag{
@@ -164,7 +179,20 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts)
+		var signers = make(map[common.Address]models.Signer)
+
+		if signersFile != "" {
+			data, err := ioutil.ReadFile(signersFile)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(data, &signers)
+			if err != nil {
+				return err
+			}
+		}
+
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -201,6 +229,11 @@ func main() {
 				r.Get("/rpc_provider", getRpcProvider)
 				r.Get("/stats", getCurrentStats)
 				r.Get("/richlist", getRichlist)
+
+				r.Route("/signers", func(r chi.Router) {
+					r.Get("/stats", getSignersStats)
+					r.Get("/list", getSignersList)
+				})
 
 				r.Route("/blocks", func(r chi.Router) {
 					r.Get("/", getListBlocks)
@@ -276,6 +309,14 @@ func getCurrentStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, backendInstance.GetStats())
 }
 
+func getSignersStats(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, backendInstance.GetSignersStats())
+}
+
+func getSignersList(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, backendInstance.GetSignersList())
+}
+
 func getRichlist(w http.ResponseWriter, r *http.Request) {
 	totalSupply, err := backendInstance.TotalSupply()
 	if err != nil {
@@ -284,7 +325,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 	}
 	skip, limit := parseSkipLimit(r)
 	circulatingSupply, err := backendInstance.CirculatingSupply()
-	if err != nil {		
+	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}

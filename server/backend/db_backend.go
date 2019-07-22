@@ -157,6 +157,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 
+	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
 	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true})
 	if err != nil {
 		panic(err)
@@ -648,6 +653,49 @@ func (self *MongoBackend) getStats() *models.Stats {
 		}
 	}
 	return s
+}
+
+func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration) []models.SignerStats {
+	var resp []bson.M
+	stats := []models.SignerStats{}
+	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
+	pipe := self.mongo.C("Blocks").Pipe(queryDayStats)
+	err := pipe.All(&resp)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot run pipe")
+	}
+	for _, el := range resp {
+		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
+		stats = append(stats, signerStats)
+	}
+	return stats
+}
+
+func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) models.BlockRange {
+	var startBlock, endBlock models.Block
+	var resp models.BlockRange
+	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot get block number")
+	}
+	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
+	if err != nil {
+		log.Info().Err(err).Msg("Cannot get block number")
+	}
+	resp.StartBlock = startBlock.Number
+	resp.EndBlock = endBlock.Number
+	return resp
+}
+
+func (self *MongoBackend) getSignersStats() []models.SignersStats {
+	var stats []models.SignersStats
+	const day = -24 * time.Hour
+	kvs := map[string]time.Duration{"daily": day, "weekly": 7 * day, "monthly": 30 * day}
+	endTime := time.Now()
+	for k, v := range kvs {
+		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v), Range: k})
+	}
+	return stats
 }
 
 func (self *MongoBackend) cleanUp() {

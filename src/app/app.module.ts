@@ -20,6 +20,7 @@ import {TokenAssetComponent} from './scenes/token-asset/token-asset.component';
 import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.component';
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
+import {SignersComponent} from './scenes/signers/signers.component';
 
 import {AddrTransactionsComponent} from './components/addr-transactions/addr-transactions.component';
 import {AddrInternalTxsComponent} from './components/addr-internal-txs/addr-internal-txs.component';
@@ -48,9 +49,10 @@ import {PipesModule} from './modules/pipes/pipes.module';
 import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
-import {SliderModule} from './modules/slider/slider.module';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
+import {PieChartModule} from '@swimlane/ngx-charts';
+import { DataTableModule } from 'ng-angular8-datatable';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
@@ -90,6 +92,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     DeployerComponent,
     SenderComponent,
     InteractorComponent,
+    SignersComponent,
   ],
   imports: [
     CommonModule,
@@ -99,6 +102,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     PipesModule,
     DirectiveModule,
     TabsModule,
+    DataTableModule,
     /*SliderModule,*/
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     NgProgressModule.withConfig({
@@ -112,6 +116,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
+    PieChartModule,
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},

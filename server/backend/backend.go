@@ -25,6 +25,7 @@ type Backend struct {
 	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	lockedAccounts        []string
+	signers                 map[common.Address]models.Signer
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -42,7 +43,7 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot connect to gochain network")
@@ -56,6 +57,7 @@ func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string) *Backe
 	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
 	importer.dockerhubAPI = new(DockerHubAPI)
 	importer.lockedAccounts = lockedAccounts
+	importer.signers = signers
 	return importer
 }
 
@@ -113,6 +115,15 @@ func (self *Backend) CirculatingSupply() (*big.Int, error) {
 func (self *Backend) GetStats() *models.Stats {
 	return self.mongo.getStats()
 }
+
+func (self *Backend) GetSignersStats() []models.SignersStats {
+	return self.mongo.getSignersStats()
+}
+
+func (self *Backend) GetSignersList() map[common.Address]models.Signer {
+	return self.signers
+}
+
 func (self *Backend) GetRichlist(skip, limit int) []*models.Address {
 	return self.mongo.getRichlist(skip, limit, self.lockedAccounts)
 

@@ -172,3 +172,25 @@ export function isHex(val: string): boolean {
   return /^[0-9A-F]+$/i.test(val);
 }
 
+/**
+ *
+ * @param arr
+ * @param key
+ * @param desc
+ */
+export function sortObjArrByKey(arr: any[], key: string, desc: boolean = true) {
+  if (desc) {
+    arr.sort((a, b) => {
+      if (a[key] > b[key]) return -1;
+      if (a[key] < b[key]) return 1;
+      return 0;
+    });
+  } else {
+    arr.sort((a, b) => {
+      if (a[key] > b[key]) return 1;
+      if (a[key] < b[key]) return -1;
+      return 0;
+    });
+  }
+}
+
