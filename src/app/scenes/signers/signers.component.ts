@@ -3,11 +3,13 @@ import {Component, OnInit} from '@angular/core';
 /*SERVICE*/
 import {CommonService} from '../../services/common.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
+import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {SignerData, SignerStat} from '../../models/signer-stats';
 import {ChartItem} from '../../models/chart';
 /*UTILS*/
 import {sortObjArrByKey} from '../../utils/functions';
+import {META_TITLES} from '../../utils/constants';
 
 interface IHoveredItem {
   rangeIndex: number;
@@ -47,10 +49,12 @@ export class SignersComponent implements OnInit {
   constructor(
     private _commonService: CommonService,
     private _toastrService: ToastrService,
+    private _metaService: MetaService,
   ) {
   }
 
   ngOnInit() {
+    this._metaService.setTitle(META_TITLES.SIGNERS.title);
     this._commonService.getSignerStats().subscribe(data => {
       this.onSignerData(data);
     });
