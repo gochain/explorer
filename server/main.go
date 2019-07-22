@@ -227,7 +227,7 @@ func main() {
 				r.Post("/verify", verifyContract)
 				r.Get("/compiler", getCompilerVersion)
 				r.Get("/rpc_provider", getRpcProvider)
-
+				r.Get("/stats", getCurrentStats)
 				r.Get("/richlist", getRichlist)
 
 				r.Route("/signers", func(r chi.Router) {
