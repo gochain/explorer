@@ -654,23 +654,19 @@ func (self *MongoBackend) getStats() *models.Stats {
 	}
 	return s
 }
-func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration, signers map[common.Address]models.Signer) []models.SignerStats {
-	var resp []bson.M
-	var stat []models.SignerStats
+func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration) map[common.Address]int64 {
+	var resp []bson.M	
+	stats := make(map[common.Address]int64)
 	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
 	pipe := self.mongo.C("Blocks").Pipe(queryDayStats)
 	err := pipe.All(&resp)
 	if err != nil {
 		log.Info().Err(err).Msg("Cannot run pipe")
 	}
-	for _, el := range resp {
-		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
-		if val, ok := signers[signerStats.SignerAddress]; ok {
-			signerStats.Signer = val
-		}
-		stat = append(stat, signerStats)
+	for _, el := range resp {		
+		stats[common.HexToAddress(el["_id"].(string))] =  int64(el["count"].(int))
 	}
-	return stat
+	return stats
 }
 
 func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) models.BlockRange {
@@ -689,13 +685,13 @@ func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) mo
 	return resp
 }
 
-func (self *MongoBackend) getSignersStats(signers map[common.Address]models.Signer) []models.SignersStats {
+func (self *MongoBackend) getSignersStats() []models.SignersStats {
 	var stats []models.SignersStats
 	const day = -24 * time.Hour
 	kvs := map[string]time.Duration{"daily": day, "weekly": 7 * day, "monthly": 30 * day}
 	endTime := time.Now()
 	for k, v := range kvs {
-		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v, signers), Range: k})
+		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v), Range: k})
 	}
 	return stats
 }

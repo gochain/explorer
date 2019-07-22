@@ -10,18 +10,13 @@ type Signer struct {
 	Region string `json:"region"`
 }
 
-type SignerStats struct {
-	Signer        Signer         `json:"signer"`
-	SignerAddress common.Address `json:"signer_address"`
-	BlocksCount   int            `json:"blocks_count"`
-}
 type BlockRange struct {
 	StartBlock int64 `json:"start_block"`
 	EndBlock   int64 `json:"end_block"`
 }
 
 type SignersStats struct {
-	SignerStats []SignerStats `json:"signer_stats"`
-	BlockRange  BlockRange    `json:"block_range"`
-	Range       string        `json:"range"`
+	SignerStats map[common.Address]int64 `json:"signer_stats"`
+	BlockRange  BlockRange               `json:"block_range"`
+	Range       string                   `json:"range"`
 }

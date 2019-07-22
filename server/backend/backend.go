@@ -117,7 +117,7 @@ func (self *Backend) GetStats() *models.Stats {
 }
 
 func (self *Backend) GetSignersStats() []models.SignersStats {
-	return self.mongo.getSignersStats(self.signers)
+	return self.mongo.getSignersStats()
 }
 
 func (self *Backend) GetSignersList() map[common.Address]models.Signer {
