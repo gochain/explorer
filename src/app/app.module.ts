@@ -52,6 +52,7 @@ import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 import {PieChartModule} from '@swimlane/ngx-charts';
+import { DataTableModule } from 'ng-angular8-datatable';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
@@ -101,6 +102,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     PipesModule,
     DirectiveModule,
     TabsModule,
+    DataTableModule,
     /*SliderModule,*/
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     NgProgressModule.withConfig({

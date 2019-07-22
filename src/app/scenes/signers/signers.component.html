@@ -35,23 +35,20 @@
             </div>
             <div>
               <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-bordered" [svData]="stat.signer_stats" #sv="svDataTable">                
                   <thead>
                   <tr>
-                    <th>Account</th>
-                    <th>Name</th>
-                    <th>Region</th>
-                    <th>URL</th>
-                    <th>Blocks</th>
+                    <th><sv-default-sorter by="account">Account</sv-default-sorter></th>                    
+                    <th><sv-default-sorter by="name">Name</sv-default-sorter></th>                    
+                    <th><sv-default-sorter by="region">Region</sv-default-sorter></th>                    
+                    <th><sv-default-sorter by="url">URL</sv-default-sorter></th>                    
+                    <th><sv-default-sorter by="blocks_count">Blocks</sv-default-sorter></th>
                     <th>%</th>
                   </tr>
                   </thead>
                   <tbody>
                   <tr
-                      *ngFor="let item of stat.signer_stats; let itemIndex = index"
-                      [ngClass]="{
-                'table-active': hoveredItem && hoveredItem.rangeIndex === rangeIndex && hoveredItem.itemIndex === itemIndex
-                }">
+                      *ngFor="let item of sv.data">
                     <td class="text-monospace">
                       <a routerLink="/addr/{{item.signer_address}}">{{item.signer_address}}</a>
                     </td>
