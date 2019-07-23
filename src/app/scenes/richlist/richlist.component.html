@@ -59,7 +59,7 @@
             <td class="text-truncate text-monospace ws-p"><a
                 routerLink="/addr/{{address.address}}">{{address.address}}</a></td>
             <td class="text-right text-monospace ws-p">{{address.balance_wei | weiToGO: false : true | bigNumber}}</td>
-            <td>{{address.supplyOwned}}%</td>
+            <td class="text-right text-monospace">{{address.supplyOwned}}%</td>
           </tr>
           </tbody>
         </table>

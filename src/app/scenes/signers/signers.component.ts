@@ -4,6 +4,7 @@ import {Component, OnInit} from '@angular/core';
 import {CommonService} from '../../services/common.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
 import {MetaService} from '../../services/meta.service';
+import {LayoutService} from '../../services/layout.service';
 /*MODELS*/
 import {SignerData, SignerStat} from '../../models/signer-stats';
 import {ChartItem} from '../../models/chart';
@@ -50,13 +51,16 @@ export class SignersComponent implements OnInit {
     private _commonService: CommonService,
     private _toastrService: ToastrService,
     private _metaService: MetaService,
+    private _layoutService: LayoutService,
   ) {
   }
 
   ngOnInit() {
+    this._layoutService.onLoading();
     this._metaService.setTitle(META_TITLES.SIGNERS.title);
     this._commonService.getSignerStats().subscribe(data => {
       this.onSignerData(data);
+      this._layoutService.offLoading();
     });
   }
 
