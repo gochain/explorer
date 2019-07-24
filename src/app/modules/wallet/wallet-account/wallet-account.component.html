@@ -6,17 +6,11 @@
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
       <p>
         <button
-            routerLink="/addr/{{walletService.account.address}}"
-            class="btn btn-outline-success btn-sm mr-2"
-        >
-          VIEW ADDRESS
-        </button>
-        <button
             type="button"
             class="btn btn-outline-info btn-sm"
             (click)="walletService.closeAccount()"
         >
-          CLOSE ACCOUNT
+          CLOSE WALLET
         </button>
       </p>
     </div>
