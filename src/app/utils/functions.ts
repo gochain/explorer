@@ -95,7 +95,13 @@ export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAb
  * @param decimals
  * @param unitName
  */
-export function convertWithDecimals(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18, unitName: string = 'GO'): string {
+export function convertWithDecimals(
+  val: string,
+  showUnit: boolean = true,
+  removeTrailingZeros: boolean = false,
+  decimals: number = 18,
+  unitName: string = 'GO',
+): string {
   if (!val) {
     return;
   }
