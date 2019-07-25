@@ -114,7 +114,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     NgProgressHttpModule,
     ToastrModule.forRoot(),
     RouterModule.forRoot(APP_ROUTES),
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     BrowserAnimationsModule,
     PieChartModule,
   ],
