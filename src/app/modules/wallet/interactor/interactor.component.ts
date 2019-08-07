@@ -131,7 +131,7 @@ export class InteractorComponent implements OnInit {
   onDefinitionSelect(functionIndex: number): void {
     this.selectedFunction = null;
     this.functionResult = null;
-    this.functionParameters.reset();
+    this.functionParameters.clear();
     this.selectedFunction = this.abiFunctions[functionIndex];
     // TODO: IF ANY INPUTS, add a sub formgroup
     // if constant, just show value immediately
