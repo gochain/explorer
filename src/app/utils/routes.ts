@@ -38,7 +38,6 @@ export const APP_ROUTES: Routes = [
             component: WalletAccountComponent,
             canActivate: [WalletGuard],
           },
-          // {path: 'use', component: WalletAccountComponentt},
         ]
       },
       {path: ROUTES.BLOCK + '/:id', component: BlockComponent},

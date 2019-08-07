@@ -1,11 +1,15 @@
+/*CORE*/
 import {Component, Input, OnInit} from '@angular/core';
+import {forkJoin, of, Subscription} from 'rxjs';
+import {concatMap, map} from 'rxjs/operators';
+/*SERVICES*/
+import {CommonService} from '../../services/common.service';
+/*MODELS*/
 import {InternalTransaction} from '../../models/internal-transaction.model';
 import {QueryParams} from '../../models/query_params';
-import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {forkJoin, of, Subscription} from 'rxjs';
-import {CommonService} from '../../services/common.service';
 import {Address} from '../../models/address.model';
-import {concatMap, map} from 'rxjs/operators';
+/*UTILS*/
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
 @Component({
   selector: 'app-token-txs',
