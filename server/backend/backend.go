@@ -267,8 +267,8 @@ func (self *Backend) GetTokenDetails(contractAddress string, byteCode string) (*
 	return self.tokenBalance.GetTokenDetails(contractAddress, byteCode)
 }
 
-func (self *Backend) GetInternalTransactions(address string, contractBlock int64) []TransferEvent {
-	return self.tokenBalance.getInternalTransactions(address, contractBlock)
+func (self *Backend) GetInternalTransactions(address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
+	return self.tokenBalance.getInternalTransactions(address, contractBlock, blockRangeLimit)
 }
 
 func (self *Backend) CountInternalTransactions(address string) int {

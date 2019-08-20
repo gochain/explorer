@@ -3,9 +3,10 @@ package backend
 import (
 	"context"
 	"errors"
-	"github.com/gochain-io/explorer/server/utils"
 	"math/big"
 	"strings"
+
+	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/gochain-io/gochain/v3"
 	"github.com/gochain-io/gochain/v3/accounts/abi"
@@ -160,8 +161,8 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	return err
 }
 
-func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock int64) []TransferEvent {
-	const numOfBlocksPerRequest = 100000
+func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
+	numOfBlocksPerRequest := int64(blockRangeLimit)
 	latestBlockNumber := rpc.initialBlockNumber
 	block, err := rpc.conn.BlockByNumber(context.Background(), nil)
 	if block == nil {

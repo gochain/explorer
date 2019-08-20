@@ -20,6 +20,7 @@ func main() {
 	var dbName string
 	var loglevel string
 	var startFrom int64
+	var blockRangeLimit uint64
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
@@ -54,6 +55,12 @@ func main() {
 			Usage:       "refill from this block",
 			Destination: &startFrom,
 		},
+		cli.Uint64Flag{
+			Name:        "block-range-limit, b",
+			Value:       9999,
+			Usage:       "block range limit",
+			Destination: &blockRangeLimit,
+		},
 		cli.StringSliceFlag{
 			Name:  "locked-accounts",
 			Usage: "accounts with locked funds to exclude from rich list and circulating supply",
@@ -77,8 +84,8 @@ func main() {
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)
-		go updateAddresses(rpcUrl, false, importer) // update only addresses
-		updateAddresses(rpcUrl, true, importer)     // update contracts
+		go updateAddresses(rpcUrl, false, blockRangeLimit, importer) // update only addresses
+		updateAddresses(rpcUrl, true, blockRangeLimit, importer)     // update contracts
 		return nil
 	}
 	err := app.Run(os.Args)
@@ -195,7 +202,7 @@ func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) 
 	}
 }
 
-func updateAddresses(url string, updateContracts bool, importer *backend.Backend) {
+func updateAddresses(url string, updateContracts bool, blockRangeLimit uint64, importer *backend.Backend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := int64(0)
 	for {
@@ -233,7 +240,7 @@ func updateAddresses(url string, updateContracts bool, importer *backend.Backend
 					} else {
 						fromBlock = importer.GetContractBlock(normalizedAddress)
 					}
-					internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock)
+					internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock, blockRangeLimit)
 					internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
 					log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
 					if len(internalTxs) != internalTxsFromDb {
