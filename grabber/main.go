@@ -57,7 +57,7 @@ func main() {
 		},
 		cli.Uint64Flag{
 			Name:        "block-range-limit, b",
-			Value:       9999,
+			Value:       10000,
 			Usage:       "block range limit",
 			Destination: &blockRangeLimit,
 		},
