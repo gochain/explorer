@@ -312,8 +312,8 @@ func (self *Backend) ImportInternalTransaction(contractAddress string, transferE
 	}
 	return self.mongo.importInternalTransaction(contractAddress, transferEvent, createdAt)
 }
-func (self *Backend) ImportContract(contractAddress string, byteCode string) *models.Contract {
-	return self.mongo.importContract(contractAddress, byteCode)
+func (self *Backend) ImportContract(contractAddress string, byteCode string) {
+	self.mongo.importContract(contractAddress, byteCode)
 }
 
 func (self *Backend) GetContractBlock(contractAddress string) int64 {

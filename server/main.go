@@ -167,8 +167,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
-		zerolog.SetGlobalLevel(level)
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		zerolog.SetGlobalLevel(level)		
 
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {

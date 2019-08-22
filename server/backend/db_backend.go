@@ -403,18 +403,12 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 	return internalTransaction
 }
 
-func (self *MongoBackend) importContract(contractAddress string, byteCode string) *models.Contract {
-	contract := &models.Contract{
-		Address:   contractAddress,
-		Bytecode:  byteCode,
-		CreatedAt: time.Now(),
-	}
-	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
+func (self *MongoBackend) importContract(contractAddress string, byteCode string) {
+	//https://stackoverflow.com/questions/43278696/golang-mgo-insert-or-update-not-working-as-expected/43278832
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress,"byte_code": byteCode,"created_at":time.Now()}},)	
 	if err != nil {
 		log.Fatal().Err(err).Msg("importContract")
 	}
-
-	return contract
 }
 
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {

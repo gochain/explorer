@@ -177,7 +177,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 	var transferEvents []TransferEvent
 	for i := 0; i <= numOfCycles; i++ {
 		fromBlock := contractBlock + int64(i)*numOfBlocksPerRequest
-		log.Info().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
+		 log.Debug().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
 		query := gochain.FilterQuery{
 			FromBlock: big.NewInt(fromBlock),
 			ToBlock:   big.NewInt(fromBlock + numOfBlocksPerRequest),
