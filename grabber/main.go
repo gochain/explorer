@@ -220,12 +220,15 @@ func updateAddresses(url string, updateContracts bool, blockRangeLimit uint64, w
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		var jobs = make(chan *models.ActiveAddress, workersCount)
-		go fillJobs(jobs, addresses)
 		var wg sync.WaitGroup
 		for i := 0; i < int(workersCount); i++ {
 			wg.Add(1)
-			go worker(&wg, jobs, i, currentBlock, blockRangeLimit, importer)
+			go worker(&wg, jobs, currentBlock, blockRangeLimit, importer)
 		}
+		for _, address := range addresses {
+			jobs <- address
+		}
+		close(jobs)
 		wg.Wait()
 		elapsed := time.Since(start)
 		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")
@@ -234,13 +237,8 @@ func updateAddresses(url string, updateContracts bool, blockRangeLimit uint64, w
 		time.Sleep(180 * time.Second) //sleep for 3 minutes
 	}
 }
-func fillJobs(jobs chan *models.ActiveAddress, addresses []*models.ActiveAddress) {
-	for _, address := range addresses {
-		jobs <- address
-	}
-	close(jobs)
-}
-func worker(wg *sync.WaitGroup, jobs chan *models.ActiveAddress, i int, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
+
+func worker(wg *sync.WaitGroup, jobs chan *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
 	for address := range jobs {
 		updateAddress(address, currentBlock, blockRangeLimit, importer)
 	}
