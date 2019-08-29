@@ -1,15 +1,15 @@
 /*CORE*/
-import {Component, Input, OnInit} from '@angular/core';
-import {forkJoin, of, Subscription} from 'rxjs';
-import {concatMap, map} from 'rxjs/operators';
+import { Component, Input, OnInit } from '@angular/core';
+import { forkJoin, of, Subscription } from 'rxjs';
+import { concatMap, map } from 'rxjs/operators';
 /*SERVICES*/
-import {CommonService} from '../../services/common.service';
+import { CommonService } from '../../services/common.service';
 /*MODELS*/
-import {InternalTransaction} from '../../models/internal-transaction.model';
-import {QueryParams} from '../../models/query_params';
-import {Address} from '../../models/address.model';
+import { InternalTransaction } from '../../models/internal-transaction.model';
+import { QueryParams } from '../../models/query_params';
+import { Address } from '../../models/address.model';
 /*UTILS*/
-import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import { AutoUnsubscribe } from '../../decorators/auto-unsubscribe';
 
 @Component({
   selector: 'app-token-txs',
@@ -77,9 +77,11 @@ export class TokenTxsComponent implements OnInit {
         }
       }),
       map((data: InternalTransaction[]) => {
-        data.forEach((tx: InternalTransaction) => {
-          tx.address = this._commonService.contractsCache[tx.contract_address];
-        });
+        if (data) {
+          data.forEach((tx: InternalTransaction) => {
+            tx.address = this._commonService.contractsCache[tx.contract_address];
+          });
+        }
         return data;
       }),
     ).subscribe((data: InternalTransaction[]) => {

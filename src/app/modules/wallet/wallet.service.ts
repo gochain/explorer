@@ -1,23 +1,23 @@
 /*CORE*/
-import {Injectable} from '@angular/core';
-import {Router} from '@angular/router';
-import {BehaviorSubject, forkJoin, Observable, of} from 'rxjs';
-import {concatMap, filter, map, tap} from 'rxjs/operators';
-import {fromPromise} from 'rxjs/internal-compatibility';
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { BehaviorSubject, forkJoin, Observable, of } from 'rxjs';
+import { concatMap, filter, map, tap } from 'rxjs/operators';
+import { fromPromise } from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
-import {SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
-import {Account} from 'web3-eth-accounts';
-import {Contract as Web3Contract} from 'web3-eth-contract';
-import {AbiItem} from 'web3-utils';
+import { SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt } from 'web3-core';
+import { Account } from 'web3-eth-accounts';
+import { Contract as Web3Contract } from 'web3-eth-contract';
+import { AbiItem } from 'web3-utils';
 /*SERVICES*/
-import {ToastrService} from '../toastr/toastr.service';
-import {CommonService} from '../../services/common.service';
+import { ToastrService } from '../toastr/toastr.service';
+import { CommonService } from '../../services/common.service';
 /*MODELS*/
-import {Transaction} from '../../models/transaction.model';
+import { Transaction } from '../../models/transaction.model';
 /*UTILS*/
-import {objIsEmpty} from '../../utils/functions';
-import {ContractAbi} from '../../utils/types';
+import { objIsEmpty } from '../../utils/functions';
+import { ContractAbi } from '../../utils/types';
 
 @Injectable()
 export class WalletService {
@@ -56,10 +56,29 @@ export class WalletService {
       .pipe(
         filter(value => !!value),
       )
-      .subscribe((rpcProvider: string) => {
-        const provider = Web3.givenProvider || new Web3.providers.HttpProvider(rpcProvider);
-        this._web3 = new Web3(provider, null, {
-          transactionConfirmationBlocks: 1,
+      .subscribe((rpcProvider: string) => {        
+        const metaMaskProvider = new Web3(Web3.givenProvider, null, { transactionConfirmationBlocks: 1, });
+        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, { transactionConfirmationBlocks: 1, });
+        if (!metaMaskProvider.currentProvider){
+          this._web3 = web3Provider;          
+          return;
+        }
+        web3Provider.eth.net.getId((err, web3NetID) => {
+          if (err) {
+            this._toastrService.danger("Metamask is enabled but can't get network id");
+            return;
+          }
+          metaMaskProvider.eth.net.getId((err, metamask3NetID) => {
+            if (err) {
+              this._toastrService.danger("Metamask is enabled but can't get network id from Metamask");
+              return;
+            }
+            if (web3NetID != metamask3NetID) {
+              this._toastrService.danger("Metamask is enabled but networks are different");              
+              return;
+            }            
+            this._web3 = metaMaskProvider;
+          });
         });
       });
   }
@@ -227,9 +246,9 @@ export class WalletService {
         return this.sendSignedTx(signed);
       })
     ).subscribe((receipt: TransactionReceipt) => {
-        this.receipt = receipt;
-        this.getBalance();
-      },
+      this.receipt = receipt;
+      this.getBalance();
+    },
       err => {
         this._toastrService.danger(err);
         this.resetProcessing();
