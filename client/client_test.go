@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/gochain-io/explorer/client"
@@ -23,7 +24,7 @@ var (
 	c        *client.Client
 )
 
-func init() {
+func TestMain(m *testing.M) {
 	flag.Parse()
 	if *url != "" {
 		log.Println("Using custom url:", *url)
@@ -46,6 +47,8 @@ func init() {
 			testAddr = mainnetTestAddr
 		}
 	}
+
+	os.Exit(m.Run())
 }
 
 func TestClient_TotalSupplyWei(t *testing.T) {

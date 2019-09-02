@@ -15,18 +15,13 @@ trap cleanup_containers SIGINT EXIT SIGHUP
 docker run --name test_mongo -d -p 8545:8545 -p 8080:8080 -p 27017:27017 mongo
 varA=`docker ps --no-trunc -q | cut -c 1-12`
 # build
+docker build --target backend_builder -t gochain/explorer-back-build .
 docker build -t gochain/explorer:test_ci .
 # launch required containers
 docker run --name test_explorer_grabber -d --network="container:$varA" gochain/explorer:test_ci grabber -u https://testnet-rpc.gochain.io -s 10
 docker run --name test_explorer_server -d --network="container:$varA" gochain/explorer:test_ci server -d /explorer/ -u https://testnet-rpc.gochain.io
 # this will run both integration and unit tests, integration test will require mongo running that why it should be running in the same network with mongo
-docker run --name test_explorer_go_integration -d -w /explorer --network="container:$varA" golang:alpine /bin/sh -c "while true; do sleep 15 ; done"
-# looks like due to some limitations it's not possilbe to just map the current directory to a container, that why you have to use docker cp
-docker cp . test_explorer_go_integration:/explorer
-# Installing build deps for tests
-docker exec test_explorer_go_integration apk add git gcc linux-headers g++ make
-# run the tests inside running container
-docker exec test_explorer_go_integration go test -tags=integration ./...
+docker run --name test_explorer_go_integration --network="container:$varA" gochain/explorer-back-build go test -tags=integration ./...
 sleep 5 # let's wait until server start
 # docker exec test_explorer npm test
 echo "Docker logs for grabber"
