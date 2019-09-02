@@ -223,6 +223,7 @@ func main() {
 
 			r.Route("/api", func(r chi.Router) {
 				r.Head("/", pingDB)
+				r.Get("/", pingDB)
 				r.Post("/verify", verifyContract)
 				r.Get("/compiler", getCompilerVersion)
 				r.Get("/rpc_provider", getRpcProvider)
