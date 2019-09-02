@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gochain-io/explorer/server/utils"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/gochain-io/explorer/server/utils"
 )
 
 var versionRegexp = regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
@@ -63,7 +64,7 @@ func (s *Solidity) makeArgs() ([]string, error) {
 		return nil, err
 	}
 	args := []string{
-		"run", "-i", "-v", dir + ":/workdir", "-w", "/workdir", "ethereum/solc:" + s.Version,
+		"run", "-i", "-v", "/home" + dir + ":/workdir", "-w", "/workdir", "ethereum/solc:" + s.Version,
 		"--combined-json",
 		"bin,bin-runtime,srcmap,srcmap-runtime,abi,userdoc,devdoc,metadata",
 	}
