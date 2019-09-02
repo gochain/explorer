@@ -2,7 +2,7 @@ version: 2
 jobs:
   build-test:
     docker:
-      - image: circleci/golang:1.12
+      - image: circleci/golang:1.13rc2
     steps:
       - setup_remote_docker:
           docker_layer_caching: true

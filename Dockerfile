@@ -1,5 +1,5 @@
 # Build GoChain in a stock Go builder container
-FROM golang:alpine as backend_builder
+FROM golang:1.13rc2-alpine as backend_builder
 RUN apk --no-cache add build-base git bzr mercurial gcc linux-headers g++ make
 ENV D=/explorer
 WORKDIR $D
@@ -11,7 +11,7 @@ ADD . $D
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
 
-FROM node:10-alpine  as frontend_builder
+FROM node:10-alpine as frontend_builder
 WORKDIR /explorer
 RUN apk add --no-cache make git gcc g++ python
 ADD . /explorer
