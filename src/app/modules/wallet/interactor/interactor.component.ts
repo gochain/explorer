@@ -295,7 +295,7 @@ export class InteractorComponent implements OnInit {
       this.contract = new this._walletService.w3.eth.Contract(abiItems, addrHash);
       this.abiFunctions = getAbiMethods(abiItems);
     } catch (e) {
-      this._toastrService.danger('Can]\'t initiate contract, check entered data');
+      this._toastrService.danger('Can\'t initiate contract, check entered data');
       return;
     }
   }
