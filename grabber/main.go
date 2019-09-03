@@ -258,7 +258,7 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 		contract = true
 		byteCode := hex.EncodeToString(contractDataArray)
 		importer.ImportContract(normalizedAddress, byteCode)
-		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
+		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)		
 		if err != nil {
 			log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
 			// continue
@@ -272,6 +272,11 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 				fromBlock = contractFromDB.UpdatedAtBlock
 			} else {
 				fromBlock = importer.GetContractBlock(normalizedAddress)
+			}
+			if (contractFromDB.TokenName =="" || contractFromDB.TokenSymbol ==""){
+				log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Str("Name",tokenDetails.Name).Msg("TokenName and TokenSymbols are empty using from token details")
+				contractFromDB.TokenName = tokenDetails.Name
+				contractFromDB.TokenSymbol = tokenDetails.Symbol
 			}
 			internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock, blockRangeLimit)
 			internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
@@ -300,14 +305,14 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 					if contractFromDB == nil {
 						log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot find contract in DB")
 						continue
-					}
-					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
+					}					
+					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)					
 				}
 			}
 		}
 	}
-	log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")
-	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
+	log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")	
+	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)	
 }
 func updateStats(importer *backend.Backend) {
 	for {
