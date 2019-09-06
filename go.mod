@@ -1,6 +1,6 @@
 module github.com/gochain-io/explorer
 
-go 1.12
+go 1.13
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20181109020153-5faa74ffbed7 // indirect
