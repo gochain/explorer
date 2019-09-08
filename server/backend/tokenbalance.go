@@ -5,12 +5,14 @@ import (
 	"errors"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/gochain-io/gochain/v3"
 	"github.com/gochain-io/gochain/v3/accounts/abi"
 	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
 	"github.com/rs/zerolog/log"
 )
@@ -186,8 +188,11 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 		}
 		ctx := context.Background()
 
-		events, err := rpc.conn.FilterLogs(ctx, query)
-
+		var events []types.Log
+		err := retry(5, 2*time.Second, func() (err error) {
+			events, err = rpc.conn.FilterLogs(ctx, query)			
+			return err
+		})
 		if err != nil {
 			log.Info().Err(err)
 		}
