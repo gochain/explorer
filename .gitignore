@@ -1,14 +1,13 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-/dist
-/front/dist
-/front/dist-server
+dist/
+dist-server/
 /tmp
 /out-tsc
 
 # dependencies
-/front/node_modules
+node_modules/
 vendor/
 
 # IDEs and editors
@@ -51,4 +50,3 @@ server/server
 server/vendor/*
 grabber/vendor/*
 data/*
-front/package-lock.json
