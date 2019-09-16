@@ -2,12 +2,13 @@
 
 # compiled output
 /dist
-/dist-server
+/front/dist
+/front/dist-server
 /tmp
 /out-tsc
 
 # dependencies
-/node_modules
+/front/node_modules
 vendor/
 
 # IDEs and editors
@@ -50,3 +51,4 @@ server/server
 server/vendor/*
 grabber/vendor/*
 data/*
+front/package-lock.json
