@@ -1,7 +1,7 @@
 import {AfterViewInit, Directive, EventEmitter, Input, NgZone, OnChanges, Output, TemplateRef, ViewContainerRef} from '@angular/core';
 import {fromEvent, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
-import {AutoUnsubscribe} from '../decorators/auto-unsubscribe';
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
 @Directive({
   selector: '[appInfinityScroll]'
