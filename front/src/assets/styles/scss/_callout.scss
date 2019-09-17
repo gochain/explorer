@@ -1,0 +1,30 @@
+.callout {
+  padding: 1.25rem;
+  //margin-top: 1.25rem;
+  //margin-bottom: 1.25rem;
+  border: 1px solid #eee;
+  border-left-width: .25rem;
+}
+
+.callout h4 {
+  margin-top: 0;
+  margin-bottom: .25rem
+}
+
+.callout p:last-child {
+  margin-bottom: 0
+}
+
+.callout code {
+  border-radius: .25rem
+}
+
+.callout+.callout {
+  margin-top: -.25rem
+}
+
+@each $color, $value in $theme-colors {
+  .callout-#{$color} {
+    @include callout-variant($value);
+  }
+}
