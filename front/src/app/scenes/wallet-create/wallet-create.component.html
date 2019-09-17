@@ -3,8 +3,10 @@
     <div class="card-body">
       <div class="card-title"><img src="../../../assets/icons/user.svg"> Create Account</div>
       <ng-container *ngIf="account; else error">
-        <p>NOTE: Once you leave this page, you cannot recover the address or private key.</p>
-        <p>Please copy this somewhere safe!</p>
+        <div class="callout callout-danger my-4">
+          <p>NOTE: Once you leave this page, you cannot recover the address or private key.</p>
+          <p>Please copy this somewhere safe!</p>
+        </div>
         <div class="row">
           <div class="col-md-9">
             <div class="form-group">
@@ -57,7 +59,9 @@
         <button type="button" class="btn btn-primary" (click)="useWallet()">Use wallet</button>
       </ng-container>
       <ng-template #error>
-        <h3>An error occurred while processing request. Please try again later.</h3>
+        <div class="callout callout-danger mb-4">
+          <h4>An error occurred while processing request. Please try again later.</h4>
+        </div>
       </ng-template>
     </div>
   </div>
