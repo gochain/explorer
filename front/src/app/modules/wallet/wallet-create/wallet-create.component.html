@@ -12,7 +12,17 @@
               <div class="input-group">
                 <input type="text" class="form-control" id="private-key" [value]="account.privateKey" readonly>
                 <div class="input-group-append">
-                  <button class="btn" type="button">Copy</button>
+                  <button
+                      class="btn"
+                      type="button"
+                      ngxClipboard
+                      *ngxClipboardIfSupported
+                      (cbOnSuccess)="onCopy()"
+                      [cbContent]="account.privateKey"
+                      title="Copy to clipboard"
+                  >
+                    <img src="../../../../assets/icons/copy.svg" alt="Copy">
+                  </button>
                 </div>
               </div>
             </div>
@@ -21,7 +31,17 @@
               <div class="input-group">
                 <input type="text" class="form-control" id="address" [value]="account.address" readonly>
                 <div class="input-group-append">
-                  <button class="btn" type="button">Copy</button>
+                  <button
+                      class="btn"
+                      type="button"
+                      ngxClipboard
+                      *ngxClipboardIfSupported
+                      (cbOnSuccess)="onCopy()"
+                      [cbContent]="account.address"
+                      title="Copy to clipboard"
+                  >
+                    <img src="../../../../assets/icons/copy.svg" alt="Copy">
+                  </button>
                 </div>
               </div>
             </div>

@@ -59,6 +59,7 @@ import {TimeAgoPipe} from 'time-ago-pipe';
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF, CommonModule} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
+import {ClipboardModule} from 'ngx-clipboard';
 
 @NgModule({
   declarations: [
@@ -117,6 +118,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     BrowserModule,
     BrowserAnimationsModule,
     PieChartModule,
+    ClipboardModule,
   ],
   providers: [
     {provide: APP_BASE_HREF, useValue: '/'},

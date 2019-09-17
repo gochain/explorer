@@ -5,6 +5,8 @@ import {Router} from '@angular/router';
 import {WalletService} from '../wallet.service';
 import {CommonService} from '../../../services/common.service';
 import {MetaService} from '../../../services/meta.service';
+import {ToastrService} from '../../toastr/toastr.service';
+import {ClipboardService} from 'ngx-clipboard';
 /*MODELS*/
 import {Account} from 'web3-eth-accounts';
 /*UTILS*/
@@ -25,7 +27,10 @@ export class WalletCreateComponent implements OnInit {
     private _commonService: CommonService,
     private _metaService: MetaService,
     private _router: Router,
+    private _toastrService: ToastrService,
+    private _clipboardService: ClipboardService,
   ) {
+    this._clipboardService.configure({ cleanUpAfterCopy: true });
   }
 
   ngOnInit(): void {
@@ -37,5 +42,9 @@ export class WalletCreateComponent implements OnInit {
     if (this._walletService.openAccount(this.account.privateKey)) {
       this._router.navigate(['/wallet/account']);
     }
+  }
+
+  onCopy(): void {
+    this._toastrService.success('Copied');
   }
 }
