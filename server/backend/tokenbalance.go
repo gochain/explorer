@@ -179,7 +179,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 	var transferEvents []TransferEvent
 	for i := 0; i <= numOfCycles; i++ {
 		fromBlock := contractBlock + int64(i)*numOfBlocksPerRequest
-		 log.Debug().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
+		log.Debug().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
 		query := gochain.FilterQuery{
 			FromBlock: big.NewInt(fromBlock),
 			ToBlock:   big.NewInt(fromBlock + numOfBlocksPerRequest),
@@ -190,7 +190,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 
 		var events []types.Log
 		err := retry(5, 2*time.Second, func() (err error) {
-			events, err = rpc.conn.FilterLogs(ctx, query)			
+			events, err = rpc.conn.FilterLogs(ctx, query)
 			return err
 		})
 		if err != nil {
@@ -202,17 +202,22 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 			log.Info().Err(err)
 		}
 		for _, event := range events {
+			logger := log.With().Uint64("Block", event.BlockNumber).Uint("Log Index", event.Index).Str("Contract", address).Logger()
 			var transferEvent TransferEvent
 			err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
 			if err != nil {
-				log.Info().Str("Address", address).Msg("Failed to unpack event")
+				logger.Warn().Err(err).Msg("Failed to unpack event")
+				continue
+			}
+			if l := len(event.Topics); l < 3 {
+				logger.Warn().Msg("Failed to parse event - too few topics. Expected 3.")
 				continue
 			}
 			transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
 			transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
 			transferEvent.BlockNumber = int64(event.BlockNumber)
 			transferEvent.TransactionHash = event.TxHash.String()
-			log.Debug().Uint64("Block", event.BlockNumber).Str("Contract", address).Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
+			logger.Debug().Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
 			transferEvents = append(transferEvents, transferEvent)
 		}
 	}
