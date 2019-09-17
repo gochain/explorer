@@ -19,8 +19,8 @@ docker create -v /data --name file alpine /bin/true
 docker cp ${HOME}/project/front/$version_file file:/data/$version_file
 # Bump version, patch by default - also checks if previous commit message contains `[bump X]`, and if so, bumps the appropriate semver number - https://github.com/treeder/dockers/tree/master/bump
 docker run --rm -it --volumes-from file -w / treeder/bump --filename /data/$version_file "$(git log -1 --pretty=%B)"
-docker cp file:/data/$version_file $version_file
-version=$(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" $version_file)
+docker cp file:/data/$version_file front/$version_file
+version=$(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" front/$version_file)
 echo "Version: $version"
 
 
