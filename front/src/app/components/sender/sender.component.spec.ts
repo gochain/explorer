@@ -1,10 +1,11 @@
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
-import {InteractorComponent} from './interactor.component';
-import {AppModule} from '../../../app.module';
 
-describe('ContractInteractorComponent', () => {
-  let component: InteractorComponent;
-  let fixture: ComponentFixture<InteractorComponent>;
+import {SenderComponent} from './sender.component';
+import {AppModule} from '../../app.module';
+
+describe('SenderComponent', () => {
+  let component: SenderComponent;
+  let fixture: ComponentFixture<SenderComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -14,7 +15,7 @@ describe('ContractInteractorComponent', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(InteractorComponent);
+    fixture = TestBed.createComponent(SenderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

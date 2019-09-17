@@ -1,7 +1,7 @@
 <div class="container" *ngIf="walletService.account">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><img src="../../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
+      <div class="card-title"><img src="../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
       <p>Address: {{walletService.account.address}}</p>
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
       <p>
@@ -47,7 +47,7 @@
       <ng-container *ngIf="walletService.isProcessing">
         <div *ngIf="!walletService.receipt; else result;" class="processing">
           <div class="processing__icon">
-            <img src="../../../../assets/icons/loader.svg" alt="Processing">
+            <img src="../../../assets/icons/loader.svg" alt="Processing">
           </div>
           <div class="processing__content mt-4">
             Transaction submitted, waiting for receipt...

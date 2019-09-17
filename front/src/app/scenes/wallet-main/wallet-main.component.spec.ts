@@ -1,11 +1,11 @@
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import {WalletCreateComponent} from './wallet-create.component';
-import {AppModule} from '../../../app.module';
+import {WalletMainComponent} from './wallet-main.component';
+import {AppModule} from '../../app.module';
 
-describe('WalletCreateComponent', () => {
-  let component: WalletCreateComponent;
-  let fixture: ComponentFixture<WalletCreateComponent>;
+describe('WalletMainComponent', () => {
+  let component: WalletMainComponent;
+  let fixture: ComponentFixture<WalletMainComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -15,7 +15,7 @@ describe('WalletCreateComponent', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(WalletCreateComponent);
+    fixture = TestBed.createComponent(WalletMainComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -4,13 +4,13 @@ import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 /*SERVICES*/
-import {WalletService} from '../wallet.service';
-import {ToastrService} from '../../toastr/toastr.service';
+import {WalletService} from '../../services/wallet.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
 /*MODELS*/
 import {TransactionConfig} from 'web3-core';
 /*UTILS*/
-import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {isHex} from '../../../utils/functions';
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {isHex} from '../../utils/functions';
 
 @Component({
   selector: 'app-deployer',

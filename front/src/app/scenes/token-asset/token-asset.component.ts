@@ -4,7 +4,7 @@ import {ActivatedRoute, Params} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {filter} from 'rxjs/operators';
 /*SERVICES*/
-import {WalletService} from '../../modules/wallet/wallet.service';
+import {WalletService} from '../../services/wallet.service';
 import {ApiService} from '../../services/api.service';
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';

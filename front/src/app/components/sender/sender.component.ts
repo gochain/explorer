@@ -2,10 +2,10 @@
 import {Component, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 /*SERVICES*/
-import {WalletService} from '../wallet.service';
-import {ToastrService} from '../../toastr/toastr.service';
+import {WalletService} from '../../services/wallet.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
 /*UTILS*/
-import {DEFAULT_GAS_LIMIT} from '../../../utils/constants';
+import {DEFAULT_GAS_LIMIT} from '../../utils/constants';
 
 @Component({
   selector: 'app-sender',

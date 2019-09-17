@@ -5,22 +5,22 @@ import {ActivatedRoute, ParamMap} from '@angular/router';
 import {forkJoin, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 /*SERVICES*/
-import {WalletService} from '../wallet.service';
-import {ToastrService} from '../../toastr/toastr.service';
-import {CommonService} from '../../../services/common.service';
+import {WalletService} from '../../services/wallet.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
+import {CommonService} from '../../services/common.service';
 /*MODELS*/
-import {Badge} from '../../../models/badge.model';
-import {Address} from '../../../models/address.model';
-import {Contract} from '../../../models/contract.model';
+import {Badge} from '../../models/badge.model';
+import {Address} from '../../models/address.model';
+import {Contract} from '../../models/contract.model';
 import {TransactionConfig} from 'web3-core';
 import {AbiItem} from 'web3-utils';
 import {Contract as Web3Contract} from 'web3-eth-contract';
 /*UTILS*/
-import {ErcName} from '../../../utils/enums';
-import {AutoUnsubscribe} from '../../../decorators/auto-unsubscribe';
-import {ContractAbi} from '../../../utils/types';
-import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../../utils/functions';
-import {ERC_INTERFACE_IDENTIFIERS} from '../../../utils/constants';
+import {ErcName} from '../../utils/enums';
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {ContractAbi} from '../../utils/types';
+import {getAbiMethods, getDecodedData, makeContractAbi, makeContractBadges} from '../../utils/functions';
+import {ERC_INTERFACE_IDENTIFIERS} from '../../utils/constants';
 import BigNumber from 'bignumber.js';
 
 @Component({

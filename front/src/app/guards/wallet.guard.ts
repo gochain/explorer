@@ -2,7 +2,7 @@
 import {Injectable} from '@angular/core';
 import {CanActivate, Router} from '@angular/router';
 /*SERVICES*/
-import {WalletService} from '../modules/wallet/wallet.service';
+import {WalletService} from '../services/wallet.service';
 
 @Injectable({
   providedIn: 'root'
