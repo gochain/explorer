@@ -7,7 +7,7 @@ import {fromPromise} from 'rxjs/internal-compatibility';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
-import {WalletService} from '../../modules/wallet/wallet.service';
+import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {Transaction} from '../../models/transaction.model';

@@ -9,9 +9,9 @@ import {HomeComponent} from '../scenes/home/home.component';
 import {PageNotFoundComponent} from '../scenes/page-not-found/page-not-found.component';
 import {ContractComponent} from '../scenes/contract/contract.component';
 import {TokenAssetComponent} from '../scenes/token-asset/token-asset.component';
-import {WalletMainComponent} from '../modules/wallet/wallet-main/wallet-main.component';
-import {WalletCreateComponent} from '../modules/wallet/wallet-create/wallet-create.component';
-import {WalletAccountComponent} from '../modules/wallet/wallet-account/wallet-account.component';
+import {WalletMainComponent} from '../scenes/wallet-main/wallet-main.component';
+import {WalletCreateComponent} from '../scenes/wallet-create/wallet-create.component';
+import {WalletAccountComponent} from '../scenes/wallet-account/wallet-account.component';
 import {SignersComponent} from '../scenes/signers/signers.component';
 /*SERVICES*/
 import {CommonService} from '../services/common.service';

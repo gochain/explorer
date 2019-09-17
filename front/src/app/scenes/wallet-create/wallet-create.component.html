@@ -1,7 +1,7 @@
 <div class="container">
   <div class="card">
     <div class="card-body">
-      <div class="card-title"><img src="../../../../assets/icons/user.svg"> Create Account</div>
+      <div class="card-title"><img src="../../../assets/icons/user.svg"> Create Account</div>
       <ng-container *ngIf="account; else error">
         <p>NOTE: Once you leave this page, you cannot recover the address or private key.</p>
         <p>Please copy this somewhere safe!</p>
@@ -21,7 +21,7 @@
                       [cbContent]="account.privateKey"
                       title="Copy to clipboard"
                   >
-                    <img src="../../../../assets/icons/copy.svg" alt="Copy">
+                    <img src="../../../assets/icons/copy.svg" alt="Copy">
                   </button>
                 </div>
               </div>
@@ -40,7 +40,7 @@
                       [cbContent]="account.address"
                       title="Copy to clipboard"
                   >
-                    <img src="../../../../assets/icons/copy.svg" alt="Copy">
+                    <img src="../../../assets/icons/copy.svg" alt="Copy">
                   </button>
                 </div>
               </div>

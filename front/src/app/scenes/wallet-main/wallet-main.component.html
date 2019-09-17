@@ -33,7 +33,7 @@
                 [disabled]="walletService.isProcessing"
             >
               <ng-container *ngIf="walletService.isProcessing; else open">
-                OPENING <img src="../../../../assets/icons/loader.svg" alt="Opening">
+                OPENING <img src="../../../assets/icons/loader.svg" alt="Opening">
               </ng-container>
               <ng-template #open>
                 OPEN WALLET

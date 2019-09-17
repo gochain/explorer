@@ -2,15 +2,15 @@
 import {Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 /*SERVICES*/
-import {WalletService} from '../wallet.service';
-import {CommonService} from '../../../services/common.service';
-import {MetaService} from '../../../services/meta.service';
-import {ToastrService} from '../../toastr/toastr.service';
+import {WalletService} from '../../services/wallet.service';
+import {CommonService} from '../../services/common.service';
+import {MetaService} from '../../services/meta.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
 import {ClipboardService} from 'ngx-clipboard';
 /*MODELS*/
 import {Account} from 'web3-eth-accounts';
 /*UTILS*/
-import {META_TITLES} from '../../../utils/constants';
+import {META_TITLES} from '../../utils/constants';
 
 @Component({
   selector: 'app-wallet-create',

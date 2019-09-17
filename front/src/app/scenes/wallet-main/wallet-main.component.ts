@@ -3,11 +3,11 @@ import {Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
 import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 /*SERVICES*/
-import {MetaService} from '../../../services/meta.service';
-import {ToastrService} from '../../toastr/toastr.service';
-import {WalletService} from '../wallet.service';
+import {MetaService} from '../../services/meta.service';
+import {ToastrService} from '../../modules/toastr/toastr.service';
+import {WalletService} from '../../services/wallet.service';
 /*UTILS*/
-import {META_TITLES} from '../../../utils/constants';
+import {META_TITLES} from '../../utils/constants';
 
 
 @Component({

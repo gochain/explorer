@@ -11,13 +11,13 @@ import { Account } from 'web3-eth-accounts';
 import { Contract as Web3Contract } from 'web3-eth-contract';
 import { AbiItem } from 'web3-utils';
 /*SERVICES*/
-import { ToastrService } from '../toastr/toastr.service';
-import { CommonService } from '../../services/common.service';
+import { ToastrService } from '../modules/toastr/toastr.service';
+import { CommonService } from './common.service';
 /*MODELS*/
-import { Transaction } from '../../models/transaction.model';
+import { Transaction } from '../models/transaction.model';
 /*UTILS*/
-import { objIsEmpty } from '../../utils/functions';
-import { ContractAbi } from '../../utils/types';
+import { objIsEmpty } from '../utils/functions';
+import { ContractAbi } from '../utils/types';
 
 @Injectable()
 export class WalletService {
@@ -56,11 +56,11 @@ export class WalletService {
       .pipe(
         filter(value => !!value),
       )
-      .subscribe((rpcProvider: string) => {        
+      .subscribe((rpcProvider: string) => {
         const metaMaskProvider = new Web3(Web3.givenProvider, null, { transactionConfirmationBlocks: 1, });
         const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, { transactionConfirmationBlocks: 1, });
         if (!metaMaskProvider.currentProvider){
-          this._web3 = web3Provider;          
+          this._web3 = web3Provider;
           return;
         }
         web3Provider.eth.net.getId((err, web3NetID) => {
@@ -74,9 +74,9 @@ export class WalletService {
               return;
             }
             if (web3NetID != metamask3NetID) {
-              this._toastrService.danger("Metamask is enabled but networks are different");              
+              this._toastrService.danger("Metamask is enabled but networks are different");
               return;
-            }            
+            }
             this._web3 = metaMaskProvider;
           });
         });

@@ -1,11 +1,11 @@
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
-import {SenderComponent} from './sender.component';
-import {AppModule} from '../../../app.module';
+import {DeployerComponent} from './deployer.component';
+import {AppModule} from '../../app.module';
 
-describe('SenderComponent', () => {
-  let component: SenderComponent;
-  let fixture: ComponentFixture<SenderComponent>;
+describe('DeployerComponent', () => {
+  let component: DeployerComponent;
+  let fixture: ComponentFixture<DeployerComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -15,7 +15,7 @@ describe('SenderComponent', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(SenderComponent);
+    fixture = TestBed.createComponent(DeployerComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
