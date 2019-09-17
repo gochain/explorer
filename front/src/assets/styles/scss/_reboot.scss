@@ -52,6 +52,7 @@ body {
   color: $body-color;
   text-align: left; // 3
   background-color: $body-bg; // 2
+  overflow-y: scroll;
 }
 
 // Suppress the focus outline on elements that cannot be accessed via keyboard.
