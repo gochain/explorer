@@ -4,7 +4,7 @@ import {ControlValueAccessor, NG_VALUE_ACCESSOR, NgControl, Validators, Abstract
 import {interval, Subscription} from 'rxjs';
 import {startWith} from 'rxjs/operators';
 /*UTILS*/
-import {AutoUnsubscribe} from '../decorators/auto-unsubscribe';
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 
 /*export interface ReCaptchaConfig {
   theme?: 'dark' | 'light';
