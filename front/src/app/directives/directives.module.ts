@@ -1,17 +1,10 @@
+/*CORE*/
 import {NgModule} from '@angular/core';
-import {InfinityScrollDirective} from './infinity-scroll.directive';
-import {ReCaptchaDirective} from './recaptcha.directive';
 
 @NgModule({
-  declarations: [
-    InfinityScrollDirective,
-    ReCaptchaDirective
-  ],
+  declarations: [],
   imports: [],
-  exports: [
-    InfinityScrollDirective,
-    ReCaptchaDirective
-  ]
+  exports: []
 })
 export class DirectiveModule {
 }
