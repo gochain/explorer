@@ -46,7 +46,6 @@ import {WalletGuard} from './guards/wallet.guard';
 /*MODULES*/
 import {TabsModule} from './modules/tabs/tabs.module';
 import {PipesModule} from './modules/pipes/pipes.module';
-import {DirectiveModule} from './directives/directives.module';
 import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {ToastrModule} from './modules/toastr/toastr.module';
@@ -101,7 +100,6 @@ import {ClipboardModule} from 'ngx-clipboard';
     ReactiveFormsModule,
     HttpClientModule,
     PipesModule,
-    DirectiveModule,
     TabsModule,
     DataTableModule,
     /*SliderModule,*/
