@@ -421,7 +421,7 @@ GET /api/richlist
       "address": "0x78cb510135787f42a23aD46998eB16B756111559",
       "balance": "19983424.526977560219899047",
       "balance_wei": "19983424526977560219899047",
-      "updated_at": "2019-01-04T16:28:28.72Z",
+      "updated_at": "2019-02-04T16:28:28.72Z",
       "total_supply": "0",
       "contract": false,
       "number_of_transactions": 0
