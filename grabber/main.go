@@ -92,8 +92,8 @@ func main() {
 		go listener(rpcUrl, importer)
 		go updateStats(importer)
 		go backfill(rpcUrl, importer, startFrom)
-		go updateAddresses(rpcUrl, false, blockRangeLimit, workersCount, importer) // update only addresses
-		updateAddresses(rpcUrl, true, blockRangeLimit, workersCount, importer)     // update contracts
+		go updateAddresses(3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
+		updateAddresses(5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
 	}
 	err := app.Run(os.Args)
@@ -210,7 +210,7 @@ func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) 
 	}
 }
 
-func updateAddresses(url string, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
+func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := int64(0)
 	for {
@@ -234,7 +234,7 @@ func updateAddresses(url string, updateContracts bool, blockRangeLimit uint64, w
 		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")
 		lastBlockUpdatedAt = currentBlock
 		lastUpdatedAt = currentTime
-		time.Sleep(180 * time.Second) //sleep for 3 minutes
+		time.Sleep(sleep)
 	}
 }
 
@@ -258,7 +258,7 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 		contract = true
 		byteCode := hex.EncodeToString(contractDataArray)
 		importer.ImportContract(normalizedAddress, byteCode)
-		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)		
+		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 		if err != nil {
 			log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
 			// continue
@@ -273,8 +273,8 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 			} else {
 				fromBlock = importer.GetContractBlock(normalizedAddress)
 			}
-			if (contractFromDB.TokenName =="" || contractFromDB.TokenSymbol ==""){
-				log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Str("Name",tokenDetails.Name).Msg("TokenName and TokenSymbols are empty using from token details")
+			if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
+				log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Str("Name", tokenDetails.Name).Msg("TokenName and TokenSymbols are empty using from token details")
 				contractFromDB.TokenName = tokenDetails.Name
 				contractFromDB.TokenSymbol = tokenDetails.Symbol
 			}
@@ -305,14 +305,14 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 					if contractFromDB == nil {
 						log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot find contract in DB")
 						continue
-					}					
-					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)					
+					}
+					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
 				}
 			}
 		}
 	}
-	log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")	
-	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)	
+	log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")
+	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
 }
 func updateStats(importer *backend.Backend) {
 	for {
