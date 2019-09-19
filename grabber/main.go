@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -127,7 +127,7 @@ func listener(importer *backend.Backend) {
 					if err != nil {
 						log.Fatal().Err(err).Msg("listener")
 					}
-					checkParentForBlock(importer, block.Number().Int64(), 100)
+					checkAncestors(importer, block.Number().Int64(), 100)
 					prevHeader = latestBlocknumber
 				}
 			}
@@ -142,72 +142,96 @@ func getLatestBlockNumber(importer *backend.Backend) int64 {
 	}
 	return number
 }
+
+// backfill continuously loops over all blocks in reverse order, verifying that all
+// data is loaded and consistent, and reloading as necessary.
 func backfill(importer *backend.Backend, startFrom int64) {
 	blockNumber := startFrom
 	if startFrom <= 0 {
 		blockNumber = getLatestBlockNumber(importer)
 	}
+	var hash common.Hash // Expected hash.
 	for {
+		logger := log.With().Int64("blockNumber", blockNumber).Logger()
 		if (blockNumber % 1000) == 0 {
-			log.Info().Int64("Block", blockNumber).Msg("Checking block in backfill")
+			logger.Info().Msg("Backfill progress")
 		}
-		blocksFromDB := importer.GetBlockByNumber(blockNumber)
-		if blocksFromDB == nil {
-			log.Info().Int64("Backfilling the block:", blockNumber).Msg("Getting block in backfill")
-			block, err := importer.BlockByNumber(blockNumber)
-			if block != nil {
-				importer.ImportBlock(block)
+		var backfill bool
+		dbBlock := importer.GetBlockByNumber(blockNumber)
+		if dbBlock == nil {
+			// Missing.
+			backfill = true
+			logger = logger.With().Str("reason", "missing").Logger()
+		} else if !common.EmptyHash(hash) && dbBlock.BlockHash != hash.Hex() {
+			// Mismatch with expected hash from parent of previous block.
+			backfill = true
+			logger = logger.With().Str("reason", "hash").Logger()
+		} else {
+			// Note parent as next expected hash.
+			hash = common.HexToHash(dbBlock.ParentHash)
+		}
+		if backfill {
+			logger.Info().Msg("Backfilling block")
+			rpcBlock, err := importer.BlockByNumber(blockNumber)
+			if rpcBlock != nil {
+				importer.ImportBlock(rpcBlock)
 				if err != nil {
-					log.Fatal().Err(err).Msg("importBlock - backfill")
+					logger.Fatal().Err(err).Msg("importBlock - backfill")
 				}
+				// Note parent as next expected hash.
+				hash = rpcBlock.ParentHash()
+			} else {
+				hash = common.Hash{}
 			}
+		} else {
+			hash = checkTransactionsConsistency(importer, blockNumber)
 		}
-		checkParentForBlock(importer, blockNumber, 5)
-		checkTransactionsConsistency(importer, blockNumber)
 		if blockNumber > 0 {
 			blockNumber = blockNumber - 1
 		} else {
 			blockNumber = getLatestBlockNumber(importer)
+			// No expected hash for latest.
+			hash = common.Hash{}
 		}
 	}
 }
 
-func checkParentForBlock(importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
-	numBlocksToCheck--
+// checkAncestors scans the ancestors of a block to verify that they exists and their hashes match.
+func checkAncestors(importer *backend.Backend, blockNumber int64, ancestorsToCheck int) {
 	if blockNumber == 0 {
 		return
 	}
-	if importer.NeedReloadBlock(blockNumber) {
-		blockNumber--
-		log.Info().Int64("Redownloading the block because it's corrupted or missing:", blockNumber).Msg("checkParentForBlock")
+	oldest := blockNumber + int64(ancestorsToCheck)
+	for ; blockNumber > oldest && importer.NeedReloadParent(blockNumber); blockNumber-- {
+		log.Info().Int64("blockNumber", blockNumber).
+			Msg("Redownloading the block because it's corrupted or missing")
 		block, err := importer.BlockByNumber(blockNumber)
+		if err != nil {
+			log.Fatal().Int64("blockNumber", blockNumber).Err(err).Msg("blockByNumber - checkAncestors")
+		}
 		if block != nil {
 			importer.ImportBlock(block)
 			if err != nil {
-				log.Fatal().Err(err).Msg("importBlock - checkParentForBlock")
+				log.Fatal().Err(err).Msg("importBlock - checkAncestors")
 			}
-		}
-		if err != nil {
-			log.Info().Err(err).Msg("BlockByNumber - checkParentForBlock")
-			checkParentForBlock(importer, blockNumber+1, numBlocksToCheck)
-		}
-		if numBlocksToCheck > 0 && block != nil {
-			checkParentForBlock(importer, block.Number().Int64(), numBlocksToCheck)
 		}
 	}
 }
 
-func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) {
+func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) common.Hash {
 	if !importer.TransactionsConsistent(blockNumber) {
-		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
+		log.Info().Int64("blockNumber", blockNumber).
+			Msg("Redownloading block because number of transactions are wrong")
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			log.Fatal().Err(err).Msg("checkTransactionsConsistency")
+			log.Fatal().Int64("blockNumber", blockNumber).Err(err).Msg("checkTransactionsConsistency")
 		}
 		if block != nil {
 			importer.ImportBlock(block)
+			return block.ParentHash()
 		}
 	}
+	return common.Hash{}
 }
 
 func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {

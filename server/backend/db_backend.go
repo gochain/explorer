@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -292,7 +292,9 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	self.UpdateActiveAddress(toAddress)
 	self.UpdateActiveAddress(transaction.From)
 }
-func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
+
+// needReloadParent returns true if the parent block exists and does not match the hash from this block.
+func (self *MongoBackend) needReloadParent(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
 	if block == nil {
 		log.Debug().Msg("Checking parent - main block not found")
@@ -405,7 +407,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 
 func (self *MongoBackend) importContract(contractAddress string, byteCode string) {
 	//https://stackoverflow.com/questions/43278696/golang-mgo-insert-or-update-not-working-as-expected/43278832
-	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress,"byte_code": byteCode,"created_at":time.Now()}},)	
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress, "byte_code": byteCode, "created_at": time.Now()}})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importContract")
 	}

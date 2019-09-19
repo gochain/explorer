@@ -283,8 +283,8 @@ func (self *Backend) CountInternalTransactions(address string) int {
 func (self *Backend) ImportBlock(block *types.Block) *models.Block {
 	return self.mongo.importBlock(block)
 }
-func (self *Backend) NeedReloadBlock(blockNumber int64) bool {
-	return self.mongo.needReloadBlock(blockNumber)
+func (self *Backend) NeedReloadParent(blockNumber int64) bool {
+	return self.mongo.needReloadParent(blockNumber)
 }
 func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 	return self.mongo.transactionsConsistent(blockNumber)
