@@ -25,7 +25,7 @@ type Backend struct {
 	dockerhubAPI          *DockerHubAPI
 	reCaptchaSecret       string
 	lockedAccounts        []string
-	signers                 map[common.Address]models.Signer
+	signers               map[common.Address]models.Signer
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -328,7 +328,7 @@ func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {
 	})
 	return value, err
 }
-func (self *Backend) GetFirstBlockNumber() (int64, error) {
+func (self *Backend) GetLatestBlockNumber() (int64, error) {
 	var value int64
 	err := retry(5, 2*time.Second, func() (err error) {
 		value, err = self.extendedGochainClient.ethBlockNumber()

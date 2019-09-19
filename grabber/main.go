@@ -89,9 +89,9 @@ func main() {
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
 		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil)
-		go listener(rpcUrl, importer)
+		go listener(importer)
 		go updateStats(importer)
-		go backfill(rpcUrl, importer, startFrom)
+		go backfill(importer, startFrom)
 		go updateAddresses(3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
 		updateAddresses(5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
@@ -111,16 +111,16 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func listener(url string, importer *backend.Backend) {
+func listener(importer *backend.Backend) {
 	var prevHeader int64
 	ticker := time.NewTicker(time.Second * 1).C
 	for {
 		select {
 		case <-ticker:
-			latestBlocknumber := getFirstBlockNumber(importer)
-			log.Debug().Int64("Block", latestBlocknumber).Msg("Gettting block in listener")
+			latestBlocknumber := getLatestBlockNumber(importer)
+			log.Debug().Int64("Block", latestBlocknumber).Msg("Getting block in listener")
 			if prevHeader != latestBlocknumber {
-				log.Info().Int64("Listener is downloading the block:", latestBlocknumber).Msg("Gettting block in listener")
+				log.Info().Int64("Listener is downloading the block:", latestBlocknumber).Msg("Getting block in listener")
 				block, err := importer.BlockByNumber(latestBlocknumber)
 				if block != nil {
 					importer.ImportBlock(block)
@@ -135,17 +135,17 @@ func listener(url string, importer *backend.Backend) {
 	}
 }
 
-func getFirstBlockNumber(importer *backend.Backend) int64 {
-	number, err := importer.GetFirstBlockNumber()
+func getLatestBlockNumber(importer *backend.Backend) int64 {
+	number, err := importer.GetLatestBlockNumber()
 	if err != nil {
-		log.Fatal().Err(err).Msg("getFirstBlockNumber")
+		log.Fatal().Err(err).Msg("getLatestBlockNumber")
 	}
 	return number
 }
-func backfill(url string, importer *backend.Backend, startFrom int64) {
-	blockNumber := getFirstBlockNumber(importer)
-	if startFrom > 0 {
-		blockNumber = startFrom
+func backfill(importer *backend.Backend, startFrom int64) {
+	blockNumber := startFrom
+	if startFrom <= 0 {
+		blockNumber = getLatestBlockNumber(importer)
 	}
 	for {
 		if (blockNumber % 1000) == 0 {
@@ -153,7 +153,7 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 		}
 		blocksFromDB := importer.GetBlockByNumber(blockNumber)
 		if blocksFromDB == nil {
-			log.Info().Int64("Backfilling the block:", blockNumber).Msg("Gettting block in backfill")
+			log.Info().Int64("Backfilling the block:", blockNumber).Msg("Getting block in backfill")
 			block, err := importer.BlockByNumber(blockNumber)
 			if block != nil {
 				importer.ImportBlock(block)
@@ -167,7 +167,7 @@ func backfill(url string, importer *backend.Backend, startFrom int64) {
 		if blockNumber > 0 {
 			blockNumber = blockNumber - 1
 		} else {
-			blockNumber = getFirstBlockNumber(importer)
+			blockNumber = getLatestBlockNumber(importer)
 		}
 	}
 }
@@ -216,7 +216,7 @@ func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit 
 	for {
 		start := time.Now()
 		currentTime := time.Now()
-		currentBlock := getFirstBlockNumber(importer)
+		currentBlock := getLatestBlockNumber(importer)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
 		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
 		var jobs = make(chan *models.ActiveAddress, workersCount)
