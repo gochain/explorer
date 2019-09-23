@@ -1,13 +1,19 @@
 <div class="tabs">
   <div class="tabs__titles mb-4">
     <ul class="nav nav-tabs">
-      <li class="nav-item"
+      <li
+          class="nav-item"
           *ngFor="let tab of tabs"
           (click)="onTabSelect(tab)"
       >
-        <div class="nav-link" [ngClass]="{'active': tab === activeTab, 'disabled': disabled}">
-          {{tab.title}}
-          <div class="tab__desc float-right" *ngIf="tab.description">
+        <div
+            class="nav-link tab"
+            [ngClass]="{'active': tab === activeTab, 'disabled': disabled}"
+        >
+          <div class="tab__title">
+            {{tab.title}}
+          </div>
+          <div class="tab__desc" *ngIf="tab.description">
             <span [tooltip]="tab.description">
               <img src="../../../assets/icons/info.svg" alt="Description">
             </span>
