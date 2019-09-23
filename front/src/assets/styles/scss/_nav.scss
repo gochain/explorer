@@ -39,6 +39,9 @@
 
   .nav-item {
     margin-bottom: -$nav-tabs-border-width;
+    @include media-breakpoint-down(md) {
+      width: 100%;
+    }
   }
 
   .nav-link {
