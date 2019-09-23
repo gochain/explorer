@@ -24,6 +24,7 @@ export const ROUTES = {
   CREATE_WALLET: 'create-account',
   SEND_TX: 'send-tx',
   SIGNERS: 'signers',
+  CONTRACTS: 'contracts',
 };
 
 export const MENU_ITEMS: MenuItem[] = [
@@ -39,6 +40,10 @@ export const MENU_ITEMS: MenuItem[] = [
     title: 'Verify Contract',
     link: '/verify',
   },*/
+  {
+    title: 'Contracts',
+    link: ROUTES.CONTRACTS,
+  },
   {
     title: 'Wallet',
     link: ROUTES.WALLET,
@@ -119,6 +124,9 @@ export const META_TITLES = {
   },
   RICHLISLT: {
     title: 'Richlist',
+  },
+  CONTRACTS: {
+    title: 'Contracts List',
   },
   TRANSACTION: {
     title: 'Transaction',

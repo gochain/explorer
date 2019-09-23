@@ -7,7 +7,7 @@ import {convertWithDecimals} from '../utils/functions';
 
 export class WeiToGOPipe implements PipeTransform {
 
-  transform(val: string, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18 ): string {
+  transform(val: string | number, showUnit: boolean = true, removeTrailingZeros: boolean = false, decimals: number = 18 ): string {
     return convertWithDecimals(val, showUnit, removeTrailingZeros, decimals);
   }
 }

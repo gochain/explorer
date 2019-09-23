@@ -147,6 +147,9 @@ func (self *Backend) GetAddressByHash(hash string) (*models.Address, error) {
 	return address, nil
 
 }
+func (self *Backend) GetContracts(filter *models.ContractsFilter) []*models.Address {
+	return self.mongo.getContracts(filter)
+}
 func (self *Backend) GetTransactionByHash(hash string) *models.Transaction {
 	return self.mongo.getTransactionByHash(hash)
 }
@@ -291,7 +294,7 @@ func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 }
 func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) []*models.ActiveAddress {
 	var selectedAddresses []*models.ActiveAddress
-	for _, address := range self.mongo.getActiveAdresses(fromDate) {
+	for _, address := range self.mongo.getActiveAddresses(fromDate) {
 		if onlyContracts == self.mongo.isContract(address.Address) {
 			selectedAddresses = append(selectedAddresses, address)
 		}

@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gorilla/schema"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/skip2/go-qrcode"
@@ -88,6 +89,13 @@ func parseSkipLimit(r *http.Request) (int, int) {
 		limit = defaultFetchLimit
 	}
 	return skip, limit
+}
+
+func parseGetParam(r *http.Request, result interface{}) error {
+	if err := schema.NewDecoder().Decode(result, r.URL.Query()); err != nil {
+		return err
+	}
+	return nil
 }
 
 func parseBlockNumber(r *http.Request) (int, error) {
@@ -167,7 +175,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) error {
 		level, _ := zerolog.ParseLevel(loglevel)
-		zerolog.SetGlobalLevel(level)		
+		zerolog.SetGlobalLevel(level)
 
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
@@ -256,6 +264,8 @@ func main() {
 					r.Head("/{hash}", checkTransactionExist)
 					r.Get("/{hash}", getTransaction)
 				})
+
+				r.Get("/contracts", getContractsList)
 			})
 		})
 
@@ -558,5 +568,14 @@ func pingDB(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
+}
 
+func getContractsList(w http.ResponseWriter, r *http.Request) {
+	filter := new(models.ContractsFilter)
+	if err := parseGetParam(r, filter); err != nil {
+		log.Info().Err(err).Msg("getContractsList")
+		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
+	}
+	addresses := backendInstance.GetContracts(filter)
+	writeJSON(w, http.StatusOK, addresses)
 }

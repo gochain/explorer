@@ -27,5 +27,5 @@ type Address struct {
 }
 
 type AddressesList struct {
-	Adresses []*Address `json:"adresses"`
+	Addresses []*Address `json:"addresses"`
 }

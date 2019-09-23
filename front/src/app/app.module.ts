@@ -21,7 +21,7 @@ import {OwnedTokensComponent} from './components/owned-tokens/owned-tokens.compo
 import {InfoComponent} from './components/info/info.component';
 import {ContractComponent} from './scenes/contract/contract.component';
 import {SignersComponent} from './scenes/signers/signers.component';
-
+import {ContractsComponent} from './scenes/contracts/contracts.component';
 import {AddrTransactionsComponent} from './components/addr-transactions/addr-transactions.component';
 import {AddrInternalTxsComponent} from './components/addr-internal-txs/addr-internal-txs.component';
 import {ContractSourceComponent} from './components/contract-source/contract-source.component';
@@ -51,14 +51,14 @@ import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
 import {PieChartModule} from '@swimlane/ngx-charts';
-import { DataTableModule } from 'ng-angular8-datatable';
+import {DataTableModule} from 'ng-angular8-datatable';
+import {ClipboardModule} from 'ngx-clipboard';
 /*PIPES*/
 import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF, CommonModule} from '@angular/common';
 import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
-import {ClipboardModule} from 'ngx-clipboard';
 
 @NgModule({
   declarations: [
@@ -72,10 +72,7 @@ import {ClipboardModule} from 'ngx-clipboard';
     RichlistComponent,
     HeaderComponent,
     SearchComponent,
-    /*LoaderComponent,*/
     PaginationComponent,
-    /*SettingsComponent,*/
-    /*ToggleSwitchComponent,*/
     InfoComponent,
     ContractComponent,
     TokenAssetComponent,
@@ -93,6 +90,7 @@ import {ClipboardModule} from 'ngx-clipboard';
     SenderComponent,
     InteractorComponent,
     SignersComponent,
+    ContractsComponent,
   ],
   imports: [
     CommonModule,
@@ -102,7 +100,6 @@ import {ClipboardModule} from 'ngx-clipboard';
     PipesModule,
     TabsModule,
     DataTableModule,
-    /*SliderModule,*/
     ViewportSizeModule.forRoot(VIEWPORT_SIZES),
     NgProgressModule.withConfig({
       trickleSpeed: 200,

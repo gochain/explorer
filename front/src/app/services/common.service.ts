@@ -1,7 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {filter, flatMap, tap} from 'rxjs/operators';
+import {filter, flatMap, map, tap} from 'rxjs/operators';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -109,6 +109,12 @@ export class CommonService implements Resolve<string> {
 
   getRichlist(data?: any): Observable<RichList> {
     return this._apiService.get('/richlist', data);
+  }
+
+  getContractsList(data?: any): Observable<Address[]> {
+    return this._apiService.get('/contracts', data).pipe(
+      map(v => v || []),
+    );
   }
 
   getStats(): Observable<Stats> {

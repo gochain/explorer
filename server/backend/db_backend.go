@@ -21,6 +21,9 @@ import (
 
 var wei = big.NewInt(1000000000000000000)
 
+const defaultFetchLimit = 100
+const defaultSkip = 0
+
 type MongoBackend struct {
 	host         string
 	mongo        *mgo.Database
@@ -405,7 +408,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 
 func (self *MongoBackend) importContract(contractAddress string, byteCode string) {
 	//https://stackoverflow.com/questions/43278696/golang-mgo-insert-or-update-not-working-as-expected/43278832
-	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress,"byte_code": byteCode,"created_at":time.Now()}},)	
+	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress, "byte_code": byteCode, "created_at": time.Now()}})
 	if err != nil {
 		log.Fatal().Err(err).Msg("importContract")
 	}
@@ -450,7 +453,7 @@ func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock
 	return blocks
 }
 
-func (self *MongoBackend) getActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
+func (self *MongoBackend) getActiveAddresses(fromDate time.Time) []*models.ActiveAddress {
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)
 	if err != nil {
@@ -601,6 +604,47 @@ func (self *MongoBackend) updateContract(contract *models.Contract) bool {
 		return false
 	}
 	return true
+}
+
+func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models.Address {
+	var addresses []*models.Address
+	var sortQuery string
+	findQuery := bson.M{"contract": true}
+	if filter.TokenName != "" {
+		findQuery["token_name"] = bson.RegEx{filter.TokenName, "i"}
+	}
+	if filter.TokenSymbol != "" {
+		findQuery["token_symbol"] = bson.RegEx{filter.TokenSymbol, "i"}
+	}
+	if filter.ErcType != "" {
+		println(filter.ErcType)
+		findQuery["erc_types"] = filter.ErcType
+	}
+	if filter.SortBy != "" {
+		sortQuery = filter.SortBy
+		if filter.Asc == false {
+			sortQuery = "-" + sortQuery
+		}
+	} else {
+		sortQuery = "-number_of_token_holders"
+	}
+	if filter.Skip < 0 {
+		filter.Skip = defaultSkip
+	}
+	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
+		filter.Limit = defaultFetchLimit
+	}
+	err := self.mongo.
+		C("Addresses").
+		Find(findQuery).
+		Sort(sortQuery).
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&addresses)
+	if err != nil {
+		log.Debug().Err(err).Msg("GetContracts")
+	}
+	return addresses
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) []*models.Address {

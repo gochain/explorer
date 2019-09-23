@@ -1,4 +1,5 @@
 import {BehaviorSubject, Subject} from 'rxjs';
+import {removeEmpty} from '../utils/functions';
 
 interface IParams {
   limit: number;
@@ -14,6 +15,17 @@ export class QueryParams {
   set limit(value: number) {
     this._limit = value;
     this.calculateTotalPage();
+    this.toStart();
+  }
+
+  private _filter: any;
+  get filter(): any {
+    return this._filter;
+  }
+
+  set filter(value: any) {
+    removeEmpty(value);
+    this._filter = value;
     this.toStart();
   }
 
@@ -78,7 +90,12 @@ export class QueryParams {
     this.state.next(this.params);
   }
 
+  resetFilter() {
+    this._filter = null;
+    this.toStart();
+  }
+
   get params(): IParams {
-    return {limit: this._limit, skip: this.skip};
+    return {limit: this._limit, skip: this.skip, ...this._filter};
   }
 }

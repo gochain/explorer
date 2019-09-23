@@ -15,6 +15,7 @@ require (
 	github.com/gochain-io/gochain/v3 v3.1.3
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.0.0 // indirect
+	github.com/gorilla/schema v1.1.0
 	github.com/hashicorp/golang-lru v0.5.0 // indirect
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/karalabe/hid v0.0.0-20181128192157-d815e0c1a2e2 // indirect

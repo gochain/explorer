@@ -96,7 +96,7 @@ export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAb
  * @param unitName
  */
 export function convertWithDecimals(
-  val: string,
+  val: string | number,
   showUnit: boolean = true,
   removeTrailingZeros: boolean = false,
   decimals: number = 18,
@@ -200,3 +200,7 @@ export function sortObjArrByKey(arr: any[], key: string, desc: boolean = true) {
   }
 }
 
+
+export function removeEmpty(obj: any): any {
+  Object.keys(obj).forEach((key) => (obj[key] === null) && delete obj[key]);
+}
