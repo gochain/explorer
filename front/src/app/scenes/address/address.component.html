@@ -36,7 +36,8 @@
               <dd>{{addr.number_of_transactions || 0}}</dd>
               <ng-container *ngIf="addr.erc_types && !!addr.erc_types.length">
                 <dt>Token type:</dt>
-                <dd><span class="badge badge-primary mr-1" *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
+                <dd><span class="badge badge-primary mr-1"
+                          *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
               </ng-container>
               <dt>Updated at:</dt>
               <dd>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</dd>
@@ -49,7 +50,8 @@
           </div>
         </div>
       </div>
-      <div class="card-footer" *ngIf="addr.contract && addr.ercObj && (addr.ercObj['Go721Metadata'] || addr.ercObj['Go721Receiver'])">
+      <div class="card-footer"
+           *ngIf="addr.contract && addr.ercObj && (addr.ercObj['Go721Metadata'] || addr.ercObj['Go721Receiver'])">
         <form class="mt-3" (submit)="searchToken()">
           <div class="form-group">
             <!--<label for="asset">Asset:</label>-->
@@ -77,30 +79,52 @@
     <div class="card mt-4 mb-5">
       <div class="card-body">
         <app-tabs name="addr_tab">
-          <tab name="transactions" title="Transactions">
+          <tab
+              name="transactions"
+              title="Transactions"
+              description="Transactions to and from this account."
+          >
             <tab-content>
               <app-addr-transactions [addr]="addr"></app-addr-transactions>
             </tab-content>
           </tab>
-          <tab *ngIf="!addr.contract" name="owned_tokens" title="Owned Tokens">
-            <tab-content>
-              <app-owned-tokens [addrHash]="addrHash" [showPagination]="false"></app-owned-tokens>
-            </tab-content>
-          </tab>
-          <tab *ngIf="addr.contract" name="internal_transactions"
-               [title]="(addr.token_symbol || 'Internal')  + ' Transactions'">
+          <tab
+              *ngIf="addr.contract"
+              name="internal_transactions"
+              [title]="(addr.token_symbol || 'Internal')  + ' Transfers'"
+              description="Internal {{addr.token_symbol || ''}} token transfers."
+          >
             <tab-content>
               <app-addr-internal-txs [addr]="addr"></app-addr-internal-txs>
             </tab-content>
           </tab>
-          <tab name="token_transactions" title="Token Transactions">
+          <tab
+              *ngIf="addr.contract"
+              name="holders"
+              [title]="(addr.token_symbol ? addr.token_symbol + ' ' : '') + 'Holders'"
+              description="Balances of accounts holding {{addr.token_symbol || ''}} tokens."
+          >
+            <tab-content>
+              <app-token-holders [addr]="addr"></app-token-holders>
+            </tab-content>
+          </tab>
+          <tab
+              name="token_transactions"
+              title="Token Transfers"
+              description="Token transfers to and from this account."
+          >
             <tab-content>
               <app-token-txs [addr]="addr"></app-token-txs>
             </tab-content>
           </tab>
-          <tab *ngIf="addr.contract" name="holders" title="Holders">
+          <tab
+              *ngIf="!addr.contract"
+              name="owned_tokens"
+              title="Tokens Held"
+              description="Balance of tokens held by this account."
+          >
             <tab-content>
-              <app-token-holders [addr]="addr"></app-token-holders>
+              <app-owned-tokens [addrHash]="addrHash" [showPagination]="false"></app-owned-tokens>
             </tab-content>
           </tab>
           <tab *ngIf="addr.contract" name="interact" title="Interact">

@@ -29,6 +29,7 @@
     "@swimlane/ngx-charts": "^12.0.1",
     "bignumber.js": "^9.0.0",
     "ng-angular8-datatable": "^0.9.11",
+    "ng2-tooltip-directive": "^2.7.16",
     "ngx-clipboard": "^12.2.1",
     "rxjs": "^6.5.3",
     "time-ago-pipe": "^1.3.2",

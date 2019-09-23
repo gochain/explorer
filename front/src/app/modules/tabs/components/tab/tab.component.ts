@@ -8,6 +8,7 @@ import {TabContentComponent} from '../tab-content/tab-content.component';
 export class TabComponent {
   @Input() name: string;
   @Input() title: string;
+  @Input() description: string;
   /*@ContentChild(TabTitleComponent) title: TabTitleComponent;*/
   @ContentChild(TabContentComponent, {static: true}) content: TabContentComponent;
 }
