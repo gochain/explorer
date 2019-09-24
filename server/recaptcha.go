@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/gochain-io/explorer/server/models"
-	"github.com/rs/zerolog/log"
 )
 
 const RECAPTCHA_URL = "https://www.google.com/recaptcha/api/siteverify"
@@ -24,7 +23,6 @@ func verifyReCaptcha(token, reCaptchaSecret, action, remoteIP string) error {
 	}
 	resp, err := http.PostForm(RECAPTCHA_URL, params)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error occurred during making recaptcha request")
 		err := errors.New("error occurred during processing your request. please try again")
 		return err
 	}

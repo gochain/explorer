@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/gochain-io/gochain/v3/common/hexutil"
-	"github.com/rs/zerolog/log"
+	"go.uber.org/zap"
 )
 
 type httpClient interface {
@@ -48,12 +48,14 @@ type ethRequest struct {
 type EthRPC struct {
 	url    string
 	client httpClient
+	Lgr    *zap.Logger
 }
 
-func NewEthClient(url string) *EthRPC {
+func NewEthClient(url string, lgr *zap.Logger) *EthRPC {
 	rpc := &EthRPC{
 		url:    url,
 		client: http.DefaultClient,
+		Lgr:    lgr,
 	}
 
 	return rpc
@@ -111,11 +113,11 @@ func (rpc *EthRPC) call(method string, target interface{}, params ...interface{}
 }
 func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
 	var response string
-	log.Debug().Str("checking balance", address).Msg("response from eth_getBalance")
+	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance", address))
 	if err := rpc.call("eth_getBalance", &response, address, block); err != nil {
 		return new(big.Int), err
 	}
-	log.Debug().Str("checking balance response", response).Msg("response from eth_getBalance")
+	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance response", response))
 	balance, err := parseBigInt(response)
 	return balance, err
 }
@@ -144,7 +146,7 @@ func (rpc *EthRPC) ethTotalSupply() (*big.Int, error) {
 		return new(big.Int), err
 	}
 	totalSupply, _ := parseBigInt(response)
-	log.Info().Str("totalSupply", totalSupply.String()).Msg("response from EthTotalSupply")
+	rpc.Lgr.Info("response from EthTotalSupply", zap.String("totalSupply", totalSupply.String()))
 	return totalSupply, nil
 }
 
