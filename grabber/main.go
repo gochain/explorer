@@ -25,6 +25,13 @@ func main() {
 	var startFrom int64
 	var blockRangeLimit uint64
 	var workersCount uint
+	cfg := zapdriver.NewProductionConfig()
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	logger, err := cfg.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
+	}
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
@@ -72,14 +79,6 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		cfg := zapdriver.NewProductionConfig()
-		cfg.EncoderConfig.TimeKey = "timestamp"
-		logger, err := cfg.Build()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
-			os.Exit(1)
-		}
-
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
@@ -96,9 +95,9 @@ func main() {
 		updateAddresses(5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
 	}
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start app: %v\n", err)
+		logger.Fatal("Failed to start app", zap.Error(err))
 	}
 }
 
