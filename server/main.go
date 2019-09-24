@@ -105,7 +105,6 @@ func main() {
 	var mongoUrl string
 	var dbName string
 	var signersFile string
-	var loglevel string
 
 	app := cli.NewApp()
 	app.Usage = "Server serves the explorer web interface, backed by a mongo database."
@@ -138,13 +137,6 @@ func main() {
 			EnvVar:      "SIGNERS_FILE",
 			Value:       "",
 			Destination: &signersFile,
-		},
-		cli.StringFlag{
-			Name:        "log, l",
-			Value:       "info",
-			Usage:       "loglevel debug/info/warn/fatal, default is Info",
-			EnvVar:      "LOG_LEVEL",
-			Destination: &loglevel,
 		},
 		cli.StringFlag{
 			Name:        "dist, d",

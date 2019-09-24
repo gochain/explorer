@@ -22,7 +22,6 @@ func main() {
 	var rpcUrl string
 	var mongoUrl string
 	var dbName string
-	var loglevel string
 	var startFrom int64
 	var blockRangeLimit uint64
 	var workersCount uint
@@ -47,12 +46,6 @@ func main() {
 			Value:       "blocks",
 			Usage:       "mongo database name",
 			Destination: &dbName,
-		},
-		cli.StringFlag{
-			Name:        "log, l",
-			Value:       "info",
-			Usage:       "loglevel debug/info/warn/fatal",
-			Destination: &loglevel,
 		},
 		cli.Int64Flag{
 			Name:        "start-from, s",
