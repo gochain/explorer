@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -611,10 +612,10 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 	var sortQuery string
 	findQuery := bson.M{"contract": true}
 	if filter.TokenName != "" {
-		findQuery["token_name"] = bson.RegEx{filter.TokenName, "i"}
+		findQuery["token_name"] = bson.RegEx{regexp.QuoteMeta(filter.TokenName), "i"}
 	}
 	if filter.TokenSymbol != "" {
-		findQuery["token_symbol"] = bson.RegEx{filter.TokenSymbol, "i"}
+		findQuery["token_symbol"] = bson.RegEx{regexp.QuoteMeta(filter.TokenSymbol), "i"}
 	}
 	if filter.ErcType != "" {
 		println(filter.ErcType)
