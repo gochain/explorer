@@ -243,9 +243,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
 		contract.Abi = compileData[key].Info.AbiDefinition
 		contract.UpdatedAt = time.Now()
-		result := self.mongo.updateContract(contract)
-		if !result {
-			err := errors.New("error occurred while processing data")
+		if err := self.mongo.updateContract(contract); err != nil {
 			return nil, err
 		}
 		return contract, nil

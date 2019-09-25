@@ -218,14 +218,15 @@ func checkAncestors(importer *backend.Backend, blockNumber int64, generations in
 		oldest = 0
 	}
 	for blockNumber > oldest && importer.NeedReloadParent(blockNumber) {
-		importer.Lgr.Info("Redownloading the block because it's corrupted or missing", zap.Int64("blockNumber", blockNumber))
+		lgr := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
+		lgr.Info("Redownloading corrupted or missing ancestor")
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			importer.Lgr.Error("Failed to get block", zap.Int64("blockNumber", blockNumber), zap.Error(err))
+			lgr.Error("Failed to get ancestor", zap.Error(err))
 			time.Sleep(5 * time.Second)
 			continue
 		} else if block == nil {
-			importer.Lgr.Error("Block not found", zap.Int64("blockNumber", blockNumber))
+			lgr.Error("Ancestor not found")
 			time.Sleep(5 * time.Second)
 			continue
 		}
