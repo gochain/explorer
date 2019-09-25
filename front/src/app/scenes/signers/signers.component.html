@@ -97,21 +97,23 @@
                     <thead>
                     <tr>
                       <th>
-                        <sv-default-sorter by="account">Account</sv-default-sorter>
+                        <sv-default-sorter by="data.signer_address">Account</sv-default-sorter>
                       </th>
                       <th>
-                        <sv-default-sorter by="name">Name</sv-default-sorter>
+                        <sv-default-sorter by="data.name">Name</sv-default-sorter>
                       </th>
                       <th>
-                        <sv-default-sorter by="region">Region</sv-default-sorter>
+                        <sv-default-sorter by="data.region">Region</sv-default-sorter>
                       </th>
                       <th>
-                        <sv-default-sorter by="url">URL</sv-default-sorter>
+                        <sv-default-sorter by="data.url">URL</sv-default-sorter>
                       </th>
-                      <th>
+                      <th class="text-right">
                         <sv-default-sorter by="blocks_count">Blocks</sv-default-sorter>
                       </th>
-                      <th>%</th>
+                      <th class="text-right">
+                        <sv-default-sorter by="percent">%</sv-default-sorter>
+                      </th>
                     </tr>
                     </thead>
                     <tbody>
