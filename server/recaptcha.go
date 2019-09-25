@@ -24,7 +24,7 @@ func verifyReCaptcha(token, reCaptchaSecret, action, remoteIP string) error {
 	}
 	resp, err := http.PostForm(RECAPTCHA_URL, params)
 	if err != nil {
-		logger.Fatal("error occurred during making recaptcha request", zap.Error(err))
+		logger.Warn("error occurred during making recaptcha request", zap.Error(err))
 		err := errors.New("error occurred during processing your request. please try again")
 		return err
 	}
