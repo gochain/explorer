@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gochain-io/explorer/server/models"
 	"go.uber.org/zap"
 
 	"github.com/gochain-io/explorer/server/backend"
+	"github.com/gochain-io/explorer/server/models"
+
 	"github.com/gochain-io/gochain/v3/common"
 
 	"github.com/blendle/zapdriver"
@@ -126,7 +127,7 @@ func listener(importer *backend.Backend) {
 					if err != nil {
 						importer.Lgr.Fatal("Listener", zap.Int64("Block Number", latestBlocknumber))
 					}
-					checkParentForBlock(importer, block.Number().Int64(), 100)
+					checkAncestors(importer, block.Number().Int64(), 100)
 					prevHeader = latestBlocknumber
 				}
 			}
@@ -141,72 +142,102 @@ func getLatestBlockNumber(importer *backend.Backend) int64 {
 	}
 	return number
 }
+
+// backfill continuously loops over all blocks in reverse order, verifying that all
+// data is loaded and consistent, and reloading as necessary.
 func backfill(importer *backend.Backend, startFrom int64) {
 	blockNumber := startFrom
 	if startFrom <= 0 {
 		blockNumber = getLatestBlockNumber(importer)
 	}
+	var hash common.Hash // Expected hash.
 	for {
+		logger := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
 		if (blockNumber % 1000) == 0 {
-			importer.Lgr.Info("Checking block in backfill", zap.Int64("Block", blockNumber))
+			logger.Info("Backfill progress")
 		}
-		blocksFromDB := importer.GetBlockByNumber(blockNumber)
-		if blocksFromDB == nil {
-			importer.Lgr.Info("Backfilling the block:", zap.Int64("Block", blockNumber))
-			block, err := importer.BlockByNumber(blockNumber)
-			if block != nil {
-				importer.ImportBlock(block)
+		var backfill bool
+		dbBlock := importer.GetBlockByNumber(blockNumber)
+		if dbBlock == nil {
+			// Missing.
+			backfill = true
+			logger = logger.With(zap.String("reason", "missing"))
+		} else if !common.EmptyHash(hash) && dbBlock.BlockHash != hash.Hex() {
+			// Mismatch with expected hash from parent of previous block.
+			backfill = true
+			logger = logger.With(zap.String("reason", "hash"))
+		} else {
+			// Note parent as next expected hash.
+			hash = common.HexToHash(dbBlock.ParentHash)
+		}
+		if backfill {
+			logger.Info("Backfilling block")
+			rpcBlock, err := importer.BlockByNumber(blockNumber)
+			if rpcBlock != nil {
+				importer.ImportBlock(rpcBlock)
 				if err != nil {
-					importer.Lgr.Fatal("importBlock - backfill", zap.Error(err))
+					logger.Fatal("importBlock - backfill", zap.Error(err))
 				}
+				// Note parent as next expected hash.
+				hash = rpcBlock.ParentHash()
+			} else {
+				hash = common.Hash{}
+			}
+		} else {
+			newParent := checkTransactionsConsistency(importer, blockNumber)
+			if !common.EmptyHash(newParent) {
+				hash = newParent
 			}
 		}
-		checkParentForBlock(importer, blockNumber, 5)
-		checkTransactionsConsistency(importer, blockNumber)
 		if blockNumber > 0 {
 			blockNumber = blockNumber - 1
 		} else {
 			blockNumber = getLatestBlockNumber(importer)
+			// No expected hash for latest.
+			hash = common.Hash{}
 		}
 	}
 }
 
-func checkParentForBlock(importer *backend.Backend, blockNumber int64, numBlocksToCheck int) {
-	numBlocksToCheck--
-	if blockNumber == 0 {
+// checkAncestors scans the ancestors of a block to verify that they exists and their hashes match.
+func checkAncestors(importer *backend.Backend, blockNumber int64, generations int) {
+	if blockNumber == 0 || generations <= 0 {
 		return
 	}
-	if importer.NeedReloadBlock(blockNumber) {
-		blockNumber--
-		importer.Lgr.Info("Redownloading the block because it's corrupted or missing:", zap.Int64("Block", blockNumber))
+	oldest := blockNumber - int64(generations)
+	if oldest < 0 {
+		oldest = 0
+	}
+	for ; blockNumber > oldest && importer.NeedReloadParent(blockNumber); blockNumber-- {
+		importer.Lgr.Info("Redownloading the block because it's corrupted or missing", zap.Int64("blockNumber", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
+		if err != nil {
+			importer.Lgr.Fatal("blockByNumber - checkAncestors", zap.Int64("blockNumber", blockNumber), zap.Error(err))
+		}
 		if block != nil {
 			importer.ImportBlock(block)
 			if err != nil {
-				importer.Lgr.Fatal("importBlock - checkParentForBlock", zap.Error(err))
+				importer.Lgr.Fatal("importBlock - checkAncestors", zap.Error(err))
 			}
-		}
-		if err != nil {
-			importer.Lgr.Info("BlockByNumber - checkParentForBlock", zap.Error(err))
-			checkParentForBlock(importer, blockNumber+1, numBlocksToCheck)
-		}
-		if numBlocksToCheck > 0 && block != nil {
-			checkParentForBlock(importer, block.Number().Int64(), numBlocksToCheck)
 		}
 	}
 }
 
-func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) {
+// checkTransactionsConsistency checks if the block tx count matches the number of txs, and reimports the block if not.
+// If a block is reimported, then the parent hash is returned.
+func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) common.Hash {
 	if !importer.TransactionsConsistent(blockNumber) {
-		importer.Lgr.Info("Redownloading the block because number of transactions are wrong:", zap.Int64("Block", blockNumber))
+		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("blockNumber", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			importer.Lgr.Fatal("checkTransactionsConsistency", zap.Error(err))
+			importer.Lgr.Fatal("checkTransactionsConsistency", zap.Int64("blockNumber", blockNumber), zap.Error(err))
 		}
 		if block != nil {
 			importer.ImportBlock(block)
+			return block.ParentHash()
 		}
 	}
+	return common.Hash{}
 }
 
 func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {

@@ -297,7 +297,7 @@ func TestReloadBlock(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(testBackend)
-	if !testBackend.NeedReloadBlock(block.Header().Number.Int64()) {
+	if !testBackend.NeedReloadParent(block.Header().Number.Int64()) {
 		t.Errorf("Block is wrong and should be reloaded")
 	}
 }

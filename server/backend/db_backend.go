@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -292,7 +292,9 @@ func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
 	self.UpdateActiveAddress(toAddress)
 	self.UpdateActiveAddress(transaction.From)
 }
-func (self *MongoBackend) needReloadBlock(blockNumber int64) bool {
+
+// needReloadParent returns true if the parent block is missing or does not match the hash from this block number.
+func (self *MongoBackend) needReloadParent(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
 	if block == nil {
 		self.Lgr.Debug("Checking parent - main block not found")
