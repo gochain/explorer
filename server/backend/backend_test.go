@@ -17,7 +17,11 @@ import (
 )
 
 func getBackend(t *testing.T) *Backend {
-	return NewBackend("127.0.0.1:27017", "https://rpc.gochain.io", "testdb", nil, nil, zaptest.NewLogger(t))
+	b, err := NewBackend("127.0.0.1:27017", "https://rpc.gochain.io", "testdb", nil, nil, zaptest.NewLogger(t))
+	if err != nil {
+		t.Fatalf("failed to create backend: %v", err)
+	}
+	return b
 }
 
 func createImportBlock(testBackend *Backend) types.Block {

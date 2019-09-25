@@ -8,15 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 
-	"github.com/gochain-io/gochain/v3/common"
-
 	"github.com/blendle/zapdriver"
+	"github.com/gochain-io/gochain/v3/common"
 	"github.com/urfave/cli"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -88,7 +86,10 @@ func main() {
 			// Ensure canonical form, since queries are case-sensitive.
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger)
+		importer, err := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger)
+		if err != nil {
+			return fmt.Errorf("failed to create backend: %v", err)
+		}
 		go listener(importer)
 		go updateStats(importer)
 		go backfill(importer, startFrom)
@@ -98,8 +99,9 @@ func main() {
 	}
 	err = app.Run(os.Args)
 	if err != nil {
-		logger.Fatal("Failed to start app", zap.Error(err))
+		logger.Fatal("Fatal error", zap.Error(err))
 	}
+	logger.Info("Stopping")
 }
 
 func appendIfMissing(slice []string, i string) []string {
@@ -117,44 +119,50 @@ func listener(importer *backend.Backend) {
 	for {
 		select {
 		case <-ticker:
-			latestBlocknumber := getLatestBlockNumber(importer)
-			importer.Lgr.Debug("Getting block in listener", zap.Int64("Block Number", latestBlocknumber))
-			if prevHeader != latestBlocknumber {
-				importer.Lgr.Info("Getting block in listener", zap.Int64("Block Number", latestBlocknumber))
-				block, err := importer.BlockByNumber(latestBlocknumber)
-				if block != nil {
+			latest, err := importer.GetLatestBlockNumber()
+			if err != nil {
+				importer.Lgr.Error("Listener: Failed to get latest block number", zap.Error(err))
+				continue
+			}
+			lgr := importer.Lgr.With(zap.Int64("block", latest))
+			lgr.Debug("Listener: Getting block")
+			if prevHeader != latest {
+				lgr.Info("Listener: Getting block")
+				block, err := importer.BlockByNumber(latest)
+				if err != nil {
+					lgr.Error("Listener: Failed to get block", zap.Error(err))
+				} else if block == nil {
+					lgr.Error("Listener: Block not found")
+				} else {
 					importer.ImportBlock(block)
-					if err != nil {
-						importer.Lgr.Fatal("Listener", zap.Int64("Block Number", latestBlocknumber))
-					}
 					checkAncestors(importer, block.Number().Int64(), 100)
-					prevHeader = latestBlocknumber
+					prevHeader = latest
 				}
 			}
 		}
 	}
 }
 
-func getLatestBlockNumber(importer *backend.Backend) int64 {
-	number, err := importer.GetFirstBlockNumber()
-	if err != nil {
-		importer.Lgr.Fatal("getLatestBlockNumber", zap.Error(err))
-	}
-	return number
-}
-
 // backfill continuously loops over all blocks in reverse order, verifying that all
 // data is loaded and consistent, and reloading as necessary.
-func backfill(importer *backend.Backend, startFrom int64) {
-	blockNumber := startFrom
-	if startFrom <= 0 {
-		blockNumber = getLatestBlockNumber(importer)
-	}
+func backfill(importer *backend.Backend, blockNumber int64) {
 	var hash common.Hash // Expected hash.
 	for {
+		if blockNumber < 0 {
+			// Start over from latest.
+			hash = common.Hash{}
+			var err error
+			blockNumber, err = importer.GetLatestBlockNumber()
+			if err != nil {
+				importer.Lgr.Error("Backfill: Failed to get latest block number", zap.Error(err))
+				time.Sleep(5 * time.Second)
+				continue
+			}
+		}
+
 		logger := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
 		if (blockNumber % 1000) == 0 {
-			logger.Info("Backfill progress")
+			logger.Info("Backfill: Progress")
 		}
 		var backfill bool
 		dbBlock := importer.GetBlockByNumber(blockNumber)
@@ -171,31 +179,32 @@ func backfill(importer *backend.Backend, startFrom int64) {
 			hash = common.HexToHash(dbBlock.ParentHash)
 		}
 		if backfill {
-			logger.Info("Backfilling block")
+			logger.Info("Backfill: Backfilling block")
 			rpcBlock, err := importer.BlockByNumber(blockNumber)
-			if rpcBlock != nil {
-				importer.ImportBlock(rpcBlock)
-				if err != nil {
-					logger.Fatal("importBlock - backfill", zap.Error(err))
-				}
-				// Note parent as next expected hash.
-				hash = rpcBlock.ParentHash()
-			} else {
-				hash = common.Hash{}
+			if err != nil {
+				logger.Error("Backfill: Failed to get block", zap.Error(err))
+				time.Sleep(5 * time.Second)
+				continue
+			} else if rpcBlock == nil {
+				logger.Error("Backfill: Block not found", zap.Error(err))
+				time.Sleep(5 * time.Second)
+				continue
 			}
+			importer.ImportBlock(rpcBlock)
+			// Note parent as next expected hash.
+			hash = rpcBlock.ParentHash()
 		} else {
-			newParent := checkTransactionsConsistency(importer, blockNumber)
+			newParent, err := checkTransactionsConsistency(importer, blockNumber)
+			if err != nil {
+				logger.Error("Backfill: Failed to check tx consistency", zap.Error(err))
+				time.Sleep(5 * time.Second)
+				continue
+			}
 			if !common.EmptyHash(newParent) {
 				hash = newParent
 			}
 		}
-		if blockNumber > 0 {
-			blockNumber = blockNumber - 1
-		} else {
-			blockNumber = getLatestBlockNumber(importer)
-			// No expected hash for latest.
-			hash = common.Hash{}
-		}
+		blockNumber--
 	}
 }
 
@@ -208,77 +217,102 @@ func checkAncestors(importer *backend.Backend, blockNumber int64, generations in
 	if oldest < 0 {
 		oldest = 0
 	}
-	for ; blockNumber > oldest && importer.NeedReloadParent(blockNumber); blockNumber-- {
+	for blockNumber > oldest && importer.NeedReloadParent(blockNumber) {
 		importer.Lgr.Info("Redownloading the block because it's corrupted or missing", zap.Int64("blockNumber", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			importer.Lgr.Fatal("blockByNumber - checkAncestors", zap.Int64("blockNumber", blockNumber), zap.Error(err))
+			importer.Lgr.Error("Failed to get block", zap.Int64("blockNumber", blockNumber), zap.Error(err))
+			time.Sleep(5 * time.Second)
+			continue
+		} else if block == nil {
+			importer.Lgr.Error("Block not found", zap.Int64("blockNumber", blockNumber))
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		if block != nil {
-			importer.ImportBlock(block)
-			if err != nil {
-				importer.Lgr.Fatal("importBlock - checkAncestors", zap.Error(err))
-			}
-		}
+		importer.ImportBlock(block)
+		blockNumber--
 	}
 }
 
 // checkTransactionsConsistency checks if the block tx count matches the number of txs, and reimports the block if not.
 // If a block is reimported, then the parent hash is returned.
-func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) common.Hash {
+func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) (common.Hash, error) {
 	if !importer.TransactionsConsistent(blockNumber) {
 		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("blockNumber", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			importer.Lgr.Fatal("checkTransactionsConsistency", zap.Int64("blockNumber", blockNumber), zap.Error(err))
+			return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
 		}
 		if block != nil {
 			importer.ImportBlock(block)
-			return block.ParentHash()
+			return block.ParentHash(), nil
 		}
 	}
-	return common.Hash{}
+	return common.Hash{}, nil
 }
 
 func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := int64(0)
+	t := time.NewTicker(sleep)
+	defer t.Stop()
 	for {
-		start := time.Now()
-		currentTime := time.Now()
-		currentBlock := getLatestBlockNumber(importer)
-		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
-		importer.Lgr.Info("updateAddresses:", zap.Time("lastUpdatedAt", lastUpdatedAt), zap.Int("Addresses in db", len(addresses)))
-		var jobs = make(chan *models.ActiveAddress, workersCount)
-		var wg sync.WaitGroup
-		for i := 0; i < int(workersCount); i++ {
-			wg.Add(1)
-			go worker(&wg, jobs, currentBlock, blockRangeLimit, importer)
+		select {
+		case <-t.C:
+			start := time.Now()
+			currentTime := time.Now()
+			currentBlock, err := importer.GetLatestBlockNumber()
+			if err != nil {
+				importer.Lgr.Error("Update Addresses: Failed to get latest block number", zap.Error(err))
+				continue
+			}
+			addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
+			importer.Lgr.Info("Update Addresses: Starting", zap.Time("lastUpdatedAt", lastUpdatedAt), zap.Int("count", len(addresses)))
+			var jobs = make(chan *models.ActiveAddress, workersCount)
+			var wg sync.WaitGroup
+			for i := 0; i < int(workersCount); i++ {
+				wg.Add(1)
+				lgr := importer.Lgr.With(zap.Int("worker", i))
+				go worker(wg.Done, lgr, jobs, currentBlock, blockRangeLimit, importer)
+			}
+			for _, address := range addresses {
+				jobs <- address
+			}
+			close(jobs)
+			wg.Wait()
+			elapsed := time.Since(start)
+			importer.Lgr.Info("Update Addresses: Complete", zap.Bool("updateContracts", updateContracts),
+				zap.Duration("elapsed", elapsed), zap.Int64("block", lastBlockUpdatedAt))
+			lastBlockUpdatedAt = currentBlock
+			lastUpdatedAt = currentTime
 		}
-		for _, address := range addresses {
-			jobs <- address
-		}
-		close(jobs)
-		wg.Wait()
-		elapsed := time.Since(start)
-		importer.Lgr.Info("Performance measurement:", zap.Bool("updateContracts", updateContracts), zap.String("Updating all addresses took", elapsed.String()), zap.Int64("Current block", lastBlockUpdatedAt))
-		lastBlockUpdatedAt = currentBlock
-		lastUpdatedAt = currentTime
-		time.Sleep(sleep)
 	}
 }
 
-func worker(wg *sync.WaitGroup, jobs chan *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
+func worker(done func(), lgr *zap.Logger, jobs chan *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
+	defer done()
+	var errs []error
+	var updated int
 	for address := range jobs {
-		updateAddress(address, currentBlock, blockRangeLimit, importer)
+		err := updateAddress(address, currentBlock, blockRangeLimit, importer)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to update address %s: %v", address.Address, err))
+		} else {
+			updated++
+		}
 	}
-	wg.Done()
+	if len(errs) > 0 {
+		lgr.Error("Update Addresses: worker done", zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
+		return
+	}
+	lgr.Info("Update Addresses: worker done", zap.Int("updated", updated))
 }
-func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
+
+func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) error {
 	normalizedAddress := common.HexToAddress(address.Address).Hex()
 	balance, err := importer.BalanceAt(normalizedAddress, "latest")
 	if err != nil {
-		importer.Lgr.Fatal("updateAddresses", zap.Error(err))
+		return fmt.Errorf("failed to get balance")
 	}
 	contractDataArray, err := importer.CodeAt(normalizedAddress)
 	contractData := string(contractDataArray[:])
@@ -296,7 +330,7 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 			var fromBlock int64
 			contractFromDB, err := importer.GetAddressByHash(normalizedAddress)
 			if err != nil {
-				importer.Lgr.Fatal("updateAddresses", zap.Error(err))
+				return fmt.Errorf("failed to get contract from DB")
 			}
 			if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
 				fromBlock = contractFromDB.UpdatedAtBlock
@@ -341,9 +375,11 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 			}
 		}
 	}
-	importer.Lgr.Info("updateAddresses", zap.String("Balance of the address:", normalizedAddress), zap.String("Balance", balance.String()))
+	importer.Lgr.Info("Update Addresses: updated address", zap.String("address", normalizedAddress), zap.String("Balance", balance.String()))
 	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
+	return nil
 }
+
 func updateStats(importer *backend.Backend) {
 	for {
 		importer.Lgr.Info("Updating stats")
