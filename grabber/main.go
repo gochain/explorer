@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
+	"go.uber.org/zap"
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/gochain/v3/common"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+
+	"github.com/blendle/zapdriver"
 	"github.com/urfave/cli"
 )
 
@@ -21,10 +22,16 @@ func main() {
 	var rpcUrl string
 	var mongoUrl string
 	var dbName string
-	var loglevel string
 	var startFrom int64
 	var blockRangeLimit uint64
 	var workersCount uint
+	cfg := zapdriver.NewProductionConfig()
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	logger, err := cfg.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
+	}
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
@@ -46,12 +53,6 @@ func main() {
 			Value:       "blocks",
 			Usage:       "mongo database name",
 			Destination: &dbName,
-		},
-		cli.StringFlag{
-			Name:        "log, l",
-			Value:       "info",
-			Usage:       "loglevel debug/info/warn/fatal",
-			Destination: &loglevel,
 		},
 		cli.Int64Flag{
 			Name:        "start-from, s",
@@ -78,8 +79,6 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		level, _ := zerolog.ParseLevel(loglevel)
-		zerolog.SetGlobalLevel(level)
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
@@ -88,7 +87,7 @@ func main() {
 			// Ensure canonical form, since queries are case-sensitive.
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil)
+		importer := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger)
 		go listener(importer)
 		go updateStats(importer)
 		go backfill(importer, startFrom)
@@ -96,9 +95,9 @@ func main() {
 		updateAddresses(5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
 	}
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Run")
+		logger.Fatal("Failed to start app", zap.Error(err))
 	}
 }
 
@@ -118,14 +117,14 @@ func listener(importer *backend.Backend) {
 		select {
 		case <-ticker:
 			latestBlocknumber := getLatestBlockNumber(importer)
-			log.Debug().Int64("Block", latestBlocknumber).Msg("Getting block in listener")
+			importer.Lgr.Debug("Getting block in listener", zap.Int64("Block Number", latestBlocknumber))
 			if prevHeader != latestBlocknumber {
-				log.Info().Int64("Listener is downloading the block:", latestBlocknumber).Msg("Getting block in listener")
+				importer.Lgr.Info("Getting block in listener", zap.Int64("Block Number", latestBlocknumber))
 				block, err := importer.BlockByNumber(latestBlocknumber)
 				if block != nil {
 					importer.ImportBlock(block)
 					if err != nil {
-						log.Fatal().Err(err).Msg("listener")
+						importer.Lgr.Fatal("Listener", zap.Int64("Block Number", latestBlocknumber))
 					}
 					checkParentForBlock(importer, block.Number().Int64(), 100)
 					prevHeader = latestBlocknumber
@@ -136,9 +135,9 @@ func listener(importer *backend.Backend) {
 }
 
 func getLatestBlockNumber(importer *backend.Backend) int64 {
-	number, err := importer.GetLatestBlockNumber()
+	number, err := importer.GetFirstBlockNumber()
 	if err != nil {
-		log.Fatal().Err(err).Msg("getLatestBlockNumber")
+		importer.Lgr.Fatal("getLatestBlockNumber", zap.Error(err))
 	}
 	return number
 }
@@ -149,16 +148,16 @@ func backfill(importer *backend.Backend, startFrom int64) {
 	}
 	for {
 		if (blockNumber % 1000) == 0 {
-			log.Info().Int64("Block", blockNumber).Msg("Checking block in backfill")
+			importer.Lgr.Info("Checking block in backfill", zap.Int64("Block", blockNumber))
 		}
 		blocksFromDB := importer.GetBlockByNumber(blockNumber)
 		if blocksFromDB == nil {
-			log.Info().Int64("Backfilling the block:", blockNumber).Msg("Getting block in backfill")
+			importer.Lgr.Info("Backfilling the block:", zap.Int64("Block", blockNumber))
 			block, err := importer.BlockByNumber(blockNumber)
 			if block != nil {
 				importer.ImportBlock(block)
 				if err != nil {
-					log.Fatal().Err(err).Msg("importBlock - backfill")
+					importer.Lgr.Fatal("importBlock - backfill", zap.Error(err))
 				}
 			}
 		}
@@ -179,16 +178,16 @@ func checkParentForBlock(importer *backend.Backend, blockNumber int64, numBlocks
 	}
 	if importer.NeedReloadBlock(blockNumber) {
 		blockNumber--
-		log.Info().Int64("Redownloading the block because it's corrupted or missing:", blockNumber).Msg("checkParentForBlock")
+		importer.Lgr.Info("Redownloading the block because it's corrupted or missing:", zap.Int64("Block", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
 		if block != nil {
 			importer.ImportBlock(block)
 			if err != nil {
-				log.Fatal().Err(err).Msg("importBlock - checkParentForBlock")
+				importer.Lgr.Fatal("importBlock - checkParentForBlock", zap.Error(err))
 			}
 		}
 		if err != nil {
-			log.Info().Err(err).Msg("BlockByNumber - checkParentForBlock")
+			importer.Lgr.Info("BlockByNumber - checkParentForBlock", zap.Error(err))
 			checkParentForBlock(importer, blockNumber+1, numBlocksToCheck)
 		}
 		if numBlocksToCheck > 0 && block != nil {
@@ -199,10 +198,10 @@ func checkParentForBlock(importer *backend.Backend, blockNumber int64, numBlocks
 
 func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) {
 	if !importer.TransactionsConsistent(blockNumber) {
-		log.Info().Int64("Redownloading the block because number of transactions are wrong", blockNumber).Msg("checkTransactionsConsistency")
+		importer.Lgr.Info("Redownloading the block because number of transactions are wrong:", zap.Int64("Block", blockNumber))
 		block, err := importer.BlockByNumber(blockNumber)
 		if err != nil {
-			log.Fatal().Err(err).Msg("checkTransactionsConsistency")
+			importer.Lgr.Fatal("checkTransactionsConsistency", zap.Error(err))
 		}
 		if block != nil {
 			importer.ImportBlock(block)
@@ -218,7 +217,7 @@ func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit 
 		currentTime := time.Now()
 		currentBlock := getLatestBlockNumber(importer)
 		addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
-		log.Info().Int("Addresses in db", len(addresses)).Time("lastUpdatedAt", lastUpdatedAt).Msg("updateAddresses")
+		importer.Lgr.Info("updateAddresses:", zap.Time("lastUpdatedAt", lastUpdatedAt), zap.Int("Addresses in db", len(addresses)))
 		var jobs = make(chan *models.ActiveAddress, workersCount)
 		var wg sync.WaitGroup
 		for i := 0; i < int(workersCount); i++ {
@@ -231,7 +230,7 @@ func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit 
 		close(jobs)
 		wg.Wait()
 		elapsed := time.Since(start)
-		log.Info().Bool("updateContracts", updateContracts).Str("Updating all addresses took", elapsed.String()).Int64("Current block", lastBlockUpdatedAt).Msg("Performance measurement")
+		importer.Lgr.Info("Performance measurement:", zap.Bool("updateContracts", updateContracts), zap.String("Updating all addresses took", elapsed.String()), zap.Int64("Current block", lastBlockUpdatedAt))
 		lastBlockUpdatedAt = currentBlock
 		lastUpdatedAt = currentTime
 		time.Sleep(sleep)
@@ -248,7 +247,7 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 	normalizedAddress := common.HexToAddress(address.Address).Hex()
 	balance, err := importer.BalanceAt(normalizedAddress, "latest")
 	if err != nil {
-		log.Fatal().Err(err).Msg("updateAddresses")
+		importer.Lgr.Fatal("updateAddresses", zap.Error(err))
 	}
 	contractDataArray, err := importer.CodeAt(normalizedAddress)
 	contractData := string(contractDataArray[:])
@@ -260,13 +259,13 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 		importer.ImportContract(normalizedAddress, byteCode)
 		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 		if err != nil {
-			log.Info().Err(err).Str("Address", normalizedAddress).Msg("Cannot GetTokenDetails")
+			importer.Lgr.Info("Cannot GetTokenDetails", zap.Error(err), zap.String("Address", normalizedAddress))
 			// continue
 		} else {
 			var fromBlock int64
 			contractFromDB, err := importer.GetAddressByHash(normalizedAddress)
 			if err != nil {
-				log.Fatal().Err(err).Msg("updateAddresses")
+				importer.Lgr.Fatal("updateAddresses", zap.Error(err))
 			}
 			if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
 				fromBlock = contractFromDB.UpdatedAtBlock
@@ -274,20 +273,20 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 				fromBlock = importer.GetContractBlock(normalizedAddress)
 			}
 			if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
-				log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Str("Name", tokenDetails.Name).Msg("TokenName and TokenSymbols are empty using from token details")
+				importer.Lgr.Info("TokenName and TokenSymbols are empty using from token details", zap.String("Address", normalizedAddress), zap.Int64("Contract block", fromBlock), zap.String("Name", tokenDetails.Name))
 				contractFromDB.TokenName = tokenDetails.Name
 				contractFromDB.TokenSymbol = tokenDetails.Symbol
 			}
 			internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock, blockRangeLimit)
 			internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
-			log.Info().Str("Address", normalizedAddress).Int64("Contract block", fromBlock).Int("In the gochain", len(internalTxs)).Int("In the db", internalTxsFromDb).Msg("Comparing number of internal txs in the db and in the gochain")
+			importer.Lgr.Info("Comparing number of internal txs in the db and in the gochain", zap.String("Address", normalizedAddress), zap.Int("In the gochain", len(internalTxs)), zap.Int("In the db", internalTxsFromDb))
 			if len(internalTxs) != internalTxsFromDb {
 				var tokenHoldersList []string
 				for _, itx := range internalTxs {
-					log.Debug().Str("From", itx.From.String()).Str("To", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Internal Transaction")
+					importer.Lgr.Debug("Internal Transaction", zap.String("From", itx.From.String()), zap.String("To", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
 					importer.ImportInternalTransaction(normalizedAddress, itx)
 					// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
-					log.Debug().Str("addr 1", itx.From.String()).Str("addr 2", itx.To.String()).Int64("Value", itx.Value.Int64()).Msg("Updating following token holder addresses")
+					importer.Lgr.Debug("Updating following token holder addresses", zap.String("addr 1", itx.From.String()), zap.String("addr 2", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
 					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
 					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
 					// }
@@ -296,14 +295,14 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 					if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
 						continue
 					}
-					log.Info().Int("Index", index).Int("Total number", len(tokenHoldersList)).Msg("Importing token holder")
+					importer.Lgr.Info("Importing token holder", zap.Int("Index", index), zap.Int("Total number", len(tokenHoldersList)))
 					tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
 					if err != nil {
-						log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot GetTokenBalance, in internal transaction")
+						importer.Lgr.Info("Cannot GetTokenBalance, in internal transaction", zap.Error(err), zap.String("Address", tokenHolderAddress))
 						continue
 					}
 					if contractFromDB == nil {
-						log.Info().Err(err).Str("Address", tokenHolderAddress).Msg("Cannot find contract in DB")
+						importer.Lgr.Info("Cannot find contract in DB", zap.Error(err), zap.String("Address", tokenHolderAddress))
 						continue
 					}
 					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
@@ -311,14 +310,14 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 			}
 		}
 	}
-	log.Info().Str("Balance of the address:", normalizedAddress).Str("Balance", balance.String()).Msg("updateAddresses")
+	importer.Lgr.Info("updateAddresses", zap.String("Balance of the address:", normalizedAddress), zap.String("Balance", balance.String()))
 	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
 }
 func updateStats(importer *backend.Backend) {
 	for {
-		log.Info().Msg("Updating stats")
+		importer.Lgr.Info("Updating stats")
 		importer.UpdateStats()
-		log.Info().Msg("Updating stats finished")
+		importer.Lgr.Info("Updating stats finished")
 		time.Sleep(300 * time.Second) //sleep for 5 minutes
 	}
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/gochain-io/gochain/v3/consensus/clique"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
-	"github.com/rs/zerolog/log"
+	"go.uber.org/zap"
 )
 
 type Backend struct {
@@ -26,6 +26,7 @@ type Backend struct {
 	reCaptchaSecret       string
 	lockedAccounts        []string
 	signers               map[common.Address]models.Signer
+	Lgr                   *zap.Logger
 }
 
 func retry(attempts int, sleep time.Duration, f func() error) (err error) {
@@ -38,26 +39,26 @@ func retry(attempts int, sleep time.Duration, f func() error) (err error) {
 			break
 		}
 		time.Sleep(sleep)
-		log.Info().Err(err).Msg("retrying after error")
 	}
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
 
-func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer) *Backend {
+func NewBackend(mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer, lgr *zap.Logger) *Backend {
 	client, err := goclient.Dial(rpcUrl)
 	if err != nil {
-		log.Fatal().Err(err).Msg("cannot connect to gochain network")
+		lgr.Fatal("Cannot connect to gochain network", zap.Error(err))
 	}
-	exClient := NewEthClient(rpcUrl)
-	mongoBackend := NewMongoClient(mongoUrl, rpcUrl, dbName)
+	exClient := NewEthClient(rpcUrl, lgr)
+	mongoBackend := NewMongoClient(mongoUrl, rpcUrl, dbName, lgr)
 	importer := new(Backend)
 	importer.goClient = client
 	importer.extendedGochainClient = exClient
 	importer.mongo = mongoBackend
-	importer.tokenBalance = NewTokenBalanceClient(rpcUrl)
+	importer.tokenBalance = NewTokenBalanceClient(rpcUrl, lgr)
 	importer.dockerhubAPI = new(DockerHubAPI)
 	importer.lockedAccounts = lockedAccounts
 	importer.signers = signers
+	importer.Lgr = lgr
 	return importer
 }
 
@@ -179,10 +180,10 @@ func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit
 func (self *Backend) GetBlockByNumber(number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
 	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		log.Info().Int64("blockNumber", number).Msg("cannot get block from db or block is not up to date, importing it")
+		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("blockNumber", number))
 		blockEth, err := self.goClient.BlockByNumber(context.Background(), big.NewInt(number))
 		if err != nil {
-			log.Info().Err(err).Int64("blockNumber", number).Msg("cannot get block from eth and db")
+			self.Lgr.Error("Cannot get block from eth and db", zap.Int64("blockNumber", number))
 			return nil
 		}
 		block = self.ImportBlock(blockEth)
@@ -210,7 +211,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 	}
 	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode, contractData.Optimization)
 	if err != nil {
-		log.Error().Err(err).Msg("error while compilation")
+		self.Lgr.Error("error while compilation", zap.Error(err))
 		err := errors.New("error occurred while compiling source code")
 		return nil, err
 	}
@@ -247,8 +248,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		return contract, nil
 	} else {
 		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
-		log.Info().Str("sourceBin", sourceBin[0:len(sourceBin)-69]).Msg("Compilation result doesn't match")
-		log.Info().Str("contractBin", contractBin[0:len(contractBin)-69]).Msg("Compilation result doesn't match")
+		self.Lgr.Info("Compilation result doesn't match", zap.String("sourceBin", sourceBin[0:len(sourceBin)-69]))
+		self.Lgr.Info("Compilation result doesn't match", zap.String("contractBin", contractBin[0:len(contractBin)-69]))
 		return nil, err
 	}
 }
@@ -328,7 +329,7 @@ func (self *Backend) BlockByNumber(blockNumber int64) (*types.Block, error) {
 	})
 	return value, err
 }
-func (self *Backend) GetLatestBlockNumber() (int64, error) {
+func (self *Backend) GetFirstBlockNumber() (int64, error) {
 	var value int64
 	err := retry(5, 2*time.Second, func() (err error) {
 		value, err = self.extendedGochainClient.ethBlockNumber()
