@@ -25,7 +25,3 @@ type Address struct {
 	NumberOfInternalTransactions int                  `json:"number_of_internal_transactions,omitempty" bson:"number_of_internal_transactions"`
 	NumberOfTokenTransactions    int                  `json:"number_of_token_transactions,omitempty" bson:"number_of_token_transactions"`
 }
-
-type AddressesList struct {
-	Addresses []*Address `json:"addresses"`
-}
