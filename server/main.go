@@ -93,10 +93,7 @@ func parseSkipLimit(r *http.Request) (int, int) {
 }
 
 func parseGetParam(r *http.Request, result interface{}) error {
-	if err := schema.NewDecoder().Decode(result, r.URL.Query()); err != nil {
-		return err
-	}
-	return nil
+	return schema.NewDecoder().Decode(result, r.URL.Query())
 }
 
 func parseBlockNumber(r *http.Request) (int, error) {
@@ -571,7 +568,7 @@ func pingDB(w http.ResponseWriter, r *http.Request) {
 func getContractsList(w http.ResponseWriter, r *http.Request) {
 	filter := new(models.ContractsFilter)
 	if err := parseGetParam(r, filter); err != nil {
-		log.Info().Err(err).Msg("getContractsList")
+		logger.Info("failed to parse get params")
 		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
 	}
 	addresses := backendInstance.GetContracts(filter)

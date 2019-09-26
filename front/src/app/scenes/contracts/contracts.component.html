@@ -165,37 +165,40 @@
       </ng-container>
       <ng-container *appViewportSize="['large']">
         <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
+          <table class="table table-hover table-bordered">
+            <thead class="thead-dark">
             <tr>
               <th class="text-shrink">#</th>
-              <th>Address</th>
-              <th>Name</th>
-              <th class="text-shrink">Symbol</th>
+              <th class="text-shrink w-10">Symbol</th>
+              <th class="">Name</th>
               <th class="text-shrink">Txs</th>
-              <th class="text-shrink text-nowrap">Internal txs</th>
-              <th class="text-shrink text-nowrap">Token txs</th>
+              <th class="text-shrink text-nowrap">Internal-txs</th>
               <th class="text-shrink">Holders</th>
-              <th class="text-shrink">Type</th>
+              <th class="text-shrink text-nowrap">Token-txs</th>
+              <th class="w-15">Address</th>
             </tr>
             </thead>
             <tbody>
             <tr *ngFor="let address of addresses; let index = index;">
               <td>{{index + 1}}</td>
-              <td class="text-truncate text-monospace ws-p">
-                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
-              </td>
-              <td>{{address.token_name}}</td>
               <td>{{address.token_symbol}}</td>
+              <td>
+                {{address.token_name}}
+                <div *ngIf="address.erc_types">
+                  <span
+                      class="badge badge-primary mb-1 mr-1"
+                      *ngFor="let type of address.erc_types"
+                  >
+                    {{tokenTypes[type]}}
+                  </span>
+                </div>
+              </td>
               <td>{{address.number_of_transactions}}</td>
               <td>{{address.number_of_internal_transactions}}</td>
-              <td>{{address.number_of_token_transactions}}</td>
               <td>{{address.number_of_token_holders}}</td>
-              <td>
-                <ng-container *ngIf="address.erc_types">
-                <span class="badge badge-primary mb-1"
-                      *ngFor="let type of address.erc_types">{{tokenTypes[type]}}</span>
-                </ng-container>
+              <td>{{address.number_of_token_transactions}}</td>
+              <td class="text-truncate text-monospace ws-p">
+                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
               </td>
             </tr>
             </tbody>
