@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/blendle/zapdriver"
 	"github.com/gochain-io/gochain/v3/common"
@@ -77,6 +81,15 @@ func main() {
 		},
 	}
 
+	ctx, cancelFn := context.WithCancel(context.Background())
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		for range sigCh {
+			cancelFn()
+		}
+	}()
+
 	app.Action = func(c *cli.Context) error {
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
@@ -86,15 +99,15 @@ func main() {
 			// Ensure canonical form, since queries are case-sensitive.
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-		importer, err := backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger)
+		importer, err := backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger)
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
-		go listener(importer)
-		go updateStats(importer)
-		go backfill(importer, startFrom)
-		go updateAddresses(3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
-		updateAddresses(5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
+		go listener(ctx, importer)
+		go updateStats(ctx, importer)
+		go backfill(ctx, importer, startFrom)
+		go updateAddresses(ctx, 3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
+		updateAddresses(ctx, 5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
 	}
 	err = app.Run(os.Args)
@@ -113,13 +126,16 @@ func appendIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func listener(importer *backend.Backend) {
+func listener(ctx context.Context, importer *backend.Backend) {
 	var prevHeader int64
-	ticker := time.NewTicker(time.Second * 1).C
+	t := time.NewTicker(time.Second * 1)
+	defer t.Stop()
 	for {
 		select {
-		case <-ticker:
-			latest, err := importer.GetLatestBlockNumber()
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			latest, err := importer.GetLatestBlockNumber(ctx)
 			if err != nil {
 				importer.Lgr.Error("Listener: Failed to get latest block number", zap.Error(err))
 				continue
@@ -128,14 +144,14 @@ func listener(importer *backend.Backend) {
 			lgr.Debug("Listener: Getting block")
 			if prevHeader != latest {
 				lgr.Info("Listener: Getting block")
-				block, err := importer.BlockByNumber(latest)
+				block, err := importer.BlockByNumber(ctx, latest)
 				if err != nil {
 					lgr.Error("Listener: Failed to get block", zap.Error(err))
 				} else if block == nil {
 					lgr.Error("Listener: Block not found")
 				} else {
-					importer.ImportBlock(block)
-					checkAncestors(importer, block.Number().Int64(), 100)
+					importer.ImportBlock(ctx, block)
+					checkAncestors(ctx, importer, block.Number().Int64(), 100)
 					prevHeader = latest
 				}
 			}
@@ -145,17 +161,19 @@ func listener(importer *backend.Backend) {
 
 // backfill continuously loops over all blocks in reverse order, verifying that all
 // data is loaded and consistent, and reloading as necessary.
-func backfill(importer *backend.Backend, blockNumber int64) {
+func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64) {
 	var hash common.Hash // Expected hash.
 	for {
 		if blockNumber < 0 {
 			// Start over from latest.
 			hash = common.Hash{}
 			var err error
-			blockNumber, err = importer.GetLatestBlockNumber()
+			blockNumber, err = importer.GetLatestBlockNumber(ctx)
 			if err != nil {
 				importer.Lgr.Error("Backfill: Failed to get latest block number", zap.Error(err))
-				time.Sleep(5 * time.Second)
+				if utils.SleepCtx(ctx, 5*time.Second) != nil {
+					return
+				}
 				continue
 			}
 		}
@@ -165,7 +183,7 @@ func backfill(importer *backend.Backend, blockNumber int64) {
 			logger.Info("Backfill: Progress")
 		}
 		var backfill bool
-		dbBlock := importer.GetBlockByNumber(blockNumber)
+		dbBlock := importer.GetBlockByNumber(ctx, blockNumber)
 		if dbBlock == nil {
 			// Missing.
 			backfill = true
@@ -180,24 +198,30 @@ func backfill(importer *backend.Backend, blockNumber int64) {
 		}
 		if backfill {
 			logger.Info("Backfill: Backfilling block")
-			rpcBlock, err := importer.BlockByNumber(blockNumber)
+			rpcBlock, err := importer.BlockByNumber(ctx, blockNumber)
 			if err != nil {
 				logger.Error("Backfill: Failed to get block", zap.Error(err))
-				time.Sleep(5 * time.Second)
+				if utils.SleepCtx(ctx, 5*time.Second) != nil {
+					return
+				}
 				continue
 			} else if rpcBlock == nil {
 				logger.Error("Backfill: Block not found", zap.Error(err))
-				time.Sleep(5 * time.Second)
+				if utils.SleepCtx(ctx, 5*time.Second) != nil {
+					return
+				}
 				continue
 			}
-			importer.ImportBlock(rpcBlock)
+			importer.ImportBlock(ctx, rpcBlock)
 			// Note parent as next expected hash.
 			hash = rpcBlock.ParentHash()
 		} else {
-			newParent, err := checkTransactionsConsistency(importer, blockNumber)
+			newParent, err := checkTransactionsConsistency(ctx, importer, blockNumber)
 			if err != nil {
 				logger.Error("Backfill: Failed to check tx consistency", zap.Error(err))
-				time.Sleep(5 * time.Second)
+				if utils.SleepCtx(ctx, 5*time.Second) != nil {
+					return
+				}
 				continue
 			}
 			if !common.EmptyHash(newParent) {
@@ -209,7 +233,7 @@ func backfill(importer *backend.Backend, blockNumber int64) {
 }
 
 // checkAncestors scans the ancestors of a block to verify that they exists and their hashes match.
-func checkAncestors(importer *backend.Backend, blockNumber int64, generations int) {
+func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber int64, generations int) {
 	if blockNumber == 0 || generations <= 0 {
 		return
 	}
@@ -220,49 +244,55 @@ func checkAncestors(importer *backend.Backend, blockNumber int64, generations in
 	for blockNumber > oldest && importer.NeedReloadParent(blockNumber) {
 		lgr := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
 		lgr.Info("Redownloading corrupted or missing ancestor")
-		block, err := importer.BlockByNumber(blockNumber)
+		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
 			lgr.Error("Failed to get ancestor", zap.Error(err))
-			time.Sleep(5 * time.Second)
+			if utils.SleepCtx(ctx, 5*time.Second) != nil {
+				return
+			}
 			continue
 		} else if block == nil {
 			lgr.Error("Ancestor not found")
-			time.Sleep(5 * time.Second)
+			if utils.SleepCtx(ctx, 5*time.Second) != nil {
+				return
+			}
 			continue
 		}
-		importer.ImportBlock(block)
+		importer.ImportBlock(ctx, block)
 		blockNumber--
 	}
 }
 
 // checkTransactionsConsistency checks if the block tx count matches the number of txs, and reimports the block if not.
 // If a block is reimported, then the parent hash is returned.
-func checkTransactionsConsistency(importer *backend.Backend, blockNumber int64) (common.Hash, error) {
+func checkTransactionsConsistency(ctx context.Context, importer *backend.Backend, blockNumber int64) (common.Hash, error) {
 	if !importer.TransactionsConsistent(blockNumber) {
 		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("blockNumber", blockNumber))
-		block, err := importer.BlockByNumber(blockNumber)
+		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
 			return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
 		}
 		if block != nil {
-			importer.ImportBlock(block)
+			importer.ImportBlock(ctx, block)
 			return block.ParentHash(), nil
 		}
 	}
 	return common.Hash{}, nil
 }
 
-func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
+func updateAddresses(ctx context.Context, sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
 	lastUpdatedAt := time.Unix(0, 0)
 	lastBlockUpdatedAt := int64(0)
 	t := time.NewTicker(sleep)
 	defer t.Stop()
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case <-t.C:
 			start := time.Now()
 			currentTime := time.Now()
-			currentBlock, err := importer.GetLatestBlockNumber()
+			currentBlock, err := importer.GetLatestBlockNumber(ctx)
 			if err != nil {
 				importer.Lgr.Error("Update Addresses: Failed to get latest block number", zap.Error(err))
 				continue
@@ -274,10 +304,15 @@ func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit 
 			for i := 0; i < int(workersCount); i++ {
 				wg.Add(1)
 				lgr := importer.Lgr.With(zap.Int("worker", i))
-				go worker(wg.Done, lgr, jobs, currentBlock, blockRangeLimit, importer)
+				go worker(ctx, wg.Done, lgr, jobs, currentBlock, blockRangeLimit, importer)
 			}
+		forAddrs:
 			for _, address := range addresses {
-				jobs <- address
+				select {
+				case <-ctx.Done():
+					break forAddrs
+				case jobs <- address:
+				}
 			}
 			close(jobs)
 			wg.Wait()
@@ -290,16 +325,23 @@ func updateAddresses(sleep time.Duration, updateContracts bool, blockRangeLimit 
 	}
 }
 
-func worker(done func(), lgr *zap.Logger, jobs chan *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
+func worker(ctx context.Context, done func(), lgr *zap.Logger, jobs chan *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) {
 	defer done()
 	var errs []error
 	var updated int
-	for address := range jobs {
-		err := updateAddress(address, currentBlock, blockRangeLimit, importer)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("failed to update address %s: %v", address.Address, err))
-		} else {
-			updated++
+	for {
+		select {
+		case <-ctx.Done():
+			lgr.Error("Update Addresses: worker cancelled", zap.NamedError("ctxErr", ctx.Err()),
+				zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
+			return
+		case address := <-jobs:
+			err := updateAddress(ctx, address, currentBlock, blockRangeLimit, importer)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to update address %s: %v", address.Address, err))
+			} else {
+				updated++
+			}
 		}
 	}
 	if len(errs) > 0 {
@@ -309,13 +351,13 @@ func worker(done func(), lgr *zap.Logger, jobs chan *models.ActiveAddress, curre
 	lgr.Info("Update Addresses: worker done", zap.Int("updated", updated))
 }
 
-func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) error {
+func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) error {
 	normalizedAddress := common.HexToAddress(address.Address).Hex()
-	balance, err := importer.BalanceAt(normalizedAddress, "latest")
+	balance, err := importer.BalanceAt(ctx, normalizedAddress, "latest")
 	if err != nil {
 		return fmt.Errorf("failed to get balance")
 	}
-	contractDataArray, err := importer.CodeAt(normalizedAddress)
+	contractDataArray, err := importer.CodeAt(ctx, normalizedAddress)
 	contractData := string(contractDataArray[:])
 	var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
 	contract := false
@@ -329,7 +371,7 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 			// continue
 		} else {
 			var fromBlock int64
-			contractFromDB, err := importer.GetAddressByHash(normalizedAddress)
+			contractFromDB, err := importer.GetAddressByHash(ctx, normalizedAddress)
 			if err != nil {
 				return fmt.Errorf("failed to get contract from DB")
 			}
@@ -343,14 +385,14 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 				contractFromDB.TokenName = tokenDetails.Name
 				contractFromDB.TokenSymbol = tokenDetails.Symbol
 			}
-			internalTxs := importer.GetInternalTransactions(normalizedAddress, fromBlock, blockRangeLimit)
+			internalTxs := importer.GetInternalTransactions(ctx, normalizedAddress, fromBlock, blockRangeLimit)
 			internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
 			importer.Lgr.Info("Comparing number of internal txs in the db and in the gochain", zap.String("Address", normalizedAddress), zap.Int("In the gochain", len(internalTxs)), zap.Int("In the db", internalTxsFromDb))
 			if len(internalTxs) != internalTxsFromDb {
 				var tokenHoldersList []string
 				for _, itx := range internalTxs {
 					importer.Lgr.Debug("Internal Transaction", zap.String("From", itx.From.String()), zap.String("To", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
-					importer.ImportInternalTransaction(normalizedAddress, itx)
+					importer.ImportInternalTransaction(ctx, normalizedAddress, itx)
 					// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
 					importer.Lgr.Debug("Updating following token holder addresses", zap.String("addr 1", itx.From.String()), zap.String("addr 2", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
 					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
@@ -381,11 +423,20 @@ func updateAddress(address *models.ActiveAddress, currentBlock int64, blockRange
 	return nil
 }
 
-func updateStats(importer *backend.Backend) {
+func updateStats(ctx context.Context, importer *backend.Backend) {
+	t := time.NewTicker(5 * time.Minute)
+	defer t.Stop()
 	for {
-		importer.Lgr.Info("Updating stats")
-		importer.UpdateStats()
-		importer.Lgr.Info("Updating stats finished")
-		time.Sleep(300 * time.Second) //sleep for 5 minutes
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			stats, err := importer.UpdateStats()
+			if err != nil {
+				importer.Lgr.Error("Failed to update stats", zap.Error(err), zap.Reflect("stats", stats))
+				continue
+			}
+			importer.Lgr.Info("Updated stats", zap.Reflect("stats", stats))
+		}
 	}
 }

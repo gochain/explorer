@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,22 +9,24 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
-	"github.com/blendle/zapdriver"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
-	"go.uber.org/zap"
 
+	"github.com/blendle/zapdriver"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gorilla/schema"
-	"github.com/skip2/go-qrcode"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
+	"go.uber.org/zap"
 )
 
 var backendInstance *backend.Backend
@@ -163,6 +166,15 @@ func main() {
 		},
 	}
 
+	ctx, cancelFn := context.WithCancel(context.Background())
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		for range sigCh {
+			cancelFn()
+		}
+	}()
+
 	app.Action = func(c *cli.Context) error {
 		var err error
 		cfg := zapdriver.NewProductionConfig()
@@ -195,7 +207,7 @@ func main() {
 			}
 		}
 
-		backendInstance, err = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
+		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
@@ -267,7 +279,14 @@ func main() {
 				r.Get("/contracts", getContractsList)
 			})
 		})
-		return http.ListenAndServe(":8080", r)
+		server := &http.Server{Addr: ":8080", Handler: r}
+		go func() {
+			select {
+			case <-ctx.Done():
+				server.Close()
+			}
+		}()
+		return server.ListenAndServe()
 
 	}
 	err := app.Run(os.Args)
@@ -278,7 +297,7 @@ func main() {
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
-	totalSupply, err := backendInstance.TotalSupply()
+	totalSupply, err := backendInstance.TotalSupply(r.Context())
 	if err == nil {
 		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
 		w.Write([]byte(total.FloatString(18)))
@@ -288,7 +307,7 @@ func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCirculating(w http.ResponseWriter, r *http.Request) {
-	circulatingSupply, err := backendInstance.CirculatingSupply()
+	circulatingSupply, err := backendInstance.CirculatingSupply(r.Context())
 	if err == nil {
 		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
 		w.Write([]byte(circulating.FloatString(18)))
@@ -326,13 +345,13 @@ func getSignersList(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
-	totalSupply, err := backendInstance.TotalSupply()
+	totalSupply, err := backendInstance.TotalSupply(r.Context())
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 	skip, limit := parseSkipLimit(r)
-	circulatingSupply, err := backendInstance.CirculatingSupply()
+	circulatingSupply, err := backendInstance.CirculatingSupply(r.Context())
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -349,7 +368,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
 	logger.Info("looking up address", zap.String("address", addressHash))
-	address, err := backendInstance.GetAddressByHash(addressHash)
+	address, err := backendInstance.GetAddressByHash(r.Context(), addressHash)
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -360,13 +379,13 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 func getTransaction(w http.ResponseWriter, r *http.Request) {
 	transactionHash := chi.URLParam(r, "hash")
 	logger.Info("looking up transaction", zap.String("transaction", transactionHash))
-	transaction := backendInstance.GetTransactionByHash(transactionHash)
+	transaction := backendInstance.GetTransactionByHash(r.Context(), transactionHash)
 	writeJSON(w, http.StatusOK, transaction)
 }
 
 func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
-	tx := backendInstance.GetTransactionByHash(hash)
+	tx := backendInstance.GetTransactionByHash(r.Context(), hash)
 	if tx != nil {
 		writeJSON(w, http.StatusOK, nil)
 	} else {
@@ -543,7 +562,7 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 		block = backendInstance.GetBlockByHash(hash)
 	} else {
 		logger.Info("looking up block", zap.Int("bnum", bnum))
-		block = backendInstance.GetBlockByNumber(int64(bnum))
+		block = backendInstance.GetBlockByNumber(r.Context(), int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
 }

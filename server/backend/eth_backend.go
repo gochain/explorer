@@ -2,6 +2,7 @@ package backend
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -46,22 +47,20 @@ type ethRequest struct {
 }
 
 type EthRPC struct {
-	url    string
-	client httpClient
-	Lgr    *zap.Logger
+	url string
+	Lgr *zap.Logger
 }
 
 func NewEthClient(url string, lgr *zap.Logger) *EthRPC {
 	rpc := &EthRPC{
-		url:    url,
-		client: http.DefaultClient,
-		Lgr:    lgr,
+		url: url,
+		Lgr: lgr,
 	}
 
 	return rpc
 }
 
-func (rpc *EthRPC) Call(method string, params ...interface{}) (json.RawMessage, error) {
+func (rpc *EthRPC) Call(ctx context.Context, method string, params ...interface{}) (json.RawMessage, error) {
 	request := ethRequest{
 		ID:      1,
 		JSONRPC: "2.0",
@@ -74,7 +73,12 @@ func (rpc *EthRPC) Call(method string, params ...interface{}) (json.RawMessage, 
 		return nil, err
 	}
 
-	response, err := rpc.client.Post(rpc.url, "application/json", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", rpc.url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(req.WithContext(ctx))
 	if response != nil {
 		defer response.Body.Close()
 	}
@@ -99,8 +103,8 @@ func (rpc *EthRPC) Call(method string, params ...interface{}) (json.RawMessage, 
 	return resp.Result, nil
 
 }
-func (rpc *EthRPC) call(method string, target interface{}, params ...interface{}) error {
-	result, err := rpc.Call(method, params...)
+func (rpc *EthRPC) call(ctx context.Context, method string, target interface{}, params ...interface{}) error {
+	result, err := rpc.Call(ctx, method, params...)
 	if err != nil {
 		return err
 	}
@@ -111,10 +115,10 @@ func (rpc *EthRPC) call(method string, target interface{}, params ...interface{}
 
 	return json.Unmarshal(result, target)
 }
-func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
+func (rpc *EthRPC) ethGetBalance(ctx context.Context, address, block string) (*big.Int, error) {
 	var response string
 	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance", address))
-	if err := rpc.call("eth_getBalance", &response, address, block); err != nil {
+	if err := rpc.call(ctx, "eth_getBalance", &response, address, block); err != nil {
 		return new(big.Int), err
 	}
 	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance response", response))
@@ -126,23 +130,23 @@ func (rpc *EthRPC) ethGetBalance(address, block string) (*big.Int, error) {
 // 	return rpc.getBlock("eth_getBlockByNumber", withTransactions, IntToHex(number), withTransactions)
 // }
 
-func (rpc *EthRPC) ethBlockNumber() (int64, error) {
+func (rpc *EthRPC) ethBlockNumber(ctx context.Context) (int64, error) {
 	var response string
-	if err := rpc.call("eth_blockNumber", &response); err != nil {
+	if err := rpc.call(ctx, "eth_blockNumber", &response); err != nil {
 		return 0, err
 	}
 	return parseInt(response)
 }
 
-func (rpc *EthRPC) codeAt(address, block string) ([]byte, error) {
+func (rpc *EthRPC) codeAt(ctx context.Context, address, block string) ([]byte, error) {
 	var result hexutil.Bytes
-	err := rpc.call("eth_getCode", &result, address, block)
+	err := rpc.call(ctx, "eth_getCode", &result, address, block)
 	return result, err
 }
 
-func (rpc *EthRPC) ethTotalSupply() (*big.Int, error) {
+func (rpc *EthRPC) ethTotalSupply(ctx context.Context) (*big.Int, error) {
 	var response string
-	if err := rpc.call("eth_totalSupply", &response, "latest"); err != nil {
+	if err := rpc.call(ctx, "eth_totalSupply", &response, "latest"); err != nil {
 		return new(big.Int), err
 	}
 	totalSupply, _ := parseBigInt(response)
