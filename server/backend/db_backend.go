@@ -637,7 +637,6 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 		findQuery["token_symbol"] = bson.RegEx{regexp.QuoteMeta(filter.TokenSymbol), "i"}
 	}
 	if filter.ErcType != "" {
-		println(filter.ErcType)
 		findQuery["erc_types"] = filter.ErcType
 	}
 	if filter.SortBy != "" {

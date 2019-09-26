@@ -23,7 +23,6 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gorilla/schema"
 	"github.com/skip2/go-qrcode"
-	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
