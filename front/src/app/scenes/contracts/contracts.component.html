@@ -93,22 +93,6 @@
             </div>
             <div class="data-list-row">
               <div class="data-list-term">
-                Address:
-              </div>
-              <div class="data-list-desc text-monospace">
-                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
-              </div>
-            </div>
-            <div class="data-list-row">
-              <div class="data-list-term">
-                Name:
-              </div>
-              <div class="data-list-desc">
-                {{address.token_name}}
-              </div>
-            </div>
-            <div class="data-list-row">
-              <div class="data-list-term">
                 Symbol
               </div>
               <div class="data-list-desc">
@@ -117,34 +101,10 @@
             </div>
             <div class="data-list-row">
               <div class="data-list-term">
-                Txs:
+                Name:
               </div>
               <div class="data-list-desc">
-                {{address.number_of_transactions}}
-              </div>
-            </div>
-            <div class="data-list-row">
-              <div class="data-list-term">
-                Internal txs:
-              </div>
-              <div class="data-list-desc">
-                {{address.number_of_internal_transactions}}
-              </div>
-            </div>
-            <div class="data-list-row">
-              <div class="data-list-term">
-                Token txs:
-              </div>
-              <div class="data-list-desc">
-                {{address.number_of_token_transactions}}
-              </div>
-            </div>
-            <div class="data-list-row">
-              <div class="data-list-term">
-                Holders:
-              </div>
-              <div class="data-list-desc">
-                {{address.number_of_token_holders}}
+                {{address.token_name}}
               </div>
             </div>
             <div class="data-list-row" *ngIf="address.erc_types">
@@ -158,6 +118,46 @@
                 >
                   {{tokenTypes[type]}}
                 </span>
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Internal-txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_internal_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Holders:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_token_holders}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Token-txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_token_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Address:
+              </div>
+              <div class="data-list-desc text-monospace">
+                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
               </div>
             </div>
           </div>
