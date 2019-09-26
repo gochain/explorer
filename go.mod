@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/aristanetworks/goarista v0.0.0-20181109020153-5faa74ffbed7 // indirect
+	github.com/blendle/zapdriver v1.1.6
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
@@ -24,13 +25,15 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
 	github.com/rs/cors v1.6.0 // indirect
-	github.com/rs/zerolog v1.10.3
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/syndtr/goleveldb v0.0.0-20181105012736-f9080354173f // indirect
 	github.com/urfave/cli v1.20.0
 	go.opencensus.io v0.18.0 // indirect
+	go.uber.org/atomic v1.4.0 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.10.0
 	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect

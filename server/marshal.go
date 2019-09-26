@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/rs/zerolog/log"
+	"go.uber.org/zap"
 )
 
 type H map[string]interface{}
@@ -21,7 +21,7 @@ func writeJSON(w http.ResponseWriter, code int, obj interface{}) { // obj map[st
 	w.WriteHeader(code)
 	_, err := w.Write([]byte(jsonValue))
 	if err != nil {
-		log.Error().Err(err).Msg("couldn't write error response")
+		logger.Error("couldn't write error response", zap.Error(err))
 	}
 }
 
@@ -30,7 +30,7 @@ func writeFile(w http.ResponseWriter, code int, contentType string, file []byte)
 	w.WriteHeader(code)
 	_, err := w.Write(file)
 	if err != nil {
-		log.Error().Err(err).Msg("couldn't write error response")
+		logger.Error("couldn't write error response", zap.Error(err))
 	}
 }
 

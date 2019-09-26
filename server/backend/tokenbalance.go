@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/gochain-io/explorer/server/utils"
+	"go.uber.org/zap"
 
 	"github.com/gochain-io/gochain/v3"
 	"github.com/gochain-io/gochain/v3/accounts/abi"
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gochain-io/gochain/v3/core/types"
 	"github.com/gochain-io/gochain/v3/goclient"
-	"github.com/rs/zerolog/log"
 )
 
 type TokenDetails struct {
@@ -39,6 +39,7 @@ type TokenBalance struct {
 	url                string
 	conn               *goclient.Client
 	initialBlockNumber int64
+	Lgr                *zap.Logger
 }
 
 type TransferEvent struct {
@@ -49,27 +50,28 @@ type TransferEvent struct {
 	TransactionHash string
 }
 
-func NewTokenBalanceClient(rpcUrl string) *TokenBalance {
+func NewTokenBalanceClient(rpcUrl string, lgr *zap.Logger) *TokenBalance {
 	var err error
 
 	if rpcUrl == "" {
-		log.Fatal().Msg("geth endpoint has not been set")
+		lgr.Fatal("geth endpoint has not been set")
 	}
 	ethConn, err := goclient.Dial(rpcUrl)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
+		lgr.Fatal("NewTokenBalanceClient", zap.Error(err))
 	}
 	block, err := ethConn.BlockByNumber(context.TODO(), nil)
 	if block == nil {
-		log.Fatal().Err(err).Msg("NewTokenBalanceClient")
+		lgr.Fatal("NewTokenBalanceClient", zap.Error(err))
 	}
-	log.Info().Str("url", rpcUrl).Msg("Connected to Geth at")
+	lgr.Info("Connected to Geth at", zap.String("url", rpcUrl))
 
 	return &TokenBalance{
 		url:                rpcUrl,
 		conn:               ethConn,
 		initialBlockNumber: block.Number().Int64(),
+		Lgr:                lgr,
 	}
 }
 
@@ -82,7 +84,7 @@ func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenH
 		TokenHolder: common.HexToAddress(wallet),
 		Balance:     big.NewInt(0),
 	}
-	err := th.queryTokenHolderDetails(rpc.conn)
+	err := th.queryTokenHolderDetails(rpc.conn, rpc.Lgr)
 	return th, err
 }
 
@@ -95,33 +97,32 @@ func (rpc *TokenBalance) GetTokenDetails(contractAddress string, byteCode string
 		Decimals:    0,
 		TotalSupply: big.NewInt(0),
 	}
-	err := tb.queryTokenDetails(rpc.conn, byteCode)
+	err := tb.queryTokenDetails(rpc.conn, byteCode, rpc.Lgr)
 	return tb, err
 }
 
-func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client) error {
+func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client, lgr *zap.Logger) error {
 	var err error
-
 	token, err := NewTokenCaller(th.Contract, conn)
 	if err != nil {
-		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
+		lgr.Info("Failed to instantiate a Token contract", zap.Error(err))
 		return err
 	}
 	th.Balance, err = token.BalanceOf(nil, th.TokenHolder)
 	if err != nil {
-		log.Info().Err(err).Str("Wallet", th.Contract.String()).Msg("Failed to get balance from contract")
+		lgr.Info("Failed to get balance from contract", zap.Error(err), zap.String("Wallet", th.Contract.String()))
 		th.Balance = big.NewInt(0)
 	}
 	return err
 }
 
-func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string) error {
+func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string, lgr *zap.Logger) error {
 	var err error
 
 	token, err := NewTokenCaller(tb.Contract, conn)
 
 	if err != nil {
-		log.Info().Err(err).Msg("Failed to instantiate a Token contract")
+		lgr.Info("Failed to instantiate a Token contract", zap.Error(err))
 		return err
 	}
 
@@ -132,14 +133,14 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 			case utils.Decimals:
 				decimals, err := token.Decimals(nil)
 				if err != nil {
-					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get decimals from contract")
+					lgr.Info("Failed to get decimals from contract", zap.Error(err), zap.String("Contract", tb.Contract.String()))
 					continue
 				}
 				tb.Decimals = decimals.Int64()
 			case utils.TotalSupply:
 				totalSupply, err := token.TotalSupply(nil)
 				if err != nil {
-					log.Info().Err(err).Str("Contract", tb.Contract.String()).Msg("Failed to get total supply")
+					lgr.Info("Failed to get total supply", zap.Error(err), zap.String("Contract", tb.Contract.String()))
 					tb.TotalSupply = big.NewInt(0)
 					continue
 				}
@@ -147,13 +148,13 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 			case utils.Symbol:
 				tb.Symbol, err = token.Symbol(nil)
 				if err != nil {
-					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to get symbol from contract")
+					lgr.Info("Failed to get symbol from contract", zap.Error(err), zap.String("Wallet", tb.Contract.String()))
 					tb.Symbol = "MISSING"
 				}
 			case utils.Name:
 				tb.Name, err = token.Name(nil)
 				if err != nil {
-					log.Info().Err(err).Str("Wallet", tb.Contract.String()).Msg("Failed to retrieve token name from contract")
+					lgr.Info("Failed to retrieve token name from contract", zap.Error(err), zap.String("Wallet", tb.Contract.String()))
 					tb.Name = "MISSING"
 				}
 			}
@@ -168,7 +169,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 	latestBlockNumber := rpc.initialBlockNumber
 	block, err := rpc.conn.BlockByNumber(context.Background(), nil)
 	if block == nil {
-		log.Error().Err(err).Msg("getInternalTransactions")
+		rpc.Lgr.Error("getInternalTransactions", zap.Error(err))
 	} else {
 		latestBlockNumber = block.Number().Int64()
 	}
@@ -179,7 +180,7 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 	var transferEvents []TransferEvent
 	for i := 0; i <= numOfCycles; i++ {
 		fromBlock := contractBlock + int64(i)*numOfBlocksPerRequest
-		log.Debug().Int64("From block", fromBlock).Int64("To Block", fromBlock+numOfBlocksPerRequest).Int64("Block from request", contractBlock).Int64("Latest block", latestBlockNumber).Int("Number of the events", len(transferEvents)).Msg("list of transactions")
+		rpc.Lgr.Debug("list of transactions", zap.Int64("From block", fromBlock), zap.Int64("To Block", fromBlock+numOfBlocksPerRequest), zap.Int64("Block from request", contractBlock), zap.Int64("Latest block", latestBlockNumber), zap.Int("Number of the events", len(transferEvents)))
 		query := gochain.FilterQuery{
 			FromBlock: big.NewInt(fromBlock),
 			ToBlock:   big.NewInt(fromBlock + numOfBlocksPerRequest),
@@ -194,30 +195,30 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 			return err
 		})
 		if err != nil {
-			log.Info().Err(err)
+			rpc.Lgr.Info("getInternalTransactions", zap.Error(err))
 		}
 		tokenAbi, err := abi.JSON(strings.NewReader(string(TokenABI)))
 
 		if err != nil {
-			log.Info().Err(err)
+			rpc.Lgr.Info("getInternalTransactions", zap.Error(err))
 		}
 		for _, event := range events {
-			logger := log.With().Uint64("Block", event.BlockNumber).Uint("Log Index", event.Index).Str("Contract", address).Logger()
+
 			var transferEvent TransferEvent
 			err = tokenAbi.Unpack(&transferEvent, "Transfer", event.Data)
 			if err != nil {
-				logger.Warn().Err(err).Msg("Failed to unpack event")
+				rpc.Lgr.Warn("Failed to unpack event", zap.Error(err), zap.Uint64("Block", event.BlockNumber), zap.Uint("Log Index", event.Index), zap.String("Contract", address))
 				continue
 			}
 			if l := len(event.Topics); l < 3 {
-				logger.Warn().Msg("Failed to parse event - too few topics. Expected 3.")
+				rpc.Lgr.Warn("Failed to parse event - too few topics. Expected 3.", zap.Error(err), zap.Uint64("Block", event.BlockNumber), zap.Uint("Log Index", event.Index), zap.String("Contract", address))
 				continue
 			}
 			transferEvent.From = common.BytesToAddress(event.Topics[1].Bytes())
 			transferEvent.To = common.BytesToAddress(event.Topics[2].Bytes())
 			transferEvent.BlockNumber = int64(event.BlockNumber)
 			transferEvent.TransactionHash = event.TxHash.String()
-			logger.Debug().Str("From", transferEvent.From.Hex()).Str("To", transferEvent.To.Hex()).Str("Value", transferEvent.Value.String()).Msg("event")
+			rpc.Lgr.Debug("event", zap.Uint64("Block", event.BlockNumber), zap.Uint("Log Index", event.Index), zap.String("Contract", address), zap.String("From", transferEvent.From.Hex()), zap.String("To", transferEvent.To.Hex()), zap.String("Value", transferEvent.Value.String()))
 			transferEvents = append(transferEvents, transferEvent)
 		}
 	}

@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blendle/zapdriver"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
+	"go.uber.org/zap"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gorilla/schema"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
@@ -31,6 +31,7 @@ var wwwRoot string
 var wei = big.NewInt(1000000000000000000)
 var reCaptchaSecret string
 var rpcUrl string
+var logger *zap.Logger
 
 const defaultFetchLimit = 500
 
@@ -102,7 +103,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 	bnumS := chi.URLParam(r, "num")
 	bnum, err := strconv.Atoi(bnumS)
 	if err != nil {
-		log.Error().Err(err).Str("bnumS", bnumS).Msg("Error converting bnumS to num")
+		logger.Error("Error converting bnumS to num", zap.Error(err), zap.String("bnumS", bnumS))
 		return 0, err
 	}
 	return bnum, nil
@@ -112,7 +113,6 @@ func main() {
 	var mongoUrl string
 	var dbName string
 	var signersFile string
-	var loglevel string
 
 	app := cli.NewApp()
 	app.Usage = "Server serves the explorer web interface, backed by a mongo database."
@@ -147,13 +147,6 @@ func main() {
 			Destination: &signersFile,
 		},
 		cli.StringFlag{
-			Name:        "log, l",
-			Value:       "info",
-			Usage:       "loglevel debug/info/warn/fatal, default is Info",
-			EnvVar:      "LOG_LEVEL",
-			Destination: &loglevel,
-		},
-		cli.StringFlag{
 			Name:        "dist, d",
 			Value:       "../dist/explorer/",
 			Usage:       "folder that should be served",
@@ -174,8 +167,14 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		level, _ := zerolog.ParseLevel(loglevel)
-		zerolog.SetGlobalLevel(level)
+		var err error
+		cfg := zapdriver.NewProductionConfig()
+		cfg.EncoderConfig.TimeKey = "timestamp"
+		logger, err = cfg.Build()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+			os.Exit(1)
+		}
 
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
@@ -199,7 +198,7 @@ func main() {
 			}
 		}
 
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers)
+		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
@@ -268,13 +267,12 @@ func main() {
 				r.Get("/contracts", getContractsList)
 			})
 		})
+		return http.ListenAndServe(":8080", r)
 
-		err := http.ListenAndServe(":8080", r)
-		return err
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Run")
+		logger.Fatal("Run", zap.Error(err))
 	}
 
 }
@@ -350,7 +348,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
-	log.Info().Str("address", addressHash).Msg("looking up address")
+	logger.Info("looking up address", zap.String("address", addressHash))
 	address, err := backendInstance.GetAddressByHash(addressHash)
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, err)
@@ -361,7 +359,7 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 
 func getTransaction(w http.ResponseWriter, r *http.Request) {
 	transactionHash := chi.URLParam(r, "hash")
-	log.Info().Str("transaction", transactionHash).Msg("looking up transaction")
+	logger.Info("looking up transaction", zap.String("transaction", transactionHash))
 	transaction := backendInstance.GetTransactionByHash(transactionHash)
 	writeJSON(w, http.StatusOK, transaction)
 }
@@ -388,7 +386,7 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 		transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime, inputDataEmpty)
 		writeJSON(w, http.StatusOK, transactions)
 	} else {
-		log.Info().Err(err).Msg("getAddressTransactions")
+		logger.Info("getAddressTransactions", zap.Error(err))
 		errorResponse(w, http.StatusBadRequest, err)
 	}
 }
@@ -541,10 +539,10 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 	var block *models.Block
 	if err != nil {
 		hash := chi.URLParam(r, "num")
-		log.Info().Str("hash", hash).Msg("failed to parse number of the block so assuming it's hash")
+		logger.Info("failed to parse number of the block so assuming it's hash", zap.String("hash", hash))
 		block = backendInstance.GetBlockByHash(hash)
 	} else {
-		log.Info().Int("bnum", bnum).Msg("looking up block")
+		logger.Info("looking up block", zap.Int("bnum", bnum))
 		block = backendInstance.GetBlockByNumber(int64(bnum))
 	}
 	writeJSON(w, http.StatusOK, block)
@@ -563,7 +561,7 @@ func checkBlockExist(w http.ResponseWriter, r *http.Request) {
 func pingDB(w http.ResponseWriter, r *http.Request) {
 	err := backendInstance.PingDB()
 	if err != nil {
-		log.Error().Err(err).Msg("Cannot ping DB")
+		logger.Error("Cannot ping DB", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		w.WriteHeader(http.StatusOK)

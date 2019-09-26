@@ -1,0 +1,11 @@
+.tab {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  &__desc {
+    margin-left: 1em;
+    img {
+      height: 0.85rem;
+    }
+  }
+}
