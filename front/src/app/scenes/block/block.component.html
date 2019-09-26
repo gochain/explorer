@@ -13,7 +13,12 @@
           <dt>Parent block hash</dt>
           <dd><a routerLink="/block/{{block.parent_hash }}">{{block.parent_hash }}</a></dd>
           <dt>Signer</dt>
-          <dd><a routerLink="/addr/{{block.miner}}">{{block.miner}}</a></dd>
+          <dd>
+            <a routerLink="/addr/{{block.miner}}">{{block.miner}}</a>
+            <ng-container *ngIf="block.signerDetails">
+              (<a [href]="block.signerDetails.url" target="_blank">{{block.signerDetails.name}}</a>)
+            </ng-container>
+          </dd>
           <dt>Gas Limit</dt>
           <dd>{{block.gas_limit | bigNumber}}</dd>
           <dt>Gas Used</dt>
@@ -26,9 +31,15 @@
           <dd>{{block.difficulty}}</dd>
           <dt>Extra Data</dt>
           <dd>{{block.extra.vanity}}</dd>
-          <ng-container *ngIf="block.extra.has_vote; else empty">
+          <ng-container *ngIf="block.extra.has_vote;">
             <dt>Vote</dt>
-            <dd>{{block.extra.auth ? "Add" : "Remove"}} {{block.extra.is_voter_election ? "voter" : "signer"}} {{block.extra.candidate}}</dd>
+            <dd>
+              {{block.extra.auth ? "Add" : "Remove"}} {{block.extra.is_voter_election ? "voter" : "signer"}}
+              <a routerLink="/addr/{{block.extra.candidate}}">{{block.extra.candidate}}</a>
+              <ng-container *ngIf="block.extra.signerDetails">
+                (<a [href]="block.extra.signerDetails.url" target="_blank">{{block.extra.signerDetails.name}}</a>)
+              </ng-container>
+            </dd>
           </ng-container>
         </dl>
       </div>

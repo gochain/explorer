@@ -1,7 +1,7 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
-import {filter, flatMap, map, tap} from 'rxjs/operators';
+import {BehaviorSubject, forkJoin, Observable} from 'rxjs';
+import {filter, flatMap, map, take, tap} from 'rxjs/operators';
 import {Resolve} from '@angular/router';
 /*SERVICES*/
 import {ApiService} from './api.service';
@@ -23,6 +23,8 @@ import {objIsEmpty} from '../utils/functions';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
+  contractsCache = {};
+
   private _rpcProvider$: BehaviorSubject<string>;
 
   get rpcProvider$(): Observable<string> {
@@ -32,18 +34,35 @@ export class CommonService implements Resolve<string> {
         tap(value => this._rpcProvider$.next(value)),
       );
     }
-    return this._rpcProvider$;
+    return this._rpcProvider$.pipe(
+      filter(value => !!value),
+      take(1),
+    );
   }
 
-  contractsCache = {};
+  private _signers$: BehaviorSubject<any>;
 
-  signers$: BehaviorSubject<any>;
+  get signers$(): Observable<SignerNode> {
+    if (!this._signers$) {
+      this._signers$ = new BehaviorSubject<any>(null);
+      this._apiService.get('/signers/list').subscribe(value => {
+        this._signers$.next(value);
+      });
+    }
+    return this._signers$.pipe(
+      filter(value => !!value),
+      take(1),
+    );
+  }
 
   constructor(private _apiService: ApiService) {
   }
 
-  resolve(): Observable<string> | Promise<string> | string {
-    return this.rpcProvider$.pipe(filter(value => !value));
+  /**
+   * getting RpcProvider
+   */
+  resolve(): Observable<string> {
+    return this.rpcProvider$;
   }
 
   getRpcProvider(): Observable<string> {
@@ -63,7 +82,18 @@ export class CommonService implements Resolve<string> {
   }
 
   getBlock(blockNum: number | string, data?: any): Observable<Block> {
-    return this._apiService.get('/blocks/' + blockNum, data);
+    return forkJoin([
+      this.signers$,
+      this._apiService.get('/blocks/' + blockNum, data),
+    ]).pipe(
+      map(([signers, block]: [SignerNode, Block]) => {
+        block.signerDetails = signers[block.miner.toLowerCase()] || null;
+        if (block.extra && block.extra.candidate) {
+          block.extra.signerDetails = signers[block.extra.candidate.toLowerCase()] || null;
+        }
+        return block;
+      }),
+    );
   }
 
   checkBlockExist(blockHash: string) {
@@ -84,7 +114,15 @@ export class CommonService implements Resolve<string> {
   }
 
   getAddress(addrHash: string): Observable<Address> {
-    return this._apiService.get('/address/' + addrHash);
+    return forkJoin([
+      this.signers$,
+      this._apiService.get('/address/' + addrHash),
+    ]).pipe(
+      map(([signers, address]: [SignerNode, Address]) => {
+        address.signerDetails = signers[address.address.toLowerCase()] || null;
+        return address;
+      })
+    );
   }
 
   getAddressTransactions(addrHash: string, data?: any): Observable<Transaction[]> {
@@ -122,7 +160,7 @@ export class CommonService implements Resolve<string> {
   }
 
   getSignerStats(): Observable<SignerStat[]> {
-    return this.getSignerList().pipe(
+    return this.signers$.pipe(
       flatMap((signers: SignerNode) => {
         return this._apiService.get('/signers/stats').pipe(
           tap((stats: SignerStat[]) => {
@@ -138,15 +176,5 @@ export class CommonService implements Resolve<string> {
         );
       }),
     );
-  }
-
-  getSignerList(): Observable<SignerNode> {
-    if (!this.signers$) {
-      this.signers$ = new BehaviorSubject<any>(null);
-      this._apiService.get('/signers/list').subscribe(value => {
-        this.signers$.next(value);
-      });
-    }
-    return this.signers$.pipe(filter(value => !!value));
   }
 }
