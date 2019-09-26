@@ -1,4 +1,5 @@
 import {InterfaceName} from '../utils/enums';
+import {SignerDetails} from './signer-node';
 
 export class Address {
   address: string;
@@ -18,4 +19,5 @@ export class Address {
   number_of_internal_transactions: number;
   number_of_token_transactions: number;
   updated_at: Date;
+  signerDetails?: SignerDetails;
 }

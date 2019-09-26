@@ -7,7 +7,12 @@
           <div class="col-lg-10 col-md-9">
             <dl>
               <dt>Address hash:</dt>
-              <dd>{{addr.address}}</dd>
+              <dd>
+                {{addr.address}}
+                <ng-container *ngIf="addr.signerDetails">
+                  (<a [href]="addr.signerDetails.url" target="_blank">{{addr.signerDetails.name}}</a>)
+                </ng-container>
+              </dd>
               <dt>Balance:</dt>
               <dd>{{addr.balance_wei | weiToGO | bigNumber}}</dd>
               <ng-container *ngIf="addr.contract">
