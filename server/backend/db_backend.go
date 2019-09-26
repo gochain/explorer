@@ -662,7 +662,7 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 		Limit(filter.Limit).
 		All(&addresses)
 	if err != nil {
-		self.Lgr.Debug("GetContracts")
+		self.Lgr.Error("Failed to query contracts", zap.Error(err))
 	}
 	return addresses
 }
