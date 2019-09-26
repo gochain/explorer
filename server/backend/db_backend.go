@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strconv"
 	"time"
 
 	"go.uber.org/zap"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -20,6 +21,9 @@ import (
 )
 
 var wei = big.NewInt(1000000000000000000)
+
+const defaultFetchLimit = 100
+const defaultSkip = 0
 
 type MongoBackend struct {
 	host         string
@@ -177,6 +181,11 @@ func (self *MongoBackend) createIndexes() {
 		panic(err)
 	}
 	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
+	if err != nil {
+		panic(err)
+	}
+
+	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"contract"}, Background: true})
 	if err != nil {
 		panic(err)
 	}
@@ -461,7 +470,7 @@ func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock
 	return blocks
 }
 
-func (self *MongoBackend) getActiveAdresses(fromDate time.Time) []*models.ActiveAddress {
+func (self *MongoBackend) getActiveAddresses(fromDate time.Time) []*models.ActiveAddress {
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)
 	if err != nil {
@@ -620,6 +629,46 @@ func (self *MongoBackend) updateContract(contract *models.Contract) error {
 		return fmt.Errorf("failed to update contract: %v", err)
 	}
 	return nil
+}
+
+func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models.Address {
+	var addresses []*models.Address
+	var sortQuery string
+	findQuery := bson.M{"contract": true}
+	if filter.TokenName != "" {
+		findQuery["token_name"] = bson.RegEx{regexp.QuoteMeta(filter.TokenName), "i"}
+	}
+	if filter.TokenSymbol != "" {
+		findQuery["token_symbol"] = bson.RegEx{regexp.QuoteMeta(filter.TokenSymbol), "i"}
+	}
+	if filter.ErcType != "" {
+		findQuery["erc_types"] = filter.ErcType
+	}
+	if filter.SortBy != "" {
+		sortQuery = filter.SortBy
+		if filter.Asc == false {
+			sortQuery = "-" + sortQuery
+		}
+	} else {
+		sortQuery = "-number_of_token_holders"
+	}
+	if filter.Skip < 0 {
+		filter.Skip = defaultSkip
+	}
+	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
+		filter.Limit = defaultFetchLimit
+	}
+	err := self.mongo.
+		C("Addresses").
+		Find(findQuery).
+		Sort(sortQuery).
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&addresses)
+	if err != nil {
+		self.Lgr.Error("Failed to query contracts", zap.Error(err))
+	}
+	return addresses
 }
 
 func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) []*models.Address {

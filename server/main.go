@@ -21,7 +21,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/gochain/v3/common"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/gorilla/schema"
+	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
@@ -89,6 +90,10 @@ func parseSkipLimit(r *http.Request) (int, int) {
 		limit = defaultFetchLimit
 	}
 	return skip, limit
+}
+
+func parseGetParam(r *http.Request, result interface{}) error {
+	return schema.NewDecoder().Decode(result, r.URL.Query())
 }
 
 func parseBlockNumber(r *http.Request) (int, error) {
@@ -258,6 +263,8 @@ func main() {
 					r.Head("/{hash}", checkTransactionExist)
 					r.Get("/{hash}", getTransaction)
 				})
+
+				r.Get("/contracts", getContractsList)
 			})
 		})
 		return http.ListenAndServe(":8080", r)
@@ -559,5 +566,14 @@ func pingDB(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
+}
 
+func getContractsList(w http.ResponseWriter, r *http.Request) {
+	filter := new(models.ContractsFilter)
+	if err := parseGetParam(r, filter); err != nil {
+		logger.Info("failed to parse get params")
+		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
+	}
+	addresses := backendInstance.GetContracts(filter)
+	writeJSON(w, http.StatusOK, addresses)
 }

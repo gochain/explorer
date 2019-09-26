@@ -149,6 +149,12 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/richlist', data);
   }
 
+  getContractsList(data?: any): Observable<Address[]> {
+    return this._apiService.get('/contracts', data).pipe(
+      map(v => v || []),
+    );
+  }
+
   getStats(): Observable<Stats> {
     return this._apiService.get('/stats');
   }

@@ -1,0 +1,226 @@
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title"><img src="../../../assets/icons/contract.svg"> Contracts</div>
+      <div class="my-4 mb-5">
+        <form [formGroup]="filter" (submit)="onFilterSubmit()">
+          <div class="form-row">
+            <div class="col-lg-3 col-md-6 mb-3">
+              <label for="token-name">Name</label>
+              <input
+                  type="text"
+                  class="form-control
+                  form-control-sm"
+                  id="token-name"
+                  placeholder="Token name"
+                  formControlName="token_name"
+              >
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <label for="token-symbol">Symbol</label>
+              <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  id="token-symbol"
+                  placeholder="Token symbol"
+                  formControlName="token_symbol"
+              >
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <label for="token-type">Type</label>
+              <select
+                  class="form-control form-control-sm"
+                  id="token-type"
+                  formControlName="erc_type"
+              >
+                <option value="">All</option>
+                <option
+                    *ngFor="let type of tokenTypeOptions;"
+                    value="{{type.value}}"
+                >
+                  {{type.desc}}
+                </option>
+              </select>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+              <label for="sort">Sort By</label>
+              <select
+                  class="form-control form-control-sm"
+                  id="sort"
+                  formControlName="sortby"
+              >
+                <option value="">Default</option>
+                <option
+                    *ngFor="let type of sortFieldOptions;"
+                    value="{{type.value}}"
+                >
+                  {{type.desc}}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="text-right">
+            <button
+                class="btn btn-sm btn-secondary"
+                type="reset"
+                (click)="contractsQueryParams.resetFilter()"
+            >
+              Reset
+            </button>
+            <button
+                class="btn btn-sm btn-primary ml-2"
+                type="submit"
+            >
+              Search
+            </button>
+          </div>
+        </form>
+      </div>
+      <hr class="mb-5">
+      <ng-container *appViewportSize="['small', 'medium']">
+        <div class="data-list">
+          <div
+              class="data-list-item"
+              *ngFor="let address of addresses; let index = index;"
+          >
+            <div class="data-list-row">
+              <div class="data-list-term">
+                #:
+              </div>
+              <div class="data-list-desc">
+                {{index + 1}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Symbol
+              </div>
+              <div class="data-list-desc">
+                {{address.token_symbol}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Name:
+              </div>
+              <div class="data-list-desc">
+                {{address.token_name}}
+              </div>
+            </div>
+            <div class="data-list-row" *ngIf="address.erc_types">
+              <div class="data-list-term">
+                Type:
+              </div>
+              <div class="data-list-desc">
+                <span
+                    class="badge badge-primary ml-1"
+                    *ngFor="let type of address.erc_types"
+                >
+                  {{tokenTypes[type]}}
+                </span>
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Internal-txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_internal_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Holders:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_token_holders}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Token-txs:
+              </div>
+              <div class="data-list-desc">
+                {{address.number_of_token_transactions}}
+              </div>
+            </div>
+            <div class="data-list-row">
+              <div class="data-list-term">
+                Address:
+              </div>
+              <div class="data-list-desc text-monospace">
+                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *appViewportSize="['large']">
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered">
+            <thead class="thead-dark">
+            <tr>
+              <th class="text-shrink">#</th>
+              <th class="text-shrink w-10">Symbol</th>
+              <th class="">Name</th>
+              <th class="text-shrink">Txs</th>
+              <th class="text-shrink text-nowrap">Internal-txs</th>
+              <th class="text-shrink">Holders</th>
+              <th class="text-shrink text-nowrap">Token-txs</th>
+              <th class="w-15">Address</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let address of addresses; let index = index;">
+              <td>{{index + 1}}</td>
+              <td>{{address.token_symbol}}</td>
+              <td>
+                {{address.token_name}}
+                <div *ngIf="address.erc_types">
+                  <span
+                      class="badge badge-primary mb-1 mr-1"
+                      *ngFor="let type of address.erc_types"
+                  >
+                    {{tokenTypes[type]}}
+                  </span>
+                </div>
+              </td>
+              <td>{{address.number_of_transactions}}</td>
+              <td>{{address.number_of_internal_transactions}}</td>
+              <td>{{address.number_of_token_holders}}</td>
+              <td>{{address.number_of_token_transactions}}</td>
+              <td class="text-truncate text-monospace ws-p">
+                <a routerLink="/addr/{{address.address}}">{{address.address}}</a>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+      <div class="text-center mt-4">
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            [disabled]="isLoading"
+            (click)="contractsQueryParams.next()"
+            *ngIf="!isMoreDisabled"
+        >
+          <ng-container *ngIf="!isLoading; else loading;">
+            More
+          </ng-container>
+          <ng-template #loading>
+            Loading ...
+          </ng-template>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
