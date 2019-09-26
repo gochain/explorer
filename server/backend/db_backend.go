@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -645,7 +645,7 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 		Limit(filter.Limit).
 		All(&addresses)
 	if err != nil {
-		log.Debug().Err(err).Msg("GetContracts")
+		self.Lgr.Debug("GetContracts")
 	}
 	return addresses
 }
