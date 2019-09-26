@@ -421,7 +421,10 @@ func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
-		self.Lgr.Debug("GetBlockByNumber", zap.Int64("Block", blockNumber), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		self.Lgr.Error("Failed to get block by number", zap.Int64("block", blockNumber), zap.Error(err))
 		return nil
 	}
 	return &c
@@ -431,7 +434,10 @@ func (self *MongoBackend) getBlockByHash(blockHash string) *models.Block {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"hash": blockHash}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
-		self.Lgr.Debug("GetBlockByNumber", zap.String("Block", blockHash), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		self.Lgr.Error("Failed to get block by hash", zap.String("block", blockHash), zap.Error(err))
 		return nil
 	}
 	return &c
@@ -441,7 +447,10 @@ func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, 
 	var transactions []*models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Skip(skip).Limit(limit).All(&transactions)
 	if err != nil {
-		self.Lgr.Debug("getBlockTransactions", zap.Int64("block", blockNumber), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		self.Lgr.Error("Failed to get txs for block", zap.Int64("block", blockNumber), zap.Error(err))
 	}
 	return transactions
 }
@@ -450,7 +459,7 @@ func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock
 	var blocks []*models.LightBlock
 	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).Skip(skip).Limit(limit).All(&blocks)
 	if err != nil {
-		self.Lgr.Debug("GetLatestsBlocks", zap.Int("Block", limit), zap.Error(err))
+		self.Lgr.Error("Failed to get latest blocks", zap.Int("skip", skip), zap.Int("limit", limit), zap.Error(err))
 		return nil
 	}
 	return blocks
@@ -460,7 +469,7 @@ func (self *MongoBackend) getActiveAddresses(fromDate time.Time) []*models.Activ
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)
 	if err != nil {
-		self.Lgr.Debug("GetActiveAdresses", zap.Error(err))
+		self.Lgr.Error("Failed to get active addresses", zap.Time("from", fromDate), zap.Error(err))
 	}
 	return addresses
 }
@@ -469,7 +478,10 @@ func (self *MongoBackend) isContract(address string) bool {
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).Select(bson.M{"contract": 1}).One(&c)
 	if err != nil {
-		self.Lgr.Debug("isContract", zap.String("Address", address), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return false
+		}
+		self.Lgr.Error("Failed to check if contract", zap.String("address", address), zap.Error(err))
 		return false
 	}
 	return c.Contract
@@ -479,7 +491,7 @@ func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).One(&c)
 	if err != nil {
-		self.Lgr.Debug("GetAddressByHash", zap.String("Address", address), zap.Error(err))
+		self.Lgr.Error("Failed to get address", zap.String("address", address), zap.Error(err))
 		return nil
 	}
 	//lazy calculation for number of transactions
@@ -492,22 +504,25 @@ func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 }
 
 func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.Transaction {
+	lgr := self.Lgr.With(zap.String("tx", transactionHash))
 	var c models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
 	if err != nil {
-		self.Lgr.Debug("GetTransactionByHash", zap.String("Transaction", transactionHash), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		lgr.Error("Failed to get tx", zap.Error(err))
 		return nil
 	}
 	// lazy calculation for receipt
 	if !c.ReceiptReceived {
 		receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
 		if err != nil {
-			self.Lgr.Warn("TransactionReceipt", zap.Error(err), zap.String("TX hash", common.HexToHash(transactionHash).String()))
+			lgr.Warn("Failed to get transaction receipt", zap.Error(err))
 		} else {
-			gasPrice := new(big.Int)
-			_, err := fmt.Sscan(c.GasPrice, gasPrice)
-			if err != nil {
-				self.Lgr.Error("getTransactionByHash", zap.String("Cannot convert to bigint", c.GasPrice), zap.Error(err))
+			gasPrice, ok := new(big.Int).SetString(c.GasPrice, 0)
+			if !ok {
+				lgr.Error("Failed to parse gas price", zap.String("gasPrice", c.GasPrice))
 			}
 			c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
 			c.ContractAddress = receipt.ContractAddress.String()
@@ -518,13 +533,12 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 			c.ReceiptReceived = true
 			jsonValue, err := json.Marshal(receipt.Logs)
 			if err != nil {
-				self.Lgr.Error("getTransactionByHash", zap.Error(err))
+				lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
 			}
 			c.Logs = string(jsonValue)
-			self.Lgr.Info("GetTransactionByHash", zap.String("Transaction", transactionHash), zap.Uint64("Got new gas used", receipt.GasUsed), zap.Uint64("Old gas", c.GasLimit))
 			_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": c.TxHash}, c)
 			if err != nil {
-				self.Lgr.Error("getTransactionByHash", zap.Error(err))
+				lgr.Error("Failed to upsert tx", zap.Error(err))
 			}
 		}
 	}
@@ -540,7 +554,8 @@ func (self *MongoBackend) getTransactionList(address string, skip, limit int, fr
 		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
 	}
 	if err != nil {
-		self.Lgr.Debug("getAddressTransactions", zap.String("address", address), zap.Error(err))
+		self.Lgr.Error("Failed to get transaction list", zap.String("address", address),
+			zap.Time("from", fromTime), zap.Time("to", toTime), zap.Error(err))
 	}
 	return transactions
 }
@@ -549,7 +564,7 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limi
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
-		self.Lgr.Debug("getTokenHoldersList", zap.String("contractAddress", contractAddress), zap.Error(err))
+		self.Lgr.Error("Failed to get token holders list", zap.String("address", contractAddress), zap.Error(err))
 	}
 	return tokenHoldersList
 }
@@ -557,7 +572,7 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit in
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").Find(bson.M{"token_holder_address": ownerAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
-		self.Lgr.Debug("getOwnedTokensList", zap.String("token_holder_address", ownerAddress), zap.Error(err))
+		self.Lgr.Error("Failed to get owned tokens list", zap.String("address", ownerAddress), zap.Error(err))
 	}
 	return tokenHoldersList
 }
@@ -572,7 +587,7 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, to
 	}
 	err := self.mongo.C("InternalTransactions").Find(query).Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
 	if err != nil {
-		self.Lgr.Debug("getInternalTransactionsList", zap.String("contractAddress", contractAddress), zap.Error(err))
+		self.Lgr.Error("Failed to get internal txs list", zap.String("address", contractAddress), zap.Error(err))
 	}
 	return internalTransactionsList
 }
@@ -581,7 +596,10 @@ func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
 	var contract *models.Contract
 	err := self.mongo.C("Contracts").Find(bson.M{"address": contractAddress}).One(&contract)
 	if err != nil {
-		self.Lgr.Debug("getContract", zap.String("contractAddress", contractAddress), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		self.Lgr.Error("Failed to get contract", zap.String("contractAddress", contractAddress), zap.Error(err))
 	}
 	return contract
 }
@@ -590,7 +608,7 @@ func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
 	var transaction *models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
 	if err != nil {
-		self.Lgr.Debug("getContractBlock", zap.String("address", contractAddress), zap.Error(err))
+		self.Lgr.Error("Failed to get tx by contract address", zap.String("address", contractAddress), zap.Error(err))
 	}
 	if transaction != nil {
 		return transaction.BlockNumber
@@ -600,13 +618,12 @@ func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
 
 }
 
-func (self *MongoBackend) updateContract(contract *models.Contract) bool {
+func (self *MongoBackend) updateContract(contract *models.Contract) error {
 	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contract.Address}, contract)
 	if err != nil {
-		self.Lgr.Fatal("updateContract", zap.Error(err))
-		return false
+		return fmt.Errorf("failed to update contract: %v", err)
 	}
-	return true
+	return nil
 }
 
 func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models.Address {
@@ -654,22 +671,22 @@ func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string)
 	var addresses []*models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
-		self.Lgr.Debug("GetRichlist", zap.Error(err))
+		self.Lgr.Error("Failed to get rich list", zap.Error(err))
 	}
 	return addresses
 }
 func (self *MongoBackend) updateStats() {
 	numOfTotalTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
 	if err != nil {
-		self.Lgr.Debug("GetStats num of Total Transactions", zap.Error(err))
+		self.Lgr.Error("GetStats: Failed to get Total Transactions", zap.Error(err))
 	}
 	numOfLastWeekTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -7)}}).Count()
 	if err != nil {
-		self.Lgr.Debug("GetStats num of Last week Transactions", zap.Error(err))
+		self.Lgr.Error("GetStats: Failed to get Last week Transactions", zap.Error(err))
 	}
 	numOfLastDayTransactions, err := self.mongo.C("Transactions").Find(bson.M{"created_at": bson.M{"$gte": time.Now().AddDate(0, 0, -1)}}).Count()
 	if err != nil {
-		self.Lgr.Debug("GetStats num of 24H Transactions", zap.Error(err))
+		self.Lgr.Error("GetStats: Failed to get 24H Transactions", zap.Error(err))
 	}
 	stats := &models.Stats{
 		NumberOfTotalTransactions:    int64(numOfTotalTransactions),
@@ -679,19 +696,15 @@ func (self *MongoBackend) updateStats() {
 	}
 	err = self.mongo.C("Stats").Insert(stats)
 	if err != nil {
-		self.Lgr.Debug("Failes to update stats", zap.Error(err))
+		self.Lgr.Error("Failed to update stats", zap.Error(err), zap.Reflect("stats", stats))
 	}
 }
 func (self *MongoBackend) getStats() *models.Stats {
 	var s *models.Stats
 	err := self.mongo.C("Stats").Find(nil).Sort("-updated_at").One(&s)
 	if err != nil {
-		self.Lgr.Debug("Cannot get stats", zap.Error(err))
-		s = &models.Stats{
-			NumberOfTotalTransactions:    0,
-			NumberOfLastWeekTransactions: 0,
-			NumberOfLastDayTransactions:  0,
-		}
+		self.Lgr.Error("Failed to get stats", zap.Error(err))
+		s = new(models.Stats)
 	}
 	return s
 }
@@ -717,14 +730,16 @@ func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) mo
 	var resp models.BlockRange
 	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
 	if err != nil {
-		self.Lgr.Info("Cannot get block number", zap.Error(err))
+		self.Lgr.Error("Failed to get start block number", zap.Error(err))
+	} else {
+		resp.StartBlock = startBlock.Number
 	}
 	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
 	if err != nil {
-		self.Lgr.Info("Cannot get block number", zap.Error(err))
+		self.Lgr.Error("Failed to get end block number", zap.Error(err))
+	} else {
+		resp.EndBlock = endBlock.Number
 	}
-	resp.StartBlock = startBlock.Number
-	resp.EndBlock = endBlock.Number
 	return resp
 }
 

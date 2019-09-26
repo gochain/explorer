@@ -23,6 +23,7 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gorilla/schema"
 	"github.com/skip2/go-qrcode"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 )
 
@@ -195,7 +196,10 @@ func main() {
 			}
 		}
 
-		backendInstance = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
+		backendInstance, err = backend.NewBackend(mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
+		if err != nil {
+			return fmt.Errorf("failed to create backend: %v", err)
+		}
 		r := chi.NewRouter()
 		// A good base middleware stack
 		r.Use(middleware.RequestID)

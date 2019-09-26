@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -50,29 +51,16 @@ type TransferEvent struct {
 	TransactionHash string
 }
 
-func NewTokenBalanceClient(rpcUrl string, lgr *zap.Logger) *TokenBalance {
-	var err error
-
-	if rpcUrl == "" {
-		lgr.Fatal("geth endpoint has not been set")
-	}
-	ethConn, err := goclient.Dial(rpcUrl)
-
+func NewTokenBalanceClient(client *goclient.Client, lgr *zap.Logger) (*TokenBalance, error) {
+	num, err := client.LatestBlockNumber(context.TODO())
 	if err != nil {
-		lgr.Fatal("NewTokenBalanceClient", zap.Error(err))
+		return nil, fmt.Errorf("failed to get latest block number: %v", err)
 	}
-	block, err := ethConn.BlockByNumber(context.TODO(), nil)
-	if block == nil {
-		lgr.Fatal("NewTokenBalanceClient", zap.Error(err))
-	}
-	lgr.Info("Connected to Geth at", zap.String("url", rpcUrl))
-
 	return &TokenBalance{
-		url:                rpcUrl,
-		conn:               ethConn,
-		initialBlockNumber: block.Number().Int64(),
+		conn:               client,
+		initialBlockNumber: num.Int64(),
 		Lgr:                lgr,
-	}
+	}, nil
 }
 
 func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenHolderDetails, error) {
