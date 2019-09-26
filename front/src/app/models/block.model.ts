@@ -1,9 +1,12 @@
-export class Extra{
+import {SignerDetails} from './signer-node';
+
+export class Extra {
   auth: boolean;
-	vanity: string;
-	has_vote: boolean;
-	candidate: string;
-	is_voter_election: boolean;
+  vanity: string;
+  has_vote: boolean;
+  candidate: string;
+  is_voter_election: boolean;
+  signerDetails?: SignerDetails;
 }
 
 export class Block {
@@ -19,5 +22,6 @@ export class Block {
   extra_data: any;
   nonce: number;
   gas_limit: number;
-  extra:  Extra;
+  extra: Extra;
+  signerDetails?: SignerDetails;
 }
