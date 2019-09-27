@@ -61,8 +61,8 @@ func NewMongoClient(host, rpcUrl, dbName string, lgr *zap.Logger) *MongoBackend 
 func (self *MongoBackend) PingDB() error {
 	return self.mongoSession.Ping()
 }
-func (self *MongoBackend) parseTx(tx *types.Transaction, block *types.Block) *models.Transaction {
-	from, err := self.goClient.TransactionSender(context.Background(), tx, block.Header().Hash(), 0)
+func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) *models.Transaction {
+	from, err := self.goClient.TransactionSender(ctx, tx, block.Header().Hash(), 0)
 	if err != nil {
 		self.Lgr.Fatal("parseTx", zap.Error(err))
 	}
@@ -244,7 +244,7 @@ func (self *MongoBackend) createIndexes() {
 	}
 }
 
-func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
+func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) *models.Block {
 	self.Lgr.Debug("Importing block", zap.String("BlockNumber", block.Header().Number.String()), zap.String("Hash", block.Hash().Hex()), zap.String("ParentHash", block.ParentHash().Hex()))
 	b := self.parseBlock(block)
 	_, err := self.mongo.C("Blocks").Upsert(bson.M{"number": b.Number}, b)
@@ -256,7 +256,7 @@ func (self *MongoBackend) importBlock(block *types.Block) *models.Block {
 		self.Lgr.Fatal("importBlock", zap.Error(err))
 	}
 	for _, tx := range block.Transactions() {
-		self.importTx(tx, block)
+		self.importTx(ctx, tx, block)
 	}
 	self.UpdateActiveAddress(block.Coinbase().Hex())
 	return b
@@ -270,14 +270,14 @@ func (self *MongoBackend) UpdateActiveAddress(address string) {
 	}
 }
 
-func (self *MongoBackend) importTx(tx *types.Transaction, block *types.Block) {
+func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) {
 	self.Lgr.Debug("Importing", zap.String("tx", tx.Hash().Hex()))
-	transaction := self.parseTx(tx, block)
+	transaction := self.parseTx(ctx, tx, block)
 
 	toAddress := transaction.To
 	if transaction.To == "" {
 		self.Lgr.Info("Hash doesn't have an address", zap.String("hash", transaction.TxHash))
-		receipt, err := self.goClient.TransactionReceipt(context.Background(), tx.Hash())
+		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
 		if err == nil {
 			contractAddress := receipt.ContractAddress.String()
 			if contractAddress != "0x0000000000000000000000000000000000000000" {
@@ -508,7 +508,7 @@ func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 	return &c
 }
 
-func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.Transaction {
+func (self *MongoBackend) getTransactionByHash(ctx context.Context, transactionHash string) *models.Transaction {
 	lgr := self.Lgr.With(zap.String("tx", transactionHash))
 	var c models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
@@ -521,7 +521,7 @@ func (self *MongoBackend) getTransactionByHash(transactionHash string) *models.T
 	}
 	// lazy calculation for receipt
 	if !c.ReceiptReceived {
-		receipt, err := self.goClient.TransactionReceipt(context.Background(), common.HexToHash(transactionHash))
+		receipt, err := self.goClient.TransactionReceipt(ctx, common.HexToHash(transactionHash))
 		if err != nil {
 			lgr.Warn("Failed to get transaction receipt", zap.Error(err))
 		} else {
@@ -679,7 +679,7 @@ func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string)
 	}
 	return addresses
 }
-func (self *MongoBackend) updateStats() {
+func (self *MongoBackend) updateStats() (*models.Stats, error) {
 	numOfTotalTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
 	if err != nil {
 		self.Lgr.Error("GetStats: Failed to get Total Transactions", zap.Error(err))
@@ -698,10 +698,7 @@ func (self *MongoBackend) updateStats() {
 		NumberOfLastDayTransactions:  int64(numOfLastDayTransactions),
 		UpdatedAt:                    time.Now(),
 	}
-	err = self.mongo.C("Stats").Insert(stats)
-	if err != nil {
-		self.Lgr.Error("Failed to update stats", zap.Error(err), zap.Reflect("stats", stats))
-	}
+	return stats, self.mongo.C("Stats").Insert(stats)
 }
 func (self *MongoBackend) getStats() *models.Stats {
 	var s *models.Stats

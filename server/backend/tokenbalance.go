@@ -51,8 +51,8 @@ type TransferEvent struct {
 	TransactionHash string
 }
 
-func NewTokenBalanceClient(client *goclient.Client, lgr *zap.Logger) (*TokenBalance, error) {
-	num, err := client.LatestBlockNumber(context.TODO())
+func NewTokenBalanceClient(ctx context.Context, client *goclient.Client, lgr *zap.Logger) (*TokenBalance, error) {
+	num, err := client.LatestBlockNumber(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest block number: %v", err)
 	}
@@ -152,10 +152,10 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	return err
 }
 
-func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
+func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
 	numOfBlocksPerRequest := int64(blockRangeLimit)
 	latestBlockNumber := rpc.initialBlockNumber
-	block, err := rpc.conn.BlockByNumber(context.Background(), nil)
+	block, err := rpc.conn.BlockByNumber(ctx, nil)
 	if block == nil {
 		rpc.Lgr.Error("getInternalTransactions", zap.Error(err))
 	} else {
@@ -175,10 +175,9 @@ func (rpc *TokenBalance) getInternalTransactions(address string, contractBlock i
 			Addresses: []common.Address{contractAddress},
 			Topics:    [][]common.Hash{[]common.Hash{transferOperation}},
 		}
-		ctx := context.Background()
 
 		var events []types.Log
-		err := retry(5, 2*time.Second, func() (err error) {
+		err := retry(ctx, 5, 2*time.Second, func() (err error) {
 			events, err = rpc.conn.FilterLogs(ctx, query)
 			return err
 		})
