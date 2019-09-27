@@ -658,7 +658,6 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
 		filter.Limit = defaultFetchLimit
 	}
-	fmt.Println(findQuery)
 	query := []bson.M{
 		{"$match": findQuery},
 		{"$lookup": bson.M{
