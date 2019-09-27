@@ -16,5 +16,4 @@ type Contract struct {
 	CreatedAt       time.Time       `json:"created_at" bson:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at" bson:"updated_at"`
 	Abi             []utils.AbiItem `json:"abi" bson:"abi"`
-	/*RecaptchaToken  string    `json:"recaptcha_token"`*/
 }

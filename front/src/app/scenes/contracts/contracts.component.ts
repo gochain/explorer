@@ -89,7 +89,7 @@ export class ContractsComponent implements OnInit, OnDestroy {
       tap(() => this.isLoading = true),
       flatMap(params => this._commonService.getContractsList(params)),
     ).subscribe((data: Address[]) => {
-      this.addresses = [...this.addresses, ...data];
+      this.addresses = this.contractsQueryParams.skip === 0 ? data : [...this.addresses, ...data];
       if (data.length < this.contractsQueryParams.limit) {
         this.isMoreDisabled = true;
       }
