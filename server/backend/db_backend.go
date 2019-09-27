@@ -633,7 +633,6 @@ func (self *MongoBackend) updateContract(contract *models.Contract) error {
 
 func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models.Address {
 	var addresses []*models.Address
-	var sortQuery string
 	findQuery := bson.M{"contract": true}
 	if filter.TokenName != "" {
 		findQuery["token_name"] = bson.RegEx{regexp.QuoteMeta(filter.TokenName), "i"}
@@ -644,26 +643,40 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 	if filter.ErcType != "" {
 		findQuery["erc_types"] = filter.ErcType
 	}
-	if filter.SortBy != "" {
-		sortQuery = filter.SortBy
-		if filter.Asc == false {
-			sortQuery = "-" + sortQuery
-		}
-	} else {
-		sortQuery = "-number_of_token_holders"
+	if filter.SortBy == "" {
+		filter.SortBy = "number_of_token_holders"
+		filter.Asc = false
 	}
+	sortDir := -1
+	if filter.Asc {
+		sortDir = 1
+	}
+	sortQuery := bson.M{filter.SortBy: sortDir}
 	if filter.Skip < 0 {
 		filter.Skip = defaultSkip
 	}
 	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
 		filter.Limit = defaultFetchLimit
 	}
+	fmt.Println(findQuery)
+	query := []bson.M{
+		{"$match": findQuery},
+		{"$lookup": bson.M{
+			"from":         "Contracts",
+			"localField":   "address",
+			"foreignField": "address",
+			"as":           "contract",
+		}},
+		{"$match": bson.M{
+			"contract.valid": true,
+		}},
+		{"$sort": sortQuery},
+		{"$skip": filter.Skip},
+		{"$limit": filter.Limit},
+	}
 	err := self.mongo.
 		C("Addresses").
-		Find(findQuery).
-		Sort(sortQuery).
-		Skip(filter.Skip).
-		Limit(filter.Limit).
+		Pipe(query).
 		All(&addresses)
 	if err != nil {
 		self.Lgr.Error("Failed to query contracts", zap.Error(err))
