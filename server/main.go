@@ -103,7 +103,7 @@ func parseBlockNumber(r *http.Request) (int, error) {
 	bnumS := chi.URLParam(r, "num")
 	bnum, err := strconv.Atoi(bnumS)
 	if err != nil {
-		logger.Error("Error converting bnumS to num", zap.Error(err), zap.String("bnumS", bnumS))
+		logger.Error("Failed to parse integer", zap.Error(err), zap.String("num", bnumS))
 		return 0, err
 	}
 	return bnum, nil

@@ -116,12 +116,13 @@ func (rpc *EthRPC) call(ctx context.Context, method string, target interface{}, 
 	return json.Unmarshal(result, target)
 }
 func (rpc *EthRPC) ethGetBalance(ctx context.Context, address, block string) (*big.Int, error) {
+	lgr := rpc.Lgr.With(zap.String("address", address))
+	lgr.Debug("Checking balance")
 	var response string
-	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance", address))
 	if err := rpc.call(ctx, "eth_getBalance", &response, address, block); err != nil {
 		return new(big.Int), err
 	}
-	rpc.Lgr.Debug("response from eth_getBalance", zap.String("checking balance response", response))
+	lgr.Debug("Got balance", zap.String("balance", response))
 	balance, err := parseBigInt(response)
 	return balance, err
 }

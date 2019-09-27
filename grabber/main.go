@@ -178,7 +178,7 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64)
 			}
 		}
 
-		logger := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
+		logger := importer.Lgr.With(zap.Int64("block", blockNumber))
 		if (blockNumber % 1000) == 0 {
 			logger.Info("Backfill: Progress")
 		}
@@ -242,7 +242,7 @@ func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber 
 		oldest = 0
 	}
 	for blockNumber > oldest && importer.NeedReloadParent(blockNumber) {
-		lgr := importer.Lgr.With(zap.Int64("blockNumber", blockNumber))
+		lgr := importer.Lgr.With(zap.Int64("block", blockNumber))
 		lgr.Info("Redownloading corrupted or missing ancestor")
 		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
@@ -267,7 +267,7 @@ func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber 
 // If a block is reimported, then the parent hash is returned.
 func checkTransactionsConsistency(ctx context.Context, importer *backend.Backend, blockNumber int64) (common.Hash, error) {
 	if !importer.TransactionsConsistent(blockNumber) {
-		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("blockNumber", blockNumber))
+		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("block", blockNumber))
 		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
 			return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
@@ -353,6 +353,7 @@ func worker(ctx context.Context, done func(), lgr *zap.Logger, jobs chan *models
 
 func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) error {
 	normalizedAddress := common.HexToAddress(address.Address).Hex()
+	lgr := importer.Lgr.With(zap.String("address", normalizedAddress))
 	balance, err := importer.BalanceAt(ctx, normalizedAddress, "latest")
 	if err != nil {
 		return fmt.Errorf("failed to get balance")
@@ -367,7 +368,7 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 		importer.ImportContract(normalizedAddress, byteCode)
 		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 		if err != nil {
-			importer.Lgr.Info("Cannot GetTokenDetails", zap.Error(err), zap.String("Address", normalizedAddress))
+			lgr.Warn("Failed to get token details", zap.Error(err))
 			// continue
 		} else {
 			var fromBlock int64
@@ -381,20 +382,24 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 				fromBlock = importer.GetContractBlock(normalizedAddress)
 			}
 			if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
-				importer.Lgr.Info("TokenName and TokenSymbols are empty using from token details", zap.String("Address", normalizedAddress), zap.Int64("Contract block", fromBlock), zap.String("Name", tokenDetails.Name))
+				lgr.Info("Updating token details", zap.Int64("block", fromBlock),
+					zap.String("symbol", tokenDetails.Symbol), zap.String("name", tokenDetails.Name))
 				contractFromDB.TokenName = tokenDetails.Name
 				contractFromDB.TokenSymbol = tokenDetails.Symbol
 			}
 			internalTxs := importer.GetInternalTransactions(ctx, normalizedAddress, fromBlock, blockRangeLimit)
 			internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
-			importer.Lgr.Info("Comparing number of internal txs in the db and in the gochain", zap.String("Address", normalizedAddress), zap.Int("In the gochain", len(internalTxs)), zap.Int("In the db", internalTxsFromDb))
+			lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", internalTxsFromDb),
+				zap.Int("rpc", len(internalTxs)))
 			if len(internalTxs) != internalTxsFromDb {
 				var tokenHoldersList []string
 				for _, itx := range internalTxs {
-					importer.Lgr.Debug("Internal Transaction", zap.String("From", itx.From.String()), zap.String("To", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
+					lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
+						zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
 					importer.ImportInternalTransaction(ctx, normalizedAddress, itx)
 					// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
-					importer.Lgr.Debug("Updating following token holder addresses", zap.String("addr 1", itx.From.String()), zap.String("addr 2", itx.To.String()), zap.Int64("Value", itx.Value.Int64()))
+					lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
+						zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
 					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
 					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
 					// }
@@ -403,14 +408,15 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 					if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
 						continue
 					}
-					importer.Lgr.Info("Importing token holder", zap.Int("Index", index), zap.Int("Total number", len(tokenHoldersList)))
+					lgr.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
+						zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
 					tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
 					if err != nil {
-						importer.Lgr.Info("Cannot GetTokenBalance, in internal transaction", zap.Error(err), zap.String("Address", tokenHolderAddress))
+						lgr.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))
 						continue
 					}
 					if contractFromDB == nil {
-						importer.Lgr.Info("Cannot find contract in DB", zap.Error(err), zap.String("Address", tokenHolderAddress))
+						lgr.Error("Cannot find contract in DB", zap.Error(err), zap.String("holder", tokenHolderAddress))
 						continue
 					}
 					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
@@ -418,7 +424,7 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 			}
 		}
 	}
-	importer.Lgr.Info("Update Addresses: updated address", zap.String("address", normalizedAddress), zap.String("Balance", balance.String()))
+	lgr.Info("Update Addresses: updated address", zap.Stringer("balance", balance))
 	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
 	return nil
 }
