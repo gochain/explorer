@@ -187,10 +187,10 @@ func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit
 func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) *models.Block {
 	block := self.mongo.getBlockByNumber(number)
 	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("blockNumber", number))
+		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("block", number))
 		blockEth, err := self.goClient.BlockByNumber(ctx, big.NewInt(number))
 		if err != nil {
-			self.Lgr.Error("Cannot get block from eth and db", zap.Int64("blockNumber", number))
+			self.Lgr.Error("Cannot get block from eth and db", zap.Int64("block", number), zap.Error(err))
 			return nil
 		}
 		block = self.ImportBlock(ctx, blockEth)

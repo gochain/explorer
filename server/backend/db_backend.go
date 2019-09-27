@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"gopkg.in/mgo.v2"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -71,7 +71,7 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 	if tx.To() != nil {
 		to = tx.To().Hex()
 	}
-	self.Lgr.Debug("parseTx", zap.String("TX:", tx.Hash().Hex()))
+	self.Lgr.Debug("parseTx", zap.Stringer("tx", tx.Hash()))
 	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
@@ -245,15 +245,18 @@ func (self *MongoBackend) createIndexes() {
 }
 
 func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) *models.Block {
-	self.Lgr.Debug("Importing block", zap.String("BlockNumber", block.Header().Number.String()), zap.String("Hash", block.Hash().Hex()), zap.String("ParentHash", block.ParentHash().Hex()))
+	lgr := self.Lgr.With(zap.Int64("number", block.Header().Number.Int64()),
+		zap.Stringer("hash", block.Hash()), zap.Stringer("parentHash", block.ParentHash()))
+	lgr.Debug("Importing block")
 	b := self.parseBlock(block)
 	_, err := self.mongo.C("Blocks").Upsert(bson.M{"number": b.Number}, b)
 	if err != nil {
-		self.Lgr.Fatal("importBlock", zap.Error(err))
+		lgr.Fatal("Failed to upsert block", zap.Error(err), zap.Reflect("model", b))
 	}
-	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": b.Number}) //deleting all txs belong to this block if any exist
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": b.Number})
 	if err != nil {
-		self.Lgr.Fatal("importBlock", zap.Error(err))
+		lgr.Fatal("Failed to remove old txs", zap.Error(err))
 	}
 	for _, tx := range block.Transactions() {
 		self.importTx(ctx, tx, block)
@@ -266,17 +269,18 @@ func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) *
 func (self *MongoBackend) UpdateActiveAddress(address string) {
 	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
 	if err != nil {
-		self.Lgr.Fatal("UpdateActiveAddress", zap.Error(err))
+		self.Lgr.Fatal("Failed to upsert active address", zap.String("address", address), zap.Error(err))
 	}
 }
 
 func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) {
-	self.Lgr.Debug("Importing", zap.String("tx", tx.Hash().Hex()))
+	lgr := self.Lgr.With(zap.Stringer("tx", tx.Hash()))
+	lgr.Debug("Importing tx")
 	transaction := self.parseTx(ctx, tx, block)
 
 	toAddress := transaction.To
 	if transaction.To == "" {
-		self.Lgr.Info("Hash doesn't have an address", zap.String("hash", transaction.TxHash))
+		lgr.Debug("Importing contract creation")
 		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
 		if err == nil {
 			contractAddress := receipt.ContractAddress.String()
@@ -289,13 +293,13 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 			}
 			toAddress = transaction.ContractAddress
 		} else {
-			self.Lgr.Error("Cannot get a receipt in importTX", zap.Error(err), zap.String("hash", transaction.TxHash))
+			lgr.Error("Failed to get tx receipt", zap.Error(err))
 		}
 	}
 
 	_, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction)
 	if err != nil {
-		self.Lgr.Fatal("importTx", zap.Error(err))
+		lgr.Fatal("Failed to upsert tx", zap.Error(err), zap.Reflect("model", transaction))
 	}
 
 	self.UpdateActiveAddress(toAddress)
@@ -312,7 +316,8 @@ func (self *MongoBackend) needReloadParent(blockNumber int64) bool {
 	parentBlockNumber := (block.Number - 1)
 	parentBlock := self.getBlockByNumber(parentBlockNumber)
 	if parentBlock != nil {
-		self.Lgr.Debug("Checking parent", zap.String("ParentHash", block.ParentHash), zap.String("Hash from parent", parentBlock.BlockHash), zap.Int64("BlockNumber", block.Number), zap.Int64("ParentNumber", parentBlock.Number))
+		self.Lgr.Debug("Checking parent", zap.Int64("block.number", block.Number), zap.String("block.parentHash", block.ParentHash),
+			zap.Int64("parent.number", parentBlock.Number), zap.String("parent.hash", parentBlock.BlockHash))
 	}
 	return parentBlock == nil || (block.ParentHash != parentBlock.BlockHash)
 
@@ -322,10 +327,11 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 	block := self.getBlockByNumber(blockNumber)
 	if block != nil {
 		transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
-		self.Lgr.Debug("TransactionsConsistent", zap.Int("Transactions in block", block.TxCount), zap.Int("Num of transactions in db", transactionCounter))
 		if err != nil {
-			self.Lgr.Fatal("TransactionsConsistent", zap.Error(err))
+			self.Lgr.Fatal("Failed to count txs", zap.Int64("blockNumber", blockNumber), zap.Error(err))
 		}
+		self.Lgr.Debug("Checking tx count", zap.Int64("blockNumber", blockNumber),
+			zap.Int("block", block.TxCount), zap.Int("db", transactionCounter))
 		return transactionCounter == block.TxCount
 	}
 	return true
@@ -334,21 +340,21 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
 func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) *models.Address {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
-	self.Lgr.Debug("Updating address", zap.String("address", address), zap.String("precise balance", balanceGoString), zap.Float64("balance float", balanceGoFloat))
+	lgr := self.Lgr.With(zap.String("address", address))
+	lgr.Debug("Updating address", zap.String("balance", balanceGoString), zap.Float64("balanceFloat", balanceGoFloat))
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
-		self.Lgr.Fatal("importAddress", zap.Error(err))
+		lgr.Fatal("Failed to count token holders", zap.Error(err))
 	}
 
 	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
-
 	if err != nil {
-		self.Lgr.Fatal("importAddress", zap.Error(err))
+		lgr.Fatal("Failed to count internal txs", zap.Error(err))
 	}
 
 	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
 	if err != nil {
-		self.Lgr.Fatal("importAddress", zap.Error(err))
+		lgr.Fatal("Failed to count held token txs", zap.Error(err))
 	}
 
 	addressM := &models.Address{Address: address,
@@ -371,7 +377,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
-		self.Lgr.Fatal("importAddress", zap.Error(err))
+		lgr.Fatal("Failed to upsert address", zap.Error(err), zap.Reflect("model", addressM))
 	}
 	return addressM
 }
@@ -409,7 +415,7 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 	}
 	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"transaction_hash": transferEvent.TransactionHash}, internalTransaction)
 	if err != nil {
-		self.Lgr.Fatal("importInternalTransaction", zap.Error(err))
+		self.Lgr.Fatal("Failed to upsert internal tx", zap.Error(err), zap.Reflect("model", internalTransaction))
 	}
 	return internalTransaction
 }
@@ -418,7 +424,7 @@ func (self *MongoBackend) importContract(contractAddress string, byteCode string
 	//https://stackoverflow.com/questions/43278696/golang-mgo-insert-or-update-not-working-as-expected/43278832
 	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress, "byte_code": byteCode, "created_at": time.Now()}})
 	if err != nil {
-		self.Lgr.Fatal("importContract", zap.Error(err))
+		self.Lgr.Fatal("Failed to upsert contract", zap.Error(err))
 	}
 }
 
@@ -502,7 +508,7 @@ func (self *MongoBackend) getAddressByHash(address string) *models.Address {
 	//lazy calculation for number of transactions
 	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
 	if err != nil {
-		self.Lgr.Fatal("importAddress", zap.Error(err))
+		self.Lgr.Fatal("Failed to get txs", zap.String("address", address), zap.Error(err))
 	}
 	c.NumberOfTransactions = transactionCounter
 	return &c
@@ -758,11 +764,15 @@ func (self *MongoBackend) getSignersStats() []models.SignersStats {
 func (self *MongoBackend) cleanUp() {
 	collectionNames, err := self.mongo.CollectionNames()
 	if err != nil {
-		self.Lgr.Info("Cannot get list of collections", zap.Error(err))
+		self.Lgr.Error("Cannot get list of collections", zap.Error(err))
 		return
 	}
 	for _, collectionName := range collectionNames {
-		self.Lgr.Info("cleanUp", zap.String("collection name", collectionName))
-		self.mongo.C(collectionName).RemoveAll(nil)
+		_, err := self.mongo.C(collectionName).RemoveAll(nil)
+		if err != nil {
+			self.Lgr.Error("Failed to clean collection", zap.String("collection", collectionName), zap.Error(err))
+			continue
+		}
+		self.Lgr.Info("Cleaned collection", zap.String("collection", collectionName))
 	}
 }
