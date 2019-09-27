@@ -49,7 +49,7 @@ export class ContractsComponent implements OnInit, OnDestroy {
   tokenTypes = TOKEN_TYPES;
   tokenTypeOptions = TOKEN_TYPE_OPTIONS;
   sortFieldOptions = SORT_FIELD_OPTIONS;
-  addresses: Address[];
+  addresses: Address[] = [];
   contractsQueryParams: QueryParams = new QueryParams(50);
   isMoreDisabled = false;
   isLoading = false;
@@ -89,7 +89,7 @@ export class ContractsComponent implements OnInit, OnDestroy {
       tap(() => this.isLoading = true),
       flatMap(params => this._commonService.getContractsList(params)),
     ).subscribe((data: Address[]) => {
-      this.addresses = data;
+      this.addresses = [...this.addresses, ...data];
       if (data.length < this.contractsQueryParams.limit) {
         this.isMoreDisabled = true;
       }
