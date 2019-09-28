@@ -297,6 +297,23 @@ func (self *Backend) NeedReloadParent(blockNumber int64) bool {
 func (self *Backend) TransactionsConsistent(blockNumber int64) bool {
 	return self.mongo.transactionsConsistent(blockNumber)
 }
+
+//return false if a number of transactions in DB is different from a number of transactions in the blockchain
+func (self *Backend) TransactionCountConsistent(ctx context.Context, blockNumber int64) bool {
+	self.Lgr.Debug("Checking transaction count for the block", zap.Int64("number", blockNumber))
+	block := self.GetBlockByNumber(ctx, blockNumber)
+	if block != nil {
+		txCount, err := self.goClient.TransactionCount(ctx, common.HexToHash(block.BlockHash))
+		if err != nil {
+			self.Lgr.Info("Cannot get transaction count", zap.Int64("number", blockNumber), zap.Error(err))
+			return false
+		}
+		self.Lgr.Debug("Got transaction count for the block", zap.Uint("txCount from blockchain", txCount), zap.Int("txCount from db", block.TxCount))
+		return txCount == uint(block.TxCount)
+	}
+	self.Lgr.Info("Cannot get block", zap.Int64("number", blockNumber))
+	return false
+}
 func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) []*models.ActiveAddress {
 	var selectedAddresses []*models.ActiveAddress
 	for _, address := range self.mongo.getActiveAddresses(fromDate) {
