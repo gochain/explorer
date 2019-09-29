@@ -23,6 +23,7 @@ import (
 
 func main() {
 	var rpcUrl string
+	var checkTxCount bool
 	var mongoUrl string
 	var dbName string
 	var startFrom int64
@@ -50,6 +51,11 @@ func main() {
 			Value:       "127.0.0.1:27017",
 			Usage:       "mongo connection url",
 			Destination: &mongoUrl,
+		},
+		cli.BoolFlag{
+			Name:        "tx-count, tx",
+			Usage:       "check a transactions count for every block(a heavy operation)",
+			Destination: &checkTxCount,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
@@ -105,7 +111,7 @@ func main() {
 		}
 		go listener(ctx, importer)
 		go updateStats(ctx, importer)
-		go backfill(ctx, importer, startFrom)
+		go backfill(ctx, importer, startFrom, checkTxCount)
 		go updateAddresses(ctx, 3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
 		updateAddresses(ctx, 5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
@@ -161,7 +167,7 @@ func listener(ctx context.Context, importer *backend.Backend) {
 
 // backfill continuously loops over all blocks in reverse order, verifying that all
 // data is loaded and consistent, and reloading as necessary.
-func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64) {
+func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) {
 	var hash common.Hash // Expected hash.
 	for {
 		if blockNumber < 0 {
@@ -216,7 +222,7 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64)
 			// Note parent as next expected hash.
 			hash = rpcBlock.ParentHash()
 		} else {
-			newParent, err := checkTransactionsConsistency(ctx, importer, blockNumber)
+			newParent, err := checkTransactionsConsistency(ctx, importer, blockNumber, checkTxCount)
 			if err != nil {
 				logger.Error("Backfill: Failed to check tx consistency", zap.Error(err))
 				if utils.SleepCtx(ctx, 5*time.Second) != nil {
@@ -265,8 +271,8 @@ func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber 
 
 // checkTransactionsConsistency checks if the block tx count matches the number of txs, and reimports the block if not.
 // If a block is reimported, then the parent hash is returned.
-func checkTransactionsConsistency(ctx context.Context, importer *backend.Backend, blockNumber int64) (common.Hash, error) {
-	if !importer.TransactionsConsistent(blockNumber) {
+func checkTransactionsConsistency(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) (common.Hash, error) {
+	if !importer.TransactionsConsistent(blockNumber) || checkTxCount && !importer.TransactionCountConsistent(ctx, blockNumber) {
 		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("block", blockNumber))
 		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
@@ -336,11 +342,13 @@ func worker(ctx context.Context, done func(), lgr *zap.Logger, jobs chan *models
 				zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
 			return
 		case address := <-jobs:
-			err := updateAddress(ctx, address, currentBlock, blockRangeLimit, importer)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to update address %s: %v", address.Address, err))
-			} else {
-				updated++
+			if address != nil {
+				err := updateAddress(ctx, address, currentBlock, blockRangeLimit, importer)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to update address %s: %v", address.Address, err))
+				} else {
+					updated++
+				}
 			}
 		}
 	}
