@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -36,6 +38,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
 		os.Exit(1)
 	}
+	defer logger.Sync()
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
@@ -85,6 +88,10 @@ func main() {
 			Name:  "locked-accounts",
 			Usage: "accounts with locked funds to exclude from rich list and circulating supply",
 		},
+		cli.StringFlag{
+			Name:  "log-level",
+			Usage: "Minimum log level to include. Lower levels will be discarded. (debug, info, warn, error, dpanic, panic, fatal)",
+		},
 	}
 
 	ctx, cancelFn := context.WithCancel(context.Background())
@@ -97,6 +104,14 @@ func main() {
 	}()
 
 	app.Action = func(c *cli.Context) error {
+		if c.IsSet("log-level") {
+			var lvl zapcore.Level
+			s := c.String("log-level")
+			if err := lvl.Set(s); err != nil {
+				return fmt.Errorf("invalid log-level %q: %v", s, err)
+			}
+			cfg.Level.SetLevel(lvl)
+		}
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
@@ -153,13 +168,21 @@ func listener(ctx context.Context, importer *backend.Backend) {
 				block, err := importer.BlockByNumber(ctx, latest)
 				if err != nil {
 					lgr.Error("Listener: Failed to get block", zap.Error(err))
-				} else if block == nil {
-					lgr.Error("Listener: Block not found")
-				} else {
-					importer.ImportBlock(ctx, block)
-					checkAncestors(ctx, importer, block.Number().Int64(), 100)
-					prevHeader = latest
+					continue
 				}
+				if block == nil {
+					lgr.Error("Listener: Block not found")
+					continue
+				}
+				if _, err := importer.ImportBlock(ctx, block); err != nil {
+					lgr.Error("Listener: Failed to import block", zap.Error(err))
+					continue
+				}
+				if err := checkAncestors(ctx, importer, block.Number().Int64(), 100); err != nil {
+					lgr.Warn("Listener: Failed to check ancestors", zap.Error(err))
+				}
+				prevHeader = latest
+
 			}
 		}
 	}
@@ -189,8 +212,14 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64,
 			logger.Info("Backfill: Progress")
 		}
 		var backfill bool
-		dbBlock := importer.GetBlockByNumber(ctx, blockNumber)
-		if dbBlock == nil {
+		dbBlock, err := importer.GetBlockByNumber(ctx, blockNumber)
+		if err != nil {
+			logger.Error("Backfill: Failed to get block", zap.Error(err))
+			if utils.SleepCtx(ctx, 5*time.Second) != nil {
+				return
+			}
+			continue
+		} else if dbBlock == nil {
 			// Missing.
 			backfill = true
 			logger = logger.With(zap.String("reason", "missing"))
@@ -218,11 +247,17 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64,
 				}
 				continue
 			}
-			importer.ImportBlock(ctx, rpcBlock)
+			if _, err := importer.ImportBlock(ctx, rpcBlock); err != nil {
+				logger.Error("Backfill: Failed to import block", zap.Error(err))
+				if utils.SleepCtx(ctx, 5*time.Second) != nil {
+					return
+				}
+				continue
+			}
 			// Note parent as next expected hash.
 			hash = rpcBlock.ParentHash()
 		} else {
-			newParent, err := checkTransactionsConsistency(ctx, importer, blockNumber, checkTxCount)
+			newParent, err := ensureTxsConsistent(ctx, importer, blockNumber, checkTxCount)
 			if err != nil {
 				logger.Error("Backfill: Failed to check tx consistency", zap.Error(err))
 				if utils.SleepCtx(ctx, 5*time.Second) != nil {
@@ -239,51 +274,81 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64,
 }
 
 // checkAncestors scans the ancestors of a block to verify that they exists and their hashes match.
-func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber int64, generations int) {
+func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber int64, generations int) error {
 	if blockNumber == 0 || generations <= 0 {
-		return
+		return nil
 	}
 	oldest := blockNumber - int64(generations)
 	if oldest < 0 {
 		oldest = 0
 	}
-	for blockNumber > oldest && importer.NeedReloadParent(blockNumber) {
+	for blockNumber > oldest {
 		lgr := importer.Lgr.With(zap.Int64("block", blockNumber))
+		if ok, err := importer.NeedReloadParent(blockNumber); err != nil {
+			lgr.Error("Failed to check parent", zap.Error(err))
+			if err := utils.SleepCtx(ctx, 5*time.Second); err != nil {
+				return err
+			}
+			continue
+		} else if !ok {
+			// Parent matches, so we're done.
+			return nil
+		}
 		lgr.Info("Redownloading corrupted or missing ancestor")
 		block, err := importer.BlockByNumber(ctx, blockNumber)
 		if err != nil {
 			lgr.Error("Failed to get ancestor", zap.Error(err))
-			if utils.SleepCtx(ctx, 5*time.Second) != nil {
-				return
+			if err := utils.SleepCtx(ctx, 5*time.Second); err != nil {
+				return err
 			}
 			continue
 		} else if block == nil {
 			lgr.Error("Ancestor not found")
-			if utils.SleepCtx(ctx, 5*time.Second) != nil {
-				return
+			if err := utils.SleepCtx(ctx, 5*time.Second); err != nil {
+				return err
 			}
 			continue
 		}
-		importer.ImportBlock(ctx, block)
+		if _, err := importer.ImportBlock(ctx, block); err != nil {
+			if err := utils.SleepCtx(ctx, 5*time.Second); err != nil {
+				return err
+			}
+			continue
+		}
 		blockNumber--
 	}
+	return nil
 }
 
-// checkTransactionsConsistency checks if the block tx count matches the number of txs, and reimports the block if not.
+// ensureTxsConsistent checks if the block tx count matches the number of txs in the db, and reimports the block if not.
 // If a block is reimported, then the parent hash is returned.
-func checkTransactionsConsistency(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) (common.Hash, error) {
-	if !importer.TransactionsConsistent(blockNumber) || checkTxCount && !importer.TransactionCountConsistent(ctx, blockNumber) {
-		importer.Lgr.Info("Redownloading block because number of transactions are wrong", zap.Int64("block", blockNumber))
-		block, err := importer.BlockByNumber(ctx, blockNumber)
-		if err != nil {
-			return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
+func ensureTxsConsistent(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) (common.Hash, error) {
+	if ok, err := importer.TransactionsConsistent(blockNumber); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to check tx consistentcy: %v", err)
+	} else if ok {
+		if !checkTxCount {
+			return common.Hash{}, nil
 		}
-		if block != nil {
-			importer.ImportBlock(ctx, block)
-			return block.ParentHash(), nil
+		if ok, err := importer.TransactionCountConsistent(ctx, blockNumber); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to check tx count: %v", err)
+		} else if ok {
+			return common.Hash{}, nil
 		}
 	}
-	return common.Hash{}, nil
+
+	importer.Lgr.Warn("Reimporting block due to inconsistent tx count", zap.Int64("block", blockNumber))
+
+	block, err := importer.BlockByNumber(ctx, blockNumber)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
+	}
+	if block == nil {
+		return common.Hash{}, errors.New("block not found")
+	}
+	if _, err := importer.ImportBlock(ctx, block); err != nil {
+		return common.Hash{}, err
+	}
+	return block.ParentHash(), nil
 }
 
 func updateAddresses(ctx context.Context, sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
@@ -303,7 +368,11 @@ func updateAddresses(ctx context.Context, sleep time.Duration, updateContracts b
 				importer.Lgr.Error("Update Addresses: Failed to get latest block number", zap.Error(err))
 				continue
 			}
-			addresses := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
+			addresses, err := importer.GetActiveAdresses(lastUpdatedAt, updateContracts)
+			if err != nil {
+				importer.Lgr.Error("Update Addresses: Failed to get active addresses", zap.Error(err))
+				continue
+			}
 			importer.Lgr.Info("Update Addresses: Starting", zap.Time("lastUpdatedAt", lastUpdatedAt), zap.Int("count", len(addresses)))
 			var jobs = make(chan *models.ActiveAddress, workersCount)
 			var wg sync.WaitGroup
@@ -373,68 +442,81 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 	if contractData != "" {
 		contract = true
 		byteCode := hex.EncodeToString(contractDataArray)
-		importer.ImportContract(normalizedAddress, byteCode)
+		if err := importer.ImportContract(normalizedAddress, byteCode); err != nil {
+			return fmt.Errorf("failed to import contract: %v", err)
+		}
 		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
 		if err != nil {
-			lgr.Warn("Failed to get token details", zap.Error(err))
-			// continue
+			return fmt.Errorf("failed to get token details: %v", err)
+		}
+		var fromBlock int64
+		contractFromDB, err := importer.GetAddressByHash(ctx, normalizedAddress)
+		if err != nil {
+			return fmt.Errorf("failed to get contract from DB: %v", err)
+		}
+		if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
+			fromBlock = contractFromDB.UpdatedAtBlock
 		} else {
-			var fromBlock int64
-			contractFromDB, err := importer.GetAddressByHash(ctx, normalizedAddress)
+			fromBlock, err = importer.GetContractBlock(normalizedAddress)
 			if err != nil {
-				return fmt.Errorf("failed to get contract from DB")
+				fmt.Errorf("failed to get contract block: %v", err)
 			}
-			if contractFromDB != nil && contractFromDB.UpdatedAtBlock > 0 {
-				fromBlock = contractFromDB.UpdatedAtBlock
-			} else {
-				fromBlock = importer.GetContractBlock(normalizedAddress)
-			}
-			if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
-				lgr.Info("Updating token details", zap.Int64("block", fromBlock),
-					zap.String("symbol", tokenDetails.Symbol), zap.String("name", tokenDetails.Name))
-				contractFromDB.TokenName = tokenDetails.Name
-				contractFromDB.TokenSymbol = tokenDetails.Symbol
-			}
-			internalTxs := importer.GetInternalTransactions(ctx, normalizedAddress, fromBlock, blockRangeLimit)
-			internalTxsFromDb := importer.CountInternalTransactions(normalizedAddress)
-			lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", internalTxsFromDb),
-				zap.Int("rpc", len(internalTxs)))
-			if len(internalTxs) != internalTxsFromDb {
-				var tokenHoldersList []string
-				for _, itx := range internalTxs {
-					lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
-						zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-					importer.ImportInternalTransaction(ctx, normalizedAddress, itx)
-					// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
-					lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
-						zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
-					tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
-					// }
+		}
+		if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
+			lgr.Info("Updating token details", zap.Int64("block", fromBlock),
+				zap.String("symbol", tokenDetails.Symbol), zap.String("name", tokenDetails.Name))
+			contractFromDB.TokenName = tokenDetails.Name
+			contractFromDB.TokenSymbol = tokenDetails.Symbol
+		}
+		internalTxs, err := importer.GetInternalTransactions(ctx, normalizedAddress, fromBlock, blockRangeLimit)
+		if err != nil {
+			return fmt.Errorf("failed to get internal txs: %v", err)
+		}
+		internalTxsFromDb, err := importer.CountInternalTransactions(normalizedAddress)
+		if err != nil {
+			return fmt.Errorf("failed to count internal txs: %v", err)
+		}
+		lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", internalTxsFromDb),
+			zap.Int("rpc", len(internalTxs)))
+		if len(internalTxs) != internalTxsFromDb {
+			var tokenHoldersList []string
+			for _, itx := range internalTxs {
+				lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
+					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
+				if _, err := importer.ImportInternalTransaction(ctx, normalizedAddress, itx); err != nil {
+					return fmt.Errorf("failed to import internal tx: %v", err)
 				}
-				for index, tokenHolderAddress := range tokenHoldersList {
-					if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
-						continue
-					}
-					lgr.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
-						zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
-					tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
-					if err != nil {
-						lgr.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))
-						continue
-					}
-					if contractFromDB == nil {
-						lgr.Error("Cannot find contract in DB", zap.Error(err), zap.String("holder", tokenHolderAddress))
-						continue
-					}
-					importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB)
+				// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
+				lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
+					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
+				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
+				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
+				// }
+			}
+			for index, tokenHolderAddress := range tokenHoldersList {
+				if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
+					continue
+				}
+				lgr.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
+					zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
+				tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
+				if err != nil {
+					lgr.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))
+					continue
+				}
+				if contractFromDB == nil {
+					lgr.Error("Cannot find contract in DB", zap.Error(err), zap.String("holder", tokenHolderAddress))
+					continue
+				}
+				if _, err := importer.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB); err != nil {
+					return fmt.Errorf("failed to import token holder: %v", err)
 				}
 			}
 		}
 	}
 	lgr.Info("Update Addresses: updated address", zap.Stringer("balance", balance))
-	importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
-	return nil
+	_, err = importer.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
+	return err
 }
 
 func updateStats(ctx context.Context, importer *backend.Backend) {

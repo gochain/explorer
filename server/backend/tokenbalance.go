@@ -139,12 +139,12 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	return err
 }
 
-func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
+func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) ([]TransferEvent, error) {
 	numOfBlocksPerRequest := int64(blockRangeLimit)
 	latestBlockNumber := rpc.initialBlockNumber
 
 	if num, err := rpc.conn.LatestBlockNumber(ctx); err != nil {
-		rpc.Lgr.Error("Failed to get latest block number", zap.Error(err))
+		rpc.Lgr.Warn("Failed to get latest block number", zap.Error(err))
 	} else {
 		latestBlockNumber = num.Int64()
 	}
@@ -170,19 +170,18 @@ func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address st
 			return err
 		})
 		if err != nil {
-			rpc.Lgr.Error("Failed to query for internal txs", zap.Error(err))
+			return nil, fmt.Errorf("failed to query for internal txs: %v", err)
 		}
 		for _, event := range events {
-
 			var transferEvent TransferEvent
 			err = TokenABI.Unpack(&transferEvent, "Transfer", event.Data)
 			if err != nil {
-				rpc.Lgr.Warn("Failed to unpack event", zap.Error(err), zap.Uint64("block", event.BlockNumber),
+				rpc.Lgr.Error("Failed to unpack event", zap.Error(err), zap.Uint64("block", event.BlockNumber),
 					zap.Uint("index", event.Index), zap.String("contract", address))
 				continue
 			}
 			if l := len(event.Topics); l < 3 {
-				rpc.Lgr.Warn("Failed to parse event - too few topics. Expected 3.", zap.Error(err),
+				rpc.Lgr.Error("Failed to parse event - too few topics. Expected 3.", zap.Error(err),
 					zap.Uint64("block", event.BlockNumber), zap.Uint("index", event.Index), zap.String("contract", address))
 				continue
 			}
@@ -196,5 +195,5 @@ func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address st
 			transferEvents = append(transferEvents, transferEvent)
 		}
 	}
-	return transferEvents
+	return transferEvents, nil
 }
