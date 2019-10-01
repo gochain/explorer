@@ -5,20 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math/big"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/gochain-io/gochain/v3/common/hexutil"
 	"go.uber.org/zap"
 )
 
-type httpClient interface {
-	Post(url string, contentType string, body io.Reader) (*http.Response, error)
-}
 type EthError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -118,13 +112,12 @@ func (rpc *EthRPC) call(ctx context.Context, method string, target interface{}, 
 func (rpc *EthRPC) ethGetBalance(ctx context.Context, address, block string) (*big.Int, error) {
 	lgr := rpc.Lgr.With(zap.String("address", address))
 	lgr.Debug("Checking balance")
-	var response string
+	var response hexutil.Big
 	if err := rpc.call(ctx, "eth_getBalance", &response, address, block); err != nil {
-		return new(big.Int), err
+		return nil, err
 	}
-	lgr.Debug("Got balance", zap.String("balance", response))
-	balance, err := parseBigInt(response)
-	return balance, err
+	lgr.Debug("Got balance", zap.Stringer("balance", &response))
+	return response.ToInt(), nil
 }
 
 // func (rpc *EthRPC) ethGetBlockByNumber(number int64, withTransactions bool) (types.Block, error) {
@@ -132,11 +125,11 @@ func (rpc *EthRPC) ethGetBalance(ctx context.Context, address, block string) (*b
 // }
 
 func (rpc *EthRPC) ethBlockNumber(ctx context.Context) (int64, error) {
-	var response string
+	var response hexutil.Big
 	if err := rpc.call(ctx, "eth_blockNumber", &response); err != nil {
 		return 0, err
 	}
-	return parseInt(response)
+	return response.ToInt().Int64(), nil
 }
 
 func (rpc *EthRPC) codeAt(ctx context.Context, address, block string) ([]byte, error) {
@@ -146,27 +139,9 @@ func (rpc *EthRPC) codeAt(ctx context.Context, address, block string) ([]byte, e
 }
 
 func (rpc *EthRPC) ethTotalSupply(ctx context.Context) (*big.Int, error) {
-	var response string
+	var response hexutil.Big
 	if err := rpc.call(ctx, "eth_totalSupply", &response, "latest"); err != nil {
-		return new(big.Int), err
+		return nil, fmt.Errorf("failed to get total supply: %v", err)
 	}
-	totalSupply, _ := parseBigInt(response)
-	rpc.Lgr.Info("response from EthTotalSupply", zap.String("totalSupply", totalSupply.String()))
-	return totalSupply, nil
-}
-
-func parseBigInt(value string) (*big.Int, error) {
-	i := big.Int{}
-	_, err := fmt.Sscan(value, &i)
-
-	return &i, err
-}
-
-func parseInt(value string) (int64, error) {
-	i, err := strconv.ParseInt(strings.TrimPrefix(value, "0x"), 16, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return int64(i), nil
+	return response.ToInt(), nil
 }
