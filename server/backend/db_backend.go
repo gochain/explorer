@@ -422,6 +422,9 @@ func (self *MongoBackend) getAddressByHash(address string) (*models.Address, err
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).One(&c)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to get address: %v", err)
 	}
 	//lazy calculation for number of transactions
