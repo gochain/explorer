@@ -654,7 +654,11 @@ func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Dur
 		return nil, fmt.Errorf("failed to query signers stats: %v", err)
 	}
 	for _, el := range resp {
-		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
+		addr := el["_id"].(string)
+		if !common.IsHexAddress(addr) {
+			return nil, fmt.Errorf("invalid hex address: %s", addr)
+		}
+		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(addr), BlocksCount: el["count"].(int)}
 		stats = append(stats, signerStats)
 	}
 	return stats, nil

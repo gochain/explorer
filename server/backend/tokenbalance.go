@@ -62,6 +62,12 @@ func NewTokenBalanceClient(ctx context.Context, client *goclient.Client, lgr *za
 }
 
 func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenHolderDetails, error) {
+	if !common.IsHexAddress(contract) {
+		return nil, fmt.Errorf("invalid hex address: %s", contract)
+	}
+	if !common.IsHexAddress(wallet) {
+		return nil, fmt.Errorf("invalid hex address: %s", wallet)
+	}
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
@@ -75,6 +81,9 @@ func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenH
 }
 
 func (rpc *TokenBalance) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
@@ -150,6 +159,9 @@ func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address st
 	}
 	contractBlock -= numOfBlocksPerRequest
 	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("invalid hex address: %s", address)
+	}
 	contractAddress := common.HexToAddress(address)
 	transferOperation := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
 	var transferEvents []TransferEvent

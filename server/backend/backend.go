@@ -74,6 +74,9 @@ func (self *Backend) PingDB() error {
 }
 
 func (self *Backend) BalanceAt(ctx context.Context, address, block string) (*big.Int, error) {
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("invalid hex address: %s", address)
+	}
 	var value *big.Int
 	err := retry(ctx, 5, 2*time.Second, func() (err error) {
 		value, err = self.extendedGochainClient.ethGetBalance(ctx, address, block)
@@ -83,6 +86,9 @@ func (self *Backend) BalanceAt(ctx context.Context, address, block string) (*big
 }
 
 func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("invalid hex address: %s", address)
+	}
 	var value []byte
 	err := retry(ctx, 5, 2*time.Second, func() (err error) {
 		value, err = self.goClient.CodeAt(ctx, common.HexToAddress(address), nil)
@@ -166,18 +172,33 @@ func (self *Backend) GetTransactionByHash(ctx context.Context, hash string) (*mo
 	return self.mongo.getTransactionByHash(ctx, hash)
 }
 func (self *Backend) GetTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) ([]*models.Transaction, error) {
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("invalid hex address: %s", address)
+	}
 	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), skip, limit, fromTime, toTime, inputDataEmpty)
 }
 func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
 	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), skip, limit)
 }
 func (self *Backend) GetOwnedTokensList(ownerAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+	if !common.IsHexAddress(ownerAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", ownerAddress)
+	}
 	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), skip, limit)
 }
 func (self *Backend) GetInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) ([]*models.InternalTransaction, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
 	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), tokenTransactions, skip, limit)
 }
 func (self *Backend) GetContract(contractAddress string) (*models.Contract, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
 func (self *Backend) GetLatestsBlocks(skip, limit int) ([]*models.LightBlock, error) {

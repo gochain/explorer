@@ -429,6 +429,9 @@ func worker(ctx context.Context, done func(), lgr *zap.Logger, jobs chan *models
 }
 
 func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, importer *backend.Backend) error {
+	if !common.IsHexAddress(address.Address) {
+		return fmt.Errorf("invalid hex address: %s", address.Address)
+	}
 	normalizedAddress := common.HexToAddress(address.Address).Hex()
 	lgr := importer.Lgr.With(zap.String("address", normalizedAddress))
 	balance, err := importer.BalanceAt(ctx, normalizedAddress, "latest")
