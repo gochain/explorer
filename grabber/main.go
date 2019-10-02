@@ -335,13 +335,17 @@ func worker(ctx context.Context, done func(), lgr *zap.Logger, jobs chan *models
 	defer done()
 	var errs []error
 	var updated int
+loop:
 	for {
 		select {
 		case <-ctx.Done():
 			lgr.Error("Update Addresses: worker cancelled", zap.NamedError("ctxErr", ctx.Err()),
 				zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
 			return
-		case address := <-jobs:
+		case address, ok := <-jobs:
+			if !ok {
+				break loop
+			}
 			if address != nil {
 				err := updateAddress(ctx, address, currentBlock, blockRangeLimit, importer)
 				if err != nil {
