@@ -24,4 +24,5 @@ type Address struct {
 	NumberOfTokenHolders         int                  `json:"number_of_token_holders,omitempty" bson:"number_of_token_holders"`
 	NumberOfInternalTransactions int                  `json:"number_of_internal_transactions,omitempty" bson:"number_of_internal_transactions"`
 	NumberOfTokenTransactions    int                  `json:"number_of_token_transactions,omitempty" bson:"number_of_token_transactions"`
+	AttachedContract             Contract             `json:"attached_contract,omitempty" bson:"attached_contract,omitempty"`
 }

@@ -653,6 +653,14 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 		filter.SortBy = "number_of_token_holders"
 		filter.Asc = false
 	}
+
+	contractQuery := bson.M{
+		"attached_contract.valid": true,
+	}
+	if filter.ContractName != "" {
+		contractQuery["attached_contract.contract_name"] = bson.RegEx{regexp.QuoteMeta(filter.ContractName), "i"}
+	}
+
 	sortDir := -1
 	if filter.Asc {
 		sortDir = 1
@@ -670,10 +678,11 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 			"from":         "Contracts",
 			"localField":   "address",
 			"foreignField": "address",
-			"as":           "contract",
+			"as":           "attached_contract",
 		}},
-		{"$match": bson.M{
-			"contract.valid": true,
+		{"$match": contractQuery},
+		{"$unwind": bson.M{
+			"path": "$attached_contract",
 		}},
 		{"$sort": sortQuery},
 		{"$skip": filter.Skip},
