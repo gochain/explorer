@@ -6,9 +6,10 @@ import {FormBuilder, FormControl, FormGroup, Validators} from '@angular/forms';
 import {MetaService} from '../../services/meta.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
 import {WalletService} from '../../services/wallet.service';
+/*MODELS*/
+import {PasswordField} from '../../models/password-field.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
-
 
 @Component({
   selector: 'app-wallet-main',
@@ -16,7 +17,7 @@ import {META_TITLES} from '../../utils/constants';
   styleUrls: ['./wallet-main.component.scss']
 })
 export class WalletMainComponent implements OnInit {
-
+  passwordField: PasswordField = new PasswordField();
   privateKeyForm: FormGroup = this._fb.group({
     privateKey: ['', Validators.compose([Validators.required, WalletMainComponent.checkKeys])],
   });

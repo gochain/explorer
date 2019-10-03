@@ -9,6 +9,7 @@ import {ToastrService} from '../../modules/toastr/toastr.service';
 import {ClipboardService} from 'ngx-clipboard';
 /*MODELS*/
 import {Account} from 'web3-eth-accounts';
+import {PasswordField} from '../../models/password-field.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
 
@@ -18,7 +19,7 @@ import {META_TITLES} from '../../utils/constants';
   styleUrls: ['./wallet-create.component.css']
 })
 export class WalletCreateComponent implements OnInit {
-
+  passwordField: PasswordField = new PasswordField();
   account: Account;
   apiUrl = this._commonService.getApiUrl();
 
