@@ -24,7 +24,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/gochain/v3/common"
 	"github.com/gorilla/schema"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -37,71 +37,13 @@ var reCaptchaSecret string
 var rpcUrl string
 var logger *zap.Logger
 
-const defaultFetchLimit = 500
-
-func parseTime(r *http.Request) (time.Time, time.Time, error) {
-	var err error
-	fromTime := time.Unix(0, 0)
-	toTime := time.Now()
-	fromTimeStr := r.URL.Query().Get("from_time")
-	toTimeStr := r.URL.Query().Get("to_time")
-	if fromTimeStr != "" {
-		fromTime, err = time.Parse(time.RFC3339, fromTimeStr)
-		if err != nil {
-			return fromTime, toTime, err
-		}
-	}
-	if toTimeStr != "" {
-		toTime, err = time.Parse(time.RFC3339, toTimeStr)
-		if err != nil {
-			return fromTime, toTime, err
-		}
-	}
-	return fromTime, toTime, nil
-}
-
-func parseBool(r *http.Request, name string) (boolean *bool) {
-	valStr := r.URL.Query().Get(name)
-	var val bool
-	if valStr != "" {
-		if valStr == "true" {
-			val = true
-		} else {
-			val = false
-		}
-		return &val
+func parseGetParam(r *http.Request, w http.ResponseWriter, result interface{}) error {
+	if err := schema.NewDecoder().Decode(result, r.URL.Query()); err != nil {
+		logger.Info("failed to parse get params")
+		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
+		return err
 	}
 	return nil
-}
-
-func parseSkipLimit(r *http.Request) (int, int, error) {
-	limitS := r.URL.Query().Get("limit")
-	skipS := r.URL.Query().Get("skip")
-	skip := 0
-	limit := 100
-	if skipS != "" {
-		var err error
-		skip, err = strconv.Atoi(skipS)
-		return 0, 0, fmt.Errorf("invalid skip %q: %v", skipS, err)
-	}
-	if limitS != "" {
-		var err error
-		limit, err = strconv.Atoi(limitS)
-		return 0, 0, fmt.Errorf("invalid limit %q: %s", limitS, err)
-	}
-
-	if skip < 0 {
-		skip = 0
-	}
-
-	if limit <= 0 {
-		limit = defaultFetchLimit
-	}
-	return skip, limit, nil
-}
-
-func parseGetParam(r *http.Request, result interface{}) error {
-	return schema.NewDecoder().Decode(result, r.URL.Query())
 }
 
 func main() {
@@ -367,9 +309,8 @@ func getSignersList(w http.ResponseWriter, _ *http.Request) {
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.DefaultFilter)
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
 	totalSupply, err := backendInstance.TotalSupply(r.Context())
@@ -389,9 +330,9 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
 		CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
 	}
-	bl.Rankings, err = backendInstance.GetRichlist(skip, limit)
+	bl.Rankings, err = backendInstance.GetRichlist(filter)
 	if err != nil {
-		logger.Error("Failed to get rich list", zap.Int("skip", skip), zap.Int("limit", limit), zap.Error(err))
+		logger.Error("Failed to get rich list", zap.Int("skip", filter.Skip), zap.Int("limit", filter.Limit), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -439,20 +380,16 @@ func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
+	var err error
 	address := chi.URLParam(r, "address")
-	inputDataEmpty := parseBool(r, "input_data_empty")
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
-		return
-	}
-	fromTime, toTime, err := parseTime(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.TxsFilter)
+	filter.FromTime = time.Unix(0, 0)
+	filter.ToTime = time.Now()
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
 	transactions := &models.TransactionList{}
-	transactions.Transactions, err = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime, inputDataEmpty)
+	transactions.Transactions, err = backendInstance.GetTransactionList(address, filter)
 	if err != nil {
 		logger.Error("Failed to get txs", zap.String("address", address), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
@@ -462,14 +399,14 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTokenHolders(w http.ResponseWriter, r *http.Request) {
+	var err error
 	contractAddress := chi.URLParam(r, "address")
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.DefaultFilter)
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
 	tokenHolders := &models.TokenHolderList{}
-	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, skip, limit)
+	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, filter)
 	if err != nil {
 		logger.Error("Failed to get token holders", zap.String("address", contractAddress), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
@@ -479,14 +416,14 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 }
 
 func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
+	var err error
 	contractAddress := chi.URLParam(r, "address")
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.DefaultFilter)
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
 	tokens := &models.OwnedTokenList{}
-	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(contractAddress, skip, limit)
+	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(contractAddress, filter)
 	if err != nil {
 		logger.Error("Failed to get owned tokens", zap.String("address", contractAddress), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
@@ -497,18 +434,10 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	tokenTransactions := false
-	token_transactions_param := r.URL.Query().Get("token_transactions")
-	if token_transactions_param != "" && token_transactions_param != "false" {
-		tokenTransactions = true
-	}
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
-		return
-	}
+	filter := new(models.InternalTxFilter)
 	internalTransactions := &models.InternalTransactionsList{}
-	internalTransactions.Transactions, err = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
+	var err error
+	internalTransactions.Transactions, err = backendInstance.GetInternalTransactionsList(contractAddress, filter)
 	if err != nil {
 		logger.Error("Failed to get contract's internal txs list", zap.String("address", contractAddress), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
@@ -615,16 +544,20 @@ func getRpcProvider(w http.ResponseWriter, r *http.Request) {
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	var err error
+	filter := new(models.DefaultFilter)
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
+
 	bl := &models.LightBlockList{}
-	bl.Blocks, err = backendInstance.GetLatestsBlocks(skip, limit)
+	bl.Blocks, err = backendInstance.GetLatestsBlocks(filter)
 	if err != nil {
-		logger.Error("Failed to get latest blocks", zap.Int("skip", skip),
-			zap.Int("limit", limit), zap.Error(err))
+		logger.Error(
+			"Failed to get latest blocks",
+			zap.Int("skip", filter.Skip),
+			zap.Int("limit", filter.Limit), zap.Error(err),
+		)
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -637,16 +570,20 @@ func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'num' parameter %q: %s", numS, err))
 		return
 	}
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.DefaultFilter)
+	if parseGetParam(r, w, filter) != nil {
 		return
 	}
 	transactions := &models.TransactionList{}
-	transactions.Transactions, err = backendInstance.GetBlockTransactionsByNumber(bnum, skip, limit)
+	transactions.Transactions, err = backendInstance.GetBlockTransactionsByNumber(bnum, filter)
 	if err != nil {
-		logger.Error("Failed to get latest blocks", zap.Int64("block", bnum), zap.Int("skip", skip),
-			zap.Int("limit", limit), zap.Error(err))
+		logger.Error(
+			"Failed to get latest blocks",
+			zap.Int64("block", bnum),
+			zap.Int("skip", filter.Skip),
+			zap.Int("limit", filter.Limit),
+			zap.Error(err),
+		)
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -700,9 +637,8 @@ func pingDB(w http.ResponseWriter, r *http.Request) {
 
 func getContractsList(w http.ResponseWriter, r *http.Request) {
 	filter := new(models.ContractsFilter)
-	if err := parseGetParam(r, filter); err != nil {
-		logger.Info("failed to parse get params")
-		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
+	if parseGetParam(r, w, filter) != nil {
+		return
 	}
 	addresses, err := backendInstance.GetContracts(filter)
 	if err != nil {

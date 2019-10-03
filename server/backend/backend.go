@@ -137,8 +137,8 @@ func (self *Backend) GetSignersList() map[common.Address]models.Signer {
 	return self.signers
 }
 
-func (self *Backend) GetRichlist(skip, limit int) ([]*models.Address, error) {
-	return self.mongo.getRichlist(skip, limit, self.lockedAccounts)
+func (self *Backend) GetRichlist(filter *models.DefaultFilter) ([]*models.Address, error) {
+	return self.mongo.getRichlist(filter, self.lockedAccounts)
 
 }
 func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Address, error) {
@@ -171,29 +171,29 @@ func (self *Backend) GetContracts(filter *models.ContractsFilter) ([]*models.Add
 func (self *Backend) GetTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
 	return self.mongo.getTransactionByHash(ctx, hash)
 }
-func (self *Backend) GetTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) ([]*models.Transaction, error) {
+func (self *Backend) GetTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)
 	}
-	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), skip, limit, fromTime, toTime, inputDataEmpty)
+	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), filter)
 }
-func (self *Backend) GetTokenHoldersList(contractAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+func (self *Backend) GetTokenHoldersList(contractAddress string, filter *models.DefaultFilter) ([]*models.TokenHolder, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), skip, limit)
+	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), filter)
 }
-func (self *Backend) GetOwnedTokensList(ownerAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+func (self *Backend) GetOwnedTokensList(ownerAddress string, filter *models.DefaultFilter) ([]*models.TokenHolder, error) {
 	if !common.IsHexAddress(ownerAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", ownerAddress)
 	}
-	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), skip, limit)
+	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
 }
-func (self *Backend) GetInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) ([]*models.InternalTransaction, error) {
+func (self *Backend) GetInternalTransactionsList(contractAddress string, filter *models.InternalTxFilter) ([]*models.InternalTransaction, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), tokenTransactions, skip, limit)
+	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), filter)
 }
 func (self *Backend) GetContract(contractAddress string) (*models.Contract, error) {
 	if !common.IsHexAddress(contractAddress) {
@@ -201,9 +201,9 @@ func (self *Backend) GetContract(contractAddress string) (*models.Contract, erro
 	}
 	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
 }
-func (self *Backend) GetLatestsBlocks(skip, limit int) ([]*models.LightBlock, error) {
+func (self *Backend) GetLatestsBlocks(filter *models.DefaultFilter) ([]*models.LightBlock, error) {
 	var lightBlocks []*models.LightBlock
-	blocks, err := self.mongo.getLatestsBlocks(skip, limit)
+	blocks, err := self.mongo.getLatestsBlocks(filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest blocks: %v", err)
 	}
@@ -212,8 +212,8 @@ func (self *Backend) GetLatestsBlocks(skip, limit int) ([]*models.LightBlock, er
 	}
 	return lightBlocks, nil
 }
-func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, skip, limit int) ([]*models.Transaction, error) {
-	return self.mongo.getBlockTransactionsByNumber(blockNumber, skip, limit)
+func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, filter *models.DefaultFilter) ([]*models.Transaction, error) {
+	return self.mongo.getBlockTransactionsByNumber(blockNumber, filter)
 }
 
 func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) (*models.Block, error) {
