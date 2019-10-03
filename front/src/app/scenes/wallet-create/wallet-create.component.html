@@ -12,8 +12,25 @@
             <div class="form-group">
               <label for="private-key">Private key</label>
               <div class="input-group">
-                <input type="password" class="form-control" id="private-key" [value]="account.privateKey" readonly>
+                <input
+                    [type]="passwordField.type"
+                    class="form-control"
+                    id="private-key"
+                    [value]="account.privateKey"
+                    readonly
+                >
                 <div class="input-group-append">
+                  <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      (click)="passwordField.toggle()"
+                  >
+                    <img
+                        src="../../../../assets/icons/{{passwordField.icon}}"
+                        height="14px"
+                        [alt]="passwordField.alt"
+                    >
+                  </button>
                   <button
                       class="btn"
                       type="button"
@@ -23,7 +40,7 @@
                       [cbContent]="account.privateKey"
                       title="Copy to clipboard"
                   >
-                    <img src="../../../assets/icons/copy.svg" alt="Copy">
+                    <img src="../../../assets/icons/copy.svg" alt="Copy" height="16px">
                   </button>
                 </div>
               </div>
@@ -42,7 +59,7 @@
                       [cbContent]="account.address"
                       title="Copy to clipboard"
                   >
-                    <img src="../../../assets/icons/copy.svg" alt="Copy">
+                    <img src="../../../assets/icons/copy.svg" alt="Copy" height="16px">
                   </button>
                 </div>
               </div>
