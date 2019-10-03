@@ -55,6 +55,7 @@ export class ContractsComponent implements OnInit, OnDestroy {
   isLoading = false;
 
   filter: FormGroup = this._fb.group({
+    contract_name: [''],
     token_name: [''],
     token_symbol: [''],
     erc_type: [''],

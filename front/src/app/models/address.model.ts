@@ -1,5 +1,6 @@
 import {InterfaceName} from '../utils/enums';
 import {SignerDetails} from './signer-node';
+import {Contract} from './contract.model';
 
 export class Address {
   address: string;
@@ -20,4 +21,5 @@ export class Address {
   number_of_token_transactions: number;
   updated_at: Date;
   signerDetails?: SignerDetails;
+  attached_contract: Contract;
 }
