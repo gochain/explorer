@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -34,19 +35,12 @@ type MongoBackend struct {
 }
 
 // New create new rpc client with given url
-func NewMongoClient(host, rpcUrl, dbName string, lgr *zap.Logger) *MongoBackend {
-	client, err := goclient.Dial(rpcUrl)
-	if err != nil {
-		lgr.Fatal("main", zap.Error(err))
-	}
-	Host := []string{
-		host,
-	}
+func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
-		Addrs: Host,
+		Addrs: []string{host},
 	})
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to dial mongo: %v", err)
 	}
 	importer := new(MongoBackend)
 	importer.Lgr = lgr
@@ -55,23 +49,23 @@ func NewMongoClient(host, rpcUrl, dbName string, lgr *zap.Logger) *MongoBackend 
 	importer.goClient = client
 	importer.createIndexes()
 
-	return importer
+	return importer, nil
 
 }
 func (self *MongoBackend) PingDB() error {
 	return self.mongoSession.Ping()
 }
-func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) *models.Transaction {
+func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, error) {
 	from, err := self.goClient.TransactionSender(ctx, tx, block.Header().Hash(), 0)
 	if err != nil {
-		self.Lgr.Fatal("parseTx", zap.Error(err))
+		return nil, fmt.Errorf("failed to get tx sender: %v", err)
 	}
 	gas := tx.Gas()
 	to := ""
 	if tx.To() != nil {
 		to = tx.To().Hex()
 	}
-	self.Lgr.Debug("parseTx", zap.Stringer("tx", tx.Hash()))
+	self.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
 	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
@@ -87,7 +81,7 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
 		InputData:       hex.EncodeToString(tx.Data()[:]),
 		InputDataEmpty:  InputDataEmpty,
-	}
+	}, nil
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	var transactions []string
@@ -116,245 +110,175 @@ func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	}
 }
 
-func (self *MongoBackend) createIndexes() {
-	err := self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
+func (self *MongoBackend) createIndexes() error {
+	type CIndex struct {
+		c     string
+		index mgo.Index
 	}
-
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
+	for i, cIdx := range []CIndex{
+		{c: "Transactions", index: mgo.Index{Key: []string{"tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "Transactions", index: mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true}},
+		{c: "Transactions", index: mgo.Index{Key: []string{"from", "created_at", "input_data_empty"}, Background: true}},
+		{c: "Transactions", index: mgo.Index{Key: []string{"to", "created_at", "input_data_empty"}, Background: true}},
+		{c: "Transactions", index: mgo.Index{Key: []string{"-created_at"}, Background: true}},
+		{c: "Transactions", index: mgo.Index{Key: []string{"contract_address"}, Background: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"-number"}, Background: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"miner"}, Background: true, Sparse: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true}},
+		{c: "ActiveAddress", index: mgo.Index{Key: []string{"updated_at"}, Background: true, Sparse: true}},
+		{c: "ActiveAddress", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "Address", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "Address", index: mgo.Index{Key: []string{"contract"}, Background: true}},
+		{c: "Address", index: mgo.Index{Key: []string{"-balance_float", "address"}, Background: true, Sparse: true}},
+		{c: "TokenHolders", index: mgo.Index{Key: []string{"contract_address", "token_holder_address"}, Background: true, Sparse: true}},
+		{c: "TokenHolders", index: mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true}},
+		{c: "TokenHolders", index: mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"contract_address", "from_address", "to_address"}, Background: true, Sparse: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"from_address", "block_number"}, Background: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"to_address", "block_number"}, Background: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true}},
+		{c: "Stats", index: mgo.Index{Key: []string{"-updated_at"}, Background: true, Sparse: true}},
+		{c: "Contracts", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+	} {
+		if err := self.mongo.C(cIdx.c).EnsureIndex(cIdx.index); err != nil {
+			return fmt.Errorf("failed to create index %d for collection %q: %v", i, cIdx.c, err)
+		}
 	}
-
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"from", "created_at", "input_data_empty"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"to", "created_at", "input_data_empty"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"-created_at"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Transactions").EnsureIndex(mgo.Index{Key: []string{"contract_address"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"number"}, Unique: true, DropDups: true, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"-number"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"miner"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Blocks").EnsureIndex(mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("ActiveAddress").EnsureIndex(mgo.Index{Key: []string{"updated_at"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("ActiveAddress").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"contract"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Addresses").EnsureIndex(mgo.Index{Key: []string{"-balance_float", "address"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"contract_address", "token_holder_address"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("TokensHolders").EnsureIndex(mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"contract_address", "from_address", "to_address"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"from_address", "block_number"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"to_address", "block_number"}, Background: true})
-	if err != nil {
-		panic(err)
-	}
-	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("InternalTransactions").EnsureIndex(mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Stats").EnsureIndex(mgo.Index{Key: []string{"-updated_at"}, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
-
-	err = self.mongo.C("Contracts").EnsureIndex(mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true})
-	if err != nil {
-		panic(err)
-	}
+	return nil
 }
 
-func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) *models.Block {
+func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (*models.Block, error) {
 	lgr := self.Lgr.With(zap.Int64("number", block.Header().Number.Int64()),
 		zap.Stringer("hash", block.Hash()), zap.Stringer("parentHash", block.ParentHash()))
 	lgr.Debug("Importing block")
 	b := self.parseBlock(block)
 	_, err := self.mongo.C("Blocks").Upsert(bson.M{"number": b.Number}, b)
 	if err != nil {
-		lgr.Fatal("Failed to upsert block", zap.Error(err), zap.Reflect("model", b))
+		return nil, fmt.Errorf("failed to upsert block: %v", err)
 	}
 	// deleting all txs belong to this block if any exist
 	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": b.Number})
 	if err != nil {
-		lgr.Fatal("Failed to remove old txs", zap.Error(err))
+		return nil, fmt.Errorf("failed to remove old txs: %v", err)
 	}
 	for _, tx := range block.Transactions() {
-		self.importTx(ctx, tx, block)
+		if err := self.importTx(ctx, tx, block); err != nil {
+			return nil, fmt.Errorf("failed to import tx: %v", err)
+		}
 	}
-	self.UpdateActiveAddress(block.Coinbase().Hex())
-	return b
+	if err := self.UpdateActiveAddress(block.Coinbase().Hex()); err != nil {
+		return nil, fmt.Errorf("failed to update active signer address: %s", err)
+	}
+	return b, nil
 
 }
 
-func (self *MongoBackend) UpdateActiveAddress(address string) {
+func (self *MongoBackend) UpdateActiveAddress(address string) error {
 	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
-	if err != nil {
-		self.Lgr.Fatal("Failed to upsert active address", zap.String("address", address), zap.Error(err))
-	}
+	return err
 }
 
-func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) {
+func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) error {
 	lgr := self.Lgr.With(zap.Stringer("tx", tx.Hash()))
 	lgr.Debug("Importing tx")
-	transaction := self.parseTx(ctx, tx, block)
+	transaction, err := self.parseTx(ctx, tx, block)
+	if err != nil {
+		return fmt.Errorf("failed to parse tx: %v", err)
+	}
 
 	toAddress := transaction.To
 	if transaction.To == "" {
 		lgr.Debug("Importing contract creation")
 		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
-		if err == nil {
-			contractAddress := receipt.ContractAddress.String()
-			if contractAddress != "0x0000000000000000000000000000000000000000" {
-				transaction.ContractAddress = contractAddress
-			}
-			transaction.Status = false
-			if receipt.Status == 1 {
-				transaction.Status = true
-			}
-			toAddress = transaction.ContractAddress
-		} else {
-			lgr.Error("Failed to get tx receipt", zap.Error(err))
+		if err != nil {
+			return fmt.Errorf("failed to get tx receipt: %v", err)
 		}
+		contractAddress := receipt.ContractAddress.String()
+		if contractAddress != "0x0000000000000000000000000000000000000000" {
+			transaction.ContractAddress = contractAddress
+		}
+		transaction.Status = false
+		if receipt.Status == 1 {
+			transaction.Status = true
+		}
+		toAddress = transaction.ContractAddress
 	}
 
-	_, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction)
-	if err != nil {
-		lgr.Fatal("Failed to upsert tx", zap.Error(err), zap.Reflect("model", transaction))
+	if _, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
+		return fmt.Errorf("failed to upsert tx: %v", err)
 	}
 
-	self.UpdateActiveAddress(toAddress)
-	self.UpdateActiveAddress(transaction.From)
+	if err := self.UpdateActiveAddress(toAddress); err != nil {
+		return fmt.Errorf("failed to update active to address: %s", err)
+	}
+	if err := self.UpdateActiveAddress(transaction.From); err != nil {
+		return fmt.Errorf("failed to update active from address: %s", err)
+	}
+	return nil
 }
 
 // needReloadParent returns true if the parent block is missing or does not match the hash from this block number.
-func (self *MongoBackend) needReloadParent(blockNumber int64) bool {
-	block := self.getBlockByNumber(blockNumber)
+func (self *MongoBackend) needReloadParent(blockNumber int64) (bool, error) {
+	block, err := self.getBlockByNumber(blockNumber)
+	if err != nil {
+		return false, err
+	}
 	if block == nil {
-		self.Lgr.Debug("Checking parent - main block not found")
-		return true
+		self.Lgr.Debug("Checking parent - main block not found", zap.Int64("block", blockNumber))
+		return true, nil
 	}
 	parentBlockNumber := (block.Number - 1)
-	parentBlock := self.getBlockByNumber(parentBlockNumber)
+	parentBlock, err := self.getBlockByNumber(parentBlockNumber)
+	if err != nil {
+		return false, fmt.Errorf("failed to get parent: %v", err)
+	}
 	if parentBlock != nil {
 		self.Lgr.Debug("Checking parent", zap.Int64("block.number", block.Number), zap.String("block.parentHash", block.ParentHash),
 			zap.Int64("parent.number", parentBlock.Number), zap.String("parent.hash", parentBlock.BlockHash))
 	}
-	return parentBlock == nil || (block.ParentHash != parentBlock.BlockHash)
+	return parentBlock == nil || (block.ParentHash != parentBlock.BlockHash), nil
 
 }
 
-func (self *MongoBackend) transactionsConsistent(blockNumber int64) bool {
-	block := self.getBlockByNumber(blockNumber)
-	if block != nil {
-		transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
-		if err != nil {
-			self.Lgr.Fatal("Failed to count txs", zap.Int64("blockNumber", blockNumber), zap.Error(err))
-		}
-		self.Lgr.Debug("Checking tx count", zap.Int64("blockNumber", blockNumber),
-			zap.Int("block", block.TxCount), zap.Int("db", transactionCounter))
-		return transactionCounter == block.TxCount
+// transactionsConsistent returns true if the block count matches the number of transactions with that block number.
+func (self *MongoBackend) transactionsConsistent(blockNumber int64) (bool, error) {
+	block, err := self.getBlockByNumber(blockNumber)
+	if err != nil {
+		return false, fmt.Errorf("failed to get block: %v", err)
 	}
-	return true
+	if block == nil {
+		return false, errors.New("block not found")
+	}
+	txCount, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
+	if err != nil {
+		return false, fmt.Errorf("failed to count txs in db: %v", err)
+	}
+	self.Lgr.Debug("Checking tx count", zap.Int64("blockNumber", blockNumber),
+		zap.Int("block.count", block.TxCount), zap.Int("db.count", txCount))
+	return txCount == block.TxCount, nil
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) *models.Address {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	lgr := self.Lgr.With(zap.String("address", address))
 	lgr.Debug("Updating address", zap.String("balance", balanceGoString), zap.Float64("balanceFloat", balanceGoFloat))
 	tokenHoldersCounter, err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
-		lgr.Fatal("Failed to count token holders", zap.Error(err))
+		return nil, fmt.Errorf("failed to count token holders: %v", err)
 	}
 
 	internalTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"contract_address": address}).Count()
 	if err != nil {
-		lgr.Fatal("Failed to count internal txs", zap.Error(err))
+		return nil, fmt.Errorf("failed to count internal txs: %v", err)
 	}
 
 	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
 	if err != nil {
-		lgr.Fatal("Failed to count held token txs", zap.Error(err))
+		return nil, fmt.Errorf("failed to count held token txs: %v", err)
 	}
 
 	addressM := &models.Address{Address: address,
@@ -377,12 +301,12 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	}
 	_, err = self.mongo.C("Addresses").Upsert(bson.M{"address": address}, addressM)
 	if err != nil {
-		lgr.Fatal("Failed to upsert address", zap.Error(err), zap.Reflect("model", addressM))
+		return nil, fmt.Errorf("failed to upsert address: %v", err)
 	}
-	return addressM
+	return addressM, nil
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) *models.TokenHolder {
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
 	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
 	self.Lgr.Info("Updating token holder", zap.String("contractAddress", contractAddress), zap.String("tokenAddress", tokenHolderAddress), zap.String("balance", token.Balance.String()), zap.String("Balance int", balanceInt.String()))
 	tokenHolder := &models.TokenHolder{
@@ -395,14 +319,13 @@ func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress 
 		BalanceInt:         balanceInt.Int64()}
 	_, err := self.mongo.C("TokensHolders").Upsert(bson.M{"contract_address": contractAddress, "token_holder_address": tokenHolderAddress}, tokenHolder)
 	if err != nil {
-		self.Lgr.Fatal("importTokenHolder", zap.Error(err))
+		return nil, fmt.Errorf("failed to upsert token holders: %v", err)
 	}
-	return tokenHolder
+	return tokenHolder, nil
 
 }
 
-func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent, createdAt time.Time) *models.InternalTransaction {
-
+func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent, createdAt time.Time) (*models.InternalTransaction, error) {
 	internalTransaction := &models.InternalTransaction{
 		Contract:        contractAddress,
 		From:            transferEvent.From.String(),
@@ -415,115 +338,113 @@ func (self *MongoBackend) importInternalTransaction(contractAddress string, tran
 	}
 	_, err := self.mongo.C("InternalTransactions").Upsert(bson.M{"transaction_hash": transferEvent.TransactionHash}, internalTransaction)
 	if err != nil {
-		self.Lgr.Fatal("Failed to upsert internal tx", zap.Error(err), zap.Reflect("model", internalTransaction))
+		return nil, fmt.Errorf("failed to upsert internal txs: %v", zap.Error(err))
 	}
-	return internalTransaction
+	return internalTransaction, nil
 }
 
-func (self *MongoBackend) importContract(contractAddress string, byteCode string) {
+func (self *MongoBackend) importContract(contractAddress string, byteCode string) error {
 	//https://stackoverflow.com/questions/43278696/golang-mgo-insert-or-update-not-working-as-expected/43278832
 	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress, "byte_code": byteCode, "created_at": time.Now()}})
 	if err != nil {
-		self.Lgr.Fatal("Failed to upsert contract", zap.Error(err))
+		return fmt.Errorf("failed to upsert contract: %v", err)
 	}
+	return nil
 }
 
-func (self *MongoBackend) getBlockByNumber(blockNumber int64) *models.Block {
+func (self *MongoBackend) getBlockByNumber(blockNumber int64) (*models.Block, error) {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil
+			return nil, nil
 		}
-		self.Lgr.Error("Failed to get block by number", zap.Int64("block", blockNumber), zap.Error(err))
-		return nil
+		return nil, fmt.Errorf("failed to get block: %v", err)
 	}
-	return &c
+	return &c, nil
 }
 
-func (self *MongoBackend) getBlockByHash(blockHash string) *models.Block {
+func (self *MongoBackend) getBlockByHash(blockHash string) (*models.Block, error) {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"hash": blockHash}).Select(bson.M{"transactions": 0}).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil
+			return nil, nil
 		}
-		self.Lgr.Error("Failed to get block by hash", zap.String("block", blockHash), zap.Error(err))
-		return nil
+		return nil, fmt.Errorf("failed to get block by hash: %v", err)
 	}
-	return &c
+	return &c, nil
 }
 
-func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, limit int) []*models.Transaction {
+func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, limit int) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Skip(skip).Limit(limit).All(&transactions)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil
+			return nil, nil
 		}
-		self.Lgr.Error("Failed to get txs for block", zap.Int64("block", blockNumber), zap.Error(err))
+		return nil, fmt.Errorf("failed to get txs for block: %v", err)
 	}
-	return transactions
+	return transactions, nil
 }
 
-func (self *MongoBackend) getLatestsBlocks(skip, limit int) []*models.LightBlock {
+func (self *MongoBackend) getLatestsBlocks(skip, limit int) ([]*models.LightBlock, error) {
 	var blocks []*models.LightBlock
 	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).Skip(skip).Limit(limit).All(&blocks)
 	if err != nil {
-		self.Lgr.Error("Failed to get latest blocks", zap.Int("skip", skip), zap.Int("limit", limit), zap.Error(err))
-		return nil
+		return nil, fmt.Errorf("failed to get latest blocks: %v", err)
 	}
-	return blocks
+	return blocks, nil
 }
 
-func (self *MongoBackend) getActiveAddresses(fromDate time.Time) []*models.ActiveAddress {
+func (self *MongoBackend) getActiveAddresses(fromDate time.Time) ([]*models.ActiveAddress, error) {
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)
 	if err != nil {
-		self.Lgr.Error("Failed to get active addresses", zap.Time("from", fromDate), zap.Error(err))
+		return nil, fmt.Errorf("failed to get active addresses: %v", err)
 	}
-	return addresses
+	return addresses, nil
 }
 
-func (self *MongoBackend) isContract(address string) bool {
+func (self *MongoBackend) isContract(address string) (bool, error) {
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).Select(bson.M{"contract": 1}).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return false
+			return false, nil
 		}
-		self.Lgr.Error("Failed to check if contract", zap.String("address", address), zap.Error(err))
-		return false
+		return false, fmt.Errorf("failed to check if contract: %v", err)
 	}
-	return c.Contract
+	return c.Contract, nil
 }
 
-func (self *MongoBackend) getAddressByHash(address string) *models.Address {
+func (self *MongoBackend) getAddressByHash(address string) (*models.Address, error) {
 	var c models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"address": address}).One(&c)
 	if err != nil {
-		self.Lgr.Error("Failed to get address", zap.String("address", address), zap.Error(err))
-		return nil
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get address: %v", err)
 	}
 	//lazy calculation for number of transactions
 	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
 	if err != nil {
-		self.Lgr.Fatal("Failed to get txs", zap.String("address", address), zap.Error(err))
+		return nil, fmt.Errorf("failed to get txs: %v", err)
 	}
 	c.NumberOfTransactions = transactionCounter
-	return &c
+	return &c, nil
 }
 
-func (self *MongoBackend) getTransactionByHash(ctx context.Context, transactionHash string) *models.Transaction {
+func (self *MongoBackend) getTransactionByHash(ctx context.Context, transactionHash string) (*models.Transaction, error) {
 	lgr := self.Lgr.With(zap.String("tx", transactionHash))
 	var c models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil
+			return nil, nil
 		}
-		lgr.Error("Failed to get tx", zap.Error(err))
-		return nil
+		return nil, fmt.Errorf("failed to get tx: %v", err)
 	}
 	// lazy calculation for receipt
 	if !c.ReceiptReceived {
@@ -549,14 +470,14 @@ func (self *MongoBackend) getTransactionByHash(ctx context.Context, transactionH
 			c.Logs = string(jsonValue)
 			_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": c.TxHash}, c)
 			if err != nil {
-				lgr.Error("Failed to upsert tx", zap.Error(err))
+				return nil, fmt.Errorf("failed to upsert tx: %v", err)
 			}
 		}
 	}
-	return &c
+	return &c, nil
 }
 
-func (self *MongoBackend) getTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) []*models.Transaction {
+func (self *MongoBackend) getTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
 	var err error
 	if inputDataEmpty != nil {
@@ -565,30 +486,29 @@ func (self *MongoBackend) getTransactionList(address string, skip, limit int, fr
 		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
 	}
 	if err != nil {
-		self.Lgr.Error("Failed to get transaction list", zap.String("address", address),
-			zap.Time("from", fromTime), zap.Time("to", toTime), zap.Error(err))
+		return nil, fmt.Errorf("failed to get tx list: %v", err)
 	}
-	return transactions
+	return transactions, nil
 }
 
-func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limit int) []*models.TokenHolder {
+func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limit int) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
-		self.Lgr.Error("Failed to get token holders list", zap.String("address", contractAddress), zap.Error(err))
+		return nil, fmt.Errorf("failed to get token holders list: %v", err)
 	}
-	return tokenHoldersList
+	return tokenHoldersList, nil
 }
-func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit int) []*models.TokenHolder {
+func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit int) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").Find(bson.M{"token_holder_address": ownerAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
 	if err != nil {
-		self.Lgr.Error("Failed to get owned tokens list", zap.String("address", ownerAddress), zap.Error(err))
+		return nil, fmt.Errorf("failed to get owned tokens list: %v", err)
 	}
-	return tokenHoldersList
+	return tokenHoldersList, nil
 }
 
-func (self *MongoBackend) getInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) []*models.InternalTransaction {
+func (self *MongoBackend) getInternalTransactionsList(contractAddress string, tokenTransactions bool, skip, limit int) ([]*models.InternalTransaction, error) {
 	var internalTransactionsList []*models.InternalTransaction
 	var query bson.M
 	if tokenTransactions {
@@ -598,35 +518,36 @@ func (self *MongoBackend) getInternalTransactionsList(contractAddress string, to
 	}
 	err := self.mongo.C("InternalTransactions").Find(query).Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
 	if err != nil {
-		self.Lgr.Error("Failed to get internal txs list", zap.String("address", contractAddress), zap.Error(err))
+		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}
-	return internalTransactionsList
+	return internalTransactionsList, nil
 }
 
-func (self *MongoBackend) getContract(contractAddress string) *models.Contract {
+func (self *MongoBackend) getContract(contractAddress string) (*models.Contract, error) {
 	var contract *models.Contract
 	err := self.mongo.C("Contracts").Find(bson.M{"address": contractAddress}).One(&contract)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return nil
+			return nil, nil
 		}
-		self.Lgr.Error("Failed to get contract", zap.String("contractAddress", contractAddress), zap.Error(err))
+		return nil, fmt.Errorf("failed to get contract: %v", err)
 	}
-	return contract
+	return contract, nil
 }
 
-func (self *MongoBackend) getContractBlock(contractAddress string) int64 {
+func (self *MongoBackend) getContractBlock(contractAddress string) (int64, error) {
 	var transaction *models.Transaction
 	err := self.mongo.C("Transactions").Find(bson.M{"contract_address": contractAddress}).One(&transaction)
 	if err != nil {
-		self.Lgr.Error("Failed to get tx by contract address", zap.String("address", contractAddress), zap.Error(err))
+		if err == mgo.ErrNotFound {
+			return 0, errors.New("tx that deployed contract not found")
+		}
+		return 0, fmt.Errorf("failed to get tx that deployed contract: %v", err)
 	}
-	if transaction != nil {
-		return transaction.BlockNumber
-	} else {
-		return 0
+	if transaction == nil {
+		return 0, errors.New("tx that deployed contract not found")
 	}
-
+	return transaction.BlockNumber, nil
 }
 
 func (self *MongoBackend) updateContract(contract *models.Contract) error {
@@ -637,7 +558,7 @@ func (self *MongoBackend) updateContract(contract *models.Contract) error {
 	return nil
 }
 
-func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models.Address {
+func (self *MongoBackend) getContracts(filter *models.ContractsFilter) ([]*models.Address, error) {
 	var addresses []*models.Address
 	findQuery := bson.M{"contract": true}
 	if filter.TokenName != "" {
@@ -693,18 +614,18 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) []*models
 		Pipe(query).
 		All(&addresses)
 	if err != nil {
-		self.Lgr.Error("Failed to query contracts", zap.Error(err))
+		return nil, fmt.Errorf("failed to query contracts: %v", err)
 	}
-	return addresses
+	return addresses, nil
 }
 
-func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) []*models.Address {
+func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) ([]*models.Address, error) {
 	var addresses []*models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
 	if err != nil {
-		self.Lgr.Error("Failed to get rich list", zap.Error(err))
+		return nil, fmt.Errorf("failed to get rich list: %v", err)
 	}
-	return addresses
+	return addresses, nil
 }
 func (self *MongoBackend) updateStats() (*models.Stats, error) {
 	numOfTotalTransactions, err := self.mongo.C("Transactions").Find(nil).Count()
@@ -727,59 +648,64 @@ func (self *MongoBackend) updateStats() (*models.Stats, error) {
 	}
 	return stats, self.mongo.C("Stats").Insert(stats)
 }
-func (self *MongoBackend) getStats() *models.Stats {
+func (self *MongoBackend) getStats() (*models.Stats, error) {
 	var s *models.Stats
 	err := self.mongo.C("Stats").Find(nil).Sort("-updated_at").One(&s)
 	if err != nil {
-		self.Lgr.Error("Failed to get stats", zap.Error(err))
-		s = new(models.Stats)
+		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
-	return s
+	return s, nil
 }
 
-func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration) []models.SignerStats {
+func (self *MongoBackend) getSignerStatsForRange(endTime time.Time, dur time.Duration) ([]models.SignerStats, error) {
 	var resp []bson.M
 	stats := []models.SignerStats{}
 	queryDayStats := []bson.M{bson.M{"$match": bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}}, bson.M{"$group": bson.M{"_id": "$miner", "count": bson.M{"$sum": 1}}}}
-	pipe := self.mongo.C("Blocks").Pipe(queryDayStats)
-	err := pipe.All(&resp)
+	err := self.mongo.C("Blocks").Pipe(queryDayStats).All(&resp)
 	if err != nil {
-		self.Lgr.Info("Cannot run pipe", zap.Error(err))
+		return nil, fmt.Errorf("failed to query signers stats: %v", err)
 	}
 	for _, el := range resp {
-		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(el["_id"].(string)), BlocksCount: el["count"].(int)}
+		addr := el["_id"].(string)
+		if !common.IsHexAddress(addr) {
+			return nil, fmt.Errorf("invalid hex address: %s", addr)
+		}
+		signerStats := models.SignerStats{SignerAddress: common.HexToAddress(addr), BlocksCount: el["count"].(int)}
 		stats = append(stats, signerStats)
 	}
-	return stats
+	return stats, nil
 }
 
-func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) models.BlockRange {
+func (self *MongoBackend) getBlockRange(endTime time.Time, dur time.Duration) (models.BlockRange, error) {
 	var startBlock, endBlock models.Block
-	var resp models.BlockRange
 	err := self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("created_at").One(&startBlock)
 	if err != nil {
-		self.Lgr.Error("Failed to get start block number", zap.Error(err))
-	} else {
-		resp.StartBlock = startBlock.Number
+		return models.BlockRange{}, fmt.Errorf("failed to get start block number: %v", err)
 	}
 	err = self.mongo.C("Blocks").Find(bson.M{"created_at": bson.M{"$gte": endTime.Add(dur)}}).Select(bson.M{"number": 1}).Sort("-created_at").One(&endBlock)
 	if err != nil {
-		self.Lgr.Error("Failed to get end block number", zap.Error(err))
-	} else {
-		resp.EndBlock = endBlock.Number
+		return models.BlockRange{}, fmt.Errorf("failed to get end block number: %v", err)
 	}
-	return resp
+	return models.BlockRange{StartBlock: startBlock.Number, EndBlock: endBlock.Number}, nil
 }
 
-func (self *MongoBackend) getSignersStats() []models.SignersStats {
+func (self *MongoBackend) getSignersStats() ([]models.SignersStats, error) {
 	var stats []models.SignersStats
 	const day = -24 * time.Hour
 	kvs := map[string]time.Duration{"daily": day, "weekly": 7 * day, "monthly": 30 * day}
 	endTime := time.Now()
 	for k, v := range kvs {
-		stats = append(stats, models.SignersStats{BlockRange: self.getBlockRange(endTime, v), SignerStats: self.getSignerStatsForRange(endTime, v), Range: k})
+		blockRange, err := self.getBlockRange(endTime, v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get block range: %v", err)
+		}
+		signerStats, err := self.getSignerStatsForRange(endTime, v)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get signer stats: %v", err)
+		}
+		stats = append(stats, models.SignersStats{BlockRange: blockRange, SignerStats: signerStats, Range: k})
 	}
-	return stats
+	return stats, nil
 }
 
 func (self *MongoBackend) cleanUp() {

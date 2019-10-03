@@ -27,6 +27,7 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var backendInstance *backend.Backend
@@ -73,16 +74,20 @@ func parseBool(r *http.Request, name string) (boolean *bool) {
 	return nil
 }
 
-func parseSkipLimit(r *http.Request) (int, int) {
+func parseSkipLimit(r *http.Request) (int, int, error) {
 	limitS := r.URL.Query().Get("limit")
 	skipS := r.URL.Query().Get("skip")
 	skip := 0
 	limit := 100
 	if skipS != "" {
-		skip, _ = strconv.Atoi(skipS)
+		var err error
+		skip, err = strconv.Atoi(skipS)
+		return 0, 0, fmt.Errorf("invalid skip %q: %v", skipS, err)
 	}
 	if limitS != "" {
-		limit, _ = strconv.Atoi(limitS)
+		var err error
+		limit, err = strconv.Atoi(limitS)
+		return 0, 0, fmt.Errorf("invalid limit %q: %s", limitS, err)
 	}
 
 	if skip < 0 {
@@ -92,21 +97,11 @@ func parseSkipLimit(r *http.Request) (int, int) {
 	if limit <= 0 {
 		limit = defaultFetchLimit
 	}
-	return skip, limit
+	return skip, limit, nil
 }
 
 func parseGetParam(r *http.Request, result interface{}) error {
 	return schema.NewDecoder().Decode(result, r.URL.Query())
-}
-
-func parseBlockNumber(r *http.Request) (int, error) {
-	bnumS := chi.URLParam(r, "num")
-	bnum, err := strconv.Atoi(bnumS)
-	if err != nil {
-		logger.Error("Failed to parse integer", zap.Error(err), zap.String("num", bnumS))
-		return 0, err
-	}
-	return bnum, nil
 }
 
 func main() {
@@ -164,6 +159,10 @@ func main() {
 			Name:  "locked-accounts",
 			Usage: "accounts with locked funds to exclude from rich list and circulating supply",
 		},
+		cli.StringFlag{
+			Name:  "log-level",
+			Usage: "Minimum log level to include. Lower levels will be discarded. (debug, info, warn, error, dpanic, panic, fatal)",
+		},
 	}
 
 	ctx, cancelFn := context.WithCancel(context.Background())
@@ -175,16 +174,25 @@ func main() {
 		}
 	}()
 
-	app.Action = func(c *cli.Context) error {
-		var err error
-		cfg := zapdriver.NewProductionConfig()
-		cfg.EncoderConfig.TimeKey = "timestamp"
-		logger, err = cfg.Build()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
-			os.Exit(1)
-		}
+	cfg := zapdriver.NewProductionConfig()
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	var err error
+	logger, err = cfg.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Sync()
 
+	app.Action = func(c *cli.Context) error {
+		if c.IsSet("log-level") {
+			var lvl zapcore.Level
+			s := c.String("log-level")
+			if err := lvl.Set(s); err != nil {
+				return fmt.Errorf("invalid log-level %q: %v", s, err)
+			}
+			cfg.Level.SetLevel(lvl)
+		}
 		lockedAccounts := c.StringSlice("locked-accounts")
 		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
@@ -215,7 +223,7 @@ func main() {
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
 		r.Use(middleware.RealIP)
-		r.Use(middleware.Logger)
+		r.Use(middleware.RequestLogger(&zapLogFormatter{logger}))
 		r.Use(middleware.Recoverer)
 		cors2 := cors.New(cors.Options{
 			// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
@@ -289,11 +297,11 @@ func main() {
 		return server.ListenAndServe()
 
 	}
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
-		logger.Fatal("Run", zap.Error(err))
+		logger.Fatal("Fatal error", zap.Error(err))
 	}
-
+	logger.Info("Stopping")
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
@@ -302,6 +310,7 @@ func getTotalSupply(w http.ResponseWriter, r *http.Request) {
 		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
 		w.Write([]byte(total.FloatString(18)))
 	} else {
+		logger.Error("Failed to get total supply", zap.Error(err))
 		writeJSON(w, http.StatusInternalServerError, err)
 	}
 }
@@ -312,6 +321,7 @@ func getCirculating(w http.ResponseWriter, r *http.Request) {
 		circulating := new(big.Rat).SetFrac(circulatingSupply, wei) // return in GO instead of wei
 		w.Write([]byte(circulating.FloatString(18)))
 	} else {
+		logger.Error("Failed to get circulating supply", zap.Error(err))
 		writeJSON(w, http.StatusInternalServerError, err)
 	}
 
@@ -332,27 +342,45 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, wwwRoot+"index.html")
 }
 
-func getCurrentStats(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, backendInstance.GetStats())
+func getCurrentStats(w http.ResponseWriter, _ *http.Request) {
+	stats, err := backendInstance.GetStats()
+	if err != nil {
+		logger.Error("Failed to get stats", zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
 }
 
-func getSignersStats(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, backendInstance.GetSignersStats())
+func getSignersStats(w http.ResponseWriter, _ *http.Request) {
+	stats, err := backendInstance.GetSignersStats()
+	if err != nil {
+		logger.Error("Failed to get signer stats", zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
 }
 
-func getSignersList(w http.ResponseWriter, r *http.Request) {
+func getSignersList(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, backendInstance.GetSignersList())
 }
 
 func getRichlist(w http.ResponseWriter, r *http.Request) {
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
 	totalSupply, err := backendInstance.TotalSupply(r.Context())
 	if err != nil {
+		logger.Error("Failed to get total supply", zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	skip, limit := parseSkipLimit(r)
 	circulatingSupply, err := backendInstance.CirculatingSupply(r.Context())
 	if err != nil {
+		logger.Error("Failed to get circulating supply", zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -361,15 +389,20 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 		TotalSupply:       new(big.Rat).SetFrac(totalSupply, wei).FloatString(18),
 		CirculatingSupply: new(big.Rat).SetFrac(circulatingSupply, wei).FloatString(18),
 	}
-	bl.Rankings = backendInstance.GetRichlist(skip, limit)
+	bl.Rankings, err = backendInstance.GetRichlist(skip, limit)
+	if err != nil {
+		logger.Error("Failed to get rich list", zap.Int("skip", skip), zap.Int("limit", limit), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, bl)
 }
 
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
-	logger.Info("looking up address", zap.String("address", addressHash))
 	address, err := backendInstance.GetAddressByHash(r.Context(), addressHash)
 	if err != nil {
+		logger.Error("Failed to get address", zap.String("address", addressHash), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -378,14 +411,26 @@ func getAddress(w http.ResponseWriter, r *http.Request) {
 
 func getTransaction(w http.ResponseWriter, r *http.Request) {
 	transactionHash := chi.URLParam(r, "hash")
-	logger.Info("looking up transaction", zap.String("transaction", transactionHash))
-	transaction := backendInstance.GetTransactionByHash(r.Context(), transactionHash)
+	transaction, err := backendInstance.GetTransactionByHash(r.Context(), transactionHash)
+	if err != nil {
+		logger.Error("Failed to get tx", zap.String("address", transactionHash), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if transaction == nil {
+		writeJSON(w, http.StatusNotFound, nil)
+	}
 	writeJSON(w, http.StatusOK, transaction)
 }
 
 func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
-	tx := backendInstance.GetTransactionByHash(r.Context(), hash)
+	tx, err := backendInstance.GetTransactionByHash(r.Context(), hash)
+	if err != nil {
+		logger.Error("Failed to get tx", zap.String("address", hash), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	if tx != nil {
 		writeJSON(w, http.StatusOK, nil)
 	} else {
@@ -396,37 +441,57 @@ func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
 	inputDataEmpty := parseBool(r, "input_data_empty")
-	skip, limit := parseSkipLimit(r)
-	fromTime, toTime, err := parseTime(r)
-	if err == nil {
-		transactions := &models.TransactionList{
-			Transactions: []*models.Transaction{},
-		}
-		transactions.Transactions = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime, inputDataEmpty)
-		writeJSON(w, http.StatusOK, transactions)
-	} else {
-		logger.Info("getAddressTransactions", zap.Error(err))
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
+	fromTime, toTime, err := parseTime(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
+	}
+	transactions := &models.TransactionList{}
+	transactions.Transactions, err = backendInstance.GetTransactionList(address, skip, limit, fromTime, toTime, inputDataEmpty)
+	if err != nil {
+		logger.Error("Failed to get txs", zap.String("address", address), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, transactions)
 }
 
 func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	skip, limit := parseSkipLimit(r)
-	tokenHolders := &models.TokenHolderList{
-		Holders: []*models.TokenHolder{},
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
-	tokenHolders.Holders = backendInstance.GetTokenHoldersList(contractAddress, skip, limit)
+	tokenHolders := &models.TokenHolderList{}
+	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, skip, limit)
+	if err != nil {
+		logger.Error("Failed to get token holders", zap.String("address", contractAddress), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, tokenHolders)
 }
 
 func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	skip, limit := parseSkipLimit(r)
-	tokens := &models.OwnedTokenList{
-		OwnedTokens: []*models.TokenHolder{},
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
-	tokens.OwnedTokens = backendInstance.GetOwnedTokensList(contractAddress, skip, limit)
+	tokens := &models.OwnedTokenList{}
+	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(contractAddress, skip, limit)
+	if err != nil {
+		logger.Error("Failed to get owned tokens", zap.String("address", contractAddress), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, tokens)
 }
 
@@ -437,26 +502,43 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	if token_transactions_param != "" && token_transactions_param != "false" {
 		tokenTransactions = true
 	}
-	skip, limit := parseSkipLimit(r)
-	internalTransactions := &models.InternalTransactionsList{
-		Transactions: []*models.InternalTransaction{},
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
-	internalTransactions.Transactions = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
+	internalTransactions := &models.InternalTransactionsList{}
+	internalTransactions.Transactions, err = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
+	if err != nil {
+		logger.Error("Failed to get contract's internal txs list", zap.String("address", contractAddress), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, internalTransactions)
 }
 
 func getContract(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	contract := backendInstance.GetContract(contractAddress)
+	contract, err := backendInstance.GetContract(contractAddress)
+	if err != nil {
+		logger.Error("Failed to get contract", zap.String("address", contractAddress), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, contract)
 }
 
 func getQr(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, errors.New("invalid hex address"))
+		return
+	}
 	var png []byte
 	png, err := qrcode.Encode(contractAddress, qrcode.Medium, 256)
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+		logger.Error("Failed to encode qrcode", zap.String("address", contractAddress), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 	writeFile(w, http.StatusOK, "image/png", png)
@@ -533,43 +615,72 @@ func getRpcProvider(w http.ResponseWriter, r *http.Request) {
 }
 
 func getListBlocks(w http.ResponseWriter, r *http.Request) {
-	bl := &models.LightBlockList{
-		Blocks: []*models.LightBlock{},
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
-	skip, limit := parseSkipLimit(r)
-	bl.Blocks = backendInstance.GetLatestsBlocks(skip, limit)
+	bl := &models.LightBlockList{}
+	bl.Blocks, err = backendInstance.GetLatestsBlocks(skip, limit)
+	if err != nil {
+		logger.Error("Failed to get latest blocks", zap.Int("skip", skip),
+			zap.Int("limit", limit), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, bl)
 }
 func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
-	bnum, err := parseBlockNumber(r)
+	numS := chi.URLParam(r, "num")
+	bnum, err := strconv.ParseInt(numS, 10, 0)
 	if err != nil {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'num' parameter %q: %s", numS, err))
 		return
 	}
-	skip, limit := parseSkipLimit(r)
-	transactions := &models.TransactionList{
-		Transactions: []*models.Transaction{},
+	skip, limit, err := parseSkipLimit(r)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
+		return
 	}
-	transactions.Transactions = backendInstance.GetBlockTransactionsByNumber(int64(bnum), skip, limit)
+	transactions := &models.TransactionList{}
+	transactions.Transactions, err = backendInstance.GetBlockTransactionsByNumber(bnum, skip, limit)
+	if err != nil {
+		logger.Error("Failed to get latest blocks", zap.Int64("block", bnum), zap.Int("skip", skip),
+			zap.Int("limit", limit), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, transactions)
 }
 
 func getBlock(w http.ResponseWriter, r *http.Request) {
-	bnum, err := parseBlockNumber(r)
+	param := chi.URLParam(r, "num")
+	bnum, err := strconv.ParseInt(param, 10, 0)
 	var block *models.Block
 	if err != nil {
-		hash := chi.URLParam(r, "num")
-		logger.Info("failed to parse number of the block so assuming it's hash", zap.String("hash", hash))
-		block = backendInstance.GetBlockByHash(hash)
+		block, err = backendInstance.GetBlockByHash(param)
 	} else {
-		logger.Info("looking up block", zap.Int("bnum", bnum))
-		block = backendInstance.GetBlockByNumber(r.Context(), int64(bnum))
+		block, err = backendInstance.GetBlockByNumber(r.Context(), bnum)
+	}
+	if err != nil {
+		logger.Error("Failed to get block", zap.String("num", param), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	} else if block == nil {
+		errorResponse(w, http.StatusNotFound, nil)
+		return
 	}
 	writeJSON(w, http.StatusOK, block)
 }
 
 func checkBlockExist(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
-	block := backendInstance.GetBlockByHash(hash)
+	block, err := backendInstance.GetBlockByHash(hash)
+	if err != nil {
+		logger.Error("Failed to get block", zap.String("hash", hash), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	if block != nil {
 		writeJSON(w, http.StatusOK, nil)
 	} else {
@@ -593,6 +704,68 @@ func getContractsList(w http.ResponseWriter, r *http.Request) {
 		logger.Info("failed to parse get params")
 		errorResponse(w, http.StatusBadRequest, errors.New("invalid params"))
 	}
-	addresses := backendInstance.GetContracts(filter)
+	addresses, err := backendInstance.GetContracts(filter)
+	if err != nil {
+		logger.Error("Failed to get contracts list", zap.Reflect("filter", filter), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, addresses)
+}
+
+var _ middleware.LogFormatter = &zapLogFormatter{}
+
+type zapLogFormatter struct {
+	*zap.Logger
+}
+
+func (z *zapLogFormatter) NewLogEntry(r *http.Request) middleware.LogEntry {
+	lgr := z.With(zapdriver.HTTP(NewHTTP(r, nil)))
+	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
+		lgr = lgr.With(zap.String("requestID", reqID))
+	}
+	lgr.Info("Request started")
+	return &zapLogEntry{lgr}
+}
+
+var _ middleware.LogEntry = &zapLogEntry{}
+
+type zapLogEntry struct {
+	*zap.Logger
+}
+
+func (z *zapLogEntry) Write(status, bytes int, elapsed time.Duration) {
+	z.Info("Request complete", zap.Int("status", status),
+		zap.Int("responseSize", bytes), zap.Duration("elapsed", elapsed))
+}
+
+func (z *zapLogEntry) Panic(v interface{}, stack []byte) {
+	z.Logger = z.With(zap.String("stack", string(stack)), zap.String("panic", fmt.Sprintf("%+v", v)))
+}
+
+// NewHTTP returns a new HTTPPayload struct, based on the passed
+// in http.Request and http.Response objects. They are not modified
+// in any way, unlike the zapdriver version this is based on.
+func NewHTTP(req *http.Request, res *http.Response) *zapdriver.HTTPPayload {
+	var p zapdriver.HTTPPayload
+	if req != nil {
+		p = zapdriver.HTTPPayload{
+			RequestMethod: req.Method,
+			UserAgent:     req.UserAgent(),
+			RemoteIP:      req.RemoteAddr,
+			Referer:       req.Referer(),
+			Protocol:      req.Proto,
+			RequestSize:   strconv.FormatInt(req.ContentLength, 10),
+		}
+		if req.URL != nil {
+			p.RequestURL = req.URL.String()
+		}
+	}
+
+	if res != nil {
+		p.ResponseSize = strconv.FormatInt(res.ContentLength, 10)
+		p.Status = res.StatusCode
+	}
+
+	return &p
 }

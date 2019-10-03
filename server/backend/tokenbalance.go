@@ -62,6 +62,12 @@ func NewTokenBalanceClient(ctx context.Context, client *goclient.Client, lgr *za
 }
 
 func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenHolderDetails, error) {
+	if !common.IsHexAddress(contract) {
+		return nil, fmt.Errorf("invalid hex address: %s", contract)
+	}
+	if !common.IsHexAddress(wallet) {
+		return nil, fmt.Errorf("invalid hex address: %s", wallet)
+	}
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
@@ -75,6 +81,9 @@ func (rpc *TokenBalance) GetTokenHolderDetails(contract, wallet string) (*TokenH
 }
 
 func (rpc *TokenBalance) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
 	if rpc.conn == nil {
 		return nil, errors.New("geth server connection has not been created")
 	}
@@ -139,17 +148,20 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	return err
 }
 
-func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) []TransferEvent {
+func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) ([]TransferEvent, error) {
 	numOfBlocksPerRequest := int64(blockRangeLimit)
 	latestBlockNumber := rpc.initialBlockNumber
 
 	if num, err := rpc.conn.LatestBlockNumber(ctx); err != nil {
-		rpc.Lgr.Error("Failed to get latest block number", zap.Error(err))
+		rpc.Lgr.Warn("Failed to get latest block number", zap.Error(err))
 	} else {
 		latestBlockNumber = num.Int64()
 	}
 	contractBlock -= numOfBlocksPerRequest
 	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
+	if !common.IsHexAddress(address) {
+		return nil, fmt.Errorf("invalid hex address: %s", address)
+	}
 	contractAddress := common.HexToAddress(address)
 	transferOperation := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
 	var transferEvents []TransferEvent
@@ -170,19 +182,18 @@ func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address st
 			return err
 		})
 		if err != nil {
-			rpc.Lgr.Error("Failed to query for internal txs", zap.Error(err))
+			return nil, fmt.Errorf("failed to query for internal txs: %v", err)
 		}
 		for _, event := range events {
-
 			var transferEvent TransferEvent
 			err = TokenABI.Unpack(&transferEvent, "Transfer", event.Data)
 			if err != nil {
-				rpc.Lgr.Warn("Failed to unpack event", zap.Error(err), zap.Uint64("block", event.BlockNumber),
+				rpc.Lgr.Error("Failed to unpack event", zap.Error(err), zap.Uint64("block", event.BlockNumber),
 					zap.Uint("index", event.Index), zap.String("contract", address))
 				continue
 			}
 			if l := len(event.Topics); l < 3 {
-				rpc.Lgr.Warn("Failed to parse event - too few topics. Expected 3.", zap.Error(err),
+				rpc.Lgr.Error("Failed to parse event - too few topics. Expected 3.", zap.Error(err),
 					zap.Uint64("block", event.BlockNumber), zap.Uint("index", event.Index), zap.String("contract", address))
 				continue
 			}
@@ -196,5 +207,5 @@ func (rpc *TokenBalance) getInternalTransactions(ctx context.Context, address st
 			transferEvents = append(transferEvents, transferEvent)
 		}
 	}
-	return transferEvents
+	return transferEvents, nil
 }

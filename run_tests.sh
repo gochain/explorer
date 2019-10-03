@@ -18,17 +18,17 @@ varA=`docker ps --no-trunc -q | cut -c 1-12`
 docker build --target backend_builder -t gochain/explorer-back-build .
 docker build -t gochain/explorer:test_ci .
 # launch required containers
-docker run --name test_explorer_grabber -d --network="container:$varA" gochain/explorer:test_ci grabber -u https://testnet-rpc.gochain.io -s 10
-docker run --name test_explorer_server -d --network="container:$varA" gochain/explorer:test_ci server -d /explorer/ -u https://testnet-rpc.gochain.io
+docker run --name test_explorer_grabber -d --network="container:$varA" gochain/explorer:test_ci grabber --log-level debug -u https://testnet-rpc.gochain.io -s 10
+docker run --name test_explorer_server -d --network="container:$varA" gochain/explorer:test_ci server --log-level debug -d /explorer/ -u https://testnet-rpc.gochain.io
+sleep 5 # let's wait until server start
 # this will run both integration and unit tests, integration test will require mongo running that why it should be running in the same network with mongo
 docker run --name test_explorer_go_integration --network="container:$varA" gochain/explorer-back-build go test -tags=integration ./...
-sleep 5 # let's wait until server start
 # docker exec test_explorer npm test
-echo "Docker logs for grabber"
-docker logs test_explorer_grabber
-echo "Docker logs for server"
-docker logs test_explorer_server
 echo "Trying curl"
 docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/
 docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/api/blocks/10
 docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/api/blocks/10/transactions
+echo "Docker logs for grabber"
+docker logs test_explorer_grabber
+echo "Docker logs for server"
+docker logs test_explorer_server
