@@ -49,6 +49,22 @@ type TokenDetails struct {
 	Functions   map[utils.FunctionName]struct{}
 }
 
+func (t *TokenDetails) ERCTypesSlice() []string {
+	ercTypes := make([]string, 0, len(t.ErcTypes))
+	for et := range t.ErcTypes {
+		ercTypes = append(ercTypes, string(et))
+	}
+	return ercTypes
+}
+
+func (t *TokenDetails) FunctionsSlice() []string {
+	functions := make([]string, 0, len(t.Functions))
+	for et := range t.Functions {
+		functions = append(functions, string(et))
+	}
+	return functions
+}
+
 type TokenHolderDetails struct {
 	Contract    common.Address
 	TokenHolder common.Address
@@ -238,30 +254,34 @@ func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logge
 	return err
 }
 
-func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*TransferEvent, error) {
-	numOfBlocksPerRequest := int64(blockRangeLimit)
-	latestBlockNumber := rpc.initialBlockNumber
+var transferEventID = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
 
-	if num, err := rpc.conn.LatestBlockNumber(ctx); err != nil {
-		rpc.Lgr.Warn("Failed to get latest block number", zap.Error(err))
-	} else {
-		latestBlockNumber = num.Int64()
-	}
-	contractBlock -= numOfBlocksPerRequest
-	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
-	transferEventID := common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
+func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*TransferEvent, error) {
+	lgr := rpc.Lgr.With(zap.Stringer("address", tokenDetails.Contract))
 	var unpackTransferEvent func(log types.Log) (*TransferEvent, error)
 	if _, ok := tokenDetails.ErcTypes["erc20"]; ok {
 		unpackTransferEvent = unpackERC20TransferEvent
 	} else if _, ok := tokenDetails.ErcTypes["erc721"]; ok {
 		unpackTransferEvent = unpackERC721TransferEvent
 	} else {
-		return nil, fmt.Errorf("contract is neither ERC20 or ERC721")
+		lgr.Warn("Unsupported contract type", zap.Strings("ercTypes", tokenDetails.ERCTypesSlice()),
+			zap.Strings("functions", tokenDetails.FunctionsSlice()))
+		return nil, nil
 	}
+
+	numOfBlocksPerRequest := int64(blockRangeLimit)
+	latestBlockNumber := rpc.initialBlockNumber
+	if num, err := rpc.conn.LatestBlockNumber(ctx); err != nil {
+		lgr.Warn("Failed to get latest block number", zap.Error(err))
+	} else {
+		latestBlockNumber = num.Int64()
+	}
+	contractBlock -= numOfBlocksPerRequest
+	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
 	var transferEvents []*TransferEvent
 	for i := 0; i <= numOfCycles; i++ {
 		fromBlock := contractBlock + int64(i)*numOfBlocksPerRequest
-		rpc.Lgr.Debug("Querying for internal txs", zap.Int64("from", fromBlock), zap.Int64("to", fromBlock+numOfBlocksPerRequest),
+		lgr.Debug("Querying for token transfer events", zap.Int64("from", fromBlock), zap.Int64("to", fromBlock+numOfBlocksPerRequest),
 			zap.Int64("block", contractBlock), zap.Int64("latest", latestBlockNumber), zap.Int("events", len(transferEvents)))
 		query := gochain.FilterQuery{
 			FromBlock: big.NewInt(fromBlock),
@@ -281,7 +301,7 @@ func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *Tok
 		for _, log := range logs {
 			event, err := unpackTransferEvent(log)
 			if err != nil {
-				rpc.Lgr.Error("Failed to unpack event", zap.Error(err), zap.Uint64("block", log.BlockNumber),
+				lgr.Error("Failed to unpack event", zap.Error(err), zap.Uint64("block", log.BlockNumber),
 					zap.Uint("index", log.Index), zap.Stringer("contract", log.Address))
 				continue
 			}
