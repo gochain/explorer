@@ -22,7 +22,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
-	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain/gochain/v3/common"
 	"github.com/gorilla/schema"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
@@ -501,6 +501,10 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
+		return
+	}
 	tokenTransactions := false
 	token_transactions_param := r.URL.Query().Get("token_transactions")
 	if token_transactions_param != "" && token_transactions_param != "false" {
@@ -511,14 +515,23 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	internalTransactions := &models.InternalTransactionsList{}
-	internalTransactions.Transactions, err = backendInstance.GetInternalTransactionsList(contractAddress, tokenTransactions, skip, limit)
-	if err != nil {
-		logger.Error("Failed to get contract's internal txs list", zap.String("address", contractAddress), zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, err)
-		return
+	tokenTransfers := &models.TokenTransfers{}
+	if tokenTransactions {
+		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, skip, limit)
+		if err != nil {
+			logger.Error("Failed to get contract's held token transfers", zap.String("address", contractAddress), zap.Error(err))
+			errorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, skip, limit)
+		if err != nil {
+			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
+			errorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
 	}
-	writeJSON(w, http.StatusOK, internalTransactions)
+	writeJSON(w, http.StatusOK, tokenTransfers)
 }
 
 func getContract(w http.ResponseWriter, r *http.Request) {
@@ -535,7 +548,7 @@ func getContract(w http.ResponseWriter, r *http.Request) {
 func getQr(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
 	if !common.IsHexAddress(contractAddress) {
-		errorResponse(w, http.StatusBadRequest, errors.New("invalid hex address"))
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
 		return
 	}
 	var png []byte
