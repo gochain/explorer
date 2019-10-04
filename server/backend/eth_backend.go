@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/gochain-io/gochain/v3/common/hexutil"
+	"github.com/gochain/gochain/v3/common/hexutil"
 	"go.uber.org/zap"
 )
 

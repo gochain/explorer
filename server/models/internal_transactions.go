@@ -2,7 +2,8 @@ package models
 
 import "time"
 
-type InternalTransaction struct {
+// TokenTransfer represents a Transfer event emitted from an ERC20 or ERC721.
+type TokenTransfer struct {
 	Contract        string    `json:"contract_address" bson:"contract_address"`
 	From            string    `json:"from_address" bson:"from_address"`
 	To              string    `json:"to_address" bson:"to_address"`
@@ -13,6 +14,6 @@ type InternalTransaction struct {
 	CreatedAt       time.Time `json:"created_at" bson:"created_at"`
 }
 
-type InternalTransactionsList struct {
-	Transactions []*InternalTransaction `json:"internal_transactions"`
+type TokenTransfers struct {
+	Transfers []*TokenTransfer `json:"internal_transactions"`
 }
