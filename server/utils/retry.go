@@ -12,10 +12,15 @@ func Retry(ctx context.Context, attempts int, sleep time.Duration, f func() erro
 		if err == nil {
 			return
 		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if i >= (attempts - 1) {
 			break
 		}
-		SleepCtx(ctx, sleep)
+		if SleepCtx(ctx, sleep) != nil {
+			return ctx.Err()
+		}
 	}
 	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
 }
