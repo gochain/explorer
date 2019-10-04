@@ -82,12 +82,16 @@ func parseSkipLimit(r *http.Request) (int, int, error) {
 	if skipS != "" {
 		var err error
 		skip, err = strconv.Atoi(skipS)
-		return 0, 0, fmt.Errorf("invalid skip %q: %v", skipS, err)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid skip %q: %v", skipS, err)
+		}
 	}
 	if limitS != "" {
 		var err error
 		limit, err = strconv.Atoi(limitS)
-		return 0, 0, fmt.Errorf("invalid limit %q: %s", limitS, err)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid limit %q: %s", limitS, err)
+		}
 	}
 
 	if skip < 0 {
