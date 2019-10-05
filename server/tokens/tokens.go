@@ -259,9 +259,9 @@ var transferEventID = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7
 func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*TransferEvent, error) {
 	lgr := rpc.Lgr.With(zap.Stringer("address", tokenDetails.Contract))
 	var unpackTransferEvent func(log types.Log) (*TransferEvent, error)
-	if _, ok := tokenDetails.ErcTypes["erc20"]; ok {
+	if _, ok := tokenDetails.ErcTypes[utils.Go20]; ok {
 		unpackTransferEvent = unpackERC20TransferEvent
-	} else if _, ok := tokenDetails.ErcTypes["erc721"]; ok {
+	} else if _, ok := tokenDetails.ErcTypes[utils.Go721]; ok {
 		unpackTransferEvent = unpackERC721TransferEvent
 	} else {
 		lgr.Warn("Unsupported contract type", zap.Strings("ercTypes", tokenDetails.ERCTypesSlice()),
