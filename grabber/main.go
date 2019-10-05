@@ -437,9 +437,10 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 	if !common.IsHexAddress(address.Address) {
 		return fmt.Errorf("invalid hex address: %s", address.Address)
 	}
-	normalizedAddress := common.HexToAddress(address.Address).Hex()
+	addr := common.HexToAddress(address.Address)
+	normalizedAddress := addr.Hex()
 	lgr := importer.Lgr.With(zap.String("address", normalizedAddress))
-	balance, err := importer.BalanceAt(ctx, normalizedAddress, "latest")
+	balance, err := importer.Balance(ctx, addr)
 	if err != nil {
 		return fmt.Errorf("failed to get balance")
 	}

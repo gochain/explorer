@@ -13,36 +13,39 @@ import (
 	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v3/common/hexutil"
 	"github.com/gochain/gochain/v3/consensus/clique"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v3/rpc"
 	"go.uber.org/zap"
 )
 
 type Backend struct {
-	mongo                 *MongoBackend
-	goClient              *goclient.Client
-	extendedGochainClient *EthRPC
-	tokenClient           *tokens.TokenClient
-	dockerhubAPI          *DockerHubAPI
-	reCaptchaSecret       string
-	lockedAccounts        []string
-	signers               map[common.Address]models.Signer
-	Lgr                   *zap.Logger
+	mongo           *MongoBackend
+	goRPC           *rpc.Client
+	goClient        *goclient.Client
+	tokenClient     *tokens.TokenClient
+	dockerhubAPI    *DockerHubAPI
+	reCaptchaSecret string
+	lockedAccounts  []string
+	signers         map[common.Address]models.Signer
+	Lgr             *zap.Logger
 }
 
 func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer, lgr *zap.Logger) (*Backend, error) {
-	client, err := goclient.Dial(rpcUrl)
+	rpcClient, err := rpc.Dial(rpcUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial %q: %v", rpcUrl, err)
+		return nil, fmt.Errorf("failed to dial rpc %q: %v", rpcUrl, err)
 	}
+	client := goclient.NewClient(rpcClient)
 	mongoBackend, err := NewMongoClient(client, mongoUrl, dbName, lgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mongo client: %v", err)
 	}
 	importer := new(Backend)
+	importer.goRPC = rpcClient
 	importer.goClient = client
-	importer.extendedGochainClient = NewEthClient(rpcUrl, lgr)
 	importer.mongo = mongoBackend
 	importer.tokenClient, err = tokens.NewERC20Balance(ctx, client, lgr)
 	if err != nil {
@@ -60,13 +63,11 @@ func (self *Backend) PingDB() error {
 	return self.mongo.PingDB()
 }
 
-func (self *Backend) BalanceAt(ctx context.Context, address, block string) (*big.Int, error) {
-	if !common.IsHexAddress(address) {
-		return nil, fmt.Errorf("invalid hex address: %s", address)
-	}
+// Balance returns the latest balance for the address.
+func (self *Backend) Balance(ctx context.Context, address common.Address) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethGetBalance(ctx, address, block)
+		value, err = self.goClient.BalanceAt(ctx, address, nil /* latest */)
 		return err
 	})
 	return value, err
@@ -87,21 +88,28 @@ func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error)
 func (self *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethTotalSupply(ctx)
-		return err
+		var result hexutil.Big
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
+		if err != nil {
+			return err
+		}
+		value = result.ToInt()
+		return nil
 	})
 	return value, err
 }
 func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		total, err := self.extendedGochainClient.ethTotalSupply(ctx)
+		var result hexutil.Big
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
 		if err != nil {
 			return err
 		}
+		total := result.ToInt()
 		locked := new(big.Int)
 		for _, l := range self.lockedAccounts {
-			bal, err := self.extendedGochainClient.ethGetBalance(ctx, l, "latest")
+			bal, err := self.Balance(ctx, common.HexToAddress(l))
 			if err != nil {
 				return err
 			}
@@ -132,12 +140,13 @@ func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models
 	if !common.IsHexAddress(hash) {
 		return nil, errors.New("wrong address format")
 	}
-	addressHash := common.HexToAddress(hash).Hex()
+	addr := common.HexToAddress(hash)
+	addressHash := addr.Hex()
 	address, err := self.mongo.getAddressByHash(addressHash)
 	if err != nil {
 		return nil, err
 	}
-	balance, err := self.BalanceAt(ctx, addressHash, "latest")
+	balance, err := self.Balance(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -412,12 +421,12 @@ func (self *Backend) BlockByNumber(ctx context.Context, blockNumber int64) (*typ
 	return value, err
 }
 func (self *Backend) GetLatestBlockNumber(ctx context.Context) (int64, error) {
-	var value int64
+	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethBlockNumber(ctx)
+		value, err = self.goClient.LatestBlockNumber(ctx)
 		return err
 	})
-	return value, err
+	return value.Int64(), err
 }
 
 func fillExtra(block *models.Block) *models.Block {
