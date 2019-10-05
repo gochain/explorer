@@ -13,7 +13,6 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
-	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
@@ -282,16 +281,6 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	if err != nil {
 		return nil, fmt.Errorf("failed to count held token txs: %v", err)
 	}
-
-	ercTypes := make([]utils.ErcName, 0, len(token.ErcTypes))
-	for erc := range token.ErcTypes {
-		ercTypes = append(ercTypes, erc)
-	}
-	functions := make([]utils.FunctionName, 0, len(token.Functions))
-	for fn := range token.Functions {
-		functions = append(functions, fn)
-	}
-
 	addressM := &models.Address{Address: address,
 		BalanceWei:     balance.String(),
 		UpdatedAt:      time.Now(),
@@ -301,8 +290,8 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Decimals:       token.Decimals,
 		TotalSupply:    token.TotalSupply.String(),
 		Contract:       contract,
-		ErcTypes:       ercTypes,
-		Interfaces:     functions,
+		ErcTypes:       token.ERCTypesSlice(),
+		Interfaces:     token.FunctionsSlice(),
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
