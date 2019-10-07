@@ -1,6 +1,6 @@
-import {InterfaceName} from './enums';
+import {FunctionName} from './enums';
 import {AbiItem} from 'web3-utils';
 
 export type ContractAbi = {
-  [key in InterfaceName]: AbiItem;
+  [key in FunctionName]: AbiItem;
 };
