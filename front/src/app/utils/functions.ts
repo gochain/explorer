@@ -6,7 +6,7 @@ import {Address} from '../models/address.model';
 import {Contract} from '../models/contract.model';
 import {Badge} from '../models/badge.model';
 /*UTILS*/
-import {InterfaceName, StatusColor} from './enums';
+import {FunctionName, StatusColor} from './enums';
 import {TOKEN_ABI_NAMES, TOKEN_TYPES} from './constants';
 import {ContractAbi} from './types';
 
@@ -74,12 +74,12 @@ export function makeContractBadges(address: Address, contract: Contract): Badge[
 
 /**
  * makes contract abi
- * @param interfaceNames
+ * @param functionNames
  * @param abi
  */
-export function makeContractAbi(interfaceNames: InterfaceName[], abi: ContractAbi): AbiItem[] {
+export function makeContractAbi(functionNames: FunctionName[], abi: ContractAbi): AbiItem[] {
   const contractAbi: AbiItem[] = [];
-  interfaceNames.forEach((name: InterfaceName) => {
+  functionNames.forEach((name: FunctionName) => {
     if (abi[name]) {
       contractAbi.push(abi[name]);
     }

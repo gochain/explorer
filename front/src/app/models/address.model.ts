@@ -1,4 +1,4 @@
-import {InterfaceName} from '../utils/enums';
+import {FunctionName} from '../utils/enums';
 import {SignerDetails} from './signer-node';
 import {Contract} from './contract.model';
 
@@ -12,7 +12,7 @@ export class Address {
   total_supply: number;
   contract: boolean;
   erc_types: string[];
-  interfaces: InterfaceName[];
+  interfaces: FunctionName[];
   ercObj: object;
   supplyOwned?: string;
   number_of_transactions: number;

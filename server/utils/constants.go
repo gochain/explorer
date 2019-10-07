@@ -36,7 +36,7 @@ const (
 	BalanceOfID                     FunctionName = "BalanceOfID"
 	BalanceOfBatch                  FunctionName = "BalanceOfBatch"
 	Burn                            FunctionName = "Burn"
-	Burn1                           FunctionName = "Burn1"
+	BurnData                        FunctionName = "BurnData"
 	BurnFrom                        FunctionName = "BurnFrom"
 	CancelAndReissue                FunctionName = "CancelAndReissue"
 	CanImplementInterfaceForAddress FunctionName = "CanImplementInterfaceForAddress"
@@ -112,7 +112,7 @@ var Functions = map[FunctionName]FunctionData{
 	BalanceOfID:                     {ID: "00fdd58e", Signature: "balanceOf(address,uint256)", Callable: false},
 	BalanceOfBatch:                  {ID: "4e1273f4", Signature: "balanceOfBatch(address[],uint256[])", Callable: false},
 	Burn:                            {ID: "42966c68", Signature: "burn(uint256)", Callable: false},
-	Burn1:                           {ID: "fe9d9303", Signature: "burn(uint256,bytes)", Callable: false},
+	BurnData:                        {ID: "fe9d9303", Signature: "burn(uint256,bytes)", Callable: false},
 	BurnFrom:                        {ID: "79cc6790", Signature: "burnFrom(address,uint256)", Callable: false},
 	CancelAndReissue:                {ID: "79f64720", Signature: "cancelAndReissue(address,address)", Callable: false},
 	CanImplementInterfaceForAddress: {ID: "249cb3fa", Signature: "canImplementInterfaceForAddress(bytes32,address)", Callable: false},
@@ -248,7 +248,7 @@ var Interfaces = map[ErcName][]FunctionName{
 
 	Go621: {DecreaseSupply, IncreaseSupply},
 
-	Go777: {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name,
+	Go777: {AuthorizeOperator, BalanceOf, BurnData, DefaultOperators, Granularity, IsOperatorFor, Name,
 		OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
 	Go777Receiver: {TokensReceived},
 	Go777Sender:   {TokensToSend},
