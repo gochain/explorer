@@ -277,7 +277,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		return nil, fmt.Errorf("failed to count internal txs: %v", err)
 	}
 
-	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
+	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{{"from_address": address}, {"to_address": address}}}).Count()
 	if err != nil {
 		return nil, fmt.Errorf("failed to count held token txs: %v", err)
 	}
