@@ -150,14 +150,14 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client, lgr
 
 func GetInfo(byteCode string) (map[utils.ErcName]struct{}, map[utils.FunctionName]struct{}) {
 	funcs := map[utils.FunctionName]struct{}{}
-	for k, v := range utils.InterfaceIdentifiers {
-		if strings.Contains(byteCode, v.Value) {
+	for k, v := range utils.Functions {
+		if strings.Contains(byteCode, v.ID) {
 			funcs[k] = struct{}{}
 		}
 	}
 	types := map[utils.ErcName]struct{}{}
 Loop:
-	for k, v := range utils.ErcInterfaceIdentifiers {
+	for k, v := range utils.Interfaces {
 		for _, ercIdentifier := range v {
 			if _, ok := funcs[ercIdentifier]; !ok {
 				continue Loop
