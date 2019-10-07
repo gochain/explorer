@@ -74,8 +74,8 @@ const (
 	RevokeOperator                  FunctionName = "RevokeOperator"
 	SafeBatchTransferFrom           FunctionName = "SafeBatchTransferFrom"
 	SafeTransferFrom                FunctionName = "SafeTransferFrom"
-	SafeTransferFrom1               FunctionName = "SafeTransferFrom1"
-	SafeTransferFrom2               FunctionName = "SafeTransferFrom2"
+	SafeTransferFromData            FunctionName = "SafeTransferFromData"
+	SafeTransferFromValueData       FunctionName = "SafeTransferFromValueData"
 	Send                            FunctionName = "Send"
 	SetApprovalForAll               FunctionName = "SetApprovalForAll"
 	SupportsInterface               FunctionName = "SupportsInterface"
@@ -150,7 +150,8 @@ var InterfaceIdentifiers = map[FunctionName]FunctionData{
 	RevokeOperator:                  {Value: "fad8b32a", Description: "revokeOperator(address)", Callable: false},
 	SafeBatchTransferFrom:           {Value: "2eb2c2d6", Description: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
 	SafeTransferFrom:                {Value: "42842e0e", Description: "safeTransferFrom(address,address,uint256)", Callable: false},
-	SafeTransferFrom1:               {Value: "f242432a", Description: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
+	SafeTransferFromData:            {Value: "b88d4fde", Description: "safeTransferFrom(address,address,uint256,bytes)", Callable: false},
+	SafeTransferFromValueData:       {Value: "f242432a", Description: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
 	Send:                            {Value: "9bd9bbc6", Description: "send(address,uint256,bytes)", Callable: false},
 	SetApprovalForAll:               {Value: "a22cb465", Description: "setApprovalForAll(address,bool)", Callable: false},
 	SupportsInterface:               {Value: "01ffc9a7", Description: "supportsInterface(bytes4)", Callable: false},
@@ -218,17 +219,17 @@ var ErcInterfaceIdentifiers = map[ErcName]ErcData{
 	Go20Mintable:          {Mint},
 	Go20Pausable:          {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
 	Go165:                 {SupportsInterface},
-	Go721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
-	Go721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
+	Go721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom},
+	Go721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
 	Go721Receiver:         {OnErc721Received},
-	Go721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
-	Go721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
-	Go721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
-	Go721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
-	Go721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
-	Go721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
+	Go721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
+	Go721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
+	Go721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
+	Go721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
+	Go721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
+	Go721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
 	Go820:                 {CanImplementInterfaceForAddress},
-	Go1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
+	Go1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFromValueData, SetApprovalForAll},
 	Go1155Receiver:        {OnErc1155BatchReceived, OnErc1155Received},
 	Go1155Metadata:        {URI},
 	Go223:                 {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
