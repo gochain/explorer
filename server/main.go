@@ -109,6 +109,21 @@ func parseGetParam(r *http.Request, result interface{}) error {
 }
 
 func main() {
+	cfg := zapdriver.NewProductionConfig()
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	var err error
+	logger, err = cfg.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Sync()
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("Fatal panic", zap.String("panic", fmt.Sprintf("%+v", r)))
+		}
+	}()
+
 	var mongoUrl string
 	var dbName string
 	var signersFile string
@@ -177,16 +192,6 @@ func main() {
 			cancelFn()
 		}
 	}()
-
-	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
-	var err error
-	logger, err = cfg.Build()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
-		os.Exit(1)
-	}
-	defer logger.Sync()
 
 	app.Action = func(c *cli.Context) error {
 		if c.IsSet("log-level") {
