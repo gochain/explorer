@@ -29,14 +29,6 @@ func (f EVMFunction) String() string {
 	return evmFunctionNames[f]
 }
 
-func ParseEVMFunction(s string) EVMFunction {
-	f, ok := evmFunctionsByName[s]
-	if !ok {
-		return -1
-	}
-	return f
-}
-
 const (
 	AddPauser EVMFunction = iota
 	AddVerified
@@ -197,12 +189,19 @@ var evmFunctionNames = []string{
 	Resume:                          "Resume",
 }
 
-var evmFunctionsByName map[string]EVMFunction
+var (
+	EVMFunctionsByName map[string]EVMFunction
+	EVMFunctionsByID   map[string]EVMFunction
+)
 
 func init() {
-	evmFunctionsByName = make(map[string]EVMFunction, len(evmFunctionNames))
+	EVMFunctionsByName = make(map[string]EVMFunction, len(evmFunctionNames))
 	for i, nm := range evmFunctionNames {
-		evmFunctionsByName[nm] = EVMFunction(i)
+		EVMFunctionsByName[nm] = EVMFunction(i)
+	}
+	EVMFunctionsByID = make(map[string]EVMFunction, len(EVMFunctions))
+	for i, data := range EVMFunctions {
+		EVMFunctionsByID[data.ID] = i
 	}
 }
 
@@ -302,14 +301,6 @@ func (e EVMInterface) String() string {
 	return evmInterfaceNames[e]
 }
 
-func ParseEVMInterface(s string) EVMInterface {
-	e, ok := evmInterfacesByName[s]
-	if !ok {
-		return -1
-	}
-	return e
-}
-
 const (
 	Go20 EVMInterface = iota
 	Go20Burnable
@@ -374,12 +365,12 @@ var evmInterfaceNames = []string{
 	Upgradeable:           "Upgradeable",
 }
 
-var evmInterfacesByName map[string]EVMInterface
+var EVMInterfacesByName map[string]EVMInterface
 
 func init() {
-	evmInterfacesByName = make(map[string]EVMInterface, len(evmInterfaceNames))
+	EVMInterfacesByName = make(map[string]EVMInterface, len(evmInterfaceNames))
 	for i, nm := range evmInterfaceNames {
-		evmInterfacesByName[nm] = EVMInterface(i)
+		EVMInterfacesByName[nm] = EVMInterface(i)
 	}
 }
 
@@ -396,8 +387,8 @@ var EVMFunctionsByInterface = [][]EVMFunction{
 	Go20Capped:   append(go20Functions, Mint, Cap),
 	Go20Detailed: append(go20Functions, Decimals, Name, Symbol),
 	Go20Mintable: append(go20Functions, Mint),
-	Go20Pausable: append(go20Functions, IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause,
-		Paused, Unpause, AddPauser, IsPauser, RenouncePauser),
+	Go20Pausable: append(go20Functions, IncreaseAllowance, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused,
+		Unpause, AddPauser, IsPauser, RenouncePauser),
 
 	Go165: {SupportsInterface},
 
