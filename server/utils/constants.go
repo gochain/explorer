@@ -241,4 +241,4 @@ var ErcInterfaceIdentifiers = map[ErcName]ErcData{
 	Go884:                 {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
 }
 
-var DefaultFetchLimit = 500
+var MaxFetchLimit = 500

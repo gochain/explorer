@@ -23,9 +23,6 @@ import (
 
 var wei = big.NewInt(1000000000000000000)
 
-const defaultFetchLimit = 100
-const defaultSkip = 0
-
 type MongoBackend struct {
 	host         string
 	mongo        *mgo.Database
@@ -376,7 +373,7 @@ func (self *MongoBackend) getBlockByHash(blockHash string) (*models.Block, error
 	return &c, nil
 }
 
-func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, filter *models.DefaultFilter) ([]*models.Transaction, error) {
+func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, filter *models.PaginationFilter) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
 	err := self.mongo.C("Transactions").
 		Find(bson.M{"block_number": blockNumber}).
@@ -392,7 +389,7 @@ func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, filter
 	return transactions, nil
 }
 
-func (self *MongoBackend) getLatestsBlocks(filter *models.DefaultFilter) ([]*models.LightBlock, error) {
+func (self *MongoBackend) getLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
 	var blocks []*models.LightBlock
 	err := self.mongo.C("Blocks").
 		Find(nil).
@@ -517,7 +514,7 @@ func (self *MongoBackend) getTransactionList(
 	return transactions, nil
 }
 
-func (self *MongoBackend) getTokenHoldersList(contractAddress string, filter *models.DefaultFilter) ([]*models.TokenHolder, error) {
+func (self *MongoBackend) getTokenHoldersList(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").
 		Find(bson.M{"contract_address": contractAddress}).
@@ -530,7 +527,7 @@ func (self *MongoBackend) getTokenHoldersList(contractAddress string, filter *mo
 	}
 	return tokenHoldersList, nil
 }
-func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models.DefaultFilter) ([]*models.TokenHolder, error) {
+func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
 	err := self.mongo.C("TokensHolders").
 		Find(bson.M{"token_holder_address": ownerAddress}).
@@ -633,12 +630,6 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) ([]*model
 		sortDir = 1
 	}
 	sortQuery := bson.M{filter.SortBy: sortDir}
-	if filter.Skip < 0 {
-		filter.Skip = defaultSkip
-	}
-	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
-		filter.Limit = defaultFetchLimit
-	}
 	query := []bson.M{
 		{"$match": findQuery},
 		{"$lookup": bson.M{
@@ -665,7 +656,7 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) ([]*model
 	return addresses, nil
 }
 
-func (self *MongoBackend) getRichlist(filter *models.DefaultFilter, lockedAddresses []string) ([]*models.Address, error) {
+func (self *MongoBackend) getRichlist(filter *models.PaginationFilter, lockedAddresses []string) ([]*models.Address, error) {
 	var addresses []*models.Address
 	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(filter.Skip).Limit(filter.Limit).All(&addresses)
 	if err != nil {

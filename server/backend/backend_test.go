@@ -93,7 +93,7 @@ func TestTransactions(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-	filter1 := &models.DefaultFilter{
+	filter1 := &models.PaginationFilter{
 		Skip:  0,
 		Limit: 100,
 	}
@@ -115,11 +115,15 @@ func TestTransactions(t *testing.T) {
 	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
-	filter2 = &models.TxsFilter{
-		Skip:           0,
-		Limit:          100,
-		FromTime:       time.Unix(0, 0),
-		ToTime:         time.Now(),
+	filter2 := &models.TxsFilter{
+		PaginationFilter: PaginationFilter{
+			Skip:  0,
+			Limit: 100,
+		},
+		TimeFilter: TimeFilter{
+			FromTime: time.Unix(0, 0),
+			ToTime:   time.Now(),
+		},
 		InputDataEmpty: nil,
 	}
 	transactionsFromAddress, err := testBackend.GetTransactionList(transactionFromDB.From, filter2)
@@ -137,7 +141,7 @@ func TestTransactions(t *testing.T) {
 	if len(transactionsToAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
-	filter.Skip = 2
+	filter2.Skip = 2
 	transactionsToAddress, err = testBackend.GetTransactionList(transactionFromDB.To, filter2)
 	if err != nil {
 		t.Fatal(err)
@@ -165,7 +169,7 @@ func TestLatestBlocks(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-	filter := &models.DefaultFilter{
+	filter := &models.PaginationFilter{
 		Limit: 100,
 		Skip:  0,
 	}
@@ -236,7 +240,7 @@ func TestRichList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	filter := &models.DefaultFilter{
+	filter := &models.PaginationFilter{
 		Skip:  0,
 		Limit: 100,
 	}
@@ -306,7 +310,7 @@ func TestTokenHolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	filter := &models.DefaultFilter{
+	filter := &models.PaginationFilter{
 		Limit: 0,
 		Skip:  100,
 	}
