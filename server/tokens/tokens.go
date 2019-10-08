@@ -150,10 +150,10 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client, lgr
 	return err
 }
 
-var contractInfoCache struct {
+var contractInfoCache = struct {
 	sync.RWMutex
 	data map[common.Hash]contractInfo
-}
+}{data: make(map[common.Hash]contractInfo)}
 
 type contractInfo struct {
 	types map[utils.EVMInterface]struct{}

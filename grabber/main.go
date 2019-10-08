@@ -25,13 +25,6 @@ import (
 )
 
 func main() {
-	var rpcUrl string
-	var checkTxCount bool
-	var mongoUrl string
-	var dbName string
-	var startFrom int64
-	var blockRangeLimit uint64
-	var workersCount uint
 	cfg := zapdriver.NewProductionConfig()
 	cfg.EncoderConfig.TimeKey = "timestamp"
 	logger, err := cfg.Build()
@@ -40,6 +33,20 @@ func main() {
 		os.Exit(1)
 	}
 	defer logger.Sync()
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			logger.Error("Fatal panic", zap.String("panic", fmt.Sprintf("%+v", rerr)))
+		}
+	}()
+
+	var rpcUrl string
+	var checkTxCount bool
+	var mongoUrl string
+	var dbName string
+	var startFrom int64
+	var blockRangeLimit uint64
+	var workersCount uint
+
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
