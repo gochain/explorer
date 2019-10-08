@@ -53,6 +53,7 @@ export enum FunctionName {
   OnErc1155Received = 'OnErc1155Received',
   OperatorBurn = 'OperatorBurn',
   OperatorSend = 'OperatorSend',
+  Owner = 'Owner',
   OwnerOf = 'OwnerOf',
   RemoveVerified = 'RemoveVerified',
   RenouncePauser = 'RenouncePauser',
@@ -60,13 +61,16 @@ export enum FunctionName {
   SafeBatchTransferFrom = 'SafeBatchTransferFrom',
   SafeTransferFrom = 'SafeTransferFrom',
   SafeTransferFromData = 'SafeTransferFromData',
+  SafeTransferFromValueData = 'SafeTransferFromValueData',
   Send = 'Send',
   SetApprovalForAll = 'SetApprovalForAll',
   SupportsInterface = 'SupportsInterface',
   Symbol = 'Symbol',
+  Target = 'Target',
   TokensReceived = 'TokensReceived',
   TokensToSend = 'TokensToSend',
   TokenByIndex = 'TokenByIndex',
+  TokenFallback = 'TokenFallback',
   TokenOfOwnerByIndex = 'TokenOfOwnerByIndex',
   TokenUri = 'TokenUri',
   TotalSupply = 'TotalSupply',
@@ -81,7 +85,9 @@ export enum FunctionName {
   Pause = 'Pause',
   Paused = 'Paused',
   Unpause = 'Unpause',
+  Upgrade = 'Upgrade',
   MintWithTokenURI = 'MintWithTokenURI',
+  Resume = 'Resume',
 }
 
 export enum ErcName {
@@ -113,4 +119,5 @@ export enum ErcName {
   Go777Sender = 'Go777Sender',
   Go827 = 'Go827',
   Go884 = 'Go884',
+  Upgradeable = 'Upgradeable'
 }
