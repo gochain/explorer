@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gochain-io/explorer/server/utils"
@@ -17,7 +16,6 @@ import (
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
-	"github.com/gochain/gochain/v3/crypto"
 	"github.com/gochain/gochain/v3/goclient"
 	"go.uber.org/zap"
 )
@@ -150,56 +148,9 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client, lgr
 	return err
 }
 
-var contractInfoCache = struct {
-	sync.RWMutex
-	data map[common.Hash]contractInfo
-}{data: make(map[common.Hash]contractInfo)}
-
-type contractInfo struct {
-	types map[utils.EVMInterface]struct{}
-	funcs map[utils.EVMFunction]struct{}
-}
-
-// GetInfo returns the interface and function sets for the hex encoded byte code.
-// Results are cached, and the final return is the number of cached entries.
-func GetInfo(byteCode string) (map[utils.EVMInterface]struct{}, map[utils.EVMFunction]struct{}, int) {
-	hash := crypto.Keccak256Hash([]byte(byteCode))
-	contractInfoCache.RLock()
-	ci, ok := contractInfoCache.data[hash]
-	l := len(contractInfoCache.data)
-	contractInfoCache.RUnlock()
-	if ok {
-		return ci.types, ci.funcs, l
-	}
-
-	ci.funcs = map[utils.EVMFunction]struct{}{}
-	for k, v := range utils.EVMFunctions {
-		if strings.Contains(byteCode, v.ID) {
-			ci.funcs[k] = struct{}{}
-		}
-	}
-	ci.types = map[utils.EVMInterface]struct{}{}
-Loop:
-	for i, iFuncs := range utils.EVMFunctionsByInterface {
-		for _, fn := range iFuncs {
-			if _, ok := ci.funcs[fn]; !ok {
-				continue Loop
-			}
-		}
-		ci.types[utils.EVMInterface(i)] = struct{}{}
-	}
-
-	contractInfoCache.Lock()
-	contractInfoCache.data[hash] = ci
-	l = len(contractInfoCache.data)
-	contractInfoCache.Unlock()
-
-	return ci.types, ci.funcs, l
-}
-
 func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string, lgr *zap.Logger) error {
 	var count int
-	tb.ErcTypes, tb.Functions, count = GetInfo(byteCode)
+	tb.ErcTypes, tb.Functions, count = utils.ScanContract(byteCode)
 	lgr.Info("Analyzing contract byte code", zap.Stringer("address", tb.Contract),
 		zap.Strings("ercTypes", tb.ERCTypesSlice()), zap.Strings("functions", tb.FunctionsSlice()),
 		zap.Int("cachedContracts", count))
