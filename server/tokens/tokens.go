@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gochain-io/explorer/server/utils"
@@ -16,6 +17,7 @@ import (
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
+	"github.com/gochain/gochain/v3/crypto"
 	"github.com/gochain/gochain/v3/goclient"
 	"go.uber.org/zap"
 )
@@ -45,14 +47,14 @@ type TokenDetails struct {
 	TotalSupply *big.Int
 	Decimals    int64
 	Block       int64
-	ErcTypes    map[utils.ErcName]struct{}
-	Functions   map[utils.FunctionName]struct{}
+	ErcTypes    map[utils.EVMInterface]struct{}
+	Functions   map[utils.EVMFunction]struct{}
 }
 
 func (t *TokenDetails) ERCTypesSlice() []string {
 	ercTypes := make([]string, 0, len(t.ErcTypes))
 	for et := range t.ErcTypes {
-		ercTypes = append(ercTypes, string(et))
+		ercTypes = append(ercTypes, et.String())
 	}
 	return ercTypes
 }
@@ -60,7 +62,7 @@ func (t *TokenDetails) ERCTypesSlice() []string {
 func (t *TokenDetails) FunctionsSlice() []string {
 	functions := make([]string, 0, len(t.Functions))
 	for et := range t.Functions {
-		functions = append(functions, string(et))
+		functions = append(functions, et.String())
 	}
 	return functions
 }
@@ -148,29 +150,59 @@ func (th *TokenHolderDetails) queryTokenHolderDetails(conn *goclient.Client, lgr
 	return err
 }
 
-func GetInfo(byteCode string) (map[utils.ErcName]struct{}, map[utils.FunctionName]struct{}) {
-	funcs := map[utils.FunctionName]struct{}{}
-	for k, v := range utils.Functions {
+var contractInfoCache struct {
+	sync.RWMutex
+	data map[common.Hash]contractInfo
+}
+
+type contractInfo struct {
+	types map[utils.EVMInterface]struct{}
+	funcs map[utils.EVMFunction]struct{}
+}
+
+// GetInfo returns the interface and function sets for the hex encoded byte code.
+// Results are cached, and the final return is the number of cached entries.
+func GetInfo(byteCode string) (map[utils.EVMInterface]struct{}, map[utils.EVMFunction]struct{}, int) {
+	hash := crypto.Keccak256Hash([]byte(byteCode))
+	contractInfoCache.RLock()
+	ci, ok := contractInfoCache.data[hash]
+	l := len(contractInfoCache.data)
+	contractInfoCache.RUnlock()
+	if ok {
+		return ci.types, ci.funcs, l
+	}
+
+	ci.funcs = map[utils.EVMFunction]struct{}{}
+	for k, v := range utils.EVMFunctions {
 		if strings.Contains(byteCode, v.ID) {
-			funcs[k] = struct{}{}
+			ci.funcs[k] = struct{}{}
 		}
 	}
-	types := map[utils.ErcName]struct{}{}
+	ci.types = map[utils.EVMInterface]struct{}{}
 Loop:
-	for k, v := range utils.Interfaces {
-		for _, ercIdentifier := range v {
-			if _, ok := funcs[ercIdentifier]; !ok {
+	for i, iFuncs := range utils.EVMFunctionsByInterface {
+		for _, fn := range iFuncs {
+			if _, ok := ci.funcs[fn]; !ok {
 				continue Loop
 			}
 		}
-		types[k] = struct{}{}
+		ci.types[utils.EVMInterface(i)] = struct{}{}
 	}
 
-	return types, funcs
+	contractInfoCache.Lock()
+	contractInfoCache.data[hash] = ci
+	l = len(contractInfoCache.data)
+	contractInfoCache.Unlock()
+
+	return ci.types, ci.funcs, l
 }
 
 func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string, lgr *zap.Logger) error {
-	tb.ErcTypes, tb.Functions = GetInfo(byteCode)
+	var count int
+	tb.ErcTypes, tb.Functions, count = GetInfo(byteCode)
+	lgr.Info("Analyzing contract byte code", zap.Stringer("address", tb.Contract),
+		zap.Strings("ercTypes", tb.ERCTypesSlice()), zap.Strings("functions", tb.FunctionsSlice()),
+		zap.Int("cachedContracts", count))
 	if _, ok := tb.ErcTypes[utils.Go20]; ok {
 		return tb.queryERC20Details(conn, lgr)
 	}

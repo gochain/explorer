@@ -1,5 +1,7 @@
 package utils
 
+import "fmt"
+
 type AbiArgument struct {
 	Name    string `json:"name" bson:"name"`
 	Indexed bool   `json:"indexes" bson:"indexes"`
@@ -17,95 +19,200 @@ type AbiItem struct {
 	Type            string        `json:"type" bson:"type"`
 }
 
-type FunctionName string
+// EVMFunction is an internal enum only. Use the String() form externally.
+type EVMFunction int
 
-type FunctionData struct {
+func (f EVMFunction) String() string {
+	if f < 0 || int(f) < len(evmFunctionNames) {
+		return fmt.Sprintf("Unrecognized function: %d", f)
+	}
+	return evmFunctionNames[f]
+}
+
+func ParseEVMFunction(s string) EVMFunction {
+	f, ok := evmFunctionsByName[s]
+	if !ok {
+		return -1
+	}
+	return f
+}
+
+const (
+	AddPauser EVMFunction = iota
+	AddVerified
+	Allowance
+	Approve
+	ApproveAndCall
+	AuthorizeOperator
+	BalanceOf
+	BalanceOfID
+	BalanceOfBatch
+	Burn
+	BurnData
+	BurnFrom
+	CancelAndReissue
+	CanImplementInterfaceForAddress
+	Cap
+	Decimals
+	DecreaseAllowance
+	DecreaseAllowanceAndCall
+	DecreaseSupply
+	DefaultOperators
+	GetApproved
+	GetCurrentFor
+	Granularity
+	HasHash
+	HolderAt
+	HolderCount
+	IncreaseAllowance
+	IncreaseAllowanceAndCall
+	IncreaseSupply
+	IsApprovedForAll
+	IsHolder
+	IsPauser
+	IsOperatorFor
+	IsSuperseded
+	IsVerified
+	Mint
+	Name
+	OnErc721Received
+	OnErc1155BatchReceived
+	OnErc1155Received
+	OperatorBurn
+	OperatorSend
+	Owner
+	OwnerOf
+	RemoveVerified
+	RenouncePauser
+	RevokeOperator
+	SafeBatchTransferFrom
+	SafeTransferFrom
+	SafeTransferFromData
+	SafeTransferFromValueData
+	Send
+	SetApprovalForAll
+	SupportsInterface
+	Symbol
+	Target
+	TokensReceived
+	TokensToSend
+	TokenByIndex
+	TokenFallback
+	TokenOfOwnerByIndex
+	TokenUri
+	TotalSupply
+	Transfer
+	TransferData
+	TransferDataFallback
+	TransferAndCall
+	TransferFrom
+	TransferFromAndCall
+	UpdateVerified
+	URI
+	Pause
+	Paused
+	Unpause
+	Upgrade
+	MintWithTokenURI
+	Resume
+)
+
+var evmFunctionNames = []string{
+	AddPauser:                       "AddPauser",
+	AddVerified:                     "AddVerified",
+	Allowance:                       "Allowance",
+	Approve:                         "Approve",
+	ApproveAndCall:                  "ApproveAndCall",
+	AuthorizeOperator:               "AuthorizeOperator",
+	BalanceOf:                       "BalanceOf",
+	BalanceOfID:                     "BalanceOfID",
+	BalanceOfBatch:                  "BalanceOfBatch",
+	Burn:                            "Burn",
+	BurnData:                        "BurnData",
+	BurnFrom:                        "BurnFrom",
+	CancelAndReissue:                "CancelAndReissue",
+	CanImplementInterfaceForAddress: "CanImplementInterfaceForAddress",
+	Cap:                             "Cap",
+	Decimals:                        "Decimals",
+	DecreaseAllowance:               "DecreaseAllowance",
+	DecreaseAllowanceAndCall:        "DecreaseAllowanceAndCall",
+	DecreaseSupply:                  "DecreaseSupply",
+	DefaultOperators:                "DefaultOperators",
+	GetApproved:                     "GetApproved",
+	GetCurrentFor:                   "GetCurrentFor",
+	Granularity:                     "Granularity",
+	HasHash:                         "HasHash",
+	HolderAt:                        "HolderAt",
+	HolderCount:                     "HolderCount",
+	IncreaseAllowance:               "IncreaseAllowance",
+	IncreaseAllowanceAndCall:        "IncreaseAllowanceAndCall",
+	IncreaseSupply:                  "IncreaseSupply",
+	IsApprovedForAll:                "IsApprovedForAll",
+	IsHolder:                        "IsHolder",
+	IsPauser:                        "IsPauser",
+	IsOperatorFor:                   "IsOperatorFor",
+	IsSuperseded:                    "IsSuperseded",
+	IsVerified:                      "IsVerified",
+	Mint:                            "Mint",
+	Name:                            "Name",
+	OnErc721Received:                "OnErc721Received",
+	OnErc1155BatchReceived:          "OnErc1155BatchReceived",
+	OnErc1155Received:               "OnErc1155Received",
+	OperatorBurn:                    "OperatorBurn",
+	OperatorSend:                    "OperatorSend",
+	Owner:                           "Owner",
+	OwnerOf:                         "OwnerOf",
+	RemoveVerified:                  "RemoveVerified",
+	RenouncePauser:                  "RenouncePauser",
+	RevokeOperator:                  "RevokeOperator",
+	SafeBatchTransferFrom:           "SafeBatchTransferFrom",
+	SafeTransferFrom:                "SafeTransferFrom",
+	SafeTransferFromData:            "SafeTransferFromData",
+	SafeTransferFromValueData:       "SafeTransferFromValueData",
+	Send:                            "Send",
+	SetApprovalForAll:               "SetApprovalForAll",
+	SupportsInterface:               "SupportsInterface",
+	Symbol:                          "Symbol",
+	Target:                          "Target",
+	TokensReceived:                  "TokensReceived",
+	TokensToSend:                    "TokensToSend",
+	TokenByIndex:                    "TokenByIndex",
+	TokenFallback:                   "TokenFallback",
+	TokenOfOwnerByIndex:             "TokenOfOwnerByIndex",
+	TokenUri:                        "TokenUri",
+	TotalSupply:                     "TotalSupply",
+	Transfer:                        "Transfer",
+	TransferData:                    "TransferData",
+	TransferDataFallback:            "TransferDataFallback",
+	TransferAndCall:                 "TransferAndCall",
+	TransferFrom:                    "TransferFrom",
+	TransferFromAndCall:             "TransferFromAndCall",
+	UpdateVerified:                  "UpdateVerified",
+	URI:                             "URI",
+	Pause:                           "Pause",
+	Paused:                          "Paused",
+	Unpause:                         "Unpause",
+	Upgrade:                         "Upgrade",
+	MintWithTokenURI:                "MintWithTokenURI",
+	Resume:                          "Resume",
+}
+
+var evmFunctionsByName map[string]EVMFunction
+
+func init() {
+	evmFunctionsByName = make(map[string]EVMFunction, len(evmFunctionNames))
+	for i, nm := range evmFunctionNames {
+		evmFunctionsByName[nm] = EVMFunction(i)
+	}
+}
+
+type EVMFunctionData struct {
 	ID        string
 	Signature string
 	Callable  bool
 }
 
-const (
-	AddPauser                       FunctionName = "AddPauser"
-	AddVerified                     FunctionName = "AddVerified"
-	Allowance                       FunctionName = "Allowance"
-	Approve                         FunctionName = "Approve"
-	ApproveAndCall                  FunctionName = "ApproveAndCall"
-	AuthorizeOperator               FunctionName = "AuthorizeOperator"
-	BalanceOf                       FunctionName = "BalanceOf"
-	BalanceOfID                     FunctionName = "BalanceOfID"
-	BalanceOfBatch                  FunctionName = "BalanceOfBatch"
-	Burn                            FunctionName = "Burn"
-	BurnData                        FunctionName = "BurnData"
-	BurnFrom                        FunctionName = "BurnFrom"
-	CancelAndReissue                FunctionName = "CancelAndReissue"
-	CanImplementInterfaceForAddress FunctionName = "CanImplementInterfaceForAddress"
-	Cap                             FunctionName = "Cap"
-	Decimals                        FunctionName = "Decimals"
-	DecreaseAllowance               FunctionName = "DecreaseAllowance"
-	DecreaseAllowanceAndCall        FunctionName = "DecreaseAllowanceAndCall"
-	DecreaseSupply                  FunctionName = "DecreaseSupply"
-	DefaultOperators                FunctionName = "DefaultOperators"
-	GetApproved                     FunctionName = "GetApproved"
-	GetCurrentFor                   FunctionName = "GetCurrentFor"
-	Granularity                     FunctionName = "Granularity"
-	HasHash                         FunctionName = "HasHash"
-	HolderAt                        FunctionName = "HolderAt"
-	HolderCount                     FunctionName = "HolderCount"
-	IncreaseAllowance               FunctionName = "IncreaseAllowance"
-	IncreaseAllowanceAndCall        FunctionName = "IncreaseAllowanceAndCall"
-	IncreaseSupply                  FunctionName = "IncreaseSupply"
-	IsApprovedForAll                FunctionName = "IsApprovedForAll"
-	IsHolder                        FunctionName = "IsHolder"
-	IsPauser                        FunctionName = "IsPauser"
-	IsOperatorFor                   FunctionName = "IsOperatorFor"
-	IsSuperseded                    FunctionName = "IsSuperseded"
-	IsVerified                      FunctionName = "IsVerified"
-	Mint                            FunctionName = "Mint"
-	Name                            FunctionName = "Name"
-	OnErc721Received                FunctionName = "OnErc721Received"
-	OnErc1155BatchReceived          FunctionName = "OnErc1155BatchReceived"
-	OnErc1155Received               FunctionName = "OnErc1155Received"
-	OperatorBurn                    FunctionName = "OperatorBurn"
-	OperatorSend                    FunctionName = "OperatorSend"
-	Owner                           FunctionName = "Owner"
-	OwnerOf                         FunctionName = "OwnerOf"
-	RemoveVerified                  FunctionName = "RemoveVerified"
-	RenouncePauser                  FunctionName = "RenouncePauser"
-	RevokeOperator                  FunctionName = "RevokeOperator"
-	SafeBatchTransferFrom           FunctionName = "SafeBatchTransferFrom"
-	SafeTransferFrom                FunctionName = "SafeTransferFrom"
-	SafeTransferFromData            FunctionName = "SafeTransferFromData"
-	SafeTransferFromValueData       FunctionName = "SafeTransferFromValueData"
-	Send                            FunctionName = "Send"
-	SetApprovalForAll               FunctionName = "SetApprovalForAll"
-	SupportsInterface               FunctionName = "SupportsInterface"
-	Symbol                          FunctionName = "Symbol"
-	TokensReceived                  FunctionName = "TokensReceived"
-	TokensToSend                    FunctionName = "TokensToSend"
-	TokenByIndex                    FunctionName = "TokenByIndex"
-	TokenFallback                   FunctionName = "TokenFallback"
-	TokenOfOwnerByIndex             FunctionName = "TokenOfOwnerByIndex"
-	TokenUri                        FunctionName = "TokenUri"
-	TotalSupply                     FunctionName = "TotalSupply"
-	Transfer                        FunctionName = "Transfer"
-	TransferData                    FunctionName = "TransferData"
-	TransferDataFallback            FunctionName = "TransferDataFallback"
-	TransferAndCall                 FunctionName = "TransferAndCall"
-	TransferFrom                    FunctionName = "TransferFrom"
-	TransferFromAndCall             FunctionName = "TransferFromAndCall"
-	UpdateVerified                  FunctionName = "UpdateVerified"
-	URI                             FunctionName = "URI"
-	Pause                           FunctionName = "Pause"
-	Paused                          FunctionName = "Paused"
-	Unpause                         FunctionName = "Unpause"
-	MintWithTokenURI                FunctionName = "MintWithTokenURI"
-	Resume                          FunctionName = "Resume"
-	Upgrade                         FunctionName = "Upgrade"
-	Target                          FunctionName = "Target"
-)
-
-var Functions = map[FunctionName]FunctionData{
+var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	AddPauser:                       {ID: "82dc1ec4", Signature: "addPauser(address)", Callable: false},
 	AddVerified:                     {ID: "47089f62", Signature: "addVerified(address,bytes32)", Callable: false},
 	Allowance:                       {ID: "dd62ed3e", Signature: "allowance(address,address)", Callable: false},
@@ -161,6 +268,7 @@ var Functions = map[FunctionName]FunctionData{
 	SetApprovalForAll:               {ID: "a22cb465", Signature: "setApprovalForAll(address,bool)", Callable: false},
 	SupportsInterface:               {ID: "01ffc9a7", Signature: "supportsInterface(bytes4)", Callable: false},
 	Symbol:                          {ID: "95d89b41", Signature: "symbol()", Callable: true},
+	Target:                          {ID: "d4b83992", Signature: "target()", Callable: true},
 	TokensReceived:                  {ID: "0023de29", Signature: "tokensReceived(address,address,address,uint256,bytes,bytes)", Callable: false},
 	TokensToSend:                    {ID: "75ab9782", Signature: "tokensToSend(address,address,address,uint256,bytes,bytes)", Callable: false},
 	TokenByIndex:                    {ID: "4f6ccce7", Signature: "tokenByIndex(uint256)", Callable: false},
@@ -179,53 +287,110 @@ var Functions = map[FunctionName]FunctionData{
 	Pause:                           {ID: "8456cb59", Signature: "pause()", Callable: false},
 	Paused:                          {ID: "5c975abb", Signature: "paused()", Callable: true},
 	Unpause:                         {ID: "3f4ba83a", Signature: "unpause()", Callable: false},
+	Upgrade:                         {ID: "0900f010", Signature: "upgrade(address)", Callable: false},
 	MintWithTokenURI:                {ID: "50bb4e7f", Signature: "mintWithTokenURI(address,uint256,string)", Callable: false},
 	Resume:                          {ID: "046f7da2", Signature: "resume()", Callable: false},
-	Upgrade:                         {ID: "0900f010", Signature: "upgrade(address)", Callable: false},
-	Target:                          {ID: "d4b83992", Signature: "target()", Callable: true},
 }
 
-type ErcName string
+// EVMInterface is an internal enum only. Use the String() form externally.
+type EVMInterface int
+
+func (e EVMInterface) String() string {
+	if e < 0 || int(e) > len(evmInterfaceNames) {
+		return fmt.Sprintf("Unrecognized interface: %d", e)
+	}
+	return evmInterfaceNames[e]
+}
+
+func ParseEVMInterface(s string) EVMInterface {
+	e, ok := evmInterfacesByName[s]
+	if !ok {
+		return -1
+	}
+	return e
+}
 
 const (
-	Go20                  ErcName = "Go20"
-	Go20Burnable          ErcName = "Go20Burnable"
-	Go20Capped            ErcName = "Go20Capped"
-	Go20Detailed          ErcName = "Go20Detailed"
-	Go20Mintable          ErcName = "Go20Mintable"
-	Go20Pausable          ErcName = "Go20Pausable"
-	Go165                 ErcName = "Go165"
-	Go721                 ErcName = "Go721"
-	Go721Burnable         ErcName = "Go721Burnable"
-	Go721Receiver         ErcName = "Go721Receiver"
-	Go721Metadata         ErcName = "Go721Metadata"
-	Go721Enumerable       ErcName = "Go721Enumerable"
-	Go721Pausable         ErcName = "Go721Pausable"
-	Go721Mintable         ErcName = "Go721Mintable"
-	Go721MetadataMintable ErcName = "Go721MetadataMintable"
-	Go721Full             ErcName = "Go721Full"
-	Go820                 ErcName = "Go820"
-	Go1155                ErcName = "Go1155"
-	Go1155Receiver        ErcName = "Go1155Receiver"
-	Go1155Metadata        ErcName = "Go1155Metadata"
-	Go223                 ErcName = "Go223"
-	Go223Receiver         ErcName = "Go223Receiver"
-	Go621                 ErcName = "Go621"
-	Go777                 ErcName = "Go777"
-	Go777Receiver         ErcName = "Go777Receiver"
-	Go777Sender           ErcName = "Go777Sender"
-	Go827                 ErcName = "Go827"
-	Go884                 ErcName = "Go884"
-	Upgradeable           ErcName = "Upgradeable"
+	Go20 EVMInterface = iota
+	Go20Burnable
+	Go20Capped
+	Go20Detailed
+	Go20Mintable
+	Go20Pausable
+	Go165
+	Go721
+	Go721Burnable
+	Go721Receiver
+	Go721Metadata
+	Go721Enumerable
+	Go721Pausable
+	Go721Mintable
+	Go721MetadataMintable
+	Go721Full
+	Go820
+	Go1155
+	Go1155Receiver
+	Go1155Metadata
+	Go223
+	Go223Receiver
+	Go621
+	Go777
+	Go777Receiver
+	Go777Sender
+	Go827
+	Go884
+	Upgradeable
 )
 
+var evmInterfaceNames = []string{
+	Go20:                  "Go20",
+	Go20Burnable:          "Go20Burnable",
+	Go20Capped:            "Go20Capped",
+	Go20Detailed:          "Go20Detailed",
+	Go20Mintable:          "Go20Mintable",
+	Go20Pausable:          "Go20Pausable",
+	Go165:                 "Go165",
+	Go721:                 "Go721",
+	Go721Burnable:         "Go721Burnable",
+	Go721Receiver:         "Go721Receiver",
+	Go721Metadata:         "Go721Metadata",
+	Go721Enumerable:       "Go721Enumerable",
+	Go721Pausable:         "Go721Pausable",
+	Go721Mintable:         "Go721Mintable",
+	Go721MetadataMintable: "Go721MetadataMintable",
+	Go721Full:             "Go721Full",
+	Go820:                 "Go820",
+	Go1155:                "Go1155",
+	Go1155Receiver:        "Go1155Receiver",
+	Go1155Metadata:        "Go1155Metadata",
+	Go223:                 "Go223",
+	Go223Receiver:         "Go223Receiver",
+	Go621:                 "Go621",
+	Go777:                 "Go777",
+	Go777Receiver:         "Go777Receiver",
+	Go777Sender:           "Go777Sender",
+	Go827:                 "Go827",
+	Go884:                 "Go884",
+	Upgradeable:           "Upgradeable",
+}
+
+var evmInterfacesByName map[string]EVMInterface
+
+func init() {
+	evmInterfacesByName = make(map[string]EVMInterface, len(evmInterfaceNames))
+	for i, nm := range evmInterfaceNames {
+		evmInterfacesByName[nm] = EVMInterface(i)
+	}
+}
+
 var (
-	go20Functions  = []FunctionName{Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom}
-	go721Functions = []FunctionName{Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom,
+	go20Functions  = []EVMFunction{Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom}
+	go721Functions = []EVMFunction{Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom,
 		SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom}
 )
 
-var Interfaces = map[ErcName][]FunctionName{
+// EVMFunctionsByInterface maps each EVMInterface to its set of EVMFunctions.
+var EVMFunctionsByInterface = [][]EVMFunction{
 	Go20:         go20Functions,
 	Go20Burnable: append(go20Functions, Burn, BurnFrom),
 	Go20Capped:   append(go20Functions, Mint, Cap),
