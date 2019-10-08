@@ -97,6 +97,7 @@ export const TOKEN_TYPES = {
 };
 
 export const ERC_INTERFACE_IDENTIFIERS = {
+  [ErcName.AllFunctions]: Object.keys(FunctionName),
   [ErcName.Go20]: [FunctionName.Allowance, FunctionName.Approve, FunctionName.BalanceOf, FunctionName.TotalSupply, FunctionName.Transfer, FunctionName.TransferFrom],
   [ErcName.Go721]: [FunctionName.Approve, FunctionName.BalanceOf, FunctionName.GetApproved, FunctionName.IsApprovedForAll, FunctionName.OwnerOf, FunctionName.SafeTransferFrom, FunctionName.SafeTransferFromData, FunctionName.SetApprovalForAll, FunctionName.TransferFrom],
   [ErcName.Go165]: [FunctionName.SupportsInterface],
