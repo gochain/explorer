@@ -10,7 +10,7 @@ export enum StatusColor {
   Danger = 'danger',
 }
 
-export enum InterfaceName {
+export enum FunctionName {
   AddPauser = 'AddPauser',
   AddVerified = 'AddVerified',
   Allowance = 'Allowance',
@@ -18,10 +18,10 @@ export enum InterfaceName {
   ApproveAndCall = 'ApproveAndCall',
   AuthorizeOperator = 'AuthorizeOperator',
   BalanceOf = 'BalanceOf',
-  BalanceOf1 = 'BalanceOf1',
+  BalanceOfID = 'BalanceOfID',
   BalanceOfBatch = 'BalanceOfBatch',
   Burn = 'Burn',
-  Burn1 = 'Burn1',
+  BurnData = 'BurnData',
   BurnFrom = 'BurnFrom',
   CancelAndReissue = 'CancelAndReissue',
   ImplementInterfaceForAddress = 'ImplementInterfaceForAddress',
@@ -53,26 +53,30 @@ export enum InterfaceName {
   OnErc1155Received = 'OnErc1155Received',
   OperatorBurn = 'OperatorBurn',
   OperatorSend = 'OperatorSend',
+  Owner = 'Owner',
   OwnerOf = 'OwnerOf',
   RemoveVerified = 'RemoveVerified',
   RenouncePauser = 'RenouncePauser',
   RevokeOperator = 'RevokeOperator',
   SafeBatchTransferFrom = 'SafeBatchTransferFrom',
   SafeTransferFrom = 'SafeTransferFrom',
-  SafeTransferFrom1 = 'SafeTransferFrom1',
+  SafeTransferFromData = 'SafeTransferFromData',
+  SafeTransferFromValueData = 'SafeTransferFromValueData',
   Send = 'Send',
   SetApprovalForAll = 'SetApprovalForAll',
   SupportsInterface = 'SupportsInterface',
   Symbol = 'Symbol',
+  Target = 'Target',
   TokensReceived = 'TokensReceived',
   TokensToSend = 'TokensToSend',
   TokenByIndex = 'TokenByIndex',
+  TokenFallback = 'TokenFallback',
   TokenOfOwnerByIndex = 'TokenOfOwnerByIndex',
   TokenUri = 'TokenUri',
   TotalSupply = 'TotalSupply',
   Transfer = 'Transfer',
-  Transfer1 = 'Transfer1',
-  Transfer2 = 'Transfer2',
+  TransferData = 'TransferData',
+  TransferDataFallback = 'TransferDataFallback',
   TransferAndCall = 'TransferAndCall',
   TransferFrom = 'TransferFrom',
   TransferFromAndCall = 'TransferFromAndCall',
@@ -81,7 +85,9 @@ export enum InterfaceName {
   Pause = 'Pause',
   Paused = 'Paused',
   Unpause = 'Unpause',
+  Upgrade = 'Upgrade',
   MintWithTokenURI = 'MintWithTokenURI',
+  Resume = 'Resume',
 }
 
 export enum ErcName {
@@ -113,4 +119,5 @@ export enum ErcName {
   Go777Sender = 'Go777Sender',
   Go827 = 'Go827',
   Go884 = 'Go884',
+  Upgradeable = 'Upgradeable'
 }

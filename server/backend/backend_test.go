@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/tokens"
 
-	"github.com/gochain-io/gochain/v3/common"
-	"github.com/gochain-io/gochain/v3/core/types"
-	"github.com/gochain-io/gochain/v3/rlp"
+	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v3/core/types"
+	"github.com/gochain/gochain/v3/rlp"
 	"go.uber.org/zap/zaptest"
 )
 
@@ -41,7 +42,7 @@ func createImportBlock(t *testing.T, testBackend *Backend) types.Block {
 func TestImportAddress(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
-	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
+	var token = &tokens.TokenDetails{TotalSupply: big.NewInt(0)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
@@ -226,7 +227,7 @@ func TestActiveAddresses(t *testing.T) {
 func TestRichList(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
-	var token = &TokenDetails{TotalSupply: big.NewInt(0)}
+	var token = &tokens.TokenDetails{TotalSupply: big.NewInt(0)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
@@ -296,7 +297,7 @@ func TestTokenHolder(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 
-	var token = &TokenHolderDetails{Balance: big.NewInt(1000000000000000000)}
+	var token = &tokens.TokenHolderDetails{Balance: big.NewInt(1000000000000000000)}
 
 	addr := models.Address{Address: "addrHash ", TokenSymbol: "GoGo", TokenName: "GoGoTOken"}
 	addrHash := "0x0000000000000000000000000000000000000000"
@@ -363,15 +364,15 @@ func TestInternalTransactions(t *testing.T) {
 	tokenHolderHash1 := "0x0000000000000000000000000000000000000001"
 	tokenHolderHash2 := "0x0000000000000000000000000000000000000002"
 
-	var transaction1 = TransferEvent{BlockNumber: 10, TransactionHash: "hash1", From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
-	var transaction2 = TransferEvent{BlockNumber: 20, TransactionHash: "hash2", From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
+	var transaction1 = &tokens.TransferEvent{BlockNumber: 10, TransactionHash: "hash1", From: common.HexToAddress(tokenHolderHash1), To: common.HexToAddress(tokenHolderHash2), Value: big.NewInt(10)}
+	var transaction2 = &tokens.TransferEvent{BlockNumber: 20, TransactionHash: "hash2", From: common.HexToAddress(tokenHolderHash2), To: common.HexToAddress(tokenHolderHash1), Value: big.NewInt(100)}
 
 	addrHash := "0x0000000000000000000000000000000000000000"
 
-	if _, err := testBackend.ImportInternalTransaction(context.Background(), addrHash, transaction1); err != nil {
+	if _, err := testBackend.ImportTransferEvent(context.Background(), addrHash, transaction1); err != nil {
 		t.Fatalf("failed to import internal transaction: %v", err)
 	}
-	if _, err := testBackend.ImportInternalTransaction(context.Background(), addrHash, transaction2); err != nil {
+	if _, err := testBackend.ImportTransferEvent(context.Background(), addrHash, transaction2); err != nil {
 		t.Fatalf("failed to import internal transaction: %v", err)
 	}
 
@@ -380,27 +381,26 @@ func TestInternalTransactions(t *testing.T) {
 		Limit:             100,
 		TokenTransactions: false,
 	}
-
-	transactions, err := testBackend.GetInternalTransactionsList(addrHash, filter)
+	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
 	filter.TokenTransactions = true
-	token_transactions, err := testBackend.GetInternalTransactionsList(tokenHolderHash1, true, filter)
+	heldTokenTransfers, err := testBackend.GetHeldTokenTransfers(tokenHolderHash1, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(transactions) != 2 {
-		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(transactions), 2)
+	if len(internalTokenTransfers) != 2 {
+		t.Fatalf("InternalTokenTransfers  was incorrect, got: %d, want: %d.", len(internalTokenTransfers), 2)
 	}
-	if len(token_transactions) != 2 {
-		t.Fatalf("InternalTransactionList  was incorrect, got: %d, want: %d.", len(token_transactions), 2)
+	if len(heldTokenTransfers) != 2 {
+		t.Fatalf("HeldTokenTransfers  was incorrect, got: %d, want: %d.", len(heldTokenTransfers), 2)
 	}
-	if transactions[0].BlockNumber != transaction2.BlockNumber {
-		t.Errorf("InternalTransactionList was incorrect, got: %d, want: %d.", transactions[0].BlockNumber, transaction1.BlockNumber)
+	if internalTokenTransfers[0].BlockNumber != transaction2.BlockNumber {
+		t.Errorf("InternalTokenTransfers was incorrect, got: %d, want: %d.", internalTokenTransfers[0].BlockNumber, transaction1.BlockNumber)
 	}
-	if transactions[1].Value != transaction1.Value.String() {
-		t.Errorf("InternalTransactionList was incorrect, got: %s, want: %s.", transactions[1].Value, transaction1.Value.String())
+	if internalTokenTransfers[1].Value != transaction1.Value.String() {
+		t.Errorf("InternalTokenTransfers was incorrect, got: %s, want: %s.", internalTokenTransfers[1].Value, transaction1.Value.String())
 	}
 }
 

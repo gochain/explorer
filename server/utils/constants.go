@@ -1,5 +1,7 @@
 package utils
 
+import "fmt"
+
 type AbiArgument struct {
 	Name    string `json:"name" bson:"name"`
 	Indexed bool   `json:"indexes" bson:"indexes"`
@@ -17,228 +19,420 @@ type AbiItem struct {
 	Type            string        `json:"type" bson:"type"`
 }
 
-type FunctionName string
+// EVMFunction is an internal enum only. Use the String() form externally.
+type EVMFunction int
 
-type FunctionData struct {
-	Value       string
-	Description string
-	Callable    bool
+func (f EVMFunction) String() string {
+	if f < 0 || int(f) >= len(evmFunctionNames) {
+		return fmt.Sprintf("Unrecognized function: %d", f)
+	}
+	return evmFunctionNames[f]
+}
+
+func ParseEVMFunction(s string) EVMFunction {
+	f, ok := evmFunctionsByName[s]
+	if !ok {
+		return -1
+	}
+	return f
 }
 
 const (
-	AddPauser                       FunctionName = "AddPauser"
-	AddVerified                     FunctionName = "AddVerified"
-	Allowance                       FunctionName = "Allowance"
-	Approve                         FunctionName = "Approve"
-	ApproveAndCall                  FunctionName = "ApproveAndCall"
-	AuthorizeOperator               FunctionName = "AuthorizeOperator"
-	BalanceOf                       FunctionName = "BalanceOf"
-	BalanceOf1                      FunctionName = "BalanceOf1"
-	BalanceOfBatch                  FunctionName = "BalanceOfBatch"
-	Burn                            FunctionName = "Burn"
-	Burn1                           FunctionName = "Burn1"
-	BurnFrom                        FunctionName = "BurnFrom"
-	CancelAndReissue                FunctionName = "CancelAndReissue"
-	CanImplementInterfaceForAddress FunctionName = "CanImplementInterfaceForAddress"
-	Cap                             FunctionName = "Cap"
-	Decimals                        FunctionName = "Decimals"
-	DecreaseAllowance               FunctionName = "DecreaseAllowance"
-	DecreaseAllowanceAndCall        FunctionName = "DecreaseAllowanceAndCall"
-	DecreaseSupply                  FunctionName = "DecreaseSupply"
-	DefaultOperators                FunctionName = "DefaultOperators"
-	GetApproved                     FunctionName = "GetApproved"
-	GetCurrentFor                   FunctionName = "GetCurrentFor"
-	Granularity                     FunctionName = "Granularity"
-	HasHash                         FunctionName = "HasHash"
-	HolderAt                        FunctionName = "HolderAt"
-	HolderCount                     FunctionName = "HolderCount"
-	IncreaseAllowance               FunctionName = "IncreaseAllowance"
-	IncreaseAllowanceAndCall        FunctionName = "IncreaseAllowanceAndCall"
-	IncreaseSupply                  FunctionName = "IncreaseSupply"
-	IsApprovedForAll                FunctionName = "IsApprovedForAll"
-	IsHolder                        FunctionName = "IsHolder"
-	IsPauser                        FunctionName = "IsPauser"
-	IsOperatorFor                   FunctionName = "IsOperatorFor"
-	IsSuperseded                    FunctionName = "IsSuperseded"
-	IsVerified                      FunctionName = "IsVerified"
-	Mint                            FunctionName = "Mint"
-	Name                            FunctionName = "Name"
-	OnErc721Received                FunctionName = "OnErc721Received"
-	OnErc1155BatchReceived          FunctionName = "OnErc1155BatchReceived"
-	OnErc1155Received               FunctionName = "OnErc1155Received"
-	OperatorBurn                    FunctionName = "OperatorBurn"
-	OperatorSend                    FunctionName = "OperatorSend"
-	OwnerOf                         FunctionName = "OwnerOf"
-	RemoveVerified                  FunctionName = "RemoveVerified"
-	RenouncePauser                  FunctionName = "RenouncePauser"
-	RevokeOperator                  FunctionName = "RevokeOperator"
-	SafeBatchTransferFrom           FunctionName = "SafeBatchTransferFrom"
-	SafeTransferFrom                FunctionName = "SafeTransferFrom"
-	SafeTransferFrom1               FunctionName = "SafeTransferFrom1"
-	SafeTransferFrom2               FunctionName = "SafeTransferFrom2"
-	Send                            FunctionName = "Send"
-	SetApprovalForAll               FunctionName = "SetApprovalForAll"
-	SupportsInterface               FunctionName = "SupportsInterface"
-	Symbol                          FunctionName = "Symbol"
-	TokensReceived                  FunctionName = "TokensReceived"
-	TokensToSend                    FunctionName = "TokensToSend"
-	TokenByIndex                    FunctionName = "TokenByIndex"
-	TokenFallback                   FunctionName = "TokenFallback"
-	TokenOfOwnerByIndex             FunctionName = "TokenOfOwnerByIndex"
-	TokenUri                        FunctionName = "TokenUri"
-	TotalSupply                     FunctionName = "TotalSupply"
-	Transfer                        FunctionName = "Transfer"
-	Transfer1                       FunctionName = "Transfer1"
-	Transfer2                       FunctionName = "Transfer2"
-	TransferAndCall                 FunctionName = "TransferAndCall"
-	TransferFrom                    FunctionName = "TransferFrom"
-	TransferFromAndCall             FunctionName = "TransferFromAndCall"
-	UpdateVerified                  FunctionName = "UpdateVerified"
-	URI                             FunctionName = "URI"
-	Pause                           FunctionName = "Pause"
-	Paused                          FunctionName = "Paused"
-	Unpause                         FunctionName = "Unpause"
-	MintWithTokenURI                FunctionName = "MintWithTokenURI"
+	AddPauser EVMFunction = iota
+	AddVerified
+	Allowance
+	Approve
+	ApproveAndCall
+	AuthorizeOperator
+	BalanceOf
+	BalanceOfID
+	BalanceOfBatch
+	Burn
+	BurnData
+	BurnFrom
+	CancelAndReissue
+	CanImplementInterfaceForAddress
+	Cap
+	Decimals
+	DecreaseAllowance
+	DecreaseAllowanceAndCall
+	DecreaseSupply
+	DefaultOperators
+	GetApproved
+	GetCurrentFor
+	Granularity
+	HasHash
+	HolderAt
+	HolderCount
+	IncreaseAllowance
+	IncreaseAllowanceAndCall
+	IncreaseSupply
+	IsApprovedForAll
+	IsHolder
+	IsPauser
+	IsOperatorFor
+	IsSuperseded
+	IsVerified
+	Mint
+	Name
+	OnErc721Received
+	OnErc1155BatchReceived
+	OnErc1155Received
+	OperatorBurn
+	OperatorSend
+	Owner
+	OwnerOf
+	RemoveVerified
+	RenouncePauser
+	RevokeOperator
+	SafeBatchTransferFrom
+	SafeTransferFrom
+	SafeTransferFromData
+	SafeTransferFromValueData
+	Send
+	SetApprovalForAll
+	SupportsInterface
+	Symbol
+	Target
+	TokensReceived
+	TokensToSend
+	TokenByIndex
+	TokenFallback
+	TokenOfOwnerByIndex
+	TokenUri
+	TotalSupply
+	Transfer
+	TransferData
+	TransferDataFallback
+	TransferAndCall
+	TransferFrom
+	TransferFromAndCall
+	UpdateVerified
+	URI
+	Pause
+	Paused
+	Unpause
+	Upgrade
+	MintWithTokenURI
+	Resume
 )
 
-var InterfaceIdentifiers = map[FunctionName]FunctionData{
-	AddPauser:                       {Value: "82dc1ec4", Description: "addPauser(address)", Callable: false},
-	AddVerified:                     {Value: "47089f62", Description: "addVerified(address,bytes32)", Callable: false},
-	Allowance:                       {Value: "dd62ed3e", Description: "allowance(address,address)", Callable: false},
-	Approve:                         {Value: "095ea7b3", Description: "approve(address,uint256)", Callable: false},
-	ApproveAndCall:                  {Value: "cae9ca51", Description: "approveAndCall(address,uint256,bytes)", Callable: false},
-	AuthorizeOperator:               {Value: "959b8c3f", Description: "authorizeOperator(address)", Callable: false},
-	BalanceOf:                       {Value: "70a08231", Description: "balanceOf(address)", Callable: false},
-	BalanceOf1:                      {Value: "00fdd58e", Description: "balanceOf(address,uint256)", Callable: false},
-	BalanceOfBatch:                  {Value: "4e1273f4", Description: "balanceOfBatch(address[],uint256[])", Callable: false},
-	Burn:                            {Value: "42966c68", Description: "burn(uint256)", Callable: false},
-	Burn1:                           {Value: "fe9d9303", Description: "burn(uint256,bytes)", Callable: false},
-	BurnFrom:                        {Value: "79cc6790", Description: "burnFrom(address,uint256)", Callable: false},
-	CancelAndReissue:                {Value: "79f64720", Description: "cancelAndReissue(address,address)", Callable: false},
-	CanImplementInterfaceForAddress: {Value: "249cb3fa", Description: "canImplementInterfaceForAddress(bytes32,address)", Callable: false},
-	Cap:                             {Value: "355274ea", Description: "cap()", Callable: true},
-	Decimals:                        {Value: "313ce567", Description: "decimals()", Callable: true},
-	DecreaseAllowance:               {Value: "a457c2d7", Description: "decreaseAllowance(address,uint256)", Callable: false},
-	DecreaseAllowanceAndCall:        {Value: "d135ca1d", Description: "decreaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
-	DecreaseSupply:                  {Value: "869e0e60", Description: "decreaseSupply(uint256,address)", Callable: false},
-	DefaultOperators:                {Value: "06e48538", Description: "defaultOperators()", Callable: true},
-	GetApproved:                     {Value: "081812fc", Description: "getApproved(uint256)", Callable: false},
-	GetCurrentFor:                   {Value: "cc397ed3", Description: "getCurrentFor(address)", Callable: false},
-	Granularity:                     {Value: "556f0dc7", Description: "granularity()", Callable: true},
-	HasHash:                         {Value: "f3221c7f", Description: "hasHash(address,bytes32)", Callable: false},
-	HolderAt:                        {Value: "197bc336", Description: "holderAt(uint256)", Callable: false},
-	HolderCount:                     {Value: "1aab9a9f", Description: "holderCount()", Callable: true},
-	IncreaseAllowance:               {Value: "39509351", Description: "increaseAllowance(address,uint256)", Callable: false},
-	IncreaseAllowanceAndCall:        {Value: "5fd42775", Description: "increaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
-	IncreaseSupply:                  {Value: "124fc7e0", Description: "increaseSupply(uint256,address)", Callable: false},
-	IsApprovedForAll:                {Value: "e985e9c5", Description: "isApprovedForAll(address,address)", Callable: false},
-	IsHolder:                        {Value: "d4d7b19a", Description: "isHolder(address)", Callable: false},
-	IsPauser:                        {Value: "46fbf68e", Description: "isPauser(address)", Callable: true},
-	IsOperatorFor:                   {Value: "d95b6371", Description: "isOperatorFor(address,address)", Callable: false},
-	IsSuperseded:                    {Value: "2da7293e", Description: "isSuperseded(address)", Callable: false},
-	IsVerified:                      {Value: "b9209e33", Description: "isVerified(address)", Callable: false},
-	Mint:                            {Value: "40c10f19", Description: "mint(address,uint256)", Callable: false},
-	Name:                            {Value: "06fdde03", Description: "name()", Callable: true},
-	OnErc721Received:                {Value: "150b7a02", Description: "onERC721Received(address,address,uint256,bytes)", Callable: false},
-	OnErc1155BatchReceived:          {Value: "bc197c81", Description: "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)", Callable: false},
-	OnErc1155Received:               {Value: "f23a6e61", Description: "onERC1155Received(address,address,uint256,uint256,bytes)", Callable: false},
-	OperatorBurn:                    {Value: "fc673c4f", Description: "operatorBurn(address,uint256,bytes,bytes)", Callable: false},
-	OperatorSend:                    {Value: "62ad1b83", Description: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
-	OwnerOf:                         {Value: "6352211e", Description: "ownerOf(uint256)", Callable: false},
-	RemoveVerified:                  {Value: "4487b392", Description: "removeVerified(address)", Callable: false},
-	RenouncePauser:                  {Value: "6ef8d66d", Description: "renouncePauser()", Callable: false},
-	RevokeOperator:                  {Value: "fad8b32a", Description: "revokeOperator(address)", Callable: false},
-	SafeBatchTransferFrom:           {Value: "2eb2c2d6", Description: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
-	SafeTransferFrom:                {Value: "42842e0e", Description: "safeTransferFrom(address,address,uint256)", Callable: false},
-	SafeTransferFrom1:               {Value: "f242432a", Description: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
-	Send:                            {Value: "9bd9bbc6", Description: "send(address,uint256,bytes)", Callable: false},
-	SetApprovalForAll:               {Value: "a22cb465", Description: "setApprovalForAll(address,bool)", Callable: false},
-	SupportsInterface:               {Value: "01ffc9a7", Description: "supportsInterface(bytes4)", Callable: false},
-	Symbol:                          {Value: "95d89b41", Description: "symbol()", Callable: true},
-	TokensReceived:                  {Value: "0023de29", Description: "tokensReceived(address,address,address,uint256,bytes,bytes)", Callable: false},
-	TokensToSend:                    {Value: "75ab9782", Description: "tokensToSend(address,address,address,uint256,bytes,bytes)", Callable: false},
-	TokenByIndex:                    {Value: "4f6ccce7", Description: "tokenByIndex(uint256)", Callable: false},
-	TokenFallback:                   {Value: "c0ee0b8a", Description: "tokenFallback(address,uint256,bytes)", Callable: false},
-	TokenOfOwnerByIndex:             {Value: "2f745c59", Description: "tokenOfOwnerByIndex(address,uint256)", Callable: false},
-	TokenUri:                        {Value: "c87b56dd", Description: "tokenURI(uint256)", Callable: false},
-	TotalSupply:                     {Value: "18160ddd", Description: "totalSupply()", Callable: true},
-	Transfer:                        {Value: "a9059cbb", Description: "transfer(address,uint256)", Callable: false},
-	Transfer1:                       {Value: "be45fd62", Description: "transfer(address,uint256,bytes)", Callable: false},
-	Transfer2:                       {Value: "f6368f8a", Description: "transfer(address,uint256,bytes,string)", Callable: false},
-	TransferAndCall:                 {Value: "4000aea0", Description: "transferAndCall(address,uint256,bytes)", Callable: false},
-	TransferFrom:                    {Value: "23b872dd", Description: "transferFrom(address,address,uint256)", Callable: false},
-	TransferFromAndCall:             {Value: "c1d34b89", Description: "transferFromAndCall(address,address,uint256,bytes)", Callable: false},
-	UpdateVerified:                  {Value: "354b7b1d", Description: "updateVerified(address,bytes32)", Callable: false},
-	URI:                             {Value: "0e89341c", Description: "uri(uint256)", Callable: false},
-	Pause:                           {Value: "8456cb59", Description: "pause()", Callable: false},
-	Paused:                          {Value: "5c975abb", Description: "paused()", Callable: true},
-	Unpause:                         {Value: "3f4ba83a", Description: "unpause()", Callable: false},
-	MintWithTokenURI:                {Value: "50bb4e7f", Description: "mintWithTokenURI(address,uint256,string)", Callable: false},
+var evmFunctionNames = []string{
+	AddPauser:                       "AddPauser",
+	AddVerified:                     "AddVerified",
+	Allowance:                       "Allowance",
+	Approve:                         "Approve",
+	ApproveAndCall:                  "ApproveAndCall",
+	AuthorizeOperator:               "AuthorizeOperator",
+	BalanceOf:                       "BalanceOf",
+	BalanceOfID:                     "BalanceOfID",
+	BalanceOfBatch:                  "BalanceOfBatch",
+	Burn:                            "Burn",
+	BurnData:                        "BurnData",
+	BurnFrom:                        "BurnFrom",
+	CancelAndReissue:                "CancelAndReissue",
+	CanImplementInterfaceForAddress: "CanImplementInterfaceForAddress",
+	Cap:                             "Cap",
+	Decimals:                        "Decimals",
+	DecreaseAllowance:               "DecreaseAllowance",
+	DecreaseAllowanceAndCall:        "DecreaseAllowanceAndCall",
+	DecreaseSupply:                  "DecreaseSupply",
+	DefaultOperators:                "DefaultOperators",
+	GetApproved:                     "GetApproved",
+	GetCurrentFor:                   "GetCurrentFor",
+	Granularity:                     "Granularity",
+	HasHash:                         "HasHash",
+	HolderAt:                        "HolderAt",
+	HolderCount:                     "HolderCount",
+	IncreaseAllowance:               "IncreaseAllowance",
+	IncreaseAllowanceAndCall:        "IncreaseAllowanceAndCall",
+	IncreaseSupply:                  "IncreaseSupply",
+	IsApprovedForAll:                "IsApprovedForAll",
+	IsHolder:                        "IsHolder",
+	IsPauser:                        "IsPauser",
+	IsOperatorFor:                   "IsOperatorFor",
+	IsSuperseded:                    "IsSuperseded",
+	IsVerified:                      "IsVerified",
+	Mint:                            "Mint",
+	Name:                            "Name",
+	OnErc721Received:                "OnErc721Received",
+	OnErc1155BatchReceived:          "OnErc1155BatchReceived",
+	OnErc1155Received:               "OnErc1155Received",
+	OperatorBurn:                    "OperatorBurn",
+	OperatorSend:                    "OperatorSend",
+	Owner:                           "Owner",
+	OwnerOf:                         "OwnerOf",
+	RemoveVerified:                  "RemoveVerified",
+	RenouncePauser:                  "RenouncePauser",
+	RevokeOperator:                  "RevokeOperator",
+	SafeBatchTransferFrom:           "SafeBatchTransferFrom",
+	SafeTransferFrom:                "SafeTransferFrom",
+	SafeTransferFromData:            "SafeTransferFromData",
+	SafeTransferFromValueData:       "SafeTransferFromValueData",
+	Send:                            "Send",
+	SetApprovalForAll:               "SetApprovalForAll",
+	SupportsInterface:               "SupportsInterface",
+	Symbol:                          "Symbol",
+	Target:                          "Target",
+	TokensReceived:                  "TokensReceived",
+	TokensToSend:                    "TokensToSend",
+	TokenByIndex:                    "TokenByIndex",
+	TokenFallback:                   "TokenFallback",
+	TokenOfOwnerByIndex:             "TokenOfOwnerByIndex",
+	TokenUri:                        "TokenUri",
+	TotalSupply:                     "TotalSupply",
+	Transfer:                        "Transfer",
+	TransferData:                    "TransferData",
+	TransferDataFallback:            "TransferDataFallback",
+	TransferAndCall:                 "TransferAndCall",
+	TransferFrom:                    "TransferFrom",
+	TransferFromAndCall:             "TransferFromAndCall",
+	UpdateVerified:                  "UpdateVerified",
+	URI:                             "URI",
+	Pause:                           "Pause",
+	Paused:                          "Paused",
+	Unpause:                         "Unpause",
+	Upgrade:                         "Upgrade",
+	MintWithTokenURI:                "MintWithTokenURI",
+	Resume:                          "Resume",
 }
 
-type ErcName string
-type ErcData []FunctionName
+var evmFunctionsByName map[string]EVMFunction
+
+func init() {
+	evmFunctionsByName = make(map[string]EVMFunction, len(evmFunctionNames))
+	for i, nm := range evmFunctionNames {
+		evmFunctionsByName[nm] = EVMFunction(i)
+	}
+}
+
+type EVMFunctionData struct {
+	ID        string
+	Signature string
+	Callable  bool
+}
+
+var EVMFunctions = map[EVMFunction]EVMFunctionData{
+	AddPauser:                       {ID: "82dc1ec4", Signature: "addPauser(address)", Callable: false},
+	AddVerified:                     {ID: "47089f62", Signature: "addVerified(address,bytes32)", Callable: false},
+	Allowance:                       {ID: "dd62ed3e", Signature: "allowance(address,address)", Callable: false},
+	Approve:                         {ID: "095ea7b3", Signature: "approve(address,uint256)", Callable: false},
+	ApproveAndCall:                  {ID: "cae9ca51", Signature: "approveAndCall(address,uint256,bytes)", Callable: false},
+	AuthorizeOperator:               {ID: "959b8c3f", Signature: "authorizeOperator(address)", Callable: false},
+	BalanceOf:                       {ID: "70a08231", Signature: "balanceOf(address)", Callable: false},
+	BalanceOfID:                     {ID: "00fdd58e", Signature: "balanceOf(address,uint256)", Callable: false},
+	BalanceOfBatch:                  {ID: "4e1273f4", Signature: "balanceOfBatch(address[],uint256[])", Callable: false},
+	Burn:                            {ID: "42966c68", Signature: "burn(uint256)", Callable: false},
+	BurnData:                        {ID: "fe9d9303", Signature: "burn(uint256,bytes)", Callable: false},
+	BurnFrom:                        {ID: "79cc6790", Signature: "burnFrom(address,uint256)", Callable: false},
+	CancelAndReissue:                {ID: "79f64720", Signature: "cancelAndReissue(address,address)", Callable: false},
+	CanImplementInterfaceForAddress: {ID: "249cb3fa", Signature: "canImplementInterfaceForAddress(bytes32,address)", Callable: false},
+	Cap:                             {ID: "355274ea", Signature: "cap()", Callable: true},
+	Decimals:                        {ID: "313ce567", Signature: "decimals()", Callable: true},
+	DecreaseAllowance:               {ID: "a457c2d7", Signature: "decreaseAllowance(address,uint256)", Callable: false},
+	DecreaseAllowanceAndCall:        {ID: "d135ca1d", Signature: "decreaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
+	DecreaseSupply:                  {ID: "869e0e60", Signature: "decreaseSupply(uint256,address)", Callable: false},
+	DefaultOperators:                {ID: "06e48538", Signature: "defaultOperators()", Callable: true},
+	GetApproved:                     {ID: "081812fc", Signature: "getApproved(uint256)", Callable: false},
+	GetCurrentFor:                   {ID: "cc397ed3", Signature: "getCurrentFor(address)", Callable: false},
+	Granularity:                     {ID: "556f0dc7", Signature: "granularity()", Callable: true},
+	HasHash:                         {ID: "f3221c7f", Signature: "hasHash(address,bytes32)", Callable: false},
+	HolderAt:                        {ID: "197bc336", Signature: "holderAt(uint256)", Callable: false},
+	HolderCount:                     {ID: "1aab9a9f", Signature: "holderCount()", Callable: true},
+	IncreaseAllowance:               {ID: "39509351", Signature: "increaseAllowance(address,uint256)", Callable: false},
+	IncreaseAllowanceAndCall:        {ID: "5fd42775", Signature: "increaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
+	IncreaseSupply:                  {ID: "124fc7e0", Signature: "increaseSupply(uint256,address)", Callable: false},
+	IsApprovedForAll:                {ID: "e985e9c5", Signature: "isApprovedForAll(address,address)", Callable: false},
+	IsHolder:                        {ID: "d4d7b19a", Signature: "isHolder(address)", Callable: false},
+	IsPauser:                        {ID: "46fbf68e", Signature: "isPauser(address)", Callable: true},
+	IsOperatorFor:                   {ID: "d95b6371", Signature: "isOperatorFor(address,address)", Callable: false},
+	IsSuperseded:                    {ID: "2da7293e", Signature: "isSuperseded(address)", Callable: false},
+	IsVerified:                      {ID: "b9209e33", Signature: "isVerified(address)", Callable: false},
+	Mint:                            {ID: "40c10f19", Signature: "mint(address,uint256)", Callable: false},
+	Name:                            {ID: "06fdde03", Signature: "name()", Callable: true},
+	OnErc721Received:                {ID: "150b7a02", Signature: "onERC721Received(address,address,uint256,bytes)", Callable: false},
+	OnErc1155BatchReceived:          {ID: "bc197c81", Signature: "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)", Callable: false},
+	OnErc1155Received:               {ID: "f23a6e61", Signature: "onERC1155Received(address,address,uint256,uint256,bytes)", Callable: false},
+	OperatorBurn:                    {ID: "fc673c4f", Signature: "operatorBurn(address,uint256,bytes,bytes)", Callable: false},
+	OperatorSend:                    {ID: "62ad1b83", Signature: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
+	Owner:                           {ID: "8da5cb5b", Signature: "owner()", Callable: false},
+	OwnerOf:                         {ID: "6352211e", Signature: "ownerOf(uint256)", Callable: false},
+	RemoveVerified:                  {ID: "4487b392", Signature: "removeVerified(address)", Callable: false},
+	RenouncePauser:                  {ID: "6ef8d66d", Signature: "renouncePauser()", Callable: false},
+	RevokeOperator:                  {ID: "fad8b32a", Signature: "revokeOperator(address)", Callable: false},
+	SafeBatchTransferFrom:           {ID: "2eb2c2d6", Signature: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
+	SafeTransferFrom:                {ID: "42842e0e", Signature: "safeTransferFrom(address,address,uint256)", Callable: false},
+	SafeTransferFromData:            {ID: "b88d4fde", Signature: "safeTransferFrom(address,address,uint256,bytes)", Callable: false},
+	SafeTransferFromValueData:       {ID: "f242432a", Signature: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
+	Send:                            {ID: "9bd9bbc6", Signature: "send(address,uint256,bytes)", Callable: false},
+	SetApprovalForAll:               {ID: "a22cb465", Signature: "setApprovalForAll(address,bool)", Callable: false},
+	SupportsInterface:               {ID: "01ffc9a7", Signature: "supportsInterface(bytes4)", Callable: false},
+	Symbol:                          {ID: "95d89b41", Signature: "symbol()", Callable: true},
+	Target:                          {ID: "d4b83992", Signature: "target()", Callable: true},
+	TokensReceived:                  {ID: "0023de29", Signature: "tokensReceived(address,address,address,uint256,bytes,bytes)", Callable: false},
+	TokensToSend:                    {ID: "75ab9782", Signature: "tokensToSend(address,address,address,uint256,bytes,bytes)", Callable: false},
+	TokenByIndex:                    {ID: "4f6ccce7", Signature: "tokenByIndex(uint256)", Callable: false},
+	TokenFallback:                   {ID: "c0ee0b8a", Signature: "tokenFallback(address,uint256,bytes)", Callable: false},
+	TokenOfOwnerByIndex:             {ID: "2f745c59", Signature: "tokenOfOwnerByIndex(address,uint256)", Callable: false},
+	TokenUri:                        {ID: "c87b56dd", Signature: "tokenURI(uint256)", Callable: false},
+	TotalSupply:                     {ID: "18160ddd", Signature: "totalSupply()", Callable: true},
+	Transfer:                        {ID: "a9059cbb", Signature: "transfer(address,uint256)", Callable: false},
+	TransferData:                    {ID: "be45fd62", Signature: "transfer(address,uint256,bytes)", Callable: false},
+	TransferDataFallback:            {ID: "f6368f8a", Signature: "transfer(address,uint256,bytes,string)", Callable: false},
+	TransferAndCall:                 {ID: "4000aea0", Signature: "transferAndCall(address,uint256,bytes)", Callable: false},
+	TransferFrom:                    {ID: "23b872dd", Signature: "transferFrom(address,address,uint256)", Callable: false},
+	TransferFromAndCall:             {ID: "c1d34b89", Signature: "transferFromAndCall(address,address,uint256,bytes)", Callable: false},
+	UpdateVerified:                  {ID: "354b7b1d", Signature: "updateVerified(address,bytes32)", Callable: false},
+	URI:                             {ID: "0e89341c", Signature: "uri(uint256)", Callable: false},
+	Pause:                           {ID: "8456cb59", Signature: "pause()", Callable: false},
+	Paused:                          {ID: "5c975abb", Signature: "paused()", Callable: true},
+	Unpause:                         {ID: "3f4ba83a", Signature: "unpause()", Callable: false},
+	Upgrade:                         {ID: "0900f010", Signature: "upgrade(address)", Callable: false},
+	MintWithTokenURI:                {ID: "50bb4e7f", Signature: "mintWithTokenURI(address,uint256,string)", Callable: false},
+	Resume:                          {ID: "046f7da2", Signature: "resume()", Callable: false},
+}
+
+// EVMInterface is an internal enum only. Use the String() form externally.
+type EVMInterface int
+
+func (e EVMInterface) String() string {
+	if e < 0 || int(e) >= len(evmInterfaceNames) {
+		return fmt.Sprintf("Unrecognized interface: %d", e)
+	}
+	return evmInterfaceNames[e]
+}
+
+func ParseEVMInterface(s string) EVMInterface {
+	e, ok := evmInterfacesByName[s]
+	if !ok {
+		return -1
+	}
+	return e
+}
 
 const (
-	Go20                  ErcName = "Go20"
-	Go20Burnable          ErcName = "Go20Burnable"
-	Go20Capped            ErcName = "Go20Capped"
-	Go20Detailed          ErcName = "Go20Detailed"
-	Go20Mintable          ErcName = "Go20Mintable"
-	Go20Pausable          ErcName = "Go20Pausable"
-	Go165                 ErcName = "Go165"
-	Go721                 ErcName = "Go721"
-	Go721Burnable         ErcName = "Go721Burnable"
-	Go721Receiver         ErcName = "Go721Receiver"
-	Go721Metadata         ErcName = "Go721Metadata"
-	Go721Enumerable       ErcName = "Go721Enumerable"
-	Go721Pausable         ErcName = "Go721Pausable"
-	Go721Mintable         ErcName = "Go721Mintable"
-	Go721MetadataMintable ErcName = "Go721MetadataMintable"
-	Go721Full             ErcName = "Go721Full"
-	Go820                 ErcName = "Go820"
-	Go1155                ErcName = "Go1155"
-	Go1155Receiver        ErcName = "Go1155Receiver"
-	Go1155Metadata        ErcName = "Go1155Metadata"
-	Go223                 ErcName = "Go223"
-	Go223Receiver         ErcName = "Go223Receiver"
-	Go621                 ErcName = "Go621"
-	Go777                 ErcName = "Go777"
-	Go777Receiver         ErcName = "Go777Receiver"
-	Go777Sender           ErcName = "Go777Sender"
-	Go827                 ErcName = "Go827"
-	Go884                 ErcName = "Go884"
+	Go20 EVMInterface = iota
+	Go20Burnable
+	Go20Capped
+	Go20Detailed
+	Go20Mintable
+	Go20Pausable
+	Go165
+	Go721
+	Go721Burnable
+	Go721Receiver
+	Go721Metadata
+	Go721Enumerable
+	Go721Pausable
+	Go721Mintable
+	Go721MetadataMintable
+	Go721Full
+	Go820
+	Go1155
+	Go1155Receiver
+	Go1155Metadata
+	Go223
+	Go223Receiver
+	Go621
+	Go777
+	Go777Receiver
+	Go777Sender
+	Go827
+	Go884
+	Upgradeable
 )
 
-var ErcInterfaceIdentifiers = map[ErcName]ErcData{
-	Go20:                  {Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom},
-	Go20Burnable:          {Burn, BurnFrom},
-	Go20Capped:            {Mint, Cap},
-	Go20Detailed:          {Decimals, Name, Symbol},
-	Go20Mintable:          {Mint},
-	Go20Pausable:          {IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
-	Go165:                 {SupportsInterface},
-	Go721:                 {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom},
-	Go721Burnable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Burn},
+var evmInterfaceNames = []string{
+	Go20:                  "Go20",
+	Go20Burnable:          "Go20Burnable",
+	Go20Capped:            "Go20Capped",
+	Go20Detailed:          "Go20Detailed",
+	Go20Mintable:          "Go20Mintable",
+	Go20Pausable:          "Go20Pausable",
+	Go165:                 "Go165",
+	Go721:                 "Go721",
+	Go721Burnable:         "Go721Burnable",
+	Go721Receiver:         "Go721Receiver",
+	Go721Metadata:         "Go721Metadata",
+	Go721Enumerable:       "Go721Enumerable",
+	Go721Pausable:         "Go721Pausable",
+	Go721Mintable:         "Go721Mintable",
+	Go721MetadataMintable: "Go721MetadataMintable",
+	Go721Full:             "Go721Full",
+	Go820:                 "Go820",
+	Go1155:                "Go1155",
+	Go1155Receiver:        "Go1155Receiver",
+	Go1155Metadata:        "Go1155Metadata",
+	Go223:                 "Go223",
+	Go223Receiver:         "Go223Receiver",
+	Go621:                 "Go621",
+	Go777:                 "Go777",
+	Go777Receiver:         "Go777Receiver",
+	Go777Sender:           "Go777Sender",
+	Go827:                 "Go827",
+	Go884:                 "Go884",
+	Upgradeable:           "Upgradeable",
+}
+
+var evmInterfacesByName map[string]EVMInterface
+
+func init() {
+	evmInterfacesByName = make(map[string]EVMInterface, len(evmInterfaceNames))
+	for i, nm := range evmInterfaceNames {
+		evmInterfacesByName[nm] = EVMInterface(i)
+	}
+}
+
+var (
+	go20Functions  = []EVMFunction{Allowance, Approve, BalanceOf, TotalSupply, Transfer, TransferFrom}
+	go721Functions = []EVMFunction{Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom,
+		SafeTransferFromData, SetApprovalForAll, SupportsInterface, TransferFrom}
+)
+
+// EVMFunctionsByInterface maps each EVMInterface to its set of EVMFunctions.
+var EVMFunctionsByInterface = [][]EVMFunction{
+	Go20:         go20Functions,
+	Go20Burnable: append(go20Functions, Burn, BurnFrom),
+	Go20Capped:   append(go20Functions, Mint, Cap),
+	Go20Detailed: append(go20Functions, Decimals, Name, Symbol),
+	Go20Mintable: append(go20Functions, Mint),
+	Go20Pausable: append(go20Functions, IncreaseAllowance, Approve, DecreaseAllowance, Transfer, TransferFrom, Pause,
+		Paused, Unpause, AddPauser, IsPauser, RenouncePauser),
+
+	Go165: {SupportsInterface},
+
+	Go721:                 go721Functions,
+	Go721Burnable:         append(go721Functions, Burn),
 	Go721Receiver:         {OnErc721Received},
-	Go721Metadata:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri},
-	Go721Enumerable:       {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply},
-	Go721Pausable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser},
-	Go721Mintable:         {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Mint},
-	Go721MetadataMintable: {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, Name, Symbol, TokenUri, MintWithTokenURI},
-	Go721Full:             {Approve, BalanceOf, GetApproved, IsApprovedForAll, OwnerOf, SafeTransferFrom, SafeTransferFrom1, SetApprovalForAll, SupportsInterface, TransferFrom, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri},
-	Go820:                 {CanImplementInterfaceForAddress},
-	Go1155:                {BalanceOf1, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFrom2, SetApprovalForAll},
-	Go1155Receiver:        {OnErc1155BatchReceived, OnErc1155Received},
-	Go1155Metadata:        {URI},
-	Go223:                 {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, Transfer1, Transfer1},
-	Go223Receiver:         {TokenFallback},
-	Go621:                 {DecreaseSupply, IncreaseSupply},
-	Go777:                 {AuthorizeOperator, BalanceOf, Burn1, DefaultOperators, Granularity, IsOperatorFor, Name, OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
-	Go777Receiver:         {TokensReceived},
-	Go777Sender:           {TokensToSend},
-	Go827:                 {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
-	Go884:                 {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded, IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
+	Go721Metadata:         append(go721Functions, Name, Symbol, TokenUri),
+	Go721Enumerable:       append(go721Functions, TokenByIndex, TokenOfOwnerByIndex, TotalSupply),
+	Go721Pausable:         append(go721Functions, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser),
+	Go721Mintable:         append(go721Functions, Mint),
+	Go721MetadataMintable: append(go721Functions, Name, Symbol, TokenUri, MintWithTokenURI),
+	Go721Full:             append(go721Functions, TokenByIndex, TokenOfOwnerByIndex, TotalSupply, Name, Symbol, TokenUri),
+
+	Go820: {CanImplementInterfaceForAddress},
+
+	Go1155:         {BalanceOfID, BalanceOfBatch, IsApprovedForAll, SafeBatchTransferFrom, SafeTransferFromValueData, SetApprovalForAll},
+	Go1155Receiver: {OnErc1155BatchReceived, OnErc1155Received},
+	Go1155Metadata: {URI},
+
+	Go223:         {BalanceOf, Decimals, Name, Symbol, TotalSupply, Transfer, TransferData, TransferDataFallback},
+	Go223Receiver: {TokenFallback},
+
+	Go621: {DecreaseSupply, IncreaseSupply},
+
+	Go777: {AuthorizeOperator, BalanceOf, BurnData, DefaultOperators, Granularity, IsOperatorFor, Name,
+		OperatorBurn, OperatorSend, RevokeOperator, Send, Symbol, TotalSupply},
+	Go777Receiver: {TokensReceived},
+	Go777Sender:   {TokensToSend},
+
+	Go827: {ApproveAndCall, DecreaseAllowanceAndCall, IncreaseAllowanceAndCall, TransferAndCall, TransferFromAndCall},
+
+	Go884: {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded,
+		IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
+
+	Upgradeable: {Target, Upgrade, Pause, Paused, Resume, Owner},
 }
 
 var MaxFetchLimit = 500

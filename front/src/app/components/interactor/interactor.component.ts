@@ -42,7 +42,7 @@ export class InteractorComponent implements OnInit {
   });
 
   contractBadges: Badge[] = [];
-  abiTemplates = [ErcName.Go20, ErcName.Go721];
+  abiTemplates = [ErcName.Go20, ErcName.Go721, ErcName.Go165];
 
   contract: Web3Contract;
   abiFunctions: AbiItem[];

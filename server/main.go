@@ -22,7 +22,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
-	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain/gochain/v3/common"
 	"github.com/gorilla/schema"
 	"github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
@@ -46,6 +46,21 @@ func parseGetParam(r *http.Request, w http.ResponseWriter, result interface{}) b
 }
 
 func main() {
+	cfg := zapdriver.NewProductionConfig()
+	cfg.EncoderConfig.TimeKey = "timestamp"
+	var err error
+	logger, err = cfg.Build()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
+		os.Exit(1)
+	}
+	defer logger.Sync()
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("Fatal panic", zap.String("panic", fmt.Sprintf("%+v", r)))
+		}
+	}()
+
 	var mongoUrl string
 	var dbName string
 	var signersFile string
@@ -114,16 +129,6 @@ func main() {
 			cancelFn()
 		}
 	}()
-
-	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
-	var err error
-	logger, err = cfg.Build()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
-		os.Exit(1)
-	}
-	defer logger.Sync()
 
 	app.Action = func(c *cli.Context) error {
 		if c.IsSet("log-level") {
@@ -436,20 +441,37 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 
 func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
-	filter := new(models.InternalTxFilter)
-	if !parseGetParam(r, w, filter) {
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
 		return
 	}
-	filter.ProcessPagination()
-	internalTransactions := &models.InternalTransactionsList{}
-	var err error
-	internalTransactions.Transactions, err = backendInstance.GetInternalTransactionsList(contractAddress, filter)
+	tokenTransactions := false
+	token_transactions_param := r.URL.Query().Get("token_transactions")
+	if token_transactions_param != "" && token_transactions_param != "false" {
+		tokenTransactions = true
+	}
+	skip, limit, err := parseSkipLimit(r)
 	if err != nil {
-		logger.Error("Failed to get contract's internal txs list", zap.String("address", contractAddress), zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, err)
+		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, internalTransactions)
+	tokenTransfers := &models.TokenTransfers{}
+	if tokenTransactions {
+		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, skip, limit)
+		if err != nil {
+			logger.Error("Failed to get contract's held token transfers", zap.String("address", contractAddress), zap.Error(err))
+			errorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, skip, limit)
+		if err != nil {
+			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
+			errorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, tokenTransfers)
 }
 
 func getContract(w http.ResponseWriter, r *http.Request) {
@@ -466,7 +488,7 @@ func getContract(w http.ResponseWriter, r *http.Request) {
 func getQr(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
 	if !common.IsHexAddress(contractAddress) {
-		errorResponse(w, http.StatusBadRequest, errors.New("invalid hex address"))
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
 		return
 	}
 	var png []byte

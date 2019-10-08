@@ -1,5 +1,5 @@
 import {MenuItem} from '../models/menu_item.model';
-import {ErcName, InterfaceName, ThemeColor} from './enums';
+import {ErcName, FunctionName, ThemeColor} from './enums';
 
 export const THEME_SETTINGS = {
   color: ThemeColor.LIGHT,
@@ -97,8 +97,9 @@ export const TOKEN_TYPES = {
 };
 
 export const ERC_INTERFACE_IDENTIFIERS = {
-  [ErcName.Go20]: [InterfaceName.Allowance, InterfaceName.Approve, InterfaceName.BalanceOf, InterfaceName.TotalSupply, InterfaceName.Transfer, InterfaceName.TransferFrom],
-  [ErcName.Go721]: [InterfaceName.Approve, InterfaceName.BalanceOf, InterfaceName.GetApproved, InterfaceName.IsApprovedForAll, InterfaceName.OwnerOf, InterfaceName.SafeTransferFrom, InterfaceName.SafeTransferFrom1, InterfaceName.SetApprovalForAll, InterfaceName.TransferFrom],
+  [ErcName.Go20]: [FunctionName.Allowance, FunctionName.Approve, FunctionName.BalanceOf, FunctionName.TotalSupply, FunctionName.Transfer, FunctionName.TransferFrom],
+  [ErcName.Go721]: [FunctionName.Approve, FunctionName.BalanceOf, FunctionName.GetApproved, FunctionName.IsApprovedForAll, FunctionName.OwnerOf, FunctionName.SafeTransferFrom, FunctionName.SafeTransferFromData, FunctionName.SetApprovalForAll, FunctionName.TransferFrom],
+  [ErcName.Go165]: [FunctionName.SupportsInterface],
 };
 
 export const TOKEN_ABI_NAMES: string[] = ['totalSupply', 'balanceOf'];

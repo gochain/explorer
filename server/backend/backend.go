@@ -2,64 +2,54 @@ package backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
+	"regexp"
 	"time"
 
-	"errors"
-	"regexp"
-
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/tokens"
 	"github.com/gochain-io/explorer/server/utils"
-	"github.com/gochain-io/gochain/v3/common"
-	"github.com/gochain-io/gochain/v3/consensus/clique"
-	"github.com/gochain-io/gochain/v3/core/types"
-	"github.com/gochain-io/gochain/v3/goclient"
+
+	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v3/common/hexutil"
+	"github.com/gochain/gochain/v3/consensus/clique"
+	"github.com/gochain/gochain/v3/core/types"
+	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v3/rpc"
 	"go.uber.org/zap"
 )
 
 type Backend struct {
-	mongo                 *MongoBackend
-	goClient              *goclient.Client
-	extendedGochainClient *EthRPC
-	tokenBalance          *TokenBalance
-	dockerhubAPI          *DockerHubAPI
-	reCaptchaSecret       string
-	lockedAccounts        []string
-	signers               map[common.Address]models.Signer
-	Lgr                   *zap.Logger
-}
-
-func retry(ctx context.Context, attempts int, sleep time.Duration, f func() error) (err error) {
-	for i := 0; ; i++ {
-		err = f()
-		if err == nil {
-			return
-		}
-		if i >= (attempts - 1) {
-			break
-		}
-		utils.SleepCtx(ctx, sleep)
-	}
-	return fmt.Errorf("after %d attempts, last error: %s", attempts, err)
+	mongo           *MongoBackend
+	goRPC           *rpc.Client
+	goClient        *goclient.Client
+	tokenClient     *tokens.TokenClient
+	dockerhubAPI    *DockerHubAPI
+	reCaptchaSecret string
+	lockedAccounts  []string
+	signers         map[common.Address]models.Signer
+	Lgr             *zap.Logger
 }
 
 func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer, lgr *zap.Logger) (*Backend, error) {
-	client, err := goclient.Dial(rpcUrl)
+	rpcClient, err := rpc.Dial(rpcUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dial %q: %v", rpcUrl, err)
+		return nil, fmt.Errorf("failed to dial rpc %q: %v", rpcUrl, err)
 	}
+	client := goclient.NewClient(rpcClient)
 	mongoBackend, err := NewMongoClient(client, mongoUrl, dbName, lgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mongo client: %v", err)
 	}
 	importer := new(Backend)
+	importer.goRPC = rpcClient
 	importer.goClient = client
-	importer.extendedGochainClient = NewEthClient(rpcUrl, lgr)
 	importer.mongo = mongoBackend
-	importer.tokenBalance, err = NewTokenBalanceClient(ctx, client, lgr)
+	importer.tokenClient, err = tokens.NewERC20Balance(ctx, client, lgr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create token balance client: %v", err)
+		return nil, fmt.Errorf("failed to create erc20 balance client: %v", err)
 	}
 	importer.dockerhubAPI = new(DockerHubAPI)
 	importer.lockedAccounts = lockedAccounts
@@ -73,13 +63,11 @@ func (self *Backend) PingDB() error {
 	return self.mongo.PingDB()
 }
 
-func (self *Backend) BalanceAt(ctx context.Context, address, block string) (*big.Int, error) {
-	if !common.IsHexAddress(address) {
-		return nil, fmt.Errorf("invalid hex address: %s", address)
-	}
+// Balance returns the latest balance for the address.
+func (self *Backend) Balance(ctx context.Context, address common.Address) (*big.Int, error) {
 	var value *big.Int
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethGetBalance(ctx, address, block)
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.BalanceAt(ctx, address, nil /* latest */)
 		return err
 	})
 	return value, err
@@ -90,7 +78,7 @@ func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error)
 		return nil, fmt.Errorf("invalid hex address: %s", address)
 	}
 	var value []byte
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 		value, err = self.goClient.CodeAt(ctx, common.HexToAddress(address), nil)
 		return err
 	})
@@ -99,22 +87,29 @@ func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error)
 
 func (self *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethTotalSupply(ctx)
-		return err
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+		var result hexutil.Big
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
+		if err != nil {
+			return err
+		}
+		value = result.ToInt()
+		return nil
 	})
 	return value, err
 }
 func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
-		total, err := self.extendedGochainClient.ethTotalSupply(ctx)
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+		var result hexutil.Big
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
 		if err != nil {
 			return err
 		}
+		total := result.ToInt()
 		locked := new(big.Int)
 		for _, l := range self.lockedAccounts {
-			bal, err := self.extendedGochainClient.ethGetBalance(ctx, l, "latest")
+			bal, err := self.Balance(ctx, common.HexToAddress(l))
 			if err != nil {
 				return err
 			}
@@ -145,12 +140,13 @@ func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models
 	if !common.IsHexAddress(hash) {
 		return nil, errors.New("wrong address format")
 	}
-	addressHash := common.HexToAddress(hash).Hex()
+	addr := common.HexToAddress(hash)
+	addressHash := addr.Hex()
 	address, err := self.mongo.getAddressByHash(addressHash)
 	if err != nil {
 		return nil, err
 	}
-	balance, err := self.BalanceAt(ctx, addressHash, "latest")
+	balance, err := self.Balance(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -189,11 +185,21 @@ func (self *Backend) GetOwnedTokensList(ownerAddress string, filter *models.Pagi
 	}
 	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
 }
-func (self *Backend) GetInternalTransactionsList(contractAddress string, filter *models.InternalTxFilter) ([]*models.InternalTransaction, error) {
+
+// GetInternalTokenTransfers gets token transfer events emitted by an ERC20 or ERC721 contract.
+func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getInternalTransactionsList(common.HexToAddress(contractAddress).Hex(), filter)
+	return self.mongo.getInternalTokenTransfers(common.HexToAddress(contractAddress).Hex(), skip, limit)
+}
+
+// GetHeldTokenTransfers gets token transfer events to or from this contract, emitted by any ERC20 or ERC721 contract.
+func (self *Backend) GetHeldTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+	if !common.IsHexAddress(contractAddress) {
+		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
+	}
+	return self.mongo.getHeldTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
 }
 func (self *Backend) GetContract(contractAddress string) (*models.Contract, error) {
 	if !common.IsHexAddress(contractAddress) {
@@ -309,19 +315,19 @@ func (self *Backend) UpdateStats() (*models.Stats, error) {
 	return self.mongo.updateStats()
 }
 
-func (self *Backend) GetTokenBalance(contract, wallet string) (*TokenHolderDetails, error) {
-	return self.tokenBalance.GetTokenHolderDetails(contract, wallet)
+func (self *Backend) GetTokenBalance(contract, wallet string) (*tokens.TokenHolderDetails, error) {
+	return self.tokenClient.GetTokenHolderDetails(contract, wallet)
 }
 
-func (self *Backend) GetTokenDetails(contractAddress string, byteCode string) (*TokenDetails, error) {
-	return self.tokenBalance.GetTokenDetails(contractAddress, byteCode)
+func (self *Backend) GetTokenDetails(contractAddress string, byteCode string) (*tokens.TokenDetails, error) {
+	return self.tokenClient.GetTokenDetails(contractAddress, byteCode)
 }
 
-func (self *Backend) GetInternalTransactions(ctx context.Context, address string, contractBlock int64, blockRangeLimit uint64) ([]TransferEvent, error) {
-	return self.tokenBalance.getInternalTransactions(ctx, address, contractBlock, blockRangeLimit)
+func (self *Backend) GetTransferEvents(ctx context.Context, tokenDetails *tokens.TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*tokens.TransferEvent, error) {
+	return self.tokenClient.GetTransferEvents(ctx, tokenDetails, contractBlock, blockRangeLimit)
 }
 
-func (self *Backend) CountInternalTransactions(address string) (int, error) {
+func (self *Backend) CountTokenTransfers(address string) (int, error) {
 	addr, err := self.mongo.getAddressByHash(address)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get address: %v", err)
@@ -381,13 +387,13 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) (
 	}
 	return selectedAddresses, nil
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
+func (self *Backend) ImportAddress(address string, balance *big.Int, token *tokens.TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
 	return self.mongo.importAddress(address, balance, token, contract, updatedAtBlock)
 }
-func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
+func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *tokens.TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
 	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token, address)
 }
-func (self *Backend) ImportInternalTransaction(ctx context.Context, contractAddress string, transferEvent TransferEvent) (*models.InternalTransaction, error) {
+func (self *Backend) ImportTransferEvent(ctx context.Context, contractAddress string, transferEvent *tokens.TransferEvent) (*models.TokenTransfer, error) {
 	createdAt := time.Now()
 	block, err := self.GetBlockByNumber(ctx, transferEvent.BlockNumber)
 	if err != nil {
@@ -396,7 +402,7 @@ func (self *Backend) ImportInternalTransaction(ctx context.Context, contractAddr
 	if block != nil {
 		createdAt = block.CreatedAt
 	}
-	return self.mongo.importInternalTransaction(contractAddress, transferEvent, createdAt)
+	return self.mongo.importTransferEvent(contractAddress, transferEvent, createdAt)
 }
 func (self *Backend) ImportContract(contractAddress string, byteCode string) error {
 	return self.mongo.importContract(contractAddress, byteCode)
@@ -408,19 +414,19 @@ func (self *Backend) GetContractBlock(contractAddress string) (int64, error) {
 
 func (self *Backend) BlockByNumber(ctx context.Context, blockNumber int64) (*types.Block, error) {
 	var value *types.Block
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 		value, err = self.goClient.BlockByNumber(ctx, big.NewInt(blockNumber))
 		return err
 	})
 	return value, err
 }
 func (self *Backend) GetLatestBlockNumber(ctx context.Context) (int64, error) {
-	var value int64
-	err := retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.extendedGochainClient.ethBlockNumber(ctx)
+	var value *big.Int
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+		value, err = self.goClient.LatestBlockNumber(ctx)
 		return err
 	})
-	return value, err
+	return value.Int64(), err
 }
 
 func fillExtra(block *models.Block) *models.Block {

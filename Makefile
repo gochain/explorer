@@ -1,4 +1,4 @@
-.PHONY: docker test-backend server grabber backend frontend build
+.PHONY: docker test-backend server grabber backend frontend build generate
 
 docker:
 	docker build -t gochain/explorer .
@@ -24,3 +24,8 @@ frontend:
 	cp -r front/dist .
 
 build: backend frontend
+
+generate:
+	cd contracts && web3 contract build ERC721.sol && web3 contract build ERC20.sol
+	cd server/tokens && abigen --lang go --abi ../../contracts/ERC20.abi --bin ../../contracts/ERC20.bin --pkg tokens --type ERC20 --out erc20.go
+	cd server/tokens && abigen --lang go --abi ../../contracts/ERC721.abi --bin ../../contracts/ERC721.bin --pkg tokens --type ERC721 --out erc721.go

@@ -11,14 +11,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/tokens"
+
+	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v3/core/types"
+	"github.com/gochain/gochain/v3/goclient"
 	"go.uber.org/zap"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-
-	"github.com/gochain-io/explorer/server/models"
-	"github.com/gochain-io/gochain/v3/common"
-	"github.com/gochain-io/gochain/v3/core/types"
-	"github.com/gochain-io/gochain/v3/goclient"
 )
 
 var wei = big.NewInt(1000000000000000000)
@@ -258,7 +259,7 @@ func (self *MongoBackend) transactionsConsistent(blockNumber int64) (bool, error
 	return txCount == block.TxCount, nil
 }
 
-func (self *MongoBackend) importAddress(address string, balance *big.Int, token *TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
+func (self *MongoBackend) importAddress(address string, balance *big.Int, token *tokens.TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
 	balanceGoFloat, _ := new(big.Float).SetPrec(100).Quo(new(big.Float).SetInt(balance), new(big.Float).SetInt(wei)).Float64() //converting to GO from wei
 	balanceGoString := new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	lgr := self.Lgr.With(zap.String("address", address))
@@ -273,11 +274,10 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		return nil, fmt.Errorf("failed to count internal txs: %v", err)
 	}
 
-	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{bson.M{"from_address": address}, bson.M{"to_address": address}}}).Count()
+	tokenTransactionsCounter, err := self.mongo.C("InternalTransactions").Find(bson.M{"$or": []bson.M{{"from_address": address}, {"to_address": address}}}).Count()
 	if err != nil {
 		return nil, fmt.Errorf("failed to count held token txs: %v", err)
 	}
-
 	addressM := &models.Address{Address: address,
 		BalanceWei:     balance.String(),
 		UpdatedAt:      time.Now(),
@@ -287,8 +287,8 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 		Decimals:       token.Decimals,
 		TotalSupply:    token.TotalSupply.String(),
 		Contract:       contract,
-		ErcTypes:       token.Types,
-		Interfaces:     token.Interfaces,
+		ErcTypes:       token.ERCTypesSlice(),
+		Interfaces:     token.FunctionsSlice(),
 		BalanceFloat:   balanceGoFloat,
 		BalanceString:  balanceGoString,
 		// NumberOfTransactions:         transactionCounter,
@@ -303,7 +303,7 @@ func (self *MongoBackend) importAddress(address string, balance *big.Int, token 
 	return addressM, nil
 }
 
-func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
+func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress string, token *tokens.TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
 	balanceInt := new(big.Int).Div(token.Balance, wei) //converting to GO from wei
 	self.Lgr.Info("Updating token holder", zap.String("contractAddress", contractAddress), zap.String("tokenAddress", tokenHolderAddress), zap.String("balance", token.Balance.String()), zap.String("Balance int", balanceInt.String()))
 	tokenHolder := &models.TokenHolder{
@@ -322,8 +322,8 @@ func (self *MongoBackend) importTokenHolder(contractAddress, tokenHolderAddress 
 
 }
 
-func (self *MongoBackend) importInternalTransaction(contractAddress string, transferEvent TransferEvent, createdAt time.Time) (*models.InternalTransaction, error) {
-	internalTransaction := &models.InternalTransaction{
+func (self *MongoBackend) importTransferEvent(contractAddress string, transferEvent *tokens.TransferEvent, createdAt time.Time) (*models.TokenTransfer, error) {
+	internalTransaction := &models.TokenTransfer{
 		Contract:        contractAddress,
 		From:            transferEvent.From.String(),
 		To:              transferEvent.To.String(),
@@ -541,25 +541,24 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models
 	return tokenHoldersList, nil
 }
 
-func (self *MongoBackend) getInternalTransactionsList(contractAddress string, filter *models.InternalTxFilter) ([]*models.InternalTransaction, error) {
-	var internalTransactionsList []*models.InternalTransaction
-	var query bson.M
-	if filter.TokenTransactions {
-		query = bson.M{
-			"$or": []bson.M{
-				{"from_address": contractAddress},
-				{"to_address": contractAddress},
-			},
-		}
-	} else {
-		query = bson.M{"contract_address": contractAddress}
-	}
+// getInternalTokenTransfers gets token transfer events emitted by this contract.
+func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
-		Find(query).
-		Sort("-block_number").
-		Skip(filter.Skip).
-		Limit(filter.Limit).
-		All(&internalTransactionsList)
+		Find(bson.M{"contract_address": contractAddress}).
+		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
+	}
+	return internalTransactionsList, nil
+}
+
+// getHeldTokenTransfers gets token transfer events to or from this contract, for any token.
+func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+	var internalTransactionsList []*models.TokenTransfer
+	err := self.mongo.C("InternalTransactions").
+		Find(bson.M{"$or": []bson.M{{"from_address": contractAddress}, {"to_address": contractAddress}}}).
+		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}

@@ -14,23 +14,17 @@ import (
 
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/tokens"
 	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/blendle/zapdriver"
-	"github.com/gochain-io/gochain/v3/common"
+	"github.com/gochain/gochain/v3/common"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 func main() {
-	var rpcUrl string
-	var checkTxCount bool
-	var mongoUrl string
-	var dbName string
-	var startFrom int64
-	var blockRangeLimit uint64
-	var workersCount uint
 	cfg := zapdriver.NewProductionConfig()
 	cfg.EncoderConfig.TimeKey = "timestamp"
 	logger, err := cfg.Build()
@@ -39,6 +33,20 @@ func main() {
 		os.Exit(1)
 	}
 	defer logger.Sync()
+	defer func() {
+		if rerr := recover(); rerr != nil {
+			logger.Error("Fatal panic", zap.String("panic", fmt.Sprintf("%+v", rerr)))
+		}
+	}()
+
+	var rpcUrl string
+	var checkTxCount bool
+	var mongoUrl string
+	var dbName string
+	var startFrom int64
+	var blockRangeLimit uint64
+	var workersCount uint
+
 	app := cli.NewApp()
 	app.Usage = "Grabber populates a mongo database with explorer data."
 
@@ -436,25 +444,22 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 	if !common.IsHexAddress(address.Address) {
 		return fmt.Errorf("invalid hex address: %s", address.Address)
 	}
-	normalizedAddress := common.HexToAddress(address.Address).Hex()
+	addr := common.HexToAddress(address.Address)
+	normalizedAddress := addr.Hex()
 	lgr := importer.Lgr.With(zap.String("address", normalizedAddress))
-	balance, err := importer.BalanceAt(ctx, normalizedAddress, "latest")
+	balance, err := importer.Balance(ctx, addr)
 	if err != nil {
 		return fmt.Errorf("failed to get balance")
 	}
 	contractDataArray, err := importer.CodeAt(ctx, normalizedAddress)
 	contractData := string(contractDataArray[:])
-	var tokenDetails = &backend.TokenDetails{TotalSupply: big.NewInt(0)}
+	var tokenDetails = &tokens.TokenDetails{TotalSupply: big.NewInt(0)}
 	contract := false
 	if contractData != "" {
 		contract = true
 		byteCode := hex.EncodeToString(contractDataArray)
 		if err := importer.ImportContract(normalizedAddress, byteCode); err != nil {
 			return fmt.Errorf("failed to import contract: %v", err)
-		}
-		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
-		if err != nil {
-			return fmt.Errorf("failed to get token details: %v", err)
 		}
 		var fromBlock int64
 		contractFromDB, err := importer.GetAddressByHash(ctx, normalizedAddress)
@@ -469,28 +474,32 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 				fmt.Errorf("failed to get contract block: %v", err)
 			}
 		}
+		tokenDetails, err = importer.GetTokenDetails(normalizedAddress, byteCode)
+		if err != nil {
+			return fmt.Errorf("failed to get token details: %v", err)
+		}
 		if contractFromDB.TokenName == "" || contractFromDB.TokenSymbol == "" {
 			lgr.Info("Updating token details", zap.Int64("block", fromBlock),
 				zap.String("symbol", tokenDetails.Symbol), zap.String("name", tokenDetails.Name))
 			contractFromDB.TokenName = tokenDetails.Name
 			contractFromDB.TokenSymbol = tokenDetails.Symbol
 		}
-		internalTxs, err := importer.GetInternalTransactions(ctx, normalizedAddress, fromBlock, blockRangeLimit)
+		tokenTransfers, err := importer.GetTransferEvents(ctx, tokenDetails, fromBlock, blockRangeLimit)
 		if err != nil {
 			return fmt.Errorf("failed to get internal txs: %v", err)
 		}
-		internalTxsFromDb, err := importer.CountInternalTransactions(normalizedAddress)
+		tokenTransfersFromDB, err := importer.CountTokenTransfers(normalizedAddress)
 		if err != nil {
 			return fmt.Errorf("failed to count internal txs: %v", err)
 		}
-		lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", internalTxsFromDb),
-			zap.Int("rpc", len(internalTxs)))
-		if len(internalTxs) != internalTxsFromDb {
+		lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", tokenTransfersFromDB),
+			zap.Int("rpc", len(tokenTransfers)))
+		if len(tokenTransfers) != tokenTransfersFromDB {
 			var tokenHoldersList []string
-			for _, itx := range internalTxs {
+			for _, itx := range tokenTransfers {
 				lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-				if _, err := importer.ImportInternalTransaction(ctx, normalizedAddress, itx); err != nil {
+				if _, err := importer.ImportTransferEvent(ctx, normalizedAddress, itx); err != nil {
 					return fmt.Errorf("failed to import internal tx: %v", err)
 				}
 				// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {

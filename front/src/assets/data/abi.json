@@ -123,7 +123,7 @@
     "stateMutability": "view",
     "type": "function"
   },
-  "BalanceOf1": {
+  "BalanceOfID": {
     "constant": true,
     "inputs": [
       {
@@ -183,7 +183,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  "Burn1": {
+  "BurnData": {
     "constant": false,
     "inputs": [
       {
@@ -979,7 +979,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  "SafeTransferFrom1": {
+  "SafeTransferFromData": {
     "constant": false,
     "inputs": [
       {
@@ -1005,7 +1005,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  "SafeTransferFrom2": {
+  "SafeTransferFromValueData": {
     "constant": false,
     "inputs": [
       {
@@ -1296,7 +1296,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  "Transfer1": {
+  "TransferData": {
     "constant": false,
     "inputs": [
       {
@@ -1318,7 +1318,7 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
-  "Transfer2": {
+  "TransferDataFallback": {
     "constant": false,
     "inputs": [
       {

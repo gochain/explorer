@@ -38,10 +38,10 @@ func (f *TimeFilter) ProcessTime() {
 type ContractsFilter struct {
 	PaginationFilter
 	SortFilter
-	ContractName string        `schema:"contract_name,omitempty"`
-	TokenName    string        `schema:"token_name,omitempty"`
-	TokenSymbol  string        `schema:"token_symbol,omitempty"`
-	ErcType      utils.ErcName `schema:"erc_type,omitempty"`
+	ContractName string `schema:"contract_name,omitempty"`
+	TokenName    string `schema:"token_name,omitempty"`
+	TokenSymbol  string `schema:"token_symbol,omitempty"`
+	ErcType      string `schema:"erc_type,omitempty"`
 }
 
 type InternalTxFilter struct {
