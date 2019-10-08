@@ -23,7 +23,7 @@ type AbiItem struct {
 type EVMFunction int
 
 func (f EVMFunction) String() string {
-	if f < 0 || int(f) < len(evmFunctionNames) {
+	if f < 0 || int(f) >= len(evmFunctionNames) {
 		return fmt.Sprintf("Unrecognized function: %d", f)
 	}
 	return evmFunctionNames[f]
@@ -296,7 +296,7 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 type EVMInterface int
 
 func (e EVMInterface) String() string {
-	if e < 0 || int(e) > len(evmInterfaceNames) {
+	if e < 0 || int(e) >= len(evmInterfaceNames) {
 		return fmt.Sprintf("Unrecognized interface: %d", e)
 	}
 	return evmInterfaceNames[e]
