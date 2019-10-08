@@ -68,6 +68,7 @@ const (
 	OnErc1155Received               FunctionName = "OnErc1155Received"
 	OperatorBurn                    FunctionName = "OperatorBurn"
 	OperatorSend                    FunctionName = "OperatorSend"
+	Owner                           FunctionName = "Owner"
 	OwnerOf                         FunctionName = "OwnerOf"
 	RemoveVerified                  FunctionName = "RemoveVerified"
 	RenouncePauser                  FunctionName = "RenouncePauser"
@@ -99,6 +100,9 @@ const (
 	Paused                          FunctionName = "Paused"
 	Unpause                         FunctionName = "Unpause"
 	MintWithTokenURI                FunctionName = "MintWithTokenURI"
+	Resume                          FunctionName = "Resume"
+	Upgrade                         FunctionName = "Upgrade"
+	Target                          FunctionName = "Target"
 )
 
 var Functions = map[FunctionName]FunctionData{
@@ -144,6 +148,7 @@ var Functions = map[FunctionName]FunctionData{
 	OnErc1155Received:               {ID: "f23a6e61", Signature: "onERC1155Received(address,address,uint256,uint256,bytes)", Callable: false},
 	OperatorBurn:                    {ID: "fc673c4f", Signature: "operatorBurn(address,uint256,bytes,bytes)", Callable: false},
 	OperatorSend:                    {ID: "62ad1b83", Signature: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
+	Owner:                           {ID: "8da5cb5b", Signature: "owner()", Callable: false},
 	OwnerOf:                         {ID: "6352211e", Signature: "ownerOf(uint256)", Callable: false},
 	RemoveVerified:                  {ID: "4487b392", Signature: "removeVerified(address)", Callable: false},
 	RenouncePauser:                  {ID: "6ef8d66d", Signature: "renouncePauser()", Callable: false},
@@ -175,6 +180,9 @@ var Functions = map[FunctionName]FunctionData{
 	Paused:                          {ID: "5c975abb", Signature: "paused()", Callable: true},
 	Unpause:                         {ID: "3f4ba83a", Signature: "unpause()", Callable: false},
 	MintWithTokenURI:                {ID: "50bb4e7f", Signature: "mintWithTokenURI(address,uint256,string)", Callable: false},
+	Resume:                          {ID: "046f7da2", Signature: "resume()", Callable: false},
+	Upgrade:                         {ID: "0900f010", Signature: "upgrade(address)", Callable: false},
+	Target:                          {ID: "d4b83992", Signature: "target()", Callable: true},
 }
 
 type ErcName string
@@ -208,6 +216,7 @@ const (
 	Go777Sender           ErcName = "Go777Sender"
 	Go827                 ErcName = "Go827"
 	Go884                 ErcName = "Go884"
+	Upgradeable           ErcName = "Upgradeable"
 )
 
 var (
@@ -257,4 +266,6 @@ var Interfaces = map[ErcName][]FunctionName{
 
 	Go884: {AddVerified, CancelAndReissue, GetCurrentFor, HasHash, HolderAt, HolderCount, IsHolder, IsSuperseded,
 		IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
+
+	Upgradeable: {Target, Upgrade, Pause, Paused, Resume, Owner},
 }
