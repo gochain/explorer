@@ -542,11 +542,11 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models
 }
 
 // getInternalTokenTransfers gets token transfer events emitted by this contract.
-func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"contract_address": contractAddress}).
-		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+		Sort("-block_number").Skip(filter.Skip).Limit(filter.Limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}
@@ -554,11 +554,11 @@ func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, skip
 }
 
 // getHeldTokenTransfers gets token transfer events to or from this contract, for any token.
-func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"$or": []bson.M{{"from_address": contractAddress}, {"to_address": contractAddress}}}).
-		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+		Sort("-block_number").Skip(filter.Skip).Limit(filter.Limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}

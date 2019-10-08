@@ -191,11 +191,11 @@ func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *m
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getInternalTokenTransfers(common.HexToAddress(contractAddress).Hex(), skip, limit)
+	return self.mongo.getInternalTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
 }
 
 // GetHeldTokenTransfers gets token transfer events to or from this contract, emitted by any ERC20 or ERC721 contract.
-func (self *Backend) GetHeldTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *Backend) GetHeldTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}

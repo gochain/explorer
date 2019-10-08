@@ -445,26 +445,22 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
 		return
 	}
-	tokenTransactions := false
-	token_transactions_param := r.URL.Query().Get("token_transactions")
-	if token_transactions_param != "" && token_transactions_param != "false" {
-		tokenTransactions = true
-	}
-	skip, limit, err := parseSkipLimit(r)
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+	filter := new(models.InternalTxFilter)
+	if !parseGetParam(r, w, filter) {
 		return
 	}
+	filter.ProcessPagination()
 	tokenTransfers := &models.TokenTransfers{}
-	if tokenTransactions {
-		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, skip, limit)
+	var err error
+	if filter.TokenTransactions {
+		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, filter)
 		if err != nil {
 			logger.Error("Failed to get contract's held token transfers", zap.String("address", contractAddress), zap.Error(err))
 			errorResponse(w, http.StatusInternalServerError, err)
 			return
 		}
 	} else {
-		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, skip, limit)
+		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, filter)
 		if err != nil {
 			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
 			errorResponse(w, http.StatusInternalServerError, err)
