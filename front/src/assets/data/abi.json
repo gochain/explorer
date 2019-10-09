@@ -880,6 +880,20 @@
     "stateMutability": "nonpayable",
     "type": "function"
   },
+  "Owner": {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
   "OwnerOf": {
     "constant": true,
     "inputs": [
@@ -1102,6 +1116,20 @@
       {
         "name": "",
         "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  "Target": {
+    "constant": true,
+    "inputs": [],
+    "name": "target",
+    "outputs": [
+      {
+        "name": "addr",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -1540,6 +1568,29 @@
     "constant": false,
     "inputs": [],
     "name": "pause",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "Upgrade": {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "target",
+        "type": "address"
+      }
+    ],
+    "name": "upgrade",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "Resume": {
+    "constant": false,
+    "inputs": [],
+    "name": "resume",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
