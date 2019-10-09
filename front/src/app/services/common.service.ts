@@ -18,7 +18,7 @@ import {Contract} from '../models/contract.model';
 import {SignerData, SignerStat} from '../models/signer-stats';
 import {SignerNode} from '../models/signer-node';
 /*UTILS*/
-import {ContractAbi} from '../utils/types';
+import {ContractAbi, ContractEventsAbi} from '../utils/types';
 import {objIsEmpty} from '../utils/functions';
 
 @Injectable()
@@ -69,8 +69,12 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/rpc_provider');
   }
 
-  getAbi(): Observable<ContractAbi> {
-    return this._apiService.get('/assets/data/abi.json', null, true);
+  getFunctionsAbi(): Observable<ContractAbi> {
+    return this._apiService.get('/assets/abi/functions.json', null, true);
+  }
+
+  getEventsAbi(): Observable<ContractEventsAbi> {
+    return this._apiService.get('/assets/abi/events.json', null, true);
   }
 
   getApiUrl(): string {

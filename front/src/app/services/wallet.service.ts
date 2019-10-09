@@ -17,13 +17,15 @@ import { CommonService } from './common.service';
 import { Transaction } from '../models/transaction.model';
 /*UTILS*/
 import { objIsEmpty } from '../utils/functions';
-import { ContractAbi } from '../utils/types';
+import { ContractAbi, ContractEventsAbi } from '../utils/types';
 
 @Injectable()
 export class WalletService {
 
   private _abi$: BehaviorSubject<ContractAbi> = new BehaviorSubject<ContractAbi>(null);
   private _abi: ContractAbi;
+  private _eventsAbi$: BehaviorSubject<ContractEventsAbi> = new BehaviorSubject<ContractEventsAbi>(null);
+  private _eventsAbi: ContractEventsAbi;
 
   isProcessing = false;
 
@@ -39,6 +41,13 @@ export class WalletService {
       return this.getAbi();
     }
     return this._abi$;
+  }
+  //TODO use this for logs
+  get eventsAbi$() {
+    if (!this._eventsAbi) {
+      return this.getEventsAbi();
+    }
+    return this._eventsAbi;
   }
 
   get w3(): Web3 {
@@ -84,10 +93,19 @@ export class WalletService {
   }
 
   getAbi(): Observable<ContractAbi> {
-    return this._commonService.getAbi().pipe(
+    return this._commonService.getFunctionsAbi().pipe(
       tap((abi: ContractAbi) => {
         this._abi = abi;
         this._abi$.next(abi);
+      })
+    );
+  }
+
+  getEventsAbi(): Observable<ContractEventsAbi> {
+    return this._commonService.getEventsAbi().pipe(
+      tap((abi: ContractEventsAbi) => {
+        this._eventsAbi = abi;
+        this._eventsAbi$.next(abi);
       })
     );
   }
