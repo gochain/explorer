@@ -67,7 +67,7 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		to = tx.To().Hex()
 	}
 	self.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
-	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
+	txInputData := hex.EncodeToString(tx.Data()[:])
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
 		From:            from.Hex(),
@@ -80,8 +80,8 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		Nonce:           tx.Nonce(),
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
-		InputData:       hex.EncodeToString(tx.Data()[:]),
-		InputDataEmpty:  InputDataEmpty,
+		InputData:       txInputData,
+		InputDataEmpty:  txInputData == "",
 	}, nil
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {

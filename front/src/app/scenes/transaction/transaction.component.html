@@ -74,7 +74,7 @@
               <button class="btn btn-primary" [ngClass]="{'active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
             </div>
             <textarea
-                class="form-control code"
+                class="form-control code mt-2"
                 id="input_data"
                 readonly
                 rows="5"
@@ -82,12 +82,41 @@
           </div>
           <div class="form-group">
             <label for="receipt_logs">Receipt Logs</label>
-            <textarea
-                class="form-control code"
-                id="receipt_logs"
-                readonly
-                rows="5"
-            >{{tx.logs}}</textarea>
+            <div class="btn-group btn-group-sm float-right">
+              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Parsed</button>
+              <button class="btn btn-primary" [ngClass]="{'active': showLogsRaw}" (click)="showLogsRaw = true">JSON</button>
+            </div>
+            <div class="mt-2">
+              <ng-container *ngIf="!showLogsRaw; else rawLogBlock;">
+                <div>
+                  <span id="red-box"></span>
+                </div>
+                <table class="table table-bordered">
+                  <thead>
+                  <tr>
+                    <th>Index</th>
+                    <th>Contract</th>
+                    <th>Log Data</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr *ngFor="let log of tx.processedLogs" [ngClass]="{'table-secondary': log.removed}">
+                    <td>{{log.index}}</td>
+                    <td>{{log.contract_address}}</td>
+                    <td>{{log.data}}</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </ng-container>
+              <ng-template #rawLogBlock>
+                <textarea
+                    class="form-control code"
+                    id="receipt_logs"
+                    readonly
+                    rows="5"
+                >{{tx.prettifiedLogs}}</textarea>
+              </ng-template>
+            </div>
           </div>
         </form>
       </div>

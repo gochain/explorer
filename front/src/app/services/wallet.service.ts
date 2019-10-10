@@ -1,32 +1,25 @@
 /*CORE*/
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { BehaviorSubject, forkJoin, Observable, of } from 'rxjs';
-import { concatMap, filter, map, tap } from 'rxjs/operators';
-import { fromPromise } from 'rxjs/internal-compatibility';
+import {Injectable} from '@angular/core';
+import {Router} from '@angular/router';
+import {forkJoin, Observable, of} from 'rxjs';
+import {concatMap, filter, map} from 'rxjs/operators';
+import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
-import { SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt } from 'web3-core';
-import { Account } from 'web3-eth-accounts';
-import { Contract as Web3Contract } from 'web3-eth-contract';
-import { AbiItem } from 'web3-utils';
+import {SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
+import {Account} from 'web3-eth-accounts';
+import {Contract as Web3Contract} from 'web3-eth-contract';
+import {AbiItem} from 'web3-utils';
 /*SERVICES*/
-import { ToastrService } from '../modules/toastr/toastr.service';
-import { CommonService } from './common.service';
+import {ToastrService} from '../modules/toastr/toastr.service';
+import {CommonService} from './common.service';
 /*MODELS*/
-import { Transaction } from '../models/transaction.model';
+import {Transaction} from '../models/transaction.model';
 /*UTILS*/
-import { objIsEmpty } from '../utils/functions';
-import { ContractAbi, ContractEventsAbi } from '../utils/types';
+import {objIsEmpty} from '../utils/functions';
 
 @Injectable()
 export class WalletService {
-
-  private _abi$: BehaviorSubject<ContractAbi> = new BehaviorSubject<ContractAbi>(null);
-  private _abi: ContractAbi;
-  private _eventsAbi$: BehaviorSubject<ContractEventsAbi> = new BehaviorSubject<ContractEventsAbi>(null);
-  private _eventsAbi: ContractEventsAbi;
-
   isProcessing = false;
 
   // ACCOUNT INFO
@@ -35,20 +28,6 @@ export class WalletService {
 
   receipt: TransactionReceipt;
   contract: Web3Contract;
-
-  get abi$() {
-    if (!this._abi) {
-      return this.getAbi();
-    }
-    return this._abi$;
-  }
-  //TODO use this for logs
-  get eventsAbi$() {
-    if (!this._eventsAbi) {
-      return this.getEventsAbi();
-    }
-    return this._eventsAbi;
-  }
 
   get w3(): Web3 {
     return this._web3;
@@ -66,48 +45,30 @@ export class WalletService {
         filter(value => !!value),
       )
       .subscribe((rpcProvider: string) => {
-        const metaMaskProvider = new Web3(Web3.givenProvider, null, { transactionConfirmationBlocks: 1, });
-        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, { transactionConfirmationBlocks: 1, });
-        if (!metaMaskProvider.currentProvider){
+        const metaMaskProvider = new Web3(Web3.givenProvider, null, {transactionConfirmationBlocks: 1,});
+        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, {transactionConfirmationBlocks: 1,});
+        if (!metaMaskProvider.currentProvider) {
           this._web3 = web3Provider;
           return;
         }
         web3Provider.eth.net.getId((err, web3NetID) => {
           if (err) {
-            this._toastrService.danger("Metamask is enabled but can't get network id");
+            this._toastrService.danger('Metamask is enabled but can\'t get network id');
             return;
           }
           metaMaskProvider.eth.net.getId((err, metamask3NetID) => {
             if (err) {
-              this._toastrService.danger("Metamask is enabled but can't get network id from Metamask");
+              this._toastrService.danger('Metamask is enabled but can\'t get network id from Metamask');
               return;
             }
-            if (web3NetID != metamask3NetID) {
-              this._toastrService.danger("Metamask is enabled but networks are different");
+            if (web3NetID !== metamask3NetID) {
+              this._toastrService.danger('Metamask is enabled but networks are different');
               return;
             }
             this._web3 = metaMaskProvider;
           });
         });
       });
-  }
-
-  getAbi(): Observable<ContractAbi> {
-    return this._commonService.getFunctionsAbi().pipe(
-      tap((abi: ContractAbi) => {
-        this._abi = abi;
-        this._abi$.next(abi);
-      })
-    );
-  }
-
-  getEventsAbi(): Observable<ContractEventsAbi> {
-    return this._commonService.getEventsAbi().pipe(
-      tap((abi: ContractEventsAbi) => {
-        this._eventsAbi = abi;
-        this._eventsAbi$.next(abi);
-      })
-    );
   }
 
   private isAddress(address: string) {
@@ -264,9 +225,9 @@ export class WalletService {
         return this.sendSignedTx(signed);
       })
     ).subscribe((receipt: TransactionReceipt) => {
-      this.receipt = receipt;
-      this.getBalance();
-    },
+        this.receipt = receipt;
+        this.getBalance();
+      },
       err => {
         this._toastrService.danger(err);
         this.resetProcessing();

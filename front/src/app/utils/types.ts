@@ -6,7 +6,7 @@ export type ContractAbi = {
 };
 
 export type ContractEventsAbi = {
-  [key in EventID]: {
-    [key in ErcName]: AbiItem;
+  [eventKey in EventID]: {
+    [ercKey in ErcName]: AbiItem;
   };
 };
