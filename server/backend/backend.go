@@ -167,6 +167,9 @@ func (self *Backend) GetContracts(filter *models.ContractsFilter) ([]*models.Add
 func (self *Backend) GetTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
 	return self.mongo.getTransactionByHash(ctx, hash)
 }
+func (self *Backend) GetTxByAddressAndNonce(ctx context.Context, addr string, nonce int64) (*models.Transaction, error) {
+	return self.mongo.getTxByAddressAndNonce(ctx, addr, nonce)
+}
 func (self *Backend) GetTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) ([]*models.Transaction, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)

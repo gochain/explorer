@@ -286,6 +286,8 @@ func main() {
 					r.Get("/{address}/internal_transactions", getInternalTransactions)
 					r.Get("/{address}/contract", getContract)
 					r.Get("/{address}/qr", getQr)
+					r.Get("/{address}/tx/{nonce}", getAddressTxByNonce)
+					r.Get("/{address}/tx/{nonce}/hash", getAddressTxHashByNonce)
 				})
 
 				r.Route("/transaction", func(r chi.Router) {
@@ -409,6 +411,10 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 
 func getAddress(w http.ResponseWriter, r *http.Request) {
 	addressHash := chi.URLParam(r, "address")
+	if !common.IsHexAddress(addressHash) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", addressHash))
+		return
+	}
 	address, err := backendInstance.GetAddressByHash(r.Context(), addressHash)
 	if err != nil {
 		logger.Error("Failed to get address", zap.String("address", addressHash), zap.Error(err))
@@ -449,6 +455,10 @@ func checkTransactionExist(w http.ResponseWriter, r *http.Request) {
 
 func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	address := chi.URLParam(r, "address")
+	if !common.IsHexAddress(address) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", address))
+		return
+	}
 	inputDataEmpty := parseBool(r, "input_data_empty")
 	skip, limit, err := parseSkipLimit(r)
 	if err != nil {
@@ -470,8 +480,60 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, transactions)
 }
 
+func getAddressTxByNonce(w http.ResponseWriter, r *http.Request) {
+	address := chi.URLParam(r, "address")
+	if !common.IsHexAddress(address) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", address))
+		return
+	}
+	nonceS := chi.URLParam(r, "nonce")
+	nonce, err := strconv.ParseInt(nonceS, 0, 64)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonce, err))
+		return
+	}
+	tx, err := backendInstance.GetTxByAddressAndNonce(r.Context(), address, nonce)
+	if err != nil {
+		logger.Error("Failed to get tx", zap.String("address", address), zap.Int64("nonce", nonce), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if tx == nil {
+		writeJSON(w, http.StatusNotFound, nil)
+	}
+	writeJSON(w, http.StatusOK, tx)
+}
+
+func getAddressTxHashByNonce(w http.ResponseWriter, r *http.Request) {
+	address := chi.URLParam(r, "address")
+	if !common.IsHexAddress(address) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", address))
+		return
+	}
+	nonceS := chi.URLParam(r, "nonce")
+	nonce, err := strconv.ParseInt(nonceS, 0, 64)
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonce, err))
+		return
+	}
+	tx, err := backendInstance.GetTxByAddressAndNonce(r.Context(), address, nonce)
+	if err != nil {
+		logger.Error("Failed to get tx", zap.String("address", address), zap.Int64("nonce", nonce), zap.Error(err))
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	if tx == nil {
+		writeJSON(w, http.StatusNotFound, nil)
+	}
+	writeJSON(w, http.StatusOK, tx.TxHash)
+}
+
 func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
+		return
+	}
 	skip, limit, err := parseSkipLimit(r)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
@@ -489,6 +551,10 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 
 func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
+		return
+	}
 	skip, limit, err := parseSkipLimit(r)
 	if err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
@@ -541,6 +607,10 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 
 func getContract(w http.ResponseWriter, r *http.Request) {
 	contractAddress := chi.URLParam(r, "address")
+	if !common.IsHexAddress(contractAddress) {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid hex 'address': %s", contractAddress))
+		return
+	}
 	contract, err := backendInstance.GetContract(contractAddress)
 	if err != nil {
 		logger.Error("Failed to get contract", zap.String("address", contractAddress), zap.Error(err))
