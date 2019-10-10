@@ -6,45 +6,45 @@
         <div class="row">
           <div class="col-lg-10 col-md-9">
             <dl>
-              <dt>Address hash:</dt>
+              <dt>Hash</dt>
               <dd>
                 {{addr.address}}
                 <ng-container *ngIf="addr.signerDetails">
                   (<a [href]="addr.signerDetails.url" target="_blank">{{addr.signerDetails.name}}</a>)
                 </ng-container>
               </dd>
-              <dt>Balance:</dt>
+              <dt>Balance</dt>
               <dd>{{addr.balance_wei | weiToGO | bigNumber}}</dd>
               <ng-container *ngIf="addr.contract">
                 <ng-container *ngIf="addr.token_name">
-                  <dt>Token name:</dt>
+                  <dt>Token name</dt>
                   <dd>{{addr.token_name}}</dd>
                 </ng-container>
                 <ng-container *ngIf="addr.token_symbol">
-                  <dt>Token symbol:</dt>
+                  <dt>Token symbol</dt>
                   <dd>{{addr.token_symbol}}</dd>
                 </ng-container>
                 <ng-container *ngIf="addr.total_supply">
-                  <dt>Total supply:</dt>
+                  <dt>Total supply</dt>
                   <dd>{{addr.total_supply | weiToGO: false : true : addr.decimals ? addr.decimals : 0 | bigNumber}}</dd>
                 </ng-container>
                 <ng-container *ngIf="addr.decimals">
-                  <dt>Decimals:</dt>
+                  <dt>Decimals</dt>
                   <dd>{{addr.decimals}}</dd>
                 </ng-container>
-                <dt>Total internal transactions:</dt>
+                <dt>Total internal transactions</dt>
                 <dd>{{addr.number_of_internal_transactions || 0}}</dd>
-                <dt>Total holders:</dt>
+                <dt>Total holders</dt>
                 <dd>{{addr.number_of_token_holders || 0}}</dd>
               </ng-container>
-              <dt>Total transactions:</dt>
+              <dt>Total transactions</dt>
               <dd>{{addr.number_of_transactions || 0}}</dd>
               <ng-container *ngIf="addr.erc_types && !!addr.erc_types.length">
-                <dt>Token type:</dt>
+                <dt>Token type</dt>
                 <dd><span class="badge badge-primary mr-1"
                           *ngFor="let type of addr.erc_types">{{tokenTypes[type]}}</span></dd>
               </ng-container>
-              <dt>Updated at:</dt>
+              <dt>Updated at</dt>
               <dd>{{addr.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}}</dd>
             </dl>
           </div>
