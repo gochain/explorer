@@ -89,7 +89,7 @@ func (self *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 		var result hexutil.Big
-		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply", "latest")
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 		var result hexutil.Big
-		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply")
+		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply", "latest")
 		if err != nil {
 			return err
 		}
