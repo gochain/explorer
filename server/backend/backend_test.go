@@ -113,6 +113,13 @@ func TestTransactions(t *testing.T) {
 	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
+	transactionFromDB, err = testBackend.GetTxByAddressAndNonce(context.Background(), transactionFromDB.From, int64(block.Transactions()[0].Nonce()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
+		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
+	}
 
 	transactionsFromAddress, err := testBackend.GetTransactionList(transactionFromDB.From, 0, 100, time.Unix(0, 0), time.Now(), nil)
 	if err != nil {
