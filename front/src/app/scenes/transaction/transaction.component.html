@@ -83,7 +83,7 @@
           <div class="form-group">
             <label for="receipt_logs">Receipt Logs</label>
             <div class="btn-group btn-group-sm float-right">
-              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Parsed</button>
+              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Table</button>
               <button class="btn btn-primary" [ngClass]="{'active': showLogsRaw}" (click)="showLogsRaw = true">JSON</button>
             </div>
             <div class="mt-2">
@@ -102,7 +102,7 @@
                   <tbody>
                   <tr *ngFor="let log of tx.processedLogs" [ngClass]="{'table-secondary': log.removed}">
                     <td>{{log.index}}</td>
-                    <td>{{log.contract_address}}</td>
+                    <td><a routerLink="/addr/{{log.contract_address}}">{{log.contract_address}}</a></td>
                     <td>{{log.data}}</td>
                   </tr>
                   </tbody>
