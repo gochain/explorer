@@ -204,7 +204,7 @@ export class InteractorComponent implements OnInit {
         emitEvent: true,
       });
     } else if (address.interfaces && address.interfaces.length) {
-      this._walletService.abi$.subscribe((abiDefinitions: ContractAbi) => {
+      this._commonService.abi$.subscribe((abiDefinitions: ContractAbi) => {
         const abi: AbiItem[] = address.interfaces.reduce((acc, abiName) => {
           if (abiDefinitions[abiName]) {
             acc.push(abiDefinitions[abiName]);
@@ -328,7 +328,7 @@ export class InteractorComponent implements OnInit {
   }
 
   onAbiTemplateSelect(ercName: ErcName) {
-    this._walletService.abi$.subscribe((abi: ContractAbi) => {
+    this._commonService.abi$.subscribe((abi: ContractAbi) => {
       const ABI: AbiItem[] = makeContractAbi(ERC_INTERFACE_IDENTIFIERS[ercName], abi);
       this.form.patchValue({
         contractABI: JSON.stringify(ABI, null, 2),

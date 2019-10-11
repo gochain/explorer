@@ -94,6 +94,7 @@ export const TOKEN_TYPES = {
   Go777Sender: 'GO777 Sender',
   Go827: 'GO827',
   Go884: 'GO884',
+  Upgradeable: 'Upgradeable',
 };
 
 export const ERC_INTERFACE_IDENTIFIERS = {

@@ -18,7 +18,7 @@ import {Contract} from '../models/contract.model';
 import {SignerData, SignerStat} from '../models/signer-stats';
 import {SignerNode} from '../models/signer-node';
 /*UTILS*/
-import {ContractAbi} from '../utils/types';
+import {ContractAbi, ContractEventsAbi} from '../utils/types';
 import {objIsEmpty} from '../utils/functions';
 
 @Injectable()
@@ -26,31 +26,57 @@ export class CommonService implements Resolve<string> {
   contractsCache = {};
 
   private _rpcProvider$: BehaviorSubject<string>;
-
   get rpcProvider$(): Observable<string> {
     if (!this._rpcProvider$) {
       this._rpcProvider$ = new BehaviorSubject(null);
-      return this.getRpcProvider().pipe(
-        tap(value => this._rpcProvider$.next(value)),
-      );
+      this.getRpcProvider().subscribe(v => {
+        this._rpcProvider$.next(v);
+      });
     }
     return this._rpcProvider$.pipe(
-      filter(value => !!value),
+      filter(v => !!v),
+      take(1),
+    );
+  }
+
+  private _abi$: BehaviorSubject<ContractAbi>;
+  get abi$() {
+    if (!this._abi$) {
+      this._abi$ = new BehaviorSubject<ContractAbi>(null);
+      this.getFunctionsAbi().subscribe(v => {
+        this._abi$.next(v);
+      });
+    }
+    return this._abi$.pipe(
+      filter(v => v !== null),
+      take(1),
+    );
+  }
+
+  private _eventsAbi$: BehaviorSubject<ContractEventsAbi>;
+  get eventsAbi$() {
+    if (!this._eventsAbi$) {
+      this._eventsAbi$ = new BehaviorSubject<ContractEventsAbi>(null);
+      this.getEventsAbi().subscribe(v => {
+        this._eventsAbi$.next(v);
+      });
+    }
+    return this._eventsAbi$.pipe(
+      filter(v => v !== null),
       take(1),
     );
   }
 
   private _signers$: BehaviorSubject<any>;
-
   get signers$(): Observable<SignerNode> {
     if (!this._signers$) {
       this._signers$ = new BehaviorSubject<any>(null);
-      this._apiService.get('/signers/list').subscribe(value => {
-        this._signers$.next(value);
+      this._apiService.get('/signers/list').subscribe(v => {
+        this._signers$.next(v);
       });
     }
     return this._signers$.pipe(
-      filter(value => !!value),
+      filter(v => !!v),
       take(1),
     );
   }
@@ -69,8 +95,12 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/rpc_provider');
   }
 
-  getAbi(): Observable<ContractAbi> {
-    return this._apiService.get('/assets/data/abi.json', null, true);
+  getFunctionsAbi(): Observable<ContractAbi> {
+    return this._apiService.get('/assets/abi/functions.json', null, true);
+  }
+
+  getEventsAbi(): Observable<ContractEventsAbi> {
+    return this._apiService.get('/assets/abi/events.json', null, true);
   }
 
   getApiUrl(): string {
