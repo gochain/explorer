@@ -10,7 +10,7 @@ import {LayoutService} from '../../services/layout.service';
 import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
-import {ProcessedLog, Transaction, TxLog} from '../../models/transaction.model';
+import {ProcessedLog, ProcessedLogData, ProcessedLogItem, Transaction, TxLog} from '../../models/transaction.model';
 import {ContractEventsAbi} from '../../utils/types';
 import {AbiItem} from 'web3-utils';
 import {Address} from '../../models/address.model';
@@ -80,32 +80,72 @@ export class TransactionComponent implements OnInit, OnDestroy {
     ]).subscribe(([events, address]: [ContractEventsAbi, Address]) => {
       this.tx.addressData = address;
       this.tx.processedLogs = this.tx.parsedLogs.map((log: TxLog) => {
-        const prettyLog: ProcessedLog = new ProcessedLog();
-        prettyLog.index = +log.logIndex;
-        prettyLog.contract_address = log.address;
-        prettyLog.removed = log.removed;
+        const processedLog: ProcessedLog = new ProcessedLog();
+        processedLog.index = +log.logIndex;
+        processedLog.contract_address = log.address;
+        processedLog.removed = log.removed;
+        processedLog.data = [];
+        processedLog.recognized = false;
         let abiItem: AbiItem;
-        const eventSignature = <string>log.topics[0];
-        const knownEvent = events[eventSignature];
-        if (knownEvent) {
-          const ercType = address.erc_types.find((item: string) => !!knownEvent[item]);
-          if (ercType) {
-            abiItem = knownEvent[ercType];
+        let decodedLog;
+        if (!!log.topics.length && !!log.topics[0]) {
+          const eventSignature = <string>log.topics[0];
+          const knownEvent = events[eventSignature];
+          if (knownEvent) {
+            const ercType = address.erc_types.find((item: string) => !!knownEvent[item]);
+            if (ercType) {
+              abiItem = knownEvent[ercType];
+              log.topics.shift();
+              try {
+                decodedLog = this._walletService.w3.eth.abi.decodeLog(
+                  abiItem.inputs,
+                  log.data.replace('0x', ''),
+                  <string[]>log.topics
+                );
+                processedLog.recognized = true;
+              } catch (e) {
+                console.log('error occured while decoding log', e);
+                processedLog.recognized = false;
+              }
+            }
           }
         }
-        if (abiItem) {
-          log.topics.shift();
-          const decoded = this._walletService.w3.eth.abi.decodeLog(
-            abiItem.inputs,
-            log.data.replace('0x', ''),
-            <string[]>log.topics
-          );
-          const res: string[] = abiItem.inputs.map(input => `${input.name}: ${decoded[input.name]}`);
-          prettyLog.data = `${abiItem.name}(${res.join(', ')})`;
+        if (processedLog.recognized) {
+          const items: ProcessedLogItem[] = abiItem.inputs.map(input => {
+            let link: string;
+            if (input.name === 'tokenId') {
+              link = `/token/${processedLog.contract_address}/asset/${decodedLog[input.name]}`;
+            } else if (input.type === 'address') {
+              link = `/addr/${decodedLog[input.name]}`;
+            }
+            return {
+              link,
+              name: input.name,
+              value: decodedLog[input.name],
+            };
+          });
+          processedLog.data.push({
+            title: abiItem.name,
+            items,
+          });
         } else {
-          prettyLog.data = `topics: ${log.topics.join(',')} data: ${log.data}`;
+          const items: ProcessedLogItem[] = log.topics.map(topic => ({
+              value: <string>topic,
+          }));
+          if (log.topics.length) {
+            processedLog.data.push({
+              title: 'topics',
+              items,
+            });
+          }
+          if (log.data) {
+            processedLog.data.push({
+              title: 'data',
+              items: [{value: log.data}],
+            });
+          }
         }
-        return prettyLog;
+        return processedLog;
       });
     });
   }

@@ -5,7 +5,7 @@
         <div class="card-title"><img src="../../../assets/icons/tx.svg"> Transaction</div>
         <dl>
           <dt>Transaction hash</dt>
-          <dd>{{tx.tx_hash}}</dd>
+          <dd class="text-monospace">{{tx.tx_hash}}</dd>
           <dt>Status</dt>
           <dd>
             <ng-container *ngIf="tx.block_number ; else pendingTx;">
@@ -35,15 +35,18 @@
             <dt>Processed at</dt>
             <dd>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</dd>
           </ng-container>
-          <ng-container *ngIf="tx.contract_address && tx.contract_address !== '0x0000000000000000000000000000000000000000'">
+          <ng-container
+              *ngIf="tx.contract_address && tx.contract_address !== '0x0000000000000000000000000000000000000000'">
             <dt>Contract address</dt>
-            <dd><a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a></dd>
+            <dd>
+              <a class="text-monospace" routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>
+            </dd>
           </ng-container>
           <dt>From</dt>
-          <dd><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></dd>
+          <dd><a class="text-monospace" routerLink="/addr/{{tx.from}}">{{tx.from}}</a></dd>
           <ng-container *ngIf="tx.to">
             <dt>To</dt>
-            <dd><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></dd>
+            <dd><a class="text-monospace" routerLink="/addr/{{tx.to}}">{{tx.to}}</a></dd>
           </ng-container>
           <dt>Value</dt>
           <dd>{{tx.value | weiToGO | bigNumber}}</dd>
@@ -100,10 +103,36 @@
                   </tr>
                   </thead>
                   <tbody>
-                  <tr *ngFor="let log of tx.processedLogs" [ngClass]="{'table-secondary': log.removed}">
+                  <tr
+                      *ngFor="let log of tx.processedLogs"
+                      [ngClass]="{'table-secondary': log.removed}"
+                  >
                     <td>{{log.index}}</td>
-                    <td><a routerLink="/addr/{{log.contract_address}}">{{log.contract_address}}</a></td>
-                    <td>{{log.data}}</td>
+                    <td>
+                      <a class="text-monospace" routerLink="/addr/{{log.contract_address}}">
+                        {{log.contract_address}}
+                      </a>
+                    </td>
+                    <td>
+                      <ng-container *ngFor="let data of log.data">
+                        <b>{{data.title}}</b>
+                        <ul>
+                          <li *ngFor="let item of data.items">
+                            <ng-container *ngIf="item.name">
+                              {{item.name}}:
+                            </ng-container>
+                            <ng-container *ngIf="item.link; else regularItem">
+                              <a class="text-monospace" [routerLink]="item.link">
+                                {{item.value}}
+                              </a>
+                            </ng-container>
+                            <ng-template #regularItem>
+                              {{item.value}}
+                            </ng-template>
+                          </li>
+                        </ul>
+                      </ng-container>
+                    </td>
                   </tr>
                   </tbody>
                 </table>

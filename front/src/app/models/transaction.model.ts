@@ -1,11 +1,23 @@
 import {Address} from './address.model';
 import {Log} from 'web3-core';
 
+export class ProcessedLogItem {
+  link?: string;
+  name?: string;
+  value: string;
+}
+
+export class ProcessedLogData {
+  title: string;
+  items: ProcessedLogItem[];
+}
+
 export class ProcessedLog {
   index: number;
   contract_address: string;
-  data: string;
+  data: ProcessedLogData[];
   removed: boolean;
+  recognized: boolean;
 }
 
 export interface TxLog extends Log {
