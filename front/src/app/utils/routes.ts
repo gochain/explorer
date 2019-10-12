@@ -51,9 +51,19 @@ export const APP_ROUTES: Routes = [
         component: AddressComponent,
       },
       {
+        path: ROUTES.ADDRESS_FULL + '/:id/tx/:nonce_id',
+        component: TransactionComponent,
+      },
+
+      {
         path: ROUTES.ADDRESS + '/:id',
         component: AddressComponent,
       },
+      {
+        path: ROUTES.ADDRESS + '/:id/tx/:nonce_id',
+        component: TransactionComponent,
+      },
+
       {
         path: ROUTES.TOKEN + '/:id',
         component: AddressComponent,
