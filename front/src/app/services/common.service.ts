@@ -139,8 +139,12 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/blocks/' + blockNum + '/transactions', data);
   }
 
-  getTransaction(txHash: string): Observable<Transaction | null> {
-    return this._apiService.get('/transaction/' + txHash);
+  getTransaction(hash: string, nonceId: string): Observable<Transaction | null> {
+    if (nonceId) {
+      return this._apiService.get('/address/' + hash + '/tx/' + nonceId);
+    } else {
+      return this._apiService.get('/transaction/' + hash);
+    }
   }
 
   getAddress(addrHash: string): Observable<Address> {

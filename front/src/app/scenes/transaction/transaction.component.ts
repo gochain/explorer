@@ -52,8 +52,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
         tap(() => {
           this._layoutService.onLoading();
         }),
-        map((params: ParamMap) => params.get('id')),
-        mergeMap((txHash: string) => this.getTx(txHash)),
+        mergeMap((params: ParamMap) => this.getTx(params)),
       ).subscribe((tx: (Transaction | null)) => {
         tx.input_data = '0x' + tx.input_data;
         tx.parsedLogs = JSON.parse(tx.logs);
@@ -152,13 +151,16 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
   /**
    * getting tx from server
-   * @param txHash
+   * @param hash
+   * @param nonceId
    */
-  private getTx(txHash: string): Observable<Transaction | null> {
-    return this._commonService.getTransaction(txHash).pipe(
+  private getTx(params: ParamMap): Observable<Transaction | null> {
+    const hash = params.get('id');
+    const nonceId = params.get('nonce_id');
+    return this._commonService.getTransaction(hash, nonceId).pipe(
       mergeMap((tx: Transaction | null) => {
         if (!tx) {
-          return this._walletService.getTxData(txHash);
+          return this._walletService.getTxData(hash);
         }
         return of(tx);
       }),
