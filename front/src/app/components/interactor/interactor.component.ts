@@ -2,7 +2,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {FormArray, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {ActivatedRoute, ParamMap} from '@angular/router';
-import {forkJoin, Subscription} from 'rxjs';
+import {forkJoin, Observable, Subscription} from 'rxjs';
 import {debounceTime, distinctUntilChanged, filter} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../../services/wallet.service';
@@ -12,8 +12,9 @@ import {CommonService} from '../../services/common.service';
 import {Badge} from '../../models/badge.model';
 import {Address} from '../../models/address.model';
 import {Contract} from '../../models/contract.model';
+import Web3 from 'web3';
 import {TransactionConfig} from 'web3-core';
-import {AbiItem} from 'web3-utils';
+import {AbiItem, toWei} from 'web3-utils';
 import {Contract as Web3Contract} from 'web3-eth-contract';
 /*UTILS*/
 import {ErcName} from '../../utils/enums';
@@ -173,9 +174,9 @@ export class InteractorComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: AbiItem, params: string[] = []): void {
-    this._walletService.call(this.contract.options.address, func, params).then((decoded: object) => {
+    this._walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
       this.functionResult = getDecodedData(decoded, func, this.addr);
-    }).catch(err => {
+    }, err => {
       this._toastrService.danger(err);
     });
   }
@@ -258,7 +259,7 @@ export class InteractorComponent implements OnInit {
     if (this.selectedFunction.payable) {
       const amount = this.form.get('contractAmount').value;
       try {
-        tx.value = this._walletService.w3.utils.toWei(amount, 'ether').toString(10);
+        tx.value = toWei(amount, 'ether').toString(10);
       } catch (e) {
         throw Error('Cannot convert amount,' + e);
       }
@@ -291,13 +292,13 @@ export class InteractorComponent implements OnInit {
   }
 
   private initContract(addrHash: string, abiItems: AbiItem[]) {
-    try {
-      this.contract = new this._walletService.w3.eth.Contract(abiItems, addrHash);
+    this._walletService.w3Call.subscribe((web3: Web3) => {
+      this.contract = new web3.eth.Contract(abiItems, addrHash);
       this.abiFunctions = getAbiMethods(abiItems);
-    } catch (e) {
+    }, err => {
       this._toastrService.danger('Can\'t initiate contract, check entered data');
-      return;
-    }
+      console.error(`Failed to initiate contract (${addrHash}): ${err}`)
+    });
   }
 
   useContract(): void {

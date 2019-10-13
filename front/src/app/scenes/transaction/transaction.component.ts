@@ -2,7 +2,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, ParamMap} from '@angular/router';
 import {forkJoin, interval, Observable, of, Subscription} from 'rxjs';
-import {map, mergeMap, startWith, tap} from 'rxjs/operators';
+import {mergeMap, startWith, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
@@ -10,8 +10,9 @@ import {LayoutService} from '../../services/layout.service';
 import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
-import {ProcessedLog, ProcessedLogData, ProcessedLogItem, Transaction, TxLog} from '../../models/transaction.model';
+import {ProcessedLog, ProcessedLogItem, Transaction, TxLog} from '../../models/transaction.model';
 import {ContractEventsAbi} from '../../utils/types';
+import Web3 from 'web3';
 import {AbiItem} from 'web3-utils';
 import {Address} from '../../models/address.model';
 /*UTILS*/
@@ -32,7 +33,11 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
   recentBlockNumber$: Observable<number> = interval(5000).pipe(
     startWith(0),
-    mergeMap(() => fromPromise<number>(this._walletService.w3.eth.getBlockNumber())),
+      mergeMap(() => {
+      return this._walletService.w3Call.pipe(mergeMap((web3: Web3) => {
+        return fromPromise<number>(web3.eth.getBlockNumber())
+      }));
+    }),
   );
 
   private _subsArr$: Subscription[] = [];
@@ -76,7 +81,8 @@ export class TransactionComponent implements OnInit, OnDestroy {
     forkJoin([
       this._commonService.eventsAbi$,
       this._commonService.getAddress(this.tx.to),
-    ]).subscribe(([events, address]: [ContractEventsAbi, Address]) => {
+      this._walletService.w3Call,
+    ]).subscribe(([events, address, web3]: [ContractEventsAbi, Address, Web3]) => {
       this.tx.addressData = address;
       this.tx.processedLogs = this.tx.parsedLogs.map((log: TxLog) => {
         const processedLog: ProcessedLog = new ProcessedLog();
@@ -96,7 +102,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
               abiItem = knownEvent[ercType];
               log.topics.shift();
               try {
-                decodedLog = this._walletService.w3.eth.abi.decodeLog(
+                decodedLog = web3.eth.abi.decodeLog(
                   abiItem.inputs,
                   log.data.replace('0x', ''),
                   <string[]>log.topics

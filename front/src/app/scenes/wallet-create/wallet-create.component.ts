@@ -35,13 +35,17 @@ export class WalletCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this._metaService.setTitle(META_TITLES.CREATE_WALLET.title);
-    this.account = this._walletService.createAccount();
+    this._walletService.createAccount().subscribe((account: Account) => {
+      this.account = account;
+    });
   }
 
   useWallet(): void {
-    if (this._walletService.openAccount(this.account.privateKey)) {
-      this._router.navigate(['/wallet/account']);
-    }
+    this._walletService.openAccount(this.account.privateKey).subscribe((ok: boolean) => {
+      if (ok) {
+        this._router.navigate(['/wallet/account']);
+      }
+    });
   }
 
   onCopy(): void {
