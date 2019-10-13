@@ -1,8 +1,8 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Params} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {filter} from 'rxjs/operators';
+import {forkJoin, Subscription} from 'rxjs';
+import {filter, map, mergeMap} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../../services/wallet.service';
 import {ApiService} from '../../services/api.service';
@@ -89,30 +89,31 @@ export class TokenAssetComponent implements OnInit, OnDestroy {
 
   getData() {
     this._layoutService.onLoading();
-    Promise.all([
-      this._walletService.call(this.contractAddr, TOKEN_URL_ABI, [this.tokenId]),
+    forkJoin([
+      this._walletService.call(this.contractAddr, TOKEN_URL_ABI, [this.tokenId]).pipe(
+          mergeMap(url => this._apiService.get(url[0], null, true))
+      ),
       this._walletService.call(this.contractAddr, OWNER_OF_ABI, [this.tokenId]),
-    ]).then(([tokenUrl, ownerData]: [object, object]) => {
-      const url: string = tokenUrl[0];
+    ]).subscribe(([res, ownerData]: [any, object]) => {
       const metadata = new TokenMetadata();
-      metadata.ownerAddr = ownerData['owner'];
-      this._apiService.get(url, null, true).subscribe((res: any) => {
-        metadata.name = res.name || null;
+      if (ownerData) {
+        metadata.ownerAddr = ownerData['owner'];
+      }
+      if (res) {
+        metadata.name = res.name;
         if (metadata.name) {
           this._metaService.setTitle(`${META_TITLES.TOKEN.title} ${metadata.name}`);
         }
-        metadata.description = res.description || null;
-        metadata.image = res.image || null;
-        metadata.external_url = res.external_url || null;
+        metadata.description = res.description;
+        metadata.image = res.image;
+        metadata.external_url = res.external_url;
         metadata.origin_data = JSON.stringify(res, null, 4);
-        this.metadata = metadata;
-      });
-
-    }).catch(err => {
-      this._toastrService.danger(err);
-    }).then(() => {
-      this._layoutService.offLoading();
-    });
+      }
+      this.metadata = metadata;
+    },
+    err => this._toastrService.danger(err),
+    () => this._layoutService.offLoading()
+    );
 
     // checking if contract is erc721metadata
     /*this._commonService.getAddress(this.contractAddr).pipe(
