@@ -109,7 +109,10 @@
   </ng-container>
   <div *ngIf="functionResult">
     <h4>Response</h4>
-    <div *ngFor="let k of functionResult">
+    <div *ngIf="functionResult.error">
+      {{functionResult.error}}
+    </div>
+    <div *ngFor="let k of functionResult.output">
       {{k[0]}}: <span style="font-weight: bold;">{{k[1]}}</span>
     </div>
   </div>

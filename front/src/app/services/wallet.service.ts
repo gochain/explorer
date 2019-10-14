@@ -107,12 +107,12 @@ export class WalletService {
           data: encoded,
         }))
       }),map((res: string) => {
-        if (!res) {
-          throw new Error('Result is empty');
+        if (!res || res==='0x' || res==='0X') {
+          return null;
         }
-        const decoded: object = web3.eth.abi.decodeLog(abi.outputs, res, []);
+        const decoded: object = web3.eth.abi.decodeParameters(abi.outputs, res);
         if (objIsEmpty(decoded)) {
-          throw new Error('Result is empty');
+          return null;
         }
         return decoded;
       })
