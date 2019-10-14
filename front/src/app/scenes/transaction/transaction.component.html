@@ -5,7 +5,7 @@
         <div class="card-title"><img src="../../../assets/icons/tx.svg"> Transaction</div>
         <dl>
           <dt>Transaction hash</dt>
-          <dd>{{tx.tx_hash}}</dd>
+          <dd class="text-monospace">{{tx.tx_hash}}</dd>
           <dt>Status</dt>
           <dd>
             <ng-container *ngIf="tx.block_number ; else pendingTx;">
@@ -35,15 +35,18 @@
             <dt>Processed at</dt>
             <dd>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</dd>
           </ng-container>
-          <ng-container *ngIf="tx.contract_address && tx.contract_address !== '0x0000000000000000000000000000000000000000'">
+          <ng-container
+              *ngIf="tx.contract_address && tx.contract_address !== '0x0000000000000000000000000000000000000000'">
             <dt>Contract address</dt>
-            <dd><a routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a></dd>
+            <dd>
+              <a class="text-monospace" routerLink="/addr/{{tx.contract_address}}">{{tx.contract_address}}</a>
+            </dd>
           </ng-container>
           <dt>From</dt>
-          <dd><a routerLink="/addr/{{tx.from}}">{{tx.from}}</a></dd>
+          <dd><a class="text-monospace" routerLink="/addr/{{tx.from}}">{{tx.from}}</a></dd>
           <ng-container *ngIf="tx.to">
             <dt>To</dt>
-            <dd><a routerLink="/addr/{{tx.to}}">{{tx.to}}</a></dd>
+            <dd><a class="text-monospace" routerLink="/addr/{{tx.to}}">{{tx.to}}</a></dd>
           </ng-container>
           <dt>Value</dt>
           <dd>{{tx.value | weiToGO | bigNumber}}</dd>
@@ -74,7 +77,7 @@
               <button class="btn btn-primary" [ngClass]="{'active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
             </div>
             <textarea
-                class="form-control code"
+                class="form-control code mt-2"
                 id="input_data"
                 readonly
                 rows="5"
@@ -82,12 +85,67 @@
           </div>
           <div class="form-group">
             <label for="receipt_logs">Receipt Logs</label>
-            <textarea
-                class="form-control code"
-                id="receipt_logs"
-                readonly
-                rows="5"
-            >{{tx.logs}}</textarea>
+            <div class="btn-group btn-group-sm float-right">
+              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Table</button>
+              <button class="btn btn-primary" [ngClass]="{'active': showLogsRaw}" (click)="showLogsRaw = true">JSON</button>
+            </div>
+            <div class="mt-2">
+              <ng-container *ngIf="!showLogsRaw; else rawLogBlock;">
+                <div class="mb-2">
+                  <span id="red-box"></span> - removed log
+                </div>
+                <table class="table table-bordered">
+                  <thead>
+                  <tr>
+                    <th>Index</th>
+                    <th>Contract</th>
+                    <th>Log Data</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr
+                      *ngFor="let log of tx.processedLogs"
+                      [ngClass]="{'table-secondary': log.removed}"
+                  >
+                    <td>{{log.index}}</td>
+                    <td>
+                      <a class="text-monospace" routerLink="/addr/{{log.contract_address}}">
+                        {{log.contract_address}}
+                      </a>
+                    </td>
+                    <td>
+                      <ng-container *ngFor="let data of log.data">
+                        <b>{{data.title}}</b>
+                        <ul>
+                          <li *ngFor="let item of data.items">
+                            <ng-container *ngIf="item.name">
+                              {{item.name}}:
+                            </ng-container>
+                            <ng-container *ngIf="item.link; else regularItem">
+                              <a class="text-monospace" [routerLink]="item.link">
+                                {{item.value}}
+                              </a>
+                            </ng-container>
+                            <ng-template #regularItem>
+                              {{item.value}}
+                            </ng-template>
+                          </li>
+                        </ul>
+                      </ng-container>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </ng-container>
+              <ng-template #rawLogBlock>
+                <textarea
+                    class="form-control code"
+                    id="receipt_logs"
+                    readonly
+                    rows="5"
+                >{{tx.prettifiedLogs}}</textarea>
+              </ng-template>
+            </div>
           </div>
         </form>
       </div>

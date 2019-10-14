@@ -116,6 +116,13 @@ func TestTransactions(t *testing.T) {
 	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
+	transactionFromDB, err = testBackend.GetTxByAddressAndNonce(context.Background(), transactionFromDB.From, int64(block.Transactions()[0].Nonce()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
+		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
+	}
 	filter2 := &models.TxsFilter{
 		PaginationFilter: PaginationFilter{
 			Skip:  0,

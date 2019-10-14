@@ -64,7 +64,7 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		to = tx.To().Hex()
 	}
 	self.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
-	InputDataEmpty := hex.EncodeToString(tx.Data()[:]) == ""
+	txInputData := hex.EncodeToString(tx.Data()[:])
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
 		From:            from.Hex(),
@@ -77,8 +77,8 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		Nonce:           tx.Nonce(),
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
-		InputData:       hex.EncodeToString(tx.Data()[:]),
-		InputDataEmpty:  InputDataEmpty,
+		InputData:       txInputData,
+		InputDataEmpty:  txInputData == "",
 	}, nil
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
@@ -435,7 +435,7 @@ func (self *MongoBackend) getAddressByHash(address string) (*models.Address, err
 		return nil, fmt.Errorf("failed to get address: %v", err)
 	}
 	//lazy calculation for number of transactions
-	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}}).Count()
+	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{{"from": address}, {"to": address}}}).Count()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get txs: %v", err)
 	}
@@ -443,45 +443,62 @@ func (self *MongoBackend) getAddressByHash(address string) (*models.Address, err
 	return &c, nil
 }
 
-func (self *MongoBackend) getTransactionByHash(ctx context.Context, transactionHash string) (*models.Transaction, error) {
-	lgr := self.Lgr.With(zap.String("tx", transactionHash))
-	var c models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": transactionHash}).One(&c)
+func (self *MongoBackend) getTxByAddressAndNonce(ctx context.Context, address string, nonce int64) (*models.Transaction, error) {
+	var tx models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"from": address, "nonce": nonce}).One(&tx)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get tx: %v", err)
 	}
-	// lazy calculation for receipt
-	if !c.ReceiptReceived {
-		receipt, err := self.goClient.TransactionReceipt(ctx, common.HexToHash(transactionHash))
+	return self.ensureReceipt(ctx, &tx)
+}
+
+func (self *MongoBackend) getTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
+	var tx models.Transaction
+	err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": hash}).One(&tx)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get tx: %v", err)
+	}
+	return self.ensureReceipt(ctx, &tx)
+}
+
+// ensureReceipt does lazy loads receipt info if necessary.
+func (self *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transaction) (*models.Transaction, error) {
+	if tx.ReceiptReceived {
+		return tx, nil
+	}
+	lgr := self.Lgr.With(zap.String("tx", tx.TxHash))
+	receipt, err := self.goClient.TransactionReceipt(ctx, common.HexToHash(tx.TxHash))
+	if err != nil {
+		lgr.Warn("Failed to get transaction receipt", zap.Error(err))
+	} else {
+		gasPrice, ok := new(big.Int).SetString(tx.GasPrice, 0)
+		if !ok {
+			lgr.Error("Failed to parse gas price", zap.String("gasPrice", tx.GasPrice))
+		}
+		tx.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+		tx.ContractAddress = receipt.ContractAddress.String()
+		tx.Status = false
+		if receipt.Status == 1 {
+			tx.Status = true
+		}
+		tx.ReceiptReceived = true
+		jsonValue, err := json.Marshal(receipt.Logs)
 		if err != nil {
-			lgr.Warn("Failed to get transaction receipt", zap.Error(err))
-		} else {
-			gasPrice, ok := new(big.Int).SetString(c.GasPrice, 0)
-			if !ok {
-				lgr.Error("Failed to parse gas price", zap.String("gasPrice", c.GasPrice))
-			}
-			c.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
-			c.ContractAddress = receipt.ContractAddress.String()
-			c.Status = false
-			if receipt.Status == 1 {
-				c.Status = true
-			}
-			c.ReceiptReceived = true
-			jsonValue, err := json.Marshal(receipt.Logs)
-			if err != nil {
-				lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
-			}
-			c.Logs = string(jsonValue)
-			_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": c.TxHash}, c)
-			if err != nil {
-				return nil, fmt.Errorf("failed to upsert tx: %v", err)
-			}
+			lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
+		}
+		tx.Logs = string(jsonValue)
+		_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upsert tx: %v", err)
 		}
 	}
-	return &c, nil
+	return tx, nil
 }
 
 func (self *MongoBackend) getTransactionList(

@@ -47,6 +47,7 @@ export enum FunctionName {
   IsSuperseded = 'IsSuperseded',
   IsVerified = 'IsVerified',
   Mint = 'Mint',
+  MintWithTokenURI = 'MintWithTokenURI',
   Name = 'Name',
   OnErc721Received = 'OnErc721Received',
   OnErc1155BatchReceived = 'OnErc1155BatchReceived',
@@ -86,11 +87,11 @@ export enum FunctionName {
   Paused = 'Paused',
   Unpause = 'Unpause',
   Upgrade = 'Upgrade',
-  MintWithTokenURI = 'MintWithTokenURI',
   Resume = 'Resume',
 }
 
 export enum ErcName {
+  AllFunctions = 'AllFunctions',
   Go20 = 'Go20',
   Go20Burnable = 'Go20Burnable',
   Go20Capped = 'Go20Capped',
@@ -120,4 +121,8 @@ export enum ErcName {
   Go827 = 'Go827',
   Go884 = 'Go884',
   Upgradeable = 'Upgradeable'
+}
+
+export enum EventID {
+  Transfer = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
 }
