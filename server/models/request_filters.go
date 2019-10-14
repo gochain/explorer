@@ -1,8 +1,12 @@
 package models
 
 import (
-	"github.com/gochain-io/explorer/server/utils"
 	"time"
+)
+
+const (
+	defaultLimit = 50
+	maximumLimit = 500
 )
 
 type PaginationFilter struct {
@@ -10,12 +14,14 @@ type PaginationFilter struct {
 	Limit int `schema:"limit,omitempty"`
 }
 
-func (f *PaginationFilter) ProcessPagination() {
+func (f *PaginationFilter) Sanitize() {
 	if f.Skip < 0 {
 		f.Skip = 0
 	}
-	if f.Limit <= 0 || f.Limit > utils.MaxFetchLimit {
-		f.Limit = utils.MaxFetchLimit
+	if f.Limit <= 0 {
+		f.Limit = defaultLimit
+	} else if f.Limit > maximumLimit {
+		f.Limit = maximumLimit
 	}
 }
 
@@ -29,7 +35,7 @@ type TimeFilter struct {
 	ToTime   time.Time `schema:"to_time,omitempty"`
 }
 
-func (f *TimeFilter) ProcessTime() {
+func (f *TimeFilter) Sanitize() {
 	if f.FromTime.IsZero() {
 		f.FromTime = time.Unix(0, 0)
 	}
@@ -56,4 +62,9 @@ type TxsFilter struct {
 	PaginationFilter
 	TimeFilter
 	InputDataEmpty *bool `schema:"input_data_empty,omitempty"`
+}
+
+func (f *TxsFilter) Sanitize() {
+	f.PaginationFilter.Sanitize()
+	f.TimeFilter.Sanitize()
 }

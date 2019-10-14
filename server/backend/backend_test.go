@@ -383,18 +383,14 @@ func TestInternalTransactions(t *testing.T) {
 		t.Fatalf("failed to import internal transaction: %v", err)
 	}
 
-	filter := &models.InternalTxFilter{
-		PaginationFilter: models.PaginationFilter{
-			Skip:  0,
-			Limit: 100,
-		},
-		TokenTransactions: false,
+	filter := &models.PaginationFilter{
+		Skip:  0,
+		Limit: 100,
 	}
 	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
-	filter.TokenTransactions = true
 	heldTokenTransfers, err := testBackend.GetHeldTokenTransfers(tokenHolderHash1, filter)
 	if err != nil {
 		t.Fatal(err)
