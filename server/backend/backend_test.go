@@ -319,8 +319,8 @@ func TestTokenHolder(t *testing.T) {
 		t.Fatal(err)
 	}
 	filter := &models.PaginationFilter{
-		Limit: 0,
-		Skip:  100,
+		Skip:  0,
+		Limit: 100,
 	}
 	holders, err := testBackend.GetTokenHoldersList(addrHash, filter)
 	if err != nil {
