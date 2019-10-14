@@ -170,7 +170,7 @@ func (self *Backend) GetTransactionByHash(ctx context.Context, hash string) (*mo
 func (self *Backend) GetTxByAddressAndNonce(ctx context.Context, addr string, nonce int64) (*models.Transaction, error) {
 	return self.mongo.getTxByAddressAndNonce(ctx, addr, nonce)
 }
-func (self *Backend) GetTransactionList(address string, *models.TxsFilter) ([]*models.Transaction, error) {
+func (self *Backend) GetTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)
 	}
@@ -190,7 +190,7 @@ func (self *Backend) GetOwnedTokensList(ownerAddress string, filter *models.Pagi
 }
 
 // GetInternalTokenTransfers gets token transfer events emitted by an ERC20 or ERC721 contract.
-func (self *Backend) GetInternalTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
