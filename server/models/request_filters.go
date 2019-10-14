@@ -11,7 +11,10 @@ type PaginationFilter struct {
 }
 
 func (f *PaginationFilter) ProcessPagination() {
-	if f.Limit == 0 || f.Limit > utils.MaxFetchLimit {
+	if f.Skip < 0 {
+		f.Skip = 0
+	}
+	if f.Limit <= 0 || f.Limit > utils.MaxFetchLimit {
 		f.Limit = utils.MaxFetchLimit
 	}
 }

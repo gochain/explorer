@@ -643,6 +643,7 @@ func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
+	filter.ProcessPagination()
 	bl := &models.LightBlockList{}
 	bl.Blocks, err = backendInstance.GetLatestsBlocks(filter)
 	if err != nil {
