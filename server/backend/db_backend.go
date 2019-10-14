@@ -559,7 +559,7 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models
 }
 
 // getInternalTokenTransfers gets token transfer events emitted by this contract.
-func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"contract_address": contractAddress}).
@@ -571,7 +571,7 @@ func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filt
 }
 
 // getHeldTokenTransfers gets token transfer events to or from this contract, for any token.
-func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"$or": []bson.M{{"from_address": contractAddress}, {"to_address": contractAddress}}}).

@@ -37,11 +37,16 @@ var reCaptchaSecret string
 var rpcUrl string
 var logger *zap.Logger
 
-func parseGetParam(r *http.Request, w http.ResponseWriter, result interface{}) bool {
-	if err := schema.NewDecoder().Decode(result, r.URL.Query()); err != nil {
+type Params interface {
+	Sanitize()
+}
+
+func parseGetParam(r *http.Request, w http.ResponseWriter, params Params) bool {
+	if err := schema.NewDecoder().Decode(params, r.URL.Query()); err != nil {
 		errorResponse(w, http.StatusBadRequest, err)
 		return false
 	}
+	params.Sanitize()
 	return true
 }
 
@@ -319,7 +324,6 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	totalSupply, err := backendInstance.TotalSupply(r.Context())
 	if err != nil {
 		logger.Error("Failed to get total supply", zap.Error(err))
@@ -401,8 +405,6 @@ func getAddressTransactions(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
-	filter.ProcessTime()
 	transactions := &models.TransactionList{}
 	transactions.Transactions, err = backendInstance.GetTransactionList(address, filter)
 	if err != nil {
@@ -472,7 +474,6 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	tokenHolders := &models.TokenHolderList{}
 	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, filter)
 	if err != nil {
@@ -494,7 +495,6 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	tokens := &models.OwnedTokenList{}
 	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(contractAddress, filter)
 	if err != nil {
@@ -515,18 +515,17 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	tokenTransfers := &models.TokenTransfers{}
 	var err error
 	if filter.TokenTransactions {
-		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, filter)
+		tokenTransfers.Transfers, err = backendInstance.GetHeldTokenTransfers(contractAddress, &filter.PaginationFilter)
 		if err != nil {
 			logger.Error("Failed to get contract's held token transfers", zap.String("address", contractAddress), zap.Error(err))
 			errorResponse(w, http.StatusInternalServerError, err)
 			return
 		}
 	} else {
-		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, filter)
+		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, &filter.PaginationFilter)
 		if err != nil {
 			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
 			errorResponse(w, http.StatusInternalServerError, err)
@@ -643,7 +642,6 @@ func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	bl := &models.LightBlockList{}
 	bl.Blocks, err = backendInstance.GetLatestsBlocks(filter)
 	if err != nil {
@@ -668,7 +666,6 @@ func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	transactions := &models.TransactionList{}
 	transactions.Transactions, err = backendInstance.GetBlockTransactionsByNumber(bnum, filter)
 	if err != nil {
@@ -735,7 +732,6 @@ func getContractsList(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	filter.ProcessPagination()
 	addresses, err := backendInstance.GetContracts(filter)
 	if err != nil {
 		logger.Error("Failed to get contracts list", zap.Reflect("filter", filter), zap.Error(err))
