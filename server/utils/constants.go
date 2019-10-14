@@ -425,3 +425,5 @@ var EVMFunctionsByInterface = [][]EVMFunction{
 
 	Upgradeable: {Target, Upgrade, Pause, Paused, Resume, Owner},
 }
+
+var MaxFetchLimit = 500

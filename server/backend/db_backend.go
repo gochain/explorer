@@ -24,9 +24,6 @@ import (
 
 var wei = big.NewInt(1000000000000000000)
 
-const defaultFetchLimit = 100
-const defaultSkip = 0
-
 type MongoBackend struct {
 	host         string
 	mongo        *mgo.Database
@@ -376,9 +373,13 @@ func (self *MongoBackend) getBlockByHash(blockHash string) (*models.Block, error
 	return &c, nil
 }
 
-func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, limit int) ([]*models.Transaction, error) {
+func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, filter *models.PaginationFilter) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
-	err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Skip(skip).Limit(limit).All(&transactions)
+	err := self.mongo.C("Transactions").
+		Find(bson.M{"block_number": blockNumber}).
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&transactions)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, nil
@@ -388,9 +389,15 @@ func (self *MongoBackend) getBlockTransactionsByNumber(blockNumber int64, skip, 
 	return transactions, nil
 }
 
-func (self *MongoBackend) getLatestsBlocks(skip, limit int) ([]*models.LightBlock, error) {
+func (self *MongoBackend) getLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
 	var blocks []*models.LightBlock
-	err := self.mongo.C("Blocks").Find(nil).Sort("-number").Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).Skip(skip).Limit(limit).All(&blocks)
+	err := self.mongo.C("Blocks").
+		Find(nil).
+		Sort("-number").
+		Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&blocks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest blocks: %v", err)
 	}
@@ -494,31 +501,57 @@ func (self *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transact
 	return tx, nil
 }
 
-func (self *MongoBackend) getTransactionList(address string, skip, limit int, fromTime, toTime time.Time, inputDataEmpty *bool) ([]*models.Transaction, error) {
+func (self *MongoBackend) getTransactionList(
+	address string,
+	filter *models.TxsFilter,
+) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
-	var err error
-	if inputDataEmpty != nil {
-		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}, "input_data_empty": *inputDataEmpty}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
-	} else {
-		err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{bson.M{"from": address}, bson.M{"to": address}}, "created_at": bson.M{"$gte": fromTime, "$lte": toTime}}).Sort("-created_at").Skip(skip).Limit(limit).All(&transactions)
+	findQuery := bson.M{
+		"$or": []bson.M{
+			{"from": address},
+			{"to": address},
+		},
+		"created_at": bson.M{
+			"$gte": filter.FromTime,
+			"$lte": filter.ToTime,
+		},
 	}
+	if filter.InputDataEmpty != nil {
+		findQuery["input_data_empty"] = *filter.InputDataEmpty
+	}
+	err := self.mongo.C("Transactions").
+		Find(findQuery).
+		Sort("-created_at").
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&transactions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tx list: %v", err)
 	}
 	return transactions, nil
 }
 
-func (self *MongoBackend) getTokenHoldersList(contractAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+func (self *MongoBackend) getTokenHoldersList(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
-	err := self.mongo.C("TokensHolders").Find(bson.M{"contract_address": contractAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
+	err := self.mongo.C("TokensHolders").
+		Find(bson.M{"contract_address": contractAddress}).
+		Sort("-balance_int").
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&tokenHoldersList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get token holders list: %v", err)
 	}
 	return tokenHoldersList, nil
 }
-func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit int) ([]*models.TokenHolder, error) {
+func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	var tokenHoldersList []*models.TokenHolder
-	err := self.mongo.C("TokensHolders").Find(bson.M{"token_holder_address": ownerAddress}).Sort("-balance_int").Skip(skip).Limit(limit).All(&tokenHoldersList)
+	err := self.mongo.C("TokensHolders").
+		Find(bson.M{"token_holder_address": ownerAddress}).
+		Sort("-balance_int").
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&tokenHoldersList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get owned tokens list: %v", err)
 	}
@@ -526,11 +559,11 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, skip, limit in
 }
 
 // getInternalTokenTransfers gets token transfer events emitted by this contract.
-func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"contract_address": contractAddress}).
-		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+		Sort("-block_number").Skip(filter.Skip).Limit(filter.Limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}
@@ -538,11 +571,11 @@ func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, skip
 }
 
 // getHeldTokenTransfers gets token transfer events to or from this contract, for any token.
-func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, skip, limit int) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getHeldTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
 	err := self.mongo.C("InternalTransactions").
 		Find(bson.M{"$or": []bson.M{{"from_address": contractAddress}, {"to_address": contractAddress}}}).
-		Sort("-block_number").Skip(skip).Limit(limit).All(&internalTransactionsList)
+		Sort("-block_number").Skip(filter.Skip).Limit(filter.Limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}
@@ -613,12 +646,6 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) ([]*model
 		sortDir = 1
 	}
 	sortQuery := bson.M{filter.SortBy: sortDir}
-	if filter.Skip < 0 {
-		filter.Skip = defaultSkip
-	}
-	if filter.Limit < 0 || filter.Limit > defaultFetchLimit {
-		filter.Limit = defaultFetchLimit
-	}
 	query := []bson.M{
 		{"$match": findQuery},
 		{"$lookup": bson.M{
@@ -645,9 +672,9 @@ func (self *MongoBackend) getContracts(filter *models.ContractsFilter) ([]*model
 	return addresses, nil
 }
 
-func (self *MongoBackend) getRichlist(skip, limit int, lockedAddresses []string) ([]*models.Address, error) {
+func (self *MongoBackend) getRichlist(filter *models.PaginationFilter, lockedAddresses []string) ([]*models.Address, error) {
 	var addresses []*models.Address
-	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(skip).Limit(limit).All(&addresses)
+	err := self.mongo.C("Addresses").Find(bson.M{"balance_float": bson.M{"$gt": 0}, "address": bson.M{"$nin": lockedAddresses}}).Sort("-balance_float").Skip(filter.Skip).Limit(filter.Limit).All(&addresses)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rich list: %v", err)
 	}

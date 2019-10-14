@@ -94,8 +94,11 @@ func TestTransactions(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-
-	transactionsFromDb, err := testBackend.GetBlockTransactionsByNumber(block.Header().Number.Int64(), 0, 100)
+	filter1 := &models.PaginationFilter{
+		Skip:  0,
+		Limit: 100,
+	}
+	transactionsFromDb, err := testBackend.GetBlockTransactionsByNumber(block.Header().Number.Int64(), filter1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,8 +123,18 @@ func TestTransactions(t *testing.T) {
 	if block.Transactions()[0].Hash().Hex() != transactionFromDB.TxHash {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
-
-	transactionsFromAddress, err := testBackend.GetTransactionList(transactionFromDB.From, 0, 100, time.Unix(0, 0), time.Now(), nil)
+	filter2 := &models.TxsFilter{
+		PaginationFilter: models.PaginationFilter{
+			Skip:  0,
+			Limit: 100,
+		},
+		TimeFilter: models.TimeFilter{
+			FromTime: time.Unix(0, 0),
+			ToTime:   time.Now(),
+		},
+		InputDataEmpty: nil,
+	}
+	transactionsFromAddress, err := testBackend.GetTransactionList(transactionFromDB.From, filter2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,15 +142,15 @@ func TestTransactions(t *testing.T) {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsFromAddress), 4)
 	}
 
-	transactionsToAddress, err := testBackend.GetTransactionList(transactionFromDB.To, 0, 100, time.Unix(0, 0), time.Now(), nil)
+	transactionsToAddress, err := testBackend.GetTransactionList(transactionFromDB.To, filter2)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(transactionsToAddress) != 4 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
-
-	transactionsToAddress, err = testBackend.GetTransactionList(transactionFromDB.To, 2, 100, time.Unix(0, 0), time.Now(), nil)
+	filter2.Skip = 2
+	transactionsToAddress, err = testBackend.GetTransactionList(transactionFromDB.To, filter2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,8 +177,11 @@ func TestLatestBlocks(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-
-	latestBlocks, err := testBackend.GetLatestsBlocks(0, 100)
+	filter := &models.PaginationFilter{
+		Limit: 100,
+		Skip:  0,
+	}
+	latestBlocks, err := testBackend.GetLatestsBlocks(filter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +248,12 @@ func TestRichList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	richList, err := testBackend.GetRichlist(0, 100)
+	filter := &models.PaginationFilter{
+		Skip:  0,
+		Limit: 100,
+	}
+
+	richList, err := testBackend.GetRichlist(filter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,8 +265,8 @@ func TestRichList(t *testing.T) {
 	if richList[0].Address != addrHash {
 		t.Errorf("Richlist  was incorrect, got: %s, want: %s.", richList[0].Address, addrHash)
 	}
-
-	richList, err = testBackend.GetRichlist(1, 100)
+	filter.Skip = 1
+	richList, err = testBackend.GetRichlist(filter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +318,11 @@ func TestTokenHolder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	holders, err := testBackend.GetTokenHoldersList(addrHash, 0, 100)
+	filter := &models.PaginationFilter{
+		Skip:  0,
+		Limit: 100,
+	}
+	holders, err := testBackend.GetTokenHoldersList(addrHash, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -328,8 +353,8 @@ func TestTokenHolder(t *testing.T) {
 	if holders[1].TokenHolderAddress != tokenHolderHash2 {
 		t.Errorf("HolderList  was incorrect, got: %s, want: %s.", holders[1].TokenHolderAddress, tokenHolderHash2)
 	}
-
-	holders, err = testBackend.GetTokenHoldersList(addrHash, 1, 100)
+	filter.Skip = 1
+	holders, err = testBackend.GetTokenHoldersList(addrHash, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -358,11 +383,19 @@ func TestInternalTransactions(t *testing.T) {
 		t.Fatalf("failed to import internal transaction: %v", err)
 	}
 
-	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, 0, 100)
+	filter := &models.InternalTxFilter{
+		PaginationFilter: models.PaginationFilter{
+			Skip:  0,
+			Limit: 100,
+		},
+		TokenTransactions: false,
+	}
+	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
-	heldTokenTransfers, err := testBackend.GetHeldTokenTransfers(tokenHolderHash1, 0, 100)
+	filter.TokenTransactions = true
+	heldTokenTransfers, err := testBackend.GetHeldTokenTransfers(tokenHolderHash1, filter)
 	if err != nil {
 		t.Fatal(err)
 	}
