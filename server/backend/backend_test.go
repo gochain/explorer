@@ -124,11 +124,11 @@ func TestTransactions(t *testing.T) {
 		t.Errorf("Block transaction was incorrect, got: %s, want: %s.", block.Transactions()[0].Hash().Hex(), transactionFromDB.TxHash)
 	}
 	filter2 := &models.TxsFilter{
-		PaginationFilter: PaginationFilter{
+		PaginationFilter: models.PaginationFilter{
 			Skip:  0,
 			Limit: 100,
 		},
-		TimeFilter: TimeFilter{
+		TimeFilter: models.TimeFilter{
 			FromTime: time.Unix(0, 0),
 			ToTime:   time.Now(),
 		},
@@ -383,9 +383,11 @@ func TestInternalTransactions(t *testing.T) {
 		t.Fatalf("failed to import internal transaction: %v", err)
 	}
 
-	filter := models.InternalTxFilter{
-		Skip:              0,
-		Limit:             100,
+	filter := &models.InternalTxFilter{
+		PaginationFilter: models.PaginationFilter{
+			Skip:  0,
+			Limit: 100,
+		},
 		TokenTransactions: false,
 	}
 	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, filter)
