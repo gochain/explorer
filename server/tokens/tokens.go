@@ -247,8 +247,6 @@ func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *Tok
 	} else if _, ok := tokenDetails.ErcTypes[utils.Go721]; ok {
 		unpackTransferEvent = unpackERC721TransferEvent
 	} else {
-		lgr.Warn("Unsupported contract type", zap.Strings("ercTypes", tokenDetails.ERCTypesSlice()),
-			zap.Strings("functions", tokenDetails.FunctionsSlice()))
 		return nil, nil
 	}
 
