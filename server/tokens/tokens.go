@@ -39,14 +39,19 @@ func init() {
 }
 
 type TokenDetails struct {
-	Contract    common.Address
+	Contract common.Address
+	Block    int64
+
+	ErcTypes  map[utils.EVMInterface]struct{}
+	Functions map[utils.EVMFunction]struct{}
+
 	Name        string
 	Symbol      string
 	TotalSupply *big.Int
 	Decimals    int64
-	Block       int64
-	ErcTypes    map[utils.EVMInterface]struct{}
-	Functions   map[utils.EVMFunction]struct{}
+
+	Target string
+	Owner  string
 }
 
 func (t *TokenDetails) ERCTypesSlice() []string {
@@ -154,12 +159,49 @@ func (tb *TokenDetails) queryTokenDetails(conn *goclient.Client, byteCode string
 	lgr.Info("Analyzing contract byte code", zap.Stringer("address", tb.Contract),
 		zap.Strings("ercTypes", tb.ERCTypesSlice()), zap.Strings("functions", tb.FunctionsSlice()),
 		zap.Int("cachedContracts", count))
+	if _, ok := tb.ErcTypes[utils.Upgradeable]; ok {
+		if err := tb.queryTarget(conn, lgr); err != nil {
+			return err
+		}
+		//TODO ensure target loaded in db, and merge its types and funcs in to this set
+	}
+	if _, ok := tb.Functions[utils.Owner]; ok {
+		if err := tb.queryOwner(conn, lgr); err != nil {
+			return err
+		}
+	}
 	if _, ok := tb.ErcTypes[utils.Go20]; ok {
 		return tb.queryERC20Details(conn, lgr)
 	}
 	if _, ok := tb.ErcTypes[utils.Go721]; ok {
 		return tb.queryERC721Details(conn, lgr)
 	}
+	return nil
+}
+
+func (tb *TokenDetails) queryTarget(conn *goclient.Client, lgr *zap.Logger) error {
+	token, err := NewUpgradeableCaller(tb.Contract, conn)
+	if err != nil {
+		return err
+	}
+	target, err := token.Target(nil)
+	if err != nil {
+		return err
+	}
+	tb.Target = target.Hex()
+	return nil
+}
+
+func (tb *TokenDetails) queryOwner(conn *goclient.Client, lgr *zap.Logger) error {
+	token, err := NewUpgradeableCaller(tb.Contract, conn)
+	if err != nil {
+		return err
+	}
+	owner, err := token.Owner(nil)
+	if err != nil {
+		return err
+	}
+	tb.Owner = owner.Hex()
 	return nil
 }
 

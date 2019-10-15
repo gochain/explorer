@@ -26,6 +26,7 @@ frontend:
 build: backend frontend
 
 generate:
-	cd contracts && web3 contract build ERC721.sol && web3 contract build ERC20.sol
+	cd contracts && web3 contract build ERC721.sol && web3 contract build ERC20.sol && web3 contract build Upgradeable.sol
 	cd server/tokens && abigen --lang go --abi ../../contracts/ERC20.abi --bin ../../contracts/ERC20.bin --pkg tokens --type ERC20 --out erc20.go
 	cd server/tokens && abigen --lang go --abi ../../contracts/ERC721.abi --bin ../../contracts/ERC721.bin --pkg tokens --type ERC721 --out erc721.go
+	cd server/tokens && abigen --lang go --abi ../../contracts/Upgradeable.abi --bin ../../contracts/Upgradeable.bin --pkg tokens --type Upgradeable --out upgradeable.go

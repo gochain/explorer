@@ -8,7 +8,7 @@
             <dl>
               <dt>Address hash:</dt>
               <dd>
-                {{addr.address}}
+                <span class="text-monospace">{{addr.address}}</span>
                 <ng-container *ngIf="addr.signerDetails">
                   (<a [href]="addr.signerDetails.url" target="_blank">{{addr.signerDetails.name}}</a>)
                 </ng-container>
@@ -16,6 +16,14 @@
               <dt>Balance:</dt>
               <dd>{{addr.balance_wei | weiToGO | bigNumber}}</dd>
               <ng-container *ngIf="addr.contract">
+                <ng-container *ngIf="addr.target">
+                  <dt>Target:</dt>
+                  <dd><a class="text-monospace" routerLink="/addr/{{addr.target}}">{{addr.target}}</a></dd>
+                </ng-container>
+                <ng-container *ngIf="addr.owner">
+                  <dt>Owner:</dt>
+                  <dd><a class="text-monospace" routerLink="/addr/{{addr.owner}}">{{addr.owner}}</a></dd>
+                </ng-container>
                 <ng-container *ngIf="addr.token_name">
                   <dt>Token name:</dt>
                   <dd>{{addr.token_name}}</dd>
