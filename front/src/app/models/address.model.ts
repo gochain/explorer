@@ -22,4 +22,6 @@ export class Address {
   updated_at: Date;
   signerDetails?: SignerDetails;
   attached_contract: Contract;
+  target: string;
+  owner: string;
 }
