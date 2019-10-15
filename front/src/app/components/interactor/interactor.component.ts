@@ -48,7 +48,7 @@ export class InteractorComponent implements OnInit {
   contract: Web3Contract;
   abiFunctions: AbiItem[];
   selectedFunction: AbiItem;
-  functionResult: any[][];
+  functionResult: {output:any[][], error: string};
   addr: Address;
 
   hasData = false;
@@ -175,9 +175,13 @@ export class InteractorComponent implements OnInit {
    */
   callABIFunction(func: AbiItem, params: string[] = []): void {
     this._walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
-      this.functionResult = getDecodedData(decoded, func, this.addr);
+      if (!decoded) {
+        this.functionResult = {error:'Result is empty', output:null};
+        return;
+      }
+      this.functionResult = {output:getDecodedData(decoded, func, this.addr), error: null};
     }, err => {
-      this._toastrService.danger(err);
+      this.functionResult = {error:err, output:null};
     });
   }
 
