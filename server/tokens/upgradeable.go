@@ -28,7 +28,7 @@ var (
 )
 
 // UpgradeableABI is the input ABI used to generate the binding from.
-const UpgradeableABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"val\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"target\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const UpgradeableABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"val\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"target\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"target\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Resumed\",\"type\":\"event\"}]"
 
 // UpgradeableBin is the compiled bytecode used for deploying new contracts.
 const UpgradeableBin = `0x`
@@ -264,4 +264,378 @@ func (_Upgradeable *UpgradeableSession) Target() (common.Address, error) {
 // Solidity: function target() constant returns(address addr)
 func (_Upgradeable *UpgradeableCallerSession) Target() (common.Address, error) {
 	return _Upgradeable.Contract.Target(&_Upgradeable.CallOpts)
+}
+
+// UpgradeablePausedIterator is returned from FilterPaused and is used to iterate over the raw logs and unpacked data for Paused events raised by the Upgradeable contract.
+type UpgradeablePausedIterator struct {
+	Event *UpgradeablePaused // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log       // Log channel receiving the found contract events
+	sub  gochain.Subscription // Subscription for errors, completion and termination
+	done bool                 // Whether the subscription completed delivering logs
+	fail error                // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *UpgradeablePausedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(UpgradeablePaused)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(UpgradeablePaused)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *UpgradeablePausedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *UpgradeablePausedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// UpgradeablePaused represents a Paused event raised by the Upgradeable contract.
+type UpgradeablePaused struct {
+	Raw types.Log // Blockchain specific contextual infos
+}
+
+// FilterPaused is a free log retrieval operation binding the contract event 0x9e87fac88ff661f02d44f95383c817fece4bce600a3dab7a54406878b965e752.
+//
+// Solidity: event Paused()
+func (_Upgradeable *UpgradeableFilterer) FilterPaused(opts *bind.FilterOpts) (*UpgradeablePausedIterator, error) {
+
+	logs, sub, err := _Upgradeable.contract.FilterLogs(opts, "Paused")
+	if err != nil {
+		return nil, err
+	}
+	return &UpgradeablePausedIterator{contract: _Upgradeable.contract, event: "Paused", logs: logs, sub: sub}, nil
+}
+
+// WatchPaused is a free log subscription operation binding the contract event 0x9e87fac88ff661f02d44f95383c817fece4bce600a3dab7a54406878b965e752.
+//
+// Solidity: event Paused()
+func (_Upgradeable *UpgradeableFilterer) WatchPaused(opts *bind.WatchOpts, sink chan<- *UpgradeablePaused) (event.Subscription, error) {
+
+	logs, sub, err := _Upgradeable.contract.WatchLogs(opts, "Paused")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(UpgradeablePaused)
+				if err := _Upgradeable.contract.UnpackLog(event, "Paused", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// UpgradeableResumedIterator is returned from FilterResumed and is used to iterate over the raw logs and unpacked data for Resumed events raised by the Upgradeable contract.
+type UpgradeableResumedIterator struct {
+	Event *UpgradeableResumed // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log       // Log channel receiving the found contract events
+	sub  gochain.Subscription // Subscription for errors, completion and termination
+	done bool                 // Whether the subscription completed delivering logs
+	fail error                // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *UpgradeableResumedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(UpgradeableResumed)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(UpgradeableResumed)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *UpgradeableResumedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *UpgradeableResumedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// UpgradeableResumed represents a Resumed event raised by the Upgradeable contract.
+type UpgradeableResumed struct {
+	Raw types.Log // Blockchain specific contextual infos
+}
+
+// FilterResumed is a free log retrieval operation binding the contract event 0x62451d457bc659158be6e6247f56ec1df424a5c7597f71c20c2bc44e0965c8f9.
+//
+// Solidity: event Resumed()
+func (_Upgradeable *UpgradeableFilterer) FilterResumed(opts *bind.FilterOpts) (*UpgradeableResumedIterator, error) {
+
+	logs, sub, err := _Upgradeable.contract.FilterLogs(opts, "Resumed")
+	if err != nil {
+		return nil, err
+	}
+	return &UpgradeableResumedIterator{contract: _Upgradeable.contract, event: "Resumed", logs: logs, sub: sub}, nil
+}
+
+// WatchResumed is a free log subscription operation binding the contract event 0x62451d457bc659158be6e6247f56ec1df424a5c7597f71c20c2bc44e0965c8f9.
+//
+// Solidity: event Resumed()
+func (_Upgradeable *UpgradeableFilterer) WatchResumed(opts *bind.WatchOpts, sink chan<- *UpgradeableResumed) (event.Subscription, error) {
+
+	logs, sub, err := _Upgradeable.contract.WatchLogs(opts, "Resumed")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(UpgradeableResumed)
+				if err := _Upgradeable.contract.UnpackLog(event, "Resumed", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// UpgradeableUpgradedIterator is returned from FilterUpgraded and is used to iterate over the raw logs and unpacked data for Upgraded events raised by the Upgradeable contract.
+type UpgradeableUpgradedIterator struct {
+	Event *UpgradeableUpgraded // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log       // Log channel receiving the found contract events
+	sub  gochain.Subscription // Subscription for errors, completion and termination
+	done bool                 // Whether the subscription completed delivering logs
+	fail error                // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *UpgradeableUpgradedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(UpgradeableUpgraded)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(UpgradeableUpgraded)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *UpgradeableUpgradedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *UpgradeableUpgradedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// UpgradeableUpgraded represents a Upgraded event raised by the Upgradeable contract.
+type UpgradeableUpgraded struct {
+	Target common.Address
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterUpgraded is a free log retrieval operation binding the contract event 0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b.
+//
+// Solidity: event Upgraded(address indexed target)
+func (_Upgradeable *UpgradeableFilterer) FilterUpgraded(opts *bind.FilterOpts, target []common.Address) (*UpgradeableUpgradedIterator, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+
+	logs, sub, err := _Upgradeable.contract.FilterLogs(opts, "Upgraded", targetRule)
+	if err != nil {
+		return nil, err
+	}
+	return &UpgradeableUpgradedIterator{contract: _Upgradeable.contract, event: "Upgraded", logs: logs, sub: sub}, nil
+}
+
+// WatchUpgraded is a free log subscription operation binding the contract event 0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b.
+//
+// Solidity: event Upgraded(address indexed target)
+func (_Upgradeable *UpgradeableFilterer) WatchUpgraded(opts *bind.WatchOpts, sink chan<- *UpgradeableUpgraded, target []common.Address) (event.Subscription, error) {
+
+	var targetRule []interface{}
+	for _, targetItem := range target {
+		targetRule = append(targetRule, targetItem)
+	}
+
+	logs, sub, err := _Upgradeable.contract.WatchLogs(opts, "Upgraded", targetRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(UpgradeableUpgraded)
+				if err := _Upgradeable.contract.UnpackLog(event, "Upgraded", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
 }

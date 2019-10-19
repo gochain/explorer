@@ -2,7 +2,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, ParamMap} from '@angular/router';
 import {forkJoin, interval, Observable, of, Subscription} from 'rxjs';
-import {mergeMap, startWith, tap} from 'rxjs/operators';
+import {catchError, map, mergeMap, startWith, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
@@ -10,14 +10,17 @@ import {LayoutService} from '../../services/layout.service';
 import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
-import {ProcessedLog, ProcessedLogItem, Transaction, TxLog} from '../../models/transaction.model';
-import {ContractEventsAbi} from '../../utils/types';
+import {ProcessedLog, ProcessedABIItem, Transaction, TxLog, ProcessedABIData} from '../../models/transaction.model';
+import {ContractAbiByID, ContractEventsAbi} from '../../utils/types';
 import Web3 from 'web3';
 import {AbiItem} from 'web3-utils';
 import {Address} from '../../models/address.model';
+import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
+import {ErcName} from "../../utils/enums";
+
 
 @Component({
   selector: 'app-transaction',
@@ -27,8 +30,9 @@ import {META_TITLES} from '../../utils/constants';
 @AutoUnsubscribe('_subsArr$')
 export class TransactionComponent implements OnInit, OnDestroy {
 
-  showUtf8 = false;
-  showLogsRaw = false;
+  showInputRaw = true; // Input data as raw plain text, or rich formatting.
+  showUtf8 = false; // Raw input data as UTF8, or hex encoded bytes.
+  showLogsRaw = false; // Logs as raw JSON, or rich formatting.
   tx: Transaction;
 
   recentBlockNumber$: Observable<number> = interval(5000).pipe(
@@ -63,7 +67,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
         tx.parsedLogs = JSON.parse(tx.logs);
         tx.prettifiedLogs = JSON.stringify(tx.parsedLogs, null, '\t');
         this.tx = tx;
-        this.processTransaction();
+        this.processTransaction(this.tx);
         this._layoutService.offLoading();
       })
     );
@@ -74,85 +78,195 @@ export class TransactionComponent implements OnInit, OnDestroy {
     this._layoutService.offLoading();
   }
 
-  processTransaction() {
-    if (!this.tx.parsedLogs.length) {
-      return;
+  private processTransaction(tx: Transaction): void {
+    if (tx.input_data && tx.input_data != '0x' && tx.input_data != '0X') {
+      let data: Observable<ProcessedABIData>;
+      if (tx.to) {
+        data = forkJoin([
+          this._commonService.abiByID$,
+          tx.to ? this._commonService.getAddress(tx.to) : of(null),
+          tx.to ? this._commonService.getContract(tx.to) : of(null),
+          this._walletService.w3Call,
+        ]).pipe(map(this.processTransactionInputTo(tx)));
+      } else if(tx.contract_address) {
+        data = this._commonService.getContract(tx.contract_address).pipe(map(this.processTransactionInputDeploy(tx)));
+      }
+      if (data) {
+        data.subscribe(input => {
+          this.showInputRaw = input == null;
+          tx.processedInputData = input;
+        });
+      }
     }
-    forkJoin([
-      this._commonService.eventsAbi$,
-      this._commonService.getAddress(this.tx.to),
-      this._walletService.w3Call,
-    ]).subscribe(([events, address, web3]: [ContractEventsAbi, Address, Web3]) => {
-      this.tx.addressData = address;
-      this.tx.processedLogs = this.tx.parsedLogs.map((log: TxLog) => {
-        const processedLog: ProcessedLog = new ProcessedLog();
-        processedLog.index = +log.logIndex;
-        processedLog.contract_address = log.address;
-        processedLog.removed = log.removed;
-        processedLog.data = [];
-        processedLog.recognized = false;
-        let abiItem: AbiItem;
-        let decodedLog;
-        if (!!log.topics.length && !!log.topics[0]) {
-          const eventSignature = <string>log.topics[0];
-          const knownEvent = events[eventSignature];
-          if (knownEvent) {
-            const ercType = address.erc_types.find((item: string) => !!knownEvent[item]);
-            if (ercType) {
-              abiItem = knownEvent[ercType];
-              log.topics.shift();
-              try {
-                decodedLog = web3.eth.abi.decodeLog(
-                  abiItem.inputs,
-                  log.data.replace('0x', ''),
-                  <string[]>log.topics
-                );
-                processedLog.recognized = true;
-              } catch (e) {
-                console.log('error occured while decoding log', e);
-                processedLog.recognized = false;
+
+    if (!!tx.parsedLogs.length) {
+      forkJoin([
+        this._commonService.eventsAbi$,
+        this._walletService.w3Call,
+      ]).pipe(mergeMap(this.processTransactionLogs(tx))).subscribe(logs => tx.processedLogs = logs);
+    }
+  }
+
+  private processTransactionInputTo(tx: Transaction): (([abis, address, contract, web3]: [ContractAbiByID, Address, Contract, Web3]) => ProcessedABIData) {
+    return ([abis, address, contract, web3]: [ContractAbiByID, Address, Contract, Web3]): ProcessedABIData => {
+      const processedInputData = new ProcessedABIData();
+      // Contract call.
+      const methodId = tx.input_data.slice(0, 10);
+      let c: AbiItem;
+      if (contract && contract.abi) {
+        // Check the attached verified abi.
+        processedInputData.title = `${contract.contract_name}.`;
+        //TODO this is inefficient - could be cached or precomputed
+        c = contract.abi.find(a => methodId === web3.eth.abi.encodeFunctionSignature(a));
+      }
+      if (!c) {
+        // Check known functions.
+        processedInputData.title = ``;
+        c = abis[methodId];
+      }
+      if (!c) {
+        // We don't recognize this method.
+        return null;
+      }
+      processedInputData.title += c.name;
+      try {
+        const d: object = web3.eth.abi.decodeParameters(c.inputs, '0x' + tx.input_data.slice(10));
+        processedInputData.items = c.inputs.map(this.processAbiItem(d, contract.address, address.erc_types));
+      } catch (e) {
+        console.error('failed to decode input data', e);
+        processedInputData.items = c.inputs.map(input => {
+          return <ProcessedABIItem>{name: input.name, value: '? error'}
+        });
+      }
+      return processedInputData;
+    }
+  }
+
+  private processTransactionInputDeploy(tx: Transaction): ((contract: Contract) => ProcessedABIData) {
+    return (contract: Contract): ProcessedABIData => {
+      const processedInputData = new ProcessedABIData();
+      // Contract deploy.
+      processedInputData.title = `new ${contract.contract_name}`;
+
+      const c: AbiItem = contract.abi.find(a => a.type === 'constructor');
+      if (c && c.inputs.length > 0) {
+        //TODO we know how to decode the constructor args, and we know they are at the end of the input_data, but
+        // we don't know where they begin.
+        processedInputData.items = c.inputs.map(input => {
+          return <ProcessedABIItem>{name: input.name, value: '<unknown>'}
+        });
+      }
+      return processedInputData;
+    }
+  }
+
+  private processTransactionLogs(tx: Transaction): (([events, web3]: [ContractEventsAbi, Web3]) => Observable<ProcessedLog[]>) {
+    return ([events, web3]: [ContractEventsAbi, Web3]): Observable <ProcessedLog[]> => {
+      // Create one observable per unique address.
+      const addrs: {string: Observable<Address>} = <{ string: Observable<Address> }>tx.parsedLogs.reduce((acc: object, log: TxLog) => {
+        if (!acc[log.address] && !!log.topics.length && !!log.topics[0]) {
+          acc[log.address] = this._commonService.getAddress(log.address);
+        }
+        return acc;
+      }, {});
+      // Fetch all the Addresses, then use them to parse the logs.
+      return forkJoin(addrs).pipe(catchError(err => {
+        console.error(`failed to get address: ${err}`);
+        return of(null);
+      }), map(addrs => {
+        return tx.parsedLogs.map((log: TxLog) => {
+          const processedLog: ProcessedLog = new ProcessedLog();
+          processedLog.index = +log.logIndex;
+          processedLog.contract_address = log.address;
+          processedLog.removed = log.removed;
+          processedLog.data = [];
+
+          let abiItem: AbiItem;
+          let decodedLog: object;
+          const address: Address = addrs[log.address];
+          if (address) {
+            if (!!log.topics.length && !!log.topics[0]) {
+              const eventSignature = <string>log.topics[0];
+              const knownEvent: object = events[eventSignature];
+              if (knownEvent) {
+                if (Object.keys(knownEvent).length == 1) {
+                  // Only once choice.
+                  abiItem = Object.values(knownEvent)[0];
+                } else {
+                  // Find a match.
+                  const ercType: string = address.erc_types.find((item: string) => !!knownEvent[item]);
+                  if (ercType) {
+                    abiItem = knownEvent[ercType];
+                  }
+                }
+                if (abiItem) {
+                  try {
+                    const data: string = !log.data || log.data == '0x' || log.data == '0X' ? null : log.data;
+                    const topics: string[] = <string[]>log.topics.slice(1);
+                    decodedLog = web3.eth.abi.decodeLog(abiItem.inputs, data, topics);
+                  } catch (e) {
+                    console.error('error occurred while decoding log', e);
+                  }
+                }
               }
             }
           }
-        }
-        if (processedLog.recognized) {
-          const items: ProcessedLogItem[] = abiItem.inputs.map(input => {
-            let link: string;
-            if (input.name === 'tokenId') {
-              link = `/token/${processedLog.contract_address}/asset/${decodedLog[input.name]}`;
-            } else if (input.type === 'address') {
-              link = `/addr/${decodedLog[input.name]}`;
-            }
-            return {
-              link,
-              name: input.name,
-              value: decodedLog[input.name],
-            };
-          });
-          processedLog.data.push({
-            title: abiItem.name,
-            items,
-          });
-        } else {
-          const items: ProcessedLogItem[] = log.topics.map(topic => ({
-              value: <string>topic,
-          }));
-          if (log.topics.length) {
+          if (decodedLog) {
+            const items: ProcessedABIItem[] = abiItem.inputs.map(this.processAbiItem(decodedLog, log.address, address.erc_types));
             processedLog.data.push({
-              title: 'topics',
+              title: abiItem.name,
               items,
             });
+          } else {
+            const items: ProcessedABIItem[] = log.topics.map(topic => (<ProcessedABIItem>{value: <string>topic}));
+            if (log.topics.length) {
+              processedLog.data.push(<ProcessedABIData>{
+                title: 'topics',
+                items,
+              });
+            }
+            if (log.data && log.data != '0x' && log.data != '0X') {
+              processedLog.data.push(<ProcessedABIData>{
+                title: 'data',
+                items: [{value: log.data}],
+              });
+            }
           }
-          if (log.data) {
-            processedLog.data.push({
-              title: 'data',
-              items: [{value: log.data}],
-            });
-          }
+          return processedLog;
+        });
+      }));
+    }
+  }
+
+  private processAbiItem(decoded: object, contractAddress: string, ercTypes: string[]): (AbiItem)=>ProcessedABIItem {
+    return input => {
+      const item = new ProcessedABIItem();
+      item.name = input.name;
+      item.value = decoded[input.name];
+      if (ercTypes.includes(ErcName.Go721)) {
+        if (input.name === 'tokenId') {
+          item.link = `/token/${contractAddress}/asset/${decoded[input.name]}`;
+          return item;
+        } else if (input.name === 'tokenURI') {
+          item.link = decoded[input.name];
+          item.linkExternal = true;
+          return item;
         }
-        return processedLog;
-      });
-    });
+      }
+      // if (ercTypes.includes(ErcName.GoFS)) {
+      //   if (input.name === 'cid') {
+      //     //TODO reformat CIDs (and link to a gateway?)
+      //   }
+      // }
+      // if (ercTypes.includes(ErcName.GoST)) {
+      //   //TODO link ETH stuff
+      // }
+      if (input.type === 'address') {
+        item.link = `/addr/${decoded[input.name]}`;
+        return item;
+      }
+      return item;
+    }
   }
 
   /**

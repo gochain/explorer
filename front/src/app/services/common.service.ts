@@ -18,8 +18,10 @@ import {Contract} from '../models/contract.model';
 import {SignerData, SignerStat} from '../models/signer-stats';
 import {SignerNode} from '../models/signer-node';
 /*UTILS*/
-import {ContractAbi, ContractEventsAbi} from '../utils/types';
+import {ContractAbi, ContractEventsAbi, ContractAbiByID, AbiItemIDed} from '../utils/types';
+import {FunctionName} from '../utils/enums';
 import {objIsEmpty} from '../utils/functions';
+import {AbiItem} from 'web3-utils';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -42,15 +44,38 @@ export class CommonService implements Resolve<string> {
   private _abi$: BehaviorSubject<ContractAbi>;
   get abi$() {
     if (!this._abi$) {
-      this._abi$ = new BehaviorSubject<ContractAbi>(null);
-      this.getFunctionsAbi().subscribe(v => {
-        this._abi$.next(v);
-      });
+      this.initAbi();
     }
     return this._abi$.pipe(
       filter(v => v !== null),
       take(1),
     );
+  }
+
+  private _abiByID$: BehaviorSubject<ContractAbiByID>;
+  get abiByID$() {
+    if (!this._abiByID$) {
+      this.initAbi();
+    }
+    return this._abiByID$.pipe(
+      filter(v => v !== null),
+      take(1),
+    );
+  }
+
+  private initAbi() {
+    this._abi$ = new BehaviorSubject<ContractAbi>(null);
+    this._abiByID$ = new BehaviorSubject<ContractAbiByID>(null);
+    this.getFunctionsAbi().subscribe(v => {
+      const abi: ContractAbi = <ContractAbi>{};
+      const abiByID: ContractAbiByID = {};
+      Object.entries(v).forEach((value:[FunctionName, AbiItemIDed]) => {
+        abi[value[0]] = <AbiItem>value[1];
+        abiByID[value[1].id] = <AbiItem>value[1];
+      });
+      this._abi$.next(abi);
+      this._abiByID$.next(abiByID);
+    });
   }
 
   private _eventsAbi$: BehaviorSubject<ContractEventsAbi>;
