@@ -13,7 +13,7 @@ import {MetaService} from '../../services/meta.service';
 import {ProcessedLog, ProcessedABIItem, Transaction, TxLog, ProcessedABIData} from '../../models/transaction.model';
 import {ContractAbiByID, ContractEventsAbi} from '../../utils/types';
 import Web3 from 'web3';
-import {AbiItem} from 'web3-utils';
+import {AbiItem, AbiInput} from 'web3-utils';
 import {Address} from '../../models/address.model';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
@@ -21,6 +21,7 @@ import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
 import {ErcName} from "../../utils/enums";
 
+import CID from "../../../../node_modules/cids/dist/index.min.js"
 
 @Component({
   selector: 'app-transaction',
@@ -131,7 +132,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
       processedInputData.title += c.name;
       try {
         const d: object = web3.eth.abi.decodeParameters(c.inputs, '0x' + tx.input_data.slice(10));
-        processedInputData.items = c.inputs.map(this.processAbiItem(d, contract.address, address.erc_types));
+        processedInputData.items = c.inputs.map(this.processAbiItem(d, address));
       } catch (e) {
         console.error('failed to decode input data', e);
         processedInputData.items = c.inputs.map(input => {
@@ -212,7 +213,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
             }
           }
           if (decodedLog) {
-            const items: ProcessedABIItem[] = abiItem.inputs.map(this.processAbiItem(decodedLog, log.address, address.erc_types));
+            const items: ProcessedABIItem[] = abiItem.inputs.map(this.processAbiItem(decodedLog, address));
             processedLog.data.push({
               title: abiItem.name,
               items,
@@ -238,14 +239,14 @@ export class TransactionComponent implements OnInit, OnDestroy {
     }
   }
 
-  private processAbiItem(decoded: object, contractAddress: string, ercTypes: string[]): (AbiItem)=>ProcessedABIItem {
-    return input => {
+  private processAbiItem(decoded: object, address: Address): (input: AbiInput) => ProcessedABIItem {
+    return (input: AbiInput): ProcessedABIItem => {
       const item = new ProcessedABIItem();
       item.name = input.name;
       item.value = decoded[input.name];
-      if (ercTypes.includes(ErcName.Go721)) {
+      if (address.erc_types.includes(ErcName.Go721)) {
         if (input.name === 'tokenId') {
-          item.link = `/token/${contractAddress}/asset/${decoded[input.name]}`;
+          item.link = `/token/${address.address}/asset/${decoded[input.name]}`;
           return item;
         } else if (input.name === 'tokenURI') {
           item.link = decoded[input.name];
@@ -253,11 +254,21 @@ export class TransactionComponent implements OnInit, OnDestroy {
           return item;
         }
       }
-      // if (ercTypes.includes(ErcName.GoFS)) {
-      //   if (input.name === 'cid') {
-      //     //TODO reformat CIDs (and link to a gateway?)
-      //   }
-      // }
+      if (input.name === 'cid' && input.type === 'bytes' && !input.indexed) {
+        const hex = decoded[input.name];
+        if (hex.length > 2) {
+          try {
+            const cid: CID = new CID(Buffer.from(hex.slice(2), 'hex'));
+            const str = cid.toString();
+            item.value = str;
+            item.link = `https://ipfs.io/ipfs/${str}`;
+            item.linkExternal = true;
+            return item;
+          } catch (e) {
+            console.error(`failed to parse cid ${hex}: ${e}`);
+          }
+        }
+      }
       // if (ercTypes.includes(ErcName.GoST)) {
       //   //TODO link ETH stuff
       // }
