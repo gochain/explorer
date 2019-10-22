@@ -20,8 +20,8 @@ import {Contract} from '../../models/contract.model';
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
 import {ErcName} from "../../utils/enums";
-
 import CID from "../../../../node_modules/cids/dist/index.min.js"
+import {convertWithDecimals} from "../../utils/functions";
 
 @Component({
   selector: 'app-transaction',
@@ -244,6 +244,14 @@ export class TransactionComponent implements OnInit, OnDestroy {
       const item = new ProcessedABIItem();
       item.name = input.name;
       item.value = decoded[input.name];
+      if (address.erc_types.includes(ErcName.Go20)) {
+        if (input.name === 'value') {
+          if (address.decimals) {
+            const val = convertWithDecimals(decoded[input.name], false, true, address.decimals);
+            item.value = `${val} ${address.token_symbol}`;
+          }
+        }
+      }
       if (address.erc_types.includes(ErcName.Go721)) {
         if (input.name === 'tokenId') {
           item.link = `/token/${address.address}/asset/${decoded[input.name]}`;
@@ -273,6 +281,25 @@ export class TransactionComponent implements OnInit, OnDestroy {
       //   //TODO link ETH stuff
       // }
       if (input.type === 'address') {
+        if (decoded[input.name] === '0x0000000000000000000000000000000000000000') {
+          // Reformat empty addresses.
+          switch (input.name) {
+            case 'to':
+              item.value = '0x0 (burn)';
+              return item;
+            case 'from':
+              item.value = '0x0 (mint)';
+              return item;
+            case 'previousOwner':
+            case 'newOwner':
+              item.value = '0x0 (none)';
+              return item;
+            default:
+              item.value = '0x0';
+              return item;
+          }
+        }
+        // Link non-empty addresses.
         item.link = `/addr/${decoded[input.name]}`;
         return item;
       }
