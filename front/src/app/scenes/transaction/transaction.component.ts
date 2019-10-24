@@ -270,8 +270,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
       const hex = decoded[input.name];
       if (hex.length > 2) {
         try {
-          // byteOffset for hex is 2
-          const cid: CID = new CID(Buffer.from(hex.slice(2), 2));
+          const cid: CID = new CID(Buffer.from(hex.slice(2), 'hex'));
           const str = (cid as any).toString();
           item.value = str;
           item.link = `https://ipfs.io/ipfs/${str}`;
