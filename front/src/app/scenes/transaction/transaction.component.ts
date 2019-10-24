@@ -219,7 +219,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
             }
           }
           if (decodedLog) {
-            const items: ProcessedABIItem[] = abiItem.inputs.map(this.processAbiItem(decodedLog, address));
+            const items: ProcessedABIItem[] = abiItem.inputs.map((input: AbiInput) => this.processAbiItem(input, decodedLog, address));
             processedLog.data.push({
               title: abiItem.name,
               items,
