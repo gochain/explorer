@@ -98,7 +98,7 @@
                       </ng-container>
                       <ng-container *ngIf="item.link; else regularItem">
                         <ng-container *ngIf="item.linkExternal; else linkInternal">
-                          <a class="text-monospace" [href]="item.link">
+                          <a class="text-monospace" [href]="item.link" target="_blank">
                             {{item.value}}
                           </a>
                         </ng-container>
