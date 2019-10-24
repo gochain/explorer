@@ -53,7 +53,7 @@ export class CommonService implements Resolve<string> {
   }
 
   private _abiByID$: BehaviorSubject<ContractAbiByID>;
-  get abiByID$() {
+  get abiByID$(): Observable<ContractAbiByID> {
     if (!this._abiByID$) {
       this.initAbi();
     }
@@ -63,23 +63,8 @@ export class CommonService implements Resolve<string> {
     );
   }
 
-  private initAbi() {
-    this._abi$ = new BehaviorSubject<ContractAbi>(null);
-    this._abiByID$ = new BehaviorSubject<ContractAbiByID>(null);
-    this.getFunctionsAbi().subscribe(v => {
-      const abi: ContractAbi = <ContractAbi>{};
-      const abiByID: ContractAbiByID = {};
-      Object.entries(v).forEach((value:[FunctionName, AbiItemIDed]) => {
-        abi[value[0]] = <AbiItem>value[1];
-        abiByID[value[1].id] = <AbiItem>value[1];
-      });
-      this._abi$.next(abi);
-      this._abiByID$.next(abiByID);
-    });
-  }
-
   private _eventsAbi$: BehaviorSubject<ContractEventsAbi>;
-  get eventsAbi$() {
+  get eventsAbi$(): Observable<ContractEventsAbi> {
     if (!this._eventsAbi$) {
       this._eventsAbi$ = new BehaviorSubject<ContractEventsAbi>(null);
       this.getEventsAbi().subscribe(v => {
@@ -235,5 +220,20 @@ export class CommonService implements Resolve<string> {
         );
       }),
     );
+  }
+
+  private initAbi() {
+    this._abi$ = new BehaviorSubject<ContractAbi>(null);
+    this._abiByID$ = new BehaviorSubject<ContractAbiByID>(null);
+    this.getFunctionsAbi().subscribe(v => {
+      const abi: ContractAbi = <ContractAbi>{};
+      const abiByID: ContractAbiByID = {};
+      Object.entries(v).forEach((value: [FunctionName, AbiItemIDed]) => {
+        abi[value[0]] = <AbiItem>value[1];
+        abiByID[value[1].id] = <AbiItem>value[1];
+      });
+      this._abi$.next(abi);
+      this._abiByID$.next(abiByID);
+    });
   }
 }

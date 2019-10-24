@@ -19,9 +19,9 @@ import {Contract} from '../../models/contract.model';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
-import {ErcName} from "../../utils/enums";
-import CID from "../../../../node_modules/cids/dist/index.min.js"
-import {convertWithDecimals} from "../../utils/functions";
+import {ErcName} from '../../utils/enums';
+import CID from '../../../../node_modules/cids/dist/index.min.js';
+import {convertWithDecimals} from '../../utils/functions';
 
 @Component({
   selector: 'app-transaction',
@@ -38,9 +38,9 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
   recentBlockNumber$: Observable<number> = interval(5000).pipe(
     startWith(0),
-      mergeMap(() => {
+    mergeMap(() => {
       return this._walletService.w3Call.pipe(mergeMap((web3: Web3) => {
-        return fromPromise<number>(web3.eth.getBlockNumber())
+        return fromPromise<number>(web3.eth.getBlockNumber());
       }));
     }),
   );
@@ -59,7 +59,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
     this._layoutService.onLoading();
     this._subsArr$.push(
       this._route.paramMap.pipe(
-        tap(() => {
+        tap<ParamMap>(() => {
           this._layoutService.onLoading();
         }),
         mergeMap((params: ParamMap) => this.getTx(params)),
@@ -80,20 +80,24 @@ export class TransactionComponent implements OnInit, OnDestroy {
   }
 
   private processTransaction(tx: Transaction): void {
-    if (tx.input_data && tx.input_data != '0x' && tx.input_data != '0X') {
+    if (tx.input_data && tx.input_data !== '0x' && tx.input_data !== '0X') {
       let data: Observable<ProcessedABIData>;
       if (tx.to) {
         data = forkJoin([
-          this._commonService.abiByID$,
+          <ContractAbiByID>this._commonService.abiByID$,
           tx.to ? this._commonService.getAddress(tx.to) : of(null),
           tx.to ? this._commonService.getContract(tx.to) : of(null),
           this._walletService.w3Call,
-        ]).pipe(map(this.processTransactionInputTo(tx)));
-      } else if(tx.contract_address) {
-        data = this._commonService.getContract(tx.contract_address).pipe(map(this.processTransactionInputDeploy(tx)));
+        ]).pipe(
+          map((res) => this.processTransactionInputTo(res)),
+        );
+      } else if (tx.contract_address) {
+        data = this._commonService.getContract(tx.contract_address).pipe(
+          map<Contract, ProcessedABIData>((contract: Contract) => this.processTransactionInputDeploy(contract))
+        );
       }
       if (data) {
-        data.subscribe(input => {
+        data.subscribe((input: ProcessedABIData) => {
           this.showInputRaw = input == null;
           tx.processedInputData = input;
         });
@@ -104,78 +108,80 @@ export class TransactionComponent implements OnInit, OnDestroy {
       forkJoin([
         this._commonService.eventsAbi$,
         this._walletService.w3Call,
-      ]).pipe(mergeMap(this.processTransactionLogs(tx))).subscribe(logs => tx.processedLogs = logs);
+      ]).pipe(
+        mergeMap((res) => this.processTransactionLogs(res))
+      ).subscribe(logs => {
+        tx.processedLogs = logs;
+      });
     }
   }
 
-  private processTransactionInputTo(tx: Transaction): (([abis, address, contract, web3]: [ContractAbiByID, Address, Contract, Web3]) => ProcessedABIData) {
-    return ([abis, address, contract, web3]: [ContractAbiByID, Address, Contract, Web3]): ProcessedABIData => {
-      const processedInputData = new ProcessedABIData();
-      // Contract call.
-      const methodId = tx.input_data.slice(0, 10);
-      let c: AbiItem;
-      if (contract && contract.abi) {
-        // Check the attached verified abi.
-        processedInputData.title = `${contract.contract_name}.`;
-        //TODO this is inefficient - could be cached or precomputed
-        c = contract.abi.find(a => methodId === web3.eth.abi.encodeFunctionSignature(a));
-      }
-      if (!c) {
-        // Check known functions.
-        processedInputData.title = ``;
-        c = abis[methodId];
-      }
-      if (!c) {
-        // We don't recognize this method.
-        return null;
-      }
-      processedInputData.title += c.name;
-      try {
-        const d: object = web3.eth.abi.decodeParameters(c.inputs, '0x' + tx.input_data.slice(10));
-        processedInputData.items = c.inputs.map(this.processAbiItem(d, address));
-      } catch (e) {
-        console.error('failed to decode input data', e);
-        processedInputData.items = c.inputs.map(input => {
-          return <ProcessedABIItem>{name: input.name, value: '? error'}
-        });
-      }
-      return processedInputData;
+  private processTransactionInputTo([abis, address, contract, web3]: [ContractAbiByID, Address, Contract, Web3]): ProcessedABIData {
+    const processedInputData = new ProcessedABIData();
+    // Contract call.
+    const methodId = this.tx.input_data.slice(0, 10);
+    let c: AbiItem;
+    if (contract && contract.abi) {
+      // Check the attached verified abi.
+      processedInputData.title = `${contract.contract_name}.`;
+      // TODO this is inefficient - could be cached or precomputed
+      c = contract.abi.find(a => methodId === web3.eth.abi.encodeFunctionSignature(a));
     }
+    if (!c) {
+      // Check known functions.
+      processedInputData.title = '';
+      c = abis[methodId];
+    }
+    if (!c) {
+      // We don't recognize this method.
+      return null;
+    }
+    processedInputData.title += c.name;
+    try {
+      const d: object = web3.eth.abi.decodeParameters(c.inputs, '0x' + this.tx.input_data.slice(10));
+      processedInputData.items = c.inputs.map(this.processAbiItem(d, address));
+    } catch (e) {
+      console.error('failed to decode input data', e);
+      processedInputData.items = c.inputs.map(input => {
+        return <ProcessedABIItem>{name: input.name, value: '? error'};
+      });
+    }
+    return processedInputData;
   }
 
-  private processTransactionInputDeploy(tx: Transaction): ((contract: Contract) => ProcessedABIData) {
-    return (contract: Contract): ProcessedABIData => {
-      const processedInputData = new ProcessedABIData();
-      // Contract deploy.
-      processedInputData.title = `new ${contract.contract_name}`;
+  private processTransactionInputDeploy(contract: Contract): ProcessedABIData {
+    const processedInputData = new ProcessedABIData();
+    // Contract deploy.
+    processedInputData.title = `new ${contract.contract_name}`;
 
-      const c: AbiItem = contract.abi.find(a => a.type === 'constructor');
-      if (c && c.inputs.length > 0) {
-        //TODO we know how to decode the constructor args, and we know they are at the end of the input_data, but
-        // we don't know where they begin.
-        processedInputData.items = c.inputs.map(input => {
-          return <ProcessedABIItem>{name: input.name, value: '<unknown>'}
-        });
-      }
-      return processedInputData;
+    const c: AbiItem = contract.abi.find(a => a.type === 'constructor');
+    if (c && c.inputs.length > 0) {
+      // TODO we know how to decode the constructor args, and we know they are at the end of the input_data, but
+      // we don't know where they begin.
+      processedInputData.items = c.inputs.map((input: AbiInput) => {
+        return <ProcessedABIItem>{name: input.name, value: '<unknown>'};
+      });
     }
+    return processedInputData;
   }
 
-  private processTransactionLogs(tx: Transaction): (([events, web3]: [ContractEventsAbi, Web3]) => Observable<ProcessedLog[]>) {
-    return ([events, web3]: [ContractEventsAbi, Web3]): Observable <ProcessedLog[]> => {
-      // Create one observable per unique address.
-      const addrs: {string: Observable<Address>} = <{ string: Observable<Address> }>tx.parsedLogs.reduce((acc: object, log: TxLog) => {
-        if (!acc[log.address] && !!log.topics.length && !!log.topics[0]) {
-          acc[log.address] = this._commonService.getAddress(log.address);
+  private processTransactionLogs([events, web3]: [ContractEventsAbi, Web3]): Observable<ProcessedLog[]> {
+    // Create one observable per unique address.
+    const addrs: { string: Observable<Address> } = <{ string: Observable<Address> }>this.tx.parsedLogs.reduce((acc: object, log: TxLog) => {
+      if (!acc[log.address] && !!log.topics.length && !!log.topics[0]) {
+        acc[log.address] = this._commonService.getAddress(log.address);
+      }
+      return acc;
+    }, {});
+    // Fetch all the Addresses, then use them to parse the logs.
+    return forkJoin(addrs).pipe(
+      catchError(err => {
+          console.error(`failed to get address: ${err}`);
+          return of(null);
         }
-        return acc;
-      }, {});
-      // Fetch all the Addresses, then use them to parse the logs.
-      return forkJoin(addrs).pipe(catchError(err => {
-        console.error(`failed to get address: ${err}`);
-        return of(null);
-      }), map(addrs => {
-        return tx.parsedLogs.map((log: TxLog) => {
+      ),
+      map((eventAddrs: Address[]) => {
+        return this.tx.parsedLogs.map((log: TxLog) => {
           const processedLog: ProcessedLog = new ProcessedLog();
           processedLog.index = +log.logIndex;
           processedLog.contract_address = log.address;
@@ -184,13 +190,13 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
           let abiItem: AbiItem;
           let decodedLog: object;
-          const address: Address = addrs[log.address];
+          const address: Address = eventAddrs[log.address];
           if (address) {
             if (!!log.topics.length && !!log.topics[0]) {
               const eventSignature = <string>log.topics[0];
               const knownEvent: object = events[eventSignature];
               if (knownEvent) {
-                if (Object.keys(knownEvent).length == 1) {
+                if (Object.keys(knownEvent).length === 1) {
                   // Only once choice.
                   abiItem = Object.values(knownEvent)[0];
                 } else {
@@ -202,7 +208,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
                 }
                 if (abiItem) {
                   try {
-                    const data: string = !log.data || log.data == '0x' || log.data == '0X' ? null : log.data;
+                    const data: string = !log.data || log.data === '0x' || log.data === '0X' ? null : log.data;
                     const topics: string[] = <string[]>log.topics.slice(1);
                     decodedLog = web3.eth.abi.decodeLog(abiItem.inputs, data, topics);
                   } catch (e) {
@@ -226,7 +232,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
                 items,
               });
             }
-            if (log.data && log.data != '0x' && log.data != '0X') {
+            if (log.data && log.data !== '0x' && log.data !== '0X') {
               processedLog.data.push(<ProcessedABIData>{
                 title: 'data',
                 items: [{value: log.data}],
@@ -236,7 +242,6 @@ export class TransactionComponent implements OnInit, OnDestroy {
           return processedLog;
         });
       }));
-    }
   }
 
   private processAbiItem(decoded: object, address: Address): (input: AbiInput) => ProcessedABIItem {
@@ -304,7 +309,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
         return item;
       }
       return item;
-    }
+    };
   }
 
   /**
