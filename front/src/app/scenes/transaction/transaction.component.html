@@ -73,33 +73,67 @@
           <div class="form-group">
             <label for="input_data">Input data</label>
             <div class="btn-group btn-group-sm float-right">
-              <button class="btn btn-primary" [ngClass]="{'active': !showUtf8}" (click)="showUtf8 = false">HEX</button>
-              <button class="btn btn-primary" [ngClass]="{'active': showUtf8}" (click)="showUtf8 = true">UTF-8</button>
+              <ng-container *ngIf="tx.processedInputData != null">
+                <button class="btn btn-primary" [ngClass]="{'active': !showInputRaw}" (click)="showInputRaw = false;">Rich</button>
+              </ng-container>
+              <button class="btn btn-primary" [ngClass]="{'active': showInputRaw && !showUtf8}" (click)="showUtf8 = false; showInputRaw = true;">HEX</button>
+              <button class="btn btn-primary" [ngClass]="{'active': showInputRaw && showUtf8}" (click)="showUtf8 = true; showInputRaw = true;">UTF-8</button>
             </div>
-            <textarea
-                class="form-control code mt-2"
-                id="input_data"
-                readonly
-                rows="5"
-            >{{tx.input_data | hex2str: showUtf8}}</textarea>
+            <ng-container *ngIf="showInputRaw; else showInputRich;">
+              <textarea
+                  class="form-control code mt-2"
+                  id="input_data"
+                  readonly
+                  rows="5"
+              >{{tx.input_data | hex2str: showUtf8}}</textarea>
+            </ng-container>
+            <ng-template #showInputRich>
+              <table class="table table-bordered"><tbody><tr><td>
+                <b>{{tx.processedInputData?.title}}</b>
+                <ng-container *ngIf="tx.processedInputData?.items?.length > 0">
+                  <ul>
+                    <li *ngFor="let item of tx.processedInputData.items">
+                      <ng-container *ngIf="item.name">
+                        {{item.name}}:
+                      </ng-container>
+                      <ng-container *ngIf="item.link; else regularItem">
+                        <ng-container *ngIf="item.linkExternal; else linkInternal">
+                          <a class="text-monospace" [href]="item.link" target="_blank">
+                            {{item.value}}
+                          </a>
+                        </ng-container>
+                        <ng-template #linkInternal>
+                          <a class="text-monospace" [routerLink]="item.link">
+                            {{item.value}}
+                          </a>
+                        </ng-template>
+                      </ng-container>
+                      <ng-template #regularItem>
+                        <span class="text-monospace">{{item.value}}</span>
+                      </ng-template>
+                    </li>
+                  </ul>
+                </ng-container>
+              </td></tr></tbody></table>
+            </ng-template>
           </div>
           <div class="form-group">
             <label for="receipt_logs">Receipt Logs</label>
             <div class="btn-group btn-group-sm float-right">
-              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Table</button>
+              <button class="btn btn-primary" [ngClass]="{'active': !showLogsRaw}" (click)="showLogsRaw = false">Rich</button>
               <button class="btn btn-primary" [ngClass]="{'active': showLogsRaw}" (click)="showLogsRaw = true">JSON</button>
             </div>
             <div class="mt-2">
               <ng-container *ngIf="!showLogsRaw; else rawLogBlock;">
                 <div class="mb-2">
-                  <span id="red-box"></span> - removed log
+                  <span id="red-box"></span> - removed
                 </div>
                 <table class="table table-bordered">
                   <thead>
                   <tr>
                     <th>Index</th>
                     <th>Contract</th>
-                    <th>Log Data</th>
+                    <th>Data</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -127,7 +161,7 @@
                               </a>
                             </ng-container>
                             <ng-template #regularItem>
-                              {{item.value}}
+                              <span class="text-monospace">{{item.value}}</span>
                             </ng-template>
                           </li>
                         </ul>

@@ -44,5 +44,100 @@
       "name": "Transfer",
       "type": "event"
     }
+  },
+  "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+    "Ownable": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    }
+  },
+  "0x6719d08c1888103bea251a4ed56406bd0c3e69723c8a1686e017e7bbe159b6f8": {
+    "PauserRole": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "PauserAdded",
+      "type": "event"
+    }
+  },
+  "0xcd265ebaf09df2871cc7bd4133404a235ba12eff2041bb89d9c714a2621c7c7e": {
+    "PauserRole": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "PauserRemoved",
+      "type": "event"
+    }
+  },
+  "0x7c80eb99758dfe3e8aef5df583c1c9bab5369cf46b930b802f130edcfeac90ca": {
+    "GOFS": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "cid",
+          "type": "bytes"
+        },
+        {
+          "indexed": false,
+          "name": "bh",
+          "type": "uint256"
+        }
+      ],
+      "name": "Pinned",
+      "type": "event"
+    }
+  },
+  "0x89c3649b91d0d77a0655fa3d84b050b21c775ba31bfbc37e440ec3ee04f28927": {
+    "GOFS": {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "cid",
+          "type": "bytes"
+        },
+        {
+          "indexed": false,
+          "name": "wallet",
+          "type": "address"
+        }
+      ],
+      "name": "CreatedWallet",
+      "type": "event"
+    }
   }
 }

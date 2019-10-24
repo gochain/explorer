@@ -1,23 +1,23 @@
 import {Address} from './address.model';
 import {Log} from 'web3-core';
 
-export class ProcessedLogItem {
+export class ProcessedABIItem {
   link?: string;
+  linkExternal; boolean;
   name?: string;
   value: string;
 }
 
-export class ProcessedLogData {
+export class ProcessedABIData {
   title: string;
-  items: ProcessedLogItem[];
+  items: ProcessedABIItem[];
 }
 
 export class ProcessedLog {
   index: number;
   contract_address: string;
-  data: ProcessedLogData[];
+  data: ProcessedABIData[];
   removed: boolean;
-  recognized: boolean;
 }
 
 export interface TxLog extends Log {
@@ -41,6 +41,6 @@ export class Transaction {
   to: string;
   contract_address: string;
   status: boolean;
-  addressData?: Address;
   processedLogs?: ProcessedLog[];
+  processedInputData?: ProcessedABIData;
 }

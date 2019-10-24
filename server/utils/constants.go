@@ -45,11 +45,14 @@ const (
 	CancelAndReissue
 	CanImplementInterfaceForAddress
 	Cap
+	ChangeOwner
+	CIDByHash
 	Decimals
 	DecreaseAllowance
 	DecreaseAllowanceAndCall
 	DecreaseSupply
 	DefaultOperators
+	Deployed
 	GetApproved
 	GetCurrentFor
 	Granularity
@@ -63,10 +66,12 @@ const (
 	IsHolder
 	IsPauser
 	IsOperatorFor
+	IsOwner
 	IsSuperseded
 	IsVerified
 	Mint
 	Name
+	NewWallet
 	OnErc721Received
 	OnErc1155BatchReceived
 	OnErc1155Received
@@ -74,7 +79,9 @@ const (
 	OperatorSend
 	Owner
 	OwnerOf
+	Rate
 	RemoveVerified
+	RenounceOwnership
 	RenouncePauser
 	RevokeOperator
 	SafeBatchTransferFrom
@@ -83,6 +90,7 @@ const (
 	SafeTransferFromValueData
 	Send
 	SetApprovalForAll
+	SetRate
 	SupportsInterface
 	Symbol
 	Target
@@ -99,14 +107,18 @@ const (
 	TransferAndCall
 	TransferFrom
 	TransferFromAndCall
+	TransferOwnership
 	UpdateVerified
 	URI
 	Pause
 	Paused
+	Pin
 	Unpause
 	Upgrade
 	MintWithTokenURI
 	Resume
+	Wallet
+	Withdraw
 )
 
 var evmFunctionNames = []string{
@@ -125,11 +137,14 @@ var evmFunctionNames = []string{
 	CancelAndReissue:                "CancelAndReissue",
 	CanImplementInterfaceForAddress: "CanImplementInterfaceForAddress",
 	Cap:                             "Cap",
+	ChangeOwner:                     "ChangeOwner",
+	CIDByHash:                       "CIDByHash",
 	Decimals:                        "Decimals",
 	DecreaseAllowance:               "DecreaseAllowance",
 	DecreaseAllowanceAndCall:        "DecreaseAllowanceAndCall",
 	DecreaseSupply:                  "DecreaseSupply",
 	DefaultOperators:                "DefaultOperators",
+	Deployed:                        "Deployed",
 	GetApproved:                     "GetApproved",
 	GetCurrentFor:                   "GetCurrentFor",
 	Granularity:                     "Granularity",
@@ -143,10 +158,12 @@ var evmFunctionNames = []string{
 	IsHolder:                        "IsHolder",
 	IsPauser:                        "IsPauser",
 	IsOperatorFor:                   "IsOperatorFor",
+	IsOwner:                         "IsOwner",
 	IsSuperseded:                    "IsSuperseded",
 	IsVerified:                      "IsVerified",
 	Mint:                            "Mint",
 	Name:                            "Name",
+	NewWallet:                       "NewWallet",
 	OnErc721Received:                "OnErc721Received",
 	OnErc1155BatchReceived:          "OnErc1155BatchReceived",
 	OnErc1155Received:               "OnErc1155Received",
@@ -154,7 +171,10 @@ var evmFunctionNames = []string{
 	OperatorSend:                    "OperatorSend",
 	Owner:                           "Owner",
 	OwnerOf:                         "OwnerOf",
+	Pin:                             "Pin",
+	Rate:                            "Rate",
 	RemoveVerified:                  "RemoveVerified",
+	RenounceOwnership:               "RenounceOwnership",
 	RenouncePauser:                  "RenouncePauser",
 	RevokeOperator:                  "RevokeOperator",
 	SafeBatchTransferFrom:           "SafeBatchTransferFrom",
@@ -162,6 +182,7 @@ var evmFunctionNames = []string{
 	SafeTransferFromData:            "SafeTransferFromData",
 	SafeTransferFromValueData:       "SafeTransferFromValueData",
 	Send:                            "Send",
+	SetRate:                         "SetRate",
 	SetApprovalForAll:               "SetApprovalForAll",
 	SupportsInterface:               "SupportsInterface",
 	Symbol:                          "Symbol",
@@ -179,6 +200,7 @@ var evmFunctionNames = []string{
 	TransferAndCall:                 "TransferAndCall",
 	TransferFrom:                    "TransferFrom",
 	TransferFromAndCall:             "TransferFromAndCall",
+	TransferOwnership:               "TransferOwnership",
 	UpdateVerified:                  "UpdateVerified",
 	URI:                             "URI",
 	Pause:                           "Pause",
@@ -187,6 +209,8 @@ var evmFunctionNames = []string{
 	Upgrade:                         "Upgrade",
 	MintWithTokenURI:                "MintWithTokenURI",
 	Resume:                          "Resume",
+	Wallet:                          "Wallet",
+	Withdraw:                        "Withdraw",
 }
 
 var (
@@ -227,11 +251,14 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	CancelAndReissue:                {ID: "79f64720", Signature: "cancelAndReissue(address,address)", Callable: false},
 	CanImplementInterfaceForAddress: {ID: "249cb3fa", Signature: "canImplementInterfaceForAddress(bytes32,address)", Callable: false},
 	Cap:                             {ID: "355274ea", Signature: "cap()", Callable: true},
+	ChangeOwner:                     {ID: "a6f9dae1", Signature: "changeOwner(address)", Callable: false},
+	CIDByHash:                       {ID: "e16cf225", Signature: "cidByHash(bytes32)", Callable: true},
 	Decimals:                        {ID: "313ce567", Signature: "decimals()", Callable: true},
 	DecreaseAllowance:               {ID: "a457c2d7", Signature: "decreaseAllowance(address,uint256)", Callable: false},
 	DecreaseAllowanceAndCall:        {ID: "d135ca1d", Signature: "decreaseAllowanceAndCall(address,uint256,bytes)", Callable: false},
 	DecreaseSupply:                  {ID: "869e0e60", Signature: "decreaseSupply(uint256,address)", Callable: false},
 	DefaultOperators:                {ID: "06e48538", Signature: "defaultOperators()", Callable: true},
+	Deployed:                        {ID: "f905c15a", Signature: "deployed()", Callable: true},
 	GetApproved:                     {ID: "081812fc", Signature: "getApproved(uint256)", Callable: false},
 	GetCurrentFor:                   {ID: "cc397ed3", Signature: "getCurrentFor(address)", Callable: false},
 	Granularity:                     {ID: "556f0dc7", Signature: "granularity()", Callable: true},
@@ -245,10 +272,12 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	IsHolder:                        {ID: "d4d7b19a", Signature: "isHolder(address)", Callable: false},
 	IsPauser:                        {ID: "46fbf68e", Signature: "isPauser(address)", Callable: true},
 	IsOperatorFor:                   {ID: "d95b6371", Signature: "isOperatorFor(address,address)", Callable: false},
+	IsOwner:                         {ID: "8f32d59b", Signature: "isOwner()", Callable: false},
 	IsSuperseded:                    {ID: "2da7293e", Signature: "isSuperseded(address)", Callable: false},
 	IsVerified:                      {ID: "b9209e33", Signature: "isVerified(address)", Callable: false},
 	Mint:                            {ID: "40c10f19", Signature: "mint(address,uint256)", Callable: false},
 	Name:                            {ID: "06fdde03", Signature: "name()", Callable: true},
+	NewWallet:                       {ID: "28c6fa6f", Signature: "newWallet(bytes)", Callable: false},
 	OnErc721Received:                {ID: "150b7a02", Signature: "onERC721Received(address,address,uint256,bytes)", Callable: false},
 	OnErc1155BatchReceived:          {ID: "bc197c81", Signature: "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)", Callable: false},
 	OnErc1155Received:               {ID: "f23a6e61", Signature: "onERC1155Received(address,address,uint256,uint256,bytes)", Callable: false},
@@ -256,7 +285,10 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	OperatorSend:                    {ID: "62ad1b83", Signature: "operatorSend(address,address,uint256,bytes,bytes)", Callable: false},
 	Owner:                           {ID: "8da5cb5b", Signature: "owner()", Callable: false},
 	OwnerOf:                         {ID: "6352211e", Signature: "ownerOf(uint256)", Callable: false},
+	Pin:                             {ID: "7d1962f8", Signature: "pin(bytes)", Callable: false},
+	Rate:                            {ID: "2c4e722e", Signature: "rate()", Callable: true},
 	RemoveVerified:                  {ID: "4487b392", Signature: "removeVerified(address)", Callable: false},
+	RenounceOwnership:               {ID: "715018a6", Signature: "renounceOwnership()", Callable: false},
 	RenouncePauser:                  {ID: "6ef8d66d", Signature: "renouncePauser()", Callable: false},
 	RevokeOperator:                  {ID: "fad8b32a", Signature: "revokeOperator(address)", Callable: false},
 	SafeBatchTransferFrom:           {ID: "2eb2c2d6", Signature: "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)", Callable: false},
@@ -265,6 +297,7 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	SafeTransferFromValueData:       {ID: "f242432a", Signature: "safeTransferFrom(address,address,uint256,uint256,bytes)", Callable: false},
 	Send:                            {ID: "9bd9bbc6", Signature: "send(address,uint256,bytes)", Callable: false},
 	SetApprovalForAll:               {ID: "a22cb465", Signature: "setApprovalForAll(address,bool)", Callable: false},
+	SetRate:                         {ID: "34fcf437", Signature: "setRate(uint256)", Callable: false},
 	SupportsInterface:               {ID: "01ffc9a7", Signature: "supportsInterface(bytes4)", Callable: false},
 	Symbol:                          {ID: "95d89b41", Signature: "symbol()", Callable: true},
 	Target:                          {ID: "d4b83992", Signature: "target()", Callable: true},
@@ -281,6 +314,7 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	TransferAndCall:                 {ID: "4000aea0", Signature: "transferAndCall(address,uint256,bytes)", Callable: false},
 	TransferFrom:                    {ID: "23b872dd", Signature: "transferFrom(address,address,uint256)", Callable: false},
 	TransferFromAndCall:             {ID: "c1d34b89", Signature: "transferFromAndCall(address,address,uint256,bytes)", Callable: false},
+	TransferOwnership:               {ID: "f2fde38b", Signature: "transferOwnership(address)", Callable: false},
 	UpdateVerified:                  {ID: "354b7b1d", Signature: "updateVerified(address,bytes32)", Callable: false},
 	URI:                             {ID: "0e89341c", Signature: "uri(uint256)", Callable: false},
 	Pause:                           {ID: "8456cb59", Signature: "pause()", Callable: false},
@@ -289,6 +323,8 @@ var EVMFunctions = map[EVMFunction]EVMFunctionData{
 	Upgrade:                         {ID: "0900f010", Signature: "upgrade(address)", Callable: false},
 	MintWithTokenURI:                {ID: "50bb4e7f", Signature: "mintWithTokenURI(address,uint256,string)", Callable: false},
 	Resume:                          {ID: "046f7da2", Signature: "resume()", Callable: false},
+	Wallet:                          {ID: "521eb273", Signature: "wallet()", Callable: true},
+	Withdraw:                        {ID: "51cff8d9", Signature: "withdraw(address)", Callable: false},
 }
 
 // EVMInterface is an internal enum only. Use the String() form externally.
@@ -331,6 +367,9 @@ const (
 	Go827
 	Go884
 	Upgradeable
+	Ownable
+	PauserRole
+	GoFS
 )
 
 var evmInterfaceNames = []string{
@@ -363,6 +402,9 @@ var evmInterfaceNames = []string{
 	Go827:                 "Go827",
 	Go884:                 "Go884",
 	Upgradeable:           "Upgradeable",
+	Ownable:               "Ownable",
+	PauserRole:            "PauserRol",
+	GoFS:                  "GoFS",
 }
 
 var EVMInterfacesByName map[string]EVMInterface
@@ -424,4 +466,10 @@ var EVMFunctionsByInterface = [][]EVMFunction{
 		IsVerified, RemoveVerified, Transfer, TransferFrom, UpdateVerified},
 
 	Upgradeable: {Target, Upgrade, Pause, Paused, Resume, Owner},
+
+	Ownable: {IsOwner, RenounceOwnership, TransferOwnership},
+
+	PauserRole: {IsPauser, AddPauser, RenouncePauser},
+
+	GoFS: {SetRate, NewWallet, Rate, Withdraw, Pin, Owner, ChangeOwner, Wallet, CIDByHash, Deployed},
 }

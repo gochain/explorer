@@ -40,19 +40,20 @@ var contractInfoTests = []struct {
 	}, testRobotsByteCode},
 	{"testFASByteCode", testContractInfo{
 		types: []EVMInterface{Go165, Go721, Go721Receiver, Go721Metadata},
-		funcs: append(EVMFunctionsByInterface[Go721Metadata], SupportsInterface, OnErc721Received),
+		funcs: append(EVMFunctionsByInterface[Go721Metadata], SupportsInterface, OnErc721Received, TransferOwnership),
 	}, testFASByteCode},
 	{"testPukkamex", testContractInfo{
-		types: []EVMInterface{Go20, Go20Detailed, Go20Pausable},
+		types: []EVMInterface{Go20, Go20Detailed, Go20Pausable, Ownable, PauserRole},
 		funcs: append(EVMFunctionsByInterface[Go20Detailed], IncreaseAllowance, DecreaseAllowance, Transfer,
-			TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser),
+			TransferFrom, Pause, Paused, Unpause, AddPauser, IsPauser, RenouncePauser, IsOwner, TransferOwnership, RenounceOwnership),
 	}, testPukkamexByteCode},
 	{"testCabochonByteCode", testContractInfo{
 		types: []EVMInterface{Go20, Go20Detailed}, funcs: EVMFunctionsByInterface[Go20Detailed],
 	}, testCabochonByteCode},
 	{"testRNDTByteCode", testContractInfo{
-		types: []EVMInterface{Go20, Go20Detailed, Go20Mintable},
-		funcs: append(EVMFunctionsByInterface[Go20Detailed], IncreaseAllowance, DecreaseAllowance, Owner, Mint),
+		types: []EVMInterface{Go20, Go20Detailed, Go20Mintable, Ownable},
+		funcs: append(EVMFunctionsByInterface[Go20Detailed], IncreaseAllowance, DecreaseAllowance, Owner, Mint,
+			IsOwner, TransferOwnership, RenounceOwnership),
 	}, testRNDTByteCode},
 	{"test165ByteCode", testContractInfo{
 		types: []EVMInterface{Go165}, funcs: append(EVMFunctionsByInterface[Go165], Name, Symbol, Decimals),
@@ -60,7 +61,6 @@ var contractInfoTests = []struct {
 	{"testUpgradeableByteCode", testContractInfo{
 		types: []EVMInterface{Upgradeable}, funcs: EVMFunctionsByInterface[Upgradeable],
 	}, testUpgradeableByteCode},
-	//TODO upgradable
 	//TODO more
 }
 
@@ -110,6 +110,7 @@ type testContractInfo struct {
 }
 
 func (ci *testContractInfo) compare(t *testing.T, other *contractInfo) bool {
+	t.Helper()
 	var diff bool
 	for _, fn := range ci.funcs {
 		if _, ok := other.funcs[fn]; !ok {

@@ -4,16 +4,14 @@ jobs:
     docker:
       - image: circleci/golang:1.13
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
       - checkout
       - run: ./run_tests.sh
   release:
     docker:
       - image: google/cloud-sdk      
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
       - checkout
       - run:
           name: "Build and push the image"

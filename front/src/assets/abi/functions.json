@@ -1,5 +1,6 @@
 {
   "AddVerified": {
+    "id": "0x47089f62",
     "constant": false,
     "inputs": [
       {
@@ -18,6 +19,7 @@
     "type": "function"
   },
   "Allowance": {
+    "id": "0xdd62ed3e",
     "constant": true,
     "inputs": [
       {
@@ -41,6 +43,7 @@
     "type": "function"
   },
   "Approve": {
+    "id": "0x095ea7b3",
     "constant": false,
     "inputs": [
       {
@@ -64,18 +67,19 @@
     "type": "function"
   },
   "ApproveAndCall": {
+    "id": "0xcae9ca51",
     "constant": false,
     "inputs": [
       {
-        "name": "_spender",
+        "name": "spender",
         "type": "address"
       },
       {
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -91,6 +95,7 @@
     "type": "function"
   },
   "AuthorizeOperator": {
+    "id": "0x959b8c3f",
     "constant": false,
     "inputs": [
       {
@@ -105,6 +110,7 @@
     "type": "function"
   },
   "BalanceOf": {
+    "id": "0x70a08231",
     "constant": true,
     "inputs": [
       {
@@ -127,11 +133,11 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_owner",
+        "name": "owner",
         "type": "address"
       },
       {
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -150,11 +156,11 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_owners",
+        "name": "owners",
         "type": "address[]"
       },
       {
-        "name": "_ids",
+        "name": "ids",
         "type": "uint256[]"
       }
     ],
@@ -170,6 +176,7 @@
     "type": "function"
   },
   "Burn": {
+    "id": "0x42966c68",
     "constant": false,
     "inputs": [
       {
@@ -184,6 +191,7 @@
     "type": "function"
   },
   "BurnData": {
+    "id": "0xfe9d9303",
     "constant": false,
     "inputs": [
       {
@@ -202,6 +210,7 @@
     "type": "function"
   },
   "BurnFrom": {
+    "id": "0x79cc6790",
     "constant": false,
     "inputs": [
       {
@@ -220,6 +229,7 @@
     "type": "function"
   },
   "CancelAndReissue": {
+    "id": "0x79f64720",
     "constant": false,
     "inputs": [
       {
@@ -289,6 +299,7 @@
     "type": "function"
   },
   "DecreaseAllowance": {
+    "id": "0xa457c2d7",
     "constant": false,
     "inputs": [
       {
@@ -312,18 +323,19 @@
     "type": "function"
   },
   "DecreaseAllowanceAndCall": {
+    "id": "0xd135ca1d",
     "constant": false,
     "inputs": [
       {
-        "name": "_spender",
+        "name": "spender",
         "type": "address"
       },
       {
-        "name": "_subtractedValue",
+        "name": "subtractedValue",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -339,6 +351,7 @@
     "type": "function"
   },
   "DecreaseSupply": {
+    "id": "0x869e0e60",
     "constant": false,
     "inputs": [
       {
@@ -484,6 +497,7 @@
     "type": "function"
   },
   "IncreaseAllowance": {
+    "id": "0x39509351",
     "constant": false,
     "inputs": [
       {
@@ -507,18 +521,19 @@
     "type": "function"
   },
   "IncreaseAllowanceAndCall": {
+    "id": "0x5fd42775",
     "constant": false,
     "inputs": [
       {
-        "name": "_spender",
+        "name": "spender",
         "type": "address"
       },
       {
-        "name": "_addedValue",
+        "name": "addedValue",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -534,6 +549,7 @@
     "type": "function"
   },
   "IncreaseSupply": {
+    "id": "0x124fc7e0",
     "constant": false,
     "inputs": [
       {
@@ -660,6 +676,7 @@
     "type": "function"
   },
   "Mint": {
+    "id": "0x40c10f19",
     "constant": false,
     "inputs": [
       {
@@ -683,6 +700,7 @@
     "type": "function"
   },
   "MintWithTokenURI": {
+    "id": "0x50bb4e7f",
     "constant": false,
     "inputs": [
       {
@@ -724,6 +742,7 @@
     "type": "function"
   },
   "OnErc721Received": {
+    "id": "0x150b7a02",
     "constant": false,
     "inputs": [
       {
@@ -755,26 +774,27 @@
     "type": "function"
   },
   "OnErc1155BatchReceived": {
+    "id": "0xbc197c81",
     "constant": false,
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address"
       },
       {
-        "name": "_from",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "_ids",
+        "name": "ids",
         "type": "uint256[]"
       },
       {
-        "name": "_values",
+        "name": "values",
         "type": "uint256[]"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -790,26 +810,27 @@
     "type": "function"
   },
   "OnErc1155Received": {
+    "id": "0xf23a6e61",
     "constant": false,
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address"
       },
       {
-        "name": "_from",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       },
       {
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -825,6 +846,7 @@
     "type": "function"
   },
   "OperatorBurn": {
+    "id": "0xfc673c4f",
     "constant": false,
     "inputs": [
       {
@@ -851,6 +873,7 @@
     "type": "function"
   },
   "OperatorSend": {
+    "id": "0x62ad1b83",
     "constant": false,
     "inputs": [
       {
@@ -914,6 +937,7 @@
     "type": "function"
   },
   "RemoveVerified": {
+    "id": "0x4487b392",
     "constant": false,
     "inputs": [
       {
@@ -928,6 +952,7 @@
     "type": "function"
   },
   "RevokeOperator": {
+    "id": "0xfad8b32a",
     "constant": false,
     "inputs": [
       {
@@ -942,26 +967,27 @@
     "type": "function"
   },
   "SafeBatchTransferFrom": {
+    "id": "0x2eb2c2d6",
     "constant": false,
     "inputs": [
       {
-        "name": "_from",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
-        "name": "_ids",
+        "name": "ids",
         "type": "uint256[]"
       },
       {
-        "name": "_values",
+        "name": "values",
         "type": "uint256[]"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -972,6 +998,7 @@
     "type": "function"
   },
   "SafeTransferFrom": {
+    "id": "0x42842e0e",
     "constant": false,
     "inputs": [
       {
@@ -994,6 +1021,7 @@
     "type": "function"
   },
   "SafeTransferFromData": {
+    "id": "0xb88d4fde",
     "constant": false,
     "inputs": [
       {
@@ -1020,26 +1048,27 @@
     "type": "function"
   },
   "SafeTransferFromValueData": {
+    "id": "0xf242432a",
     "constant": false,
     "inputs": [
       {
-        "name": "_from",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       },
       {
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -1050,6 +1079,7 @@
     "type": "function"
   },
   "Send": {
+    "id": "0x9bd9bbc6",
     "constant": false,
     "inputs": [
       {
@@ -1072,14 +1102,15 @@
     "type": "function"
   },
   "SetApprovalForAll": {
+    "id": "0xa22cb465",
     "constant": false,
     "inputs": [
       {
-        "name": "_operator",
+        "name": "operator",
         "type": "address"
       },
       {
-        "name": "_approved",
+        "name": "approved",
         "type": "bool"
       }
     ],
@@ -1137,6 +1168,7 @@
     "type": "function"
   },
   "TokensReceived": {
+    "id": "0x0023de29",
     "constant": false,
     "inputs": [
       {
@@ -1171,6 +1203,7 @@
     "type": "function"
   },
   "TokensToSend": {
+    "id": "0x75ab9782",
     "constant": false,
     "inputs": [
       {
@@ -1224,18 +1257,19 @@
     "type": "function"
   },
   "TokenFallback": {
+    "id": "0xc0ee0b8a",
     "constant": false,
     "inputs": [
       {
-        "name": "_from",
+        "name": "from",
         "type": "address"
       },
       {
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -1302,6 +1336,7 @@
     "type": "function"
   },
   "Transfer": {
+    "id": "0xa9059cbb",
     "constant": false,
     "inputs": [
       {
@@ -1325,6 +1360,7 @@
     "type": "function"
   },
   "TransferData": {
+    "id": "0xbe45fd62",
     "constant": false,
     "inputs": [
       {
@@ -1347,6 +1383,7 @@
     "type": "function"
   },
   "TransferDataFallback": {
+    "id": "0xf6368f8a",
     "constant": false,
     "inputs": [
       {
@@ -1378,18 +1415,19 @@
     "type": "function"
   },
   "TransferAndCall": {
+    "id": "0x4000aea0",
     "constant": false,
     "inputs": [
       {
-        "name": "_to",
+        "name": "to",
         "type": "address"
       },
       {
-        "name": "_value",
+        "name": "value",
         "type": "uint256"
       },
       {
-        "name": "_data",
+        "name": "data",
         "type": "bytes"
       }
     ],
@@ -1405,6 +1443,7 @@
     "type": "function"
   },
   "TransferFrom": {
+    "id": "0x23b872dd",
     "constant": false,
     "inputs": [
       {
@@ -1432,6 +1471,7 @@
     "type": "function"
   },
   "TransferFromAndCall": {
+    "id": "0xc1d34b89",
     "constant": false,
     "inputs": [
       {
@@ -1463,6 +1503,7 @@
     "type": "function"
   },
   "UpdateVerified": {
+    "id": "0x354b7b1d",
     "constant": false,
     "inputs": [
       {
@@ -1484,7 +1525,7 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_id",
+        "name": "id",
         "type": "uint256"
       }
     ],
@@ -1500,6 +1541,7 @@
     "type": "function"
   },
   "Unpause": {
+    "id": "0x3f4ba83a",
     "constant": false,
     "inputs": [],
     "name": "unpause",
@@ -1542,6 +1584,7 @@
     "type": "function"
   },
   "RenouncePauser": {
+    "id": "0x6ef8d66d",
     "constant": false,
     "inputs": [],
     "name": "renouncePauser",
@@ -1551,6 +1594,7 @@
     "type": "function"
   },
   "AddPauser": {
+    "id": "0x82dc1ec4",
     "constant": false,
     "inputs": [
       {
@@ -1565,6 +1609,7 @@
     "type": "function"
   },
   "Pause": {
+    "id": "0x8456cb59",
     "constant": false,
     "inputs": [],
     "name": "pause",
@@ -1574,6 +1619,7 @@
     "type": "function"
   },
   "Upgrade": {
+    "id": "0x0900f010",
     "constant": false,
     "inputs": [
       {
@@ -1588,12 +1634,153 @@
     "type": "function"
   },
   "Resume": {
+    "id": "0x046f7da2",
     "constant": false,
     "inputs": [],
     "name": "resume",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "SetRate": {
+    "id": "0x34fcf437",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "rate",
+        "type": "uint256"
+      }
+    ],
+    "name": "setRate",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "NewWallet": {
+    "id": "0x28c6fa6f",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "cid",
+        "type": "bytes"
+      }
+    ],
+    "name": "newWallet",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "Rate": {
+    "constant": true,
+    "inputs": [],
+    "name": "rate",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  "Withdraw": {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "Pin": {
+    "id": "0x7d1962f8",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "cid",
+        "type": "bytes"
+      }
+    ],
+    "name": "pin",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  "ChangeOwner": {
+    "id": "0xa6f9dae1",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "changeOwner",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  "Wallet": {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "cid",
+        "type": "bytes"
+      }
+    ],
+    "name": "wallet",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  "CIDByHash": {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "cidByHash",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  "Deployed": {
+    "constant": true,
+    "inputs": [],
+    "name": "deployed",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   }
 }
