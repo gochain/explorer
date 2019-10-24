@@ -84,7 +84,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
       let data: Observable<ProcessedABIData>;
       if (tx.to) {
         data = forkJoin([
-          <ContractAbiByID>this._commonService.abiByID$,
+          this._commonService.abiByID$,
           tx.to ? this._commonService.getAddress(tx.to) : of(null),
           tx.to ? this._commonService.getContract(tx.to) : of(null),
           this._walletService.w3Call,
@@ -139,7 +139,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
     processedInputData.title += c.name;
     try {
       const d: object = web3.eth.abi.decodeParameters(c.inputs, '0x' + this.tx.input_data.slice(10));
-      processedInputData.items = c.inputs.map(this.processAbiItem(d, address));
+      processedInputData.items = c.inputs.map((input: AbiInput) => this.processAbiItem(input, d, address));
     } catch (e) {
       console.error('failed to decode input data', e);
       processedInputData.items = c.inputs.map(input => {
@@ -244,72 +244,71 @@ export class TransactionComponent implements OnInit, OnDestroy {
       }));
   }
 
-  private processAbiItem(decoded: object, address: Address): (input: AbiInput) => ProcessedABIItem {
-    return (input: AbiInput): ProcessedABIItem => {
-      const item = new ProcessedABIItem();
-      item.name = input.name;
-      item.value = decoded[input.name];
-      if (address.erc_types.includes(ErcName.Go20)) {
-        if (input.name === 'value') {
-          if (address.decimals) {
-            const val = convertWithDecimals(decoded[input.name], false, true, address.decimals);
-            item.value = `${val} ${address.token_symbol}`;
-          }
+  private processAbiItem(input: AbiInput, decoded: object, address: Address): ProcessedABIItem {
+    const item = new ProcessedABIItem();
+    item.name = input.name;
+    item.value = decoded[input.name];
+    if (address.erc_types.includes(ErcName.Go20)) {
+      if (input.name === 'value') {
+        if (address.decimals) {
+          const val = convertWithDecimals(decoded[input.name], false, true, address.decimals);
+          item.value = `${val} ${address.token_symbol}`;
         }
       }
-      if (address.erc_types.includes(ErcName.Go721)) {
-        if (input.name === 'tokenId') {
-          item.link = `/token/${address.address}/asset/${decoded[input.name]}`;
-          return item;
-        } else if (input.name === 'tokenURI') {
-          item.link = decoded[input.name];
-          item.linkExternal = true;
-          return item;
-        }
-      }
-      if (input.name === 'cid' && input.type === 'bytes' && !input.indexed) {
-        const hex = decoded[input.name];
-        if (hex.length > 2) {
-          try {
-            const cid: CID = new CID(Buffer.from(hex.slice(2), 'hex'));
-            const str = cid.toString();
-            item.value = str;
-            item.link = `https://ipfs.io/ipfs/${str}`;
-            item.linkExternal = true;
-            return item;
-          } catch (e) {
-            console.error(`failed to parse cid ${hex}: ${e}`);
-          }
-        }
-      }
-      // if (ercTypes.includes(ErcName.GoST)) {
-      //   //TODO link ETH stuff
-      // }
-      if (input.type === 'address') {
-        if (decoded[input.name] === '0x0000000000000000000000000000000000000000') {
-          // Reformat empty addresses.
-          switch (input.name) {
-            case 'to':
-              item.value = '0x0 (burn)';
-              return item;
-            case 'from':
-              item.value = '0x0 (mint)';
-              return item;
-            case 'previousOwner':
-            case 'newOwner':
-              item.value = '0x0 (none)';
-              return item;
-            default:
-              item.value = '0x0';
-              return item;
-          }
-        }
-        // Link non-empty addresses.
-        item.link = `/addr/${decoded[input.name]}`;
+    }
+    if (address.erc_types.includes(ErcName.Go721)) {
+      if (input.name === 'tokenId') {
+        item.link = `/token/${address.address}/asset/${decoded[input.name]}`;
+        return item;
+      } else if (input.name === 'tokenURI') {
+        item.link = decoded[input.name];
+        item.linkExternal = true;
         return item;
       }
+    }
+    if (input.name === 'cid' && input.type === 'bytes' && !input.indexed) {
+      const hex = decoded[input.name];
+      if (hex.length > 2) {
+        try {
+          // byteOffset for hex is 2
+          const cid: CID = new CID(Buffer.from(hex.slice(2), 2));
+          const str = (cid as any).toString();
+          item.value = str;
+          item.link = `https://ipfs.io/ipfs/${str}`;
+          item.linkExternal = true;
+          return item;
+        } catch (e) {
+          console.error(`failed to parse cid ${hex}: ${e}`);
+        }
+      }
+    }
+    // if (ercTypes.includes(ErcName.GoST)) {
+    //   //TODO link ETH stuff
+    // }
+    if (input.type === 'address') {
+      if (decoded[input.name] === '0x0000000000000000000000000000000000000000') {
+        // Reformat empty addresses.
+        switch (input.name) {
+          case 'to':
+            item.value = '0x0 (burn)';
+            return item;
+          case 'from':
+            item.value = '0x0 (mint)';
+            return item;
+          case 'previousOwner':
+          case 'newOwner':
+            item.value = '0x0 (none)';
+            return item;
+          default:
+            item.value = '0x0';
+            return item;
+        }
+      }
+      // Link non-empty addresses.
+      item.link = `/addr/${decoded[input.name]}`;
       return item;
-    };
+    }
+    return item;
   }
 
   /**
