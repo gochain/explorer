@@ -1,11 +1,12 @@
 import {SignerDetails} from './signer-node';
 
 export class Extra {
-  auth: boolean;
   vanity: string;
-  has_vote: boolean;
-  candidate: string;
-  is_voter_election: boolean;
+
+  has_vote: boolean; // If true, then the remaining vote fields are included.
+  auth: boolean; // Whether voting to authorize (add) or deauthorize (remove).
+  is_voter_election: boolean; // Whether voting on voter (true) or signer (false) auth.
+  candidate: string; // Candidate address.
   signerDetails?: SignerDetails;
 }
 
@@ -18,9 +19,7 @@ export class Block {
   gas_used: any;
   miner: any;
   difficulty: any;
-  sha3_uncles: any;
   extra_data: any;
-  nonce: number;
   gas_limit: number;
   extra: Extra;
   signerDetails?: SignerDetails;
