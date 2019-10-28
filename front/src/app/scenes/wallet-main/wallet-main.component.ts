@@ -10,6 +10,8 @@ import {WalletService} from '../../services/wallet.service';
 import {PasswordField} from '../../models/password-field.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
+import {LayoutService} from '../../services/layout.service';
+import {filter, flatMap} from 'rxjs/operators';
 
 @Component({
   selector: 'app-wallet-main',
@@ -42,11 +44,19 @@ export class WalletMainComponent implements OnInit {
     private _fb: FormBuilder,
     private _toastrService: ToastrService,
     private _router: Router,
+    private _layoutService: LayoutService,
   ) {
   }
 
   ngOnInit() {
+    /*this._layoutService.onLoading();*/
     this._metaService.setTitle(META_TITLES.WALLET.title);
+    this.walletService.metamaskConfigured$.pipe(
+      filter<boolean>(v => !!v),
+      flatMap(() => this.walletService.openAccount()),
+    ).subscribe((v) => {
+      this._router.navigate(['/wallet/account']);
+    });
   }
 
   onPrivateKeySubmit() {

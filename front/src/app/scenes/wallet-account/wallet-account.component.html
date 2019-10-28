@@ -1,8 +1,8 @@
-<div class="container" *ngIf="walletService.account">
+<div class="container" *ngIf="walletService.accountAddress$ | async">
   <div class="card">
     <div class="card-body">
       <div class="card-title"><img src="../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
-      <p>Address: {{walletService.account.address}}</p>
+      <p>Address: {{walletService.accountAddress$ | async}}</p>
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
       <p>
         <button
@@ -20,12 +20,12 @@
       <app-tabs name="account_tab" [disabled]="walletService.isProcessing">
         <tab name="owned_tokens" title="Owned Tokens">
           <tab-content>
-            <app-owned-tokens [addrHash]="walletService.account.address" [showPagination]="false"></app-owned-tokens>
+            <app-owned-tokens [addrHash]="walletService.accountAddress" [showPagination]="false"></app-owned-tokens>
           </tab-content>
         </tab>
         <tab name="transactions" title="Transactions">
           <tab-content>
-            <app-addr-transactions *ngIf="addr" [addr]="addr"></app-addr-transactions>
+            <app-addr-transactions *ngIf="accountAddr" [addr]="accountAddr"></app-addr-transactions>
           </tab-content>
         </tab>
         <tab name="send_go" title="Send GO">

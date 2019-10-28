@@ -48,7 +48,7 @@ export class InteractorComponent implements OnInit {
   contract: Web3Contract;
   abiFunctions: AbiItem[];
   selectedFunction: AbiItem;
-  functionResult: {output:any[][], error: string};
+  functionResult: { output: any[][], error: string };
   addr: Address;
 
   hasData = false;
@@ -101,7 +101,7 @@ export class InteractorComponent implements OnInit {
     this._subsArr$.push(this.form.get('contractAddress').valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
-    ).subscribe(val => {
+    ).subscribe((val: string) => {
       this.updateContract();
       this.getContractData(val);
     }));
@@ -117,7 +117,7 @@ export class InteractorComponent implements OnInit {
     this._subsArr$.push((this.form.get('functionParameters') as FormArray).valueChanges.pipe(
       debounceTime(1200),
       distinctUntilChanged(),
-    ).subscribe((values) => {
+    ).subscribe((values: string[]) => {
       this.estimateFunctionGas(values);
     }));
     this._subsArr$.push(this.form.get('erc').valueChanges.subscribe(value => {
@@ -176,12 +176,12 @@ export class InteractorComponent implements OnInit {
   callABIFunction(func: AbiItem, params: string[] = []): void {
     this._walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
       if (!decoded) {
-        this.functionResult = {error:'Result is empty', output:null};
+        this.functionResult = {error: 'Result is empty', output: null};
         return;
       }
-      this.functionResult = {output:getDecodedData(decoded, func, this.addr), error: null};
+      this.functionResult = {output: getDecodedData(decoded, func, this.addr), error: null};
     }, err => {
-      this.functionResult = {error:err, output:null};
+      this.functionResult = {error: err, output: null};
     });
   }
 
@@ -301,7 +301,7 @@ export class InteractorComponent implements OnInit {
       this.abiFunctions = getAbiMethods(abiItems);
     }, err => {
       this._toastrService.danger('Can\'t initiate contract, check entered data');
-      console.error(`Failed to initiate contract (${addrHash}): ${err}`)
+      console.error(`Failed to initiate contract (${addrHash}): ${err}`);
     });
   }
 

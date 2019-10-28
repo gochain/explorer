@@ -8,8 +8,9 @@ import {CommonService} from '../../services/common.service';
 import {Address} from '../../models/address.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
-import {AutoUnsubscribe} from "../../decorators/auto-unsubscribe";
-import {Subscription} from "rxjs";
+import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
+import {Subscription} from 'rxjs';
+import {filter, flatMap} from 'rxjs/operators';
 
 @Component({
   selector: 'app-wallet-account',
@@ -18,7 +19,7 @@ import {Subscription} from "rxjs";
 })
 @AutoUnsubscribe('_subsArr$')
 export class WalletAccountComponent implements OnInit, OnDestroy {
-  addr: Address;
+  accountAddr: Address;
   private _subsArr$: Subscription[] = [];
 
   constructor(
@@ -30,11 +31,12 @@ export class WalletAccountComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._metaService.setTitle(META_TITLES.WALLET.title);
-    this._subsArr$.push(
-      this._commonService.getAddress(this.walletService.account.address).subscribe((addr => {
-        this.addr = addr;
-      }))
-    );
+    this.walletService.accountAddress$.pipe(
+      filter<string>(v => !!v),
+      flatMap(() => this._commonService.getAddress(this.walletService.accountAddress)),
+    ).subscribe((addr: Address) => {
+      this.accountAddr = addr;
+    });
   }
 
   ngOnDestroy(): void {
