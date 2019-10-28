@@ -257,7 +257,7 @@ export class WalletService {
   // ACCOUNT METHODS
 
   createAccount(): Observable<Account> {
-    return this.w3Pay.pipe(map((web3: Web3) => {
+    return this.w3Call.pipe(map((web3: Web3) => {
       return web3.eth.accounts.create();
     }));
   }
