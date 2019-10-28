@@ -85,7 +85,7 @@ export class WalletService {
   }
 
   sendSignedTx(signed: SignedTransaction): Observable<TransactionReceipt> {
-    return this.w3Pay.pipe(concatMap((web3: Web3) => {
+    return this.w3Call.pipe(concatMap((web3: Web3) => {
       return fromPromise(web3.eth.sendSignedTransaction(signed.rawTransaction));
     }))
   }
