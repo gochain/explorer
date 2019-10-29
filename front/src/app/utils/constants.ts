@@ -95,6 +95,9 @@ export const TOKEN_TYPES = {
   Go827: 'GO827',
   Go884: 'GO884',
   Upgradeable: 'Upgradeable',
+  Ownable: 'Ownable',
+  PauserRole: 'Pauser Role',
+  GoFS: 'GoFS',
 };
 
 export const ERC_INTERFACE_IDENTIFIERS = {
