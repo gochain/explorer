@@ -228,7 +228,7 @@ export class WalletService {
    */
   sendTx(tx: TransactionConfig): void {
     this.isProcessing = true;
-    this.w3Pay.subscribe((web3: Web3) => {
+    this.w3Call.subscribe((web3: Web3) => {
       const p: Promise<number> = web3.eth.getTransactionCount(this.account.address);
       fromPromise(p).pipe(
           concatMap(nonce => {
