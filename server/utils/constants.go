@@ -403,7 +403,7 @@ var evmInterfaceNames = []string{
 	Go884:                 "Go884",
 	Upgradeable:           "Upgradeable",
 	Ownable:               "Ownable",
-	PauserRole:            "PauserRol",
+	PauserRole:            "PauserRole",
 	GoFS:                  "GoFS",
 }
 
