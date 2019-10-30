@@ -23,13 +23,19 @@
             Associate:
           </div>
           <div class="data-list-desc">
-            <ng-container *ngIf="addr.address === tx.to; else out">
+            <ng-container *ngIf="addr.address !== tx.from; else out">
               <img src="../../../assets/icons/left.svg" alt="From">
               <a routerLink="/addr/{{tx.from}}">{{tx.from}}</a>
             </ng-container>
             <ng-template #out>
-              <img src="../../../assets/icons/right.svg" alt="To">
-              <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+              <ng-container *ngIf="addr.address !== tx.to; else self">
+                <img src="../../../assets/icons/right.svg" alt="To">
+                <a routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+              </ng-container>
+              <ng-template #self>
+                <img src="../../../assets/icons/minus.svg" alt="Self">
+                self
+              </ng-template>
             </ng-template>
           </div>
         </div>
@@ -38,7 +44,7 @@
             Value (GO):
           </div>
           <div class="data-list-desc">
-            {{addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false | bigNumber}}
+            {{tx.from === tx.to ? '+/-' : addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : false | bigNumber}}
           </div>
         </div>
       </div>
@@ -63,7 +69,7 @@
         <td class="text-truncate">
           {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
         </td>
-        <ng-container *ngIf="addr.address === tx.to; else out">
+        <ng-container *ngIf="addr.address !== tx.from; else out">
           <td>
             <img src="../../../assets/icons/left.svg" alt="From">
           </td>
@@ -72,15 +78,25 @@
           </td>
         </ng-container>
         <ng-template #out>
-          <td>
-            <img src="../../../assets/icons/right.svg" alt="To">
-          </td>
-          <td class="text-monospace text-truncate">
-            <a class="ws-p" routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
-          </td>
+          <ng-container *ngIf="addr.address !== tx.to; else self">
+            <td>
+              <img src="../../../assets/icons/right.svg" alt="To">
+            </td>
+            <td class="text-monospace text-truncate">
+              <a class="ws-p" routerLink="/addr/{{tx.to}}">{{tx.to}}</a>
+            </td>
+          </ng-container>
+          <ng-template #self>
+            <td>
+              <img src="../../../assets/icons/minus.svg" alt="Self">
+            </td>
+            <td class="text-monospace text-truncate">
+              self
+            </td>
+          </ng-template>
         </ng-template>
         <td class="text-nowrap text-right text-monospace ws-p">
-          {{addr.address === tx.to ? '+' : tx.value === '0' ? '' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
+          {{tx.value === '0' ? '' : tx.from === tx.to ? '+/-' : addr.address === tx.to ? '+' : '-'}} {{tx.value | weiToGO: false : true | bigNumber}}
         </td>
       </tr>
       </tbody>

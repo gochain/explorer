@@ -186,9 +186,10 @@ func (tb *TokenDetails) queryTarget(conn *goclient.Client, lgr *zap.Logger) erro
 	}
 	target, err := token.Target(nil)
 	if err != nil {
-		return err
+		lgr.Error("Failed to get target from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+	} else {
+		tb.Target = target.Hex()
 	}
-	tb.Target = target.Hex()
 	return nil
 }
 
@@ -199,9 +200,10 @@ func (tb *TokenDetails) queryOwner(conn *goclient.Client, lgr *zap.Logger) error
 	}
 	owner, err := token.Owner(nil)
 	if err != nil {
-		return err
+		lgr.Error("Failed to get owner", zap.Error(err), zap.Stringer("address", tb.Contract))
+	} else {
+		tb.Owner = owner.Hex()
 	}
-	tb.Owner = owner.Hex()
 	return nil
 }
 
@@ -243,7 +245,7 @@ func (tb *TokenDetails) queryERC20Details(conn *goclient.Client, lgr *zap.Logger
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logger) error {
@@ -276,7 +278,7 @@ func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logge
 		}
 	}
 
-	return err
+	return nil
 }
 
 var transferEventID = common.HexToHash("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")
