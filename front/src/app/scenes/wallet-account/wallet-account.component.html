@@ -4,7 +4,7 @@
       <div class="card-title"><img src="../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
       <p>Address: {{walletService.accountAddress$ | async}}</p>
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
-      <p>
+      <p *ngIf="!(walletService.metamaskConfigured$ | async)">
         <button
             type="button"
             class="btn btn-outline-info btn-sm"

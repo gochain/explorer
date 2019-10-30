@@ -65,42 +65,13 @@
               </div>
             </div>
           </form>
-          <!--<div class="row mt-4">
-            <div class="col-12">
-              <button
-                  routerLink="create"
-                  type="button"
-                  class="btn btn-outline-primary btn-block"
-                  [disabled]="walletService.isProcessing"
-              >
-                Create Account
-              </button>
-            </div>-->
-          <!--<div class="col-6">
-            <button
-                routerLink="use"
-                type="button"
-                class="btn btn-light btn-block"
-                [disabled]="walletService.isProcessing"
-            >
-              Use Contract
-            </button>
-          </div>-->
-          <!--</div>-->
-          <!--</div>
-        </div>-->
-          <div class="metamask my-5">
+          <div class="metamask my-5" *ngIf="!(walletService.metamaskConfigured$ | async)">
             <div class="callout callout-info">
               <ng-container *ngIf="walletService.metamaskIntalled$ | async; else metamaskNotInstalled">
-                <ng-container *ngIf="walletService.metamaskConfigured$ | async; else metamaskNotConfigured">
-                  <a routerLink="/wallet/account">Use metamask</a>
-                </ng-container>
-                <ng-template #metamaskNotConfigured>
-                  <div class="text-danger">
-                    It seems that you have metamask installed but GoChain is not configured, please use the following
-                    <a target="_blank" href="https://gofs-help.gochain.io/metamask">guide</a> to configure it.
-                  </div>
-                </ng-template>
+                <div class="text-danger">
+                  It seems that you have metamask installed but GoChain is not configured, please use the following
+                  <a target="_blank" href="https://gofs-help.gochain.io/metamask">guide</a> to configure it.
+                </div>
               </ng-container>
               <ng-template #metamaskNotInstalled>
                 To use wallet without private key, please install or enable

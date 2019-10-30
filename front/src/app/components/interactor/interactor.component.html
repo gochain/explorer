@@ -53,7 +53,7 @@
               </option>
             </ng-container>
           </optgroup>
-          <optgroup label="Paid (wallet required)" [disabled]="!_walletService.account">
+          <optgroup label="Paid (wallet required)" [disabled]="!(walletService.logged$ | async)">
             <ng-container *ngFor="let abiItem of abiFunctions; let i = index;">
               <option
                   *ngIf="abiItem.payable || !abiItem.constant"

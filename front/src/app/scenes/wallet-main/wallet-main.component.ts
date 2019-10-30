@@ -49,22 +49,34 @@ export class WalletMainComponent implements OnInit {
   }
 
   ngOnInit() {
-    /*this._layoutService.onLoading();*/
+    this._layoutService.onLoading();
     this._metaService.setTitle(META_TITLES.WALLET.title);
     this.walletService.metamaskConfigured$.pipe(
-      filter<boolean>(v => !!v),
+      filter((v: boolean) => {
+        if (!v) {
+          this._layoutService.offLoading();
+        }
+        return v;
+      }),
       flatMap(() => this.walletService.openAccount()),
-    ).subscribe((v) => {
+    ).subscribe(() => {
+      this._layoutService.offLoading();
       this._router.navigate(['/wallet/account']);
+    }, (err) => {
+      this._toastrService.danger(err);
+      this._layoutService.offLoading();
     });
   }
 
   onPrivateKeySubmit() {
     const privateKey: string = this.privateKeyForm.get('privateKey').value;
-    this.walletService.openAccount(privateKey).subscribe((ok: boolean) => {
-      if (ok) {
-        this._router.navigate(['/wallet/account']);
-      }
-    });
+    if (!privateKey) {
+      this._toastrService.danger('Please enter private key');
+      return;
+    }
+    this.walletService.openAccount(privateKey).subscribe(
+      () => this._router.navigate(['/wallet/account']),
+      (err) => this._toastrService.danger(err),
+    );
   }
 }

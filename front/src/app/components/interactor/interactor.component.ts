@@ -73,8 +73,8 @@ export class InteractorComponent implements OnInit {
   }
 
   constructor(
+    public walletService: WalletService,
     private _fb: FormBuilder,
-    private _walletService: WalletService,
     private _toastrService: ToastrService,
     private _commonService: CommonService,
     private _activatedRoute: ActivatedRoute,
@@ -174,7 +174,7 @@ export class InteractorComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: AbiItem, params: string[] = []): void {
-    this._walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
+    this.walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
       if (!decoded) {
         this.functionResult = {error: 'Result is empty', output: null};
         return;
@@ -241,7 +241,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this._walletService.estimateGas(tx).pipe(
+    this.walletService.estimateGas(tx).pipe(
       // filter((gasLimit: number) => !this.isProcessing),
     ).subscribe((gasLimit: number) => {
       this.form.get('gasLimit').patchValue(gasLimit);
@@ -257,7 +257,7 @@ export class InteractorComponent implements OnInit {
     const tx: TransactionConfig = {
       to: this.contract.options.address,
       data: m.encodeABI(),
-      from: this._walletService.account.address,
+      from: this.walletService.accountAddress,
     };
 
     if (this.selectedFunction.payable) {
@@ -292,17 +292,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this.initContract(addrHash, abiItem);
-  }
-
-  private initContract(addrHash: string, abiItems: AbiItem[]) {
-    this._walletService.w3Call.subscribe((web3: Web3) => {
-      this.contract = new web3.eth.Contract(abiItems, addrHash);
-      this.abiFunctions = getAbiMethods(abiItems);
-    }, err => {
-      this._toastrService.danger('Can\'t initiate contract, check entered data');
-      console.error(`Failed to initiate contract (${addrHash}): ${err}`);
-    });
+    this._initContract(addrHash, abiItem);
   }
 
   useContract(): void {
@@ -329,7 +319,7 @@ export class InteractorComponent implements OnInit {
     }
 
     tx.gas = this.form.get('gasLimit').value;
-    this._walletService.sendTx(tx);
+    this.walletService.sendTx(tx);
   }
 
   onAbiTemplateSelect(ercName: ErcName) {
@@ -341,5 +331,17 @@ export class InteractorComponent implements OnInit {
         emitEvent: true,
       });
     });
+  }
+
+  private _initContract(addrHash: string, abiItems: AbiItem[]) {
+    this.walletService.initContract(addrHash, abiItems).subscribe(
+      (contract) => {
+        this.contract = contract;
+        this.abiFunctions = getAbiMethods(abiItems);
+      }, (err) => {
+        this._toastrService.danger('Can\'t initiate contract, check entered data');
+        console.error(`Failed to initiate contract (${addrHash}): ${err}`);
+      }
+    );
   }
 }

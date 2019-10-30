@@ -11,7 +11,7 @@ import {ThemeColor} from '../utils/enums';
   providedIn: 'root',
 })
 export class LayoutService {
-  isPageLoading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isPageLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   themeColor$: BehaviorSubject<ThemeColor> = new BehaviorSubject<ThemeColor>(ThemeColor.LIGHT);
   themeSettings: ThemeSettings;
   mobileMenuState: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
@@ -30,14 +30,14 @@ export class LayoutService {
   }
 
   toggleLoading() {
-    this.isPageLoading.next(!this.isPageLoading.value);
+    this.isPageLoading$.next(!this.isPageLoading$.value);
   }
 
   onLoading() {
-    this.isPageLoading.next(true);
+    this.isPageLoading$.next(true);
   }
 
   offLoading() {
-    this.isPageLoading.next(false);
+    this.isPageLoading$.next(false);
   }
 }
