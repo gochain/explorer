@@ -10,7 +10,7 @@
           <form
               class="mt-4"
               [formGroup]="privateKeyForm"
-              (submit)="onPrivateKeySubmit()"
+              (submit)="onSubmit()"
           >
             <label for="private-key">Please enter your private key to proceed</label>
             <div class="input-group">
@@ -63,6 +63,16 @@
                   Create Account
                 </button>
               </div>
+            </div>
+            <div class="mt-4">
+              <button
+                  (click)="onSubmit(true)"
+                  type="button"
+                  class="btn btn-outline-primary btn-block"
+                  [disabled]="walletService.isProcessing || !(walletService.metamaskConfigured$ | async)"
+              >
+                Open with Metamask
+              </button>
             </div>
           </form>
           <div class="metamask my-5" *ngIf="!(walletService.metamaskConfigured$ | async)">

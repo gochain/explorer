@@ -133,6 +133,7 @@ export class WalletService {
 
   // used for interaction with chain, only free methods
   private _w3: Web3;
+  private _metamaskw3: Web3;
 
   get w3$(): Observable<Web3> {
     return this.ready$.pipe(
@@ -162,7 +163,6 @@ export class WalletService {
     const metaMaskProvider = new Web3(Web3.givenProvider, null, {transactionConfirmationBlocks: 1});
     const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, {transactionConfirmationBlocks: 1});
     this._w3 = web3Provider;
-    this._walletContext = new PrivateKeyStrategy(web3Provider);
     if (!metaMaskProvider.currentProvider) {
       this._metamaskConfigured$.next(false);
       this._ready$.next(true);
@@ -191,7 +191,7 @@ export class WalletService {
           this._ready$.next(true);
           return;
         }
-        this._walletContext = new MetamaskStrategy(metaMaskProvider);
+        this._metamaskw3 = metaMaskProvider;
         this._metamaskIntalled$.next(true);
         this._metamaskConfigured$.next(true);
         this._ready$.next(true);
@@ -371,7 +371,10 @@ export class WalletService {
   openAccount(privateKey: string = null): Observable<string> {
     this.isProcessing = true;
     return this.ready$.pipe(
-      mergeMap(() => this._walletContext.logIn(privateKey)),
+      mergeMap(() => {
+        this._walletContext = new MetamaskStrategy(privateKey === null ? this._metamaskw3 : this._w3);
+        return this._walletContext.logIn(privateKey);
+      }),
       tap((accountAddress: string) => {
         this.accountAddress = accountAddress;
         this._logged$.next(true);
