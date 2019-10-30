@@ -372,7 +372,7 @@ export class WalletService {
     this.isProcessing = true;
     return this.ready$.pipe(
       mergeMap(() => {
-        this._walletContext = new MetamaskStrategy(privateKey === null ? this._metamaskw3 : this._w3);
+        this._walletContext = privateKey === null ? new MetamaskStrategy(this._metamaskw3) : new PrivateKeyStrategy(this._w3);
         return this._walletContext.logIn(privateKey);
       }),
       tap((accountAddress: string) => {
