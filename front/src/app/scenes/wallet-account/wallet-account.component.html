@@ -1,8 +1,8 @@
-<div class="container" *ngIf="walletService.accountAddress$ | async">
+<div class="container" *ngIf="walletService.accountAddress">
   <div class="card">
     <div class="card-body">
       <div class="card-title"><img src="../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
-      <p>Address: {{walletService.accountAddress$ | async}}</p>
+      <p>Address: {{walletService.accountAddress}}</p>
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
       <p *ngIf="!(walletService.metamaskConfigured$ | async)">
         <button

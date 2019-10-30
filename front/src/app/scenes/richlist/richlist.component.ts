@@ -9,7 +9,7 @@ import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {RichList} from '../../models/rich_list.model';
 import {Address} from '../../models/address.model';
-import {QueryParams} from '../../models/query_params';
+import {IParams, QueryParams} from '../../models/query_params';
 /*UTILS*/
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
 import {META_TITLES} from '../../utils/constants';
@@ -55,7 +55,9 @@ export class RichlistComponent implements OnInit, OnDestroy {
 
   initSub() {
     this._subsArr$.push(this.richListQueryParams.state.pipe(
-      tap(() => this.isLoading = true),
+      tap<IParams>(() => {
+        this.isLoading = true;
+      }),
       flatMap(params => this._commonService.getRichlist(params)),
       filter((data: RichList) => !!data),
     ).subscribe((data: RichList) => {
@@ -66,6 +68,9 @@ export class RichlistComponent implements OnInit, OnDestroy {
       if (data.rankings.length < this.richListQueryParams.limit) {
         this.isMoreDisabled = true;
       }
+      this.isLoading = false;
+      this._layoutService.offLoading();
+    }, (err) => {
       this.isLoading = false;
       this._layoutService.offLoading();
     }));

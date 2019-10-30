@@ -2,7 +2,7 @@
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
 import {BehaviorSubject, forkJoin, Observable, of, throwError} from 'rxjs';
-import {catchError, concatMap, filter, flatMap, map, mergeMap, take, tap} from 'rxjs/operators';
+import {concatMap, filter, map, mergeMap, take, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
@@ -26,6 +26,8 @@ interface IWallet {
   call(tx: TransactionConfig): Observable<string>;
 
   logIn(privateKey: string): Observable<string>;
+
+  logOut(): void;
 }
 
 abstract class Wallet {
@@ -37,6 +39,10 @@ abstract class Wallet {
 
   call(tx: TransactionConfig): Observable<string> {
     return fromPromise(this.w3.eth.call(tx));
+  }
+
+  logOut(): void {
+
   }
 }
 
@@ -60,7 +66,7 @@ class PrivateKeyStrategy extends Wallet implements IWallet {
 
   send(tx: TransactionConfig): Observable<TransactionReceipt> {
     return fromPromise(this.w3.eth.accounts.signTransaction(tx, this.account.privateKey)).pipe(
-      flatMap((signedTx: SignedTransaction) => fromPromise(this.w3.eth.sendSignedTransaction(signedTx.rawTransaction))),
+      mergeMap((signedTx: SignedTransaction) => fromPromise(this.w3.eth.sendSignedTransaction(signedTx.rawTransaction))),
     );
   }
 
@@ -80,6 +86,10 @@ class PrivateKeyStrategy extends Wallet implements IWallet {
     }
     return throwError('Given private key is not valid');
   }
+
+  logOut(): void {
+    this.account = null;
+  }
 }
 
 @Injectable()
@@ -88,12 +98,18 @@ export class WalletService {
 
   // ACCOUNT INFO
   accountAddress: string;
-  accountAddress$: BehaviorSubject<string> = new BehaviorSubject<string>(null);
   accountBalance: string;
 
   receipt: TransactionReceipt;
 
-  metamaskIntalled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private _metamaskIntalled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  get metamaskIntalled$(): Observable<boolean> {
+    return this.ready$.pipe(
+      mergeMap(() => this._metamaskIntalled$),
+      filter(v => v !== null),
+    );
+  }
 
   get metamaskConfigured$(): Observable<boolean> {
     return this.ready$.pipe(
@@ -104,9 +120,15 @@ export class WalletService {
 
   private _metamaskConfigured$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(null);
 
-  logged$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private _logged$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  // used for paid
+  get logged$(): Observable<boolean> {
+    return this.ready$.pipe(
+      mergeMap(() => this._logged$),
+    );
+  }
+
+// used for paid
   private _walletContext: IWallet;
 
   // used for interaction with chain, only free methods
@@ -149,7 +171,7 @@ export class WalletService {
     web3Provider.eth.net.getId((web3err, web3NetID) => {
       if (web3err) {
         this._toastrService.danger('Metamask is enabled but can\'t get Gochain network id');
-        this.metamaskIntalled$.next(true);
+        this._metamaskIntalled$.next(true);
         this._metamaskConfigured$.next(false);
         this._ready$.next(true);
         return;
@@ -157,20 +179,20 @@ export class WalletService {
       metaMaskProvider.eth.net.getId((metamaskErr, metamask3NetID) => {
         if (metamaskErr) {
           this._toastrService.danger('Metamask is enabled but can\'t get network id from Metamask');
-          this.metamaskIntalled$.next(true);
+          this._metamaskIntalled$.next(true);
           this._metamaskConfigured$.next(false);
           this._ready$.next(true);
           return;
         }
         if (web3NetID !== metamask3NetID) {
           this._toastrService.warning('Metamask is enabled but networks are different');
-          this.metamaskIntalled$.next(true);
+          this._metamaskIntalled$.next(true);
           this._metamaskConfigured$.next(false);
           this._ready$.next(true);
           return;
         }
         this._walletContext = new MetamaskStrategy(metaMaskProvider);
-        this.metamaskIntalled$.next(true);
+        this._metamaskIntalled$.next(true);
         this._metamaskConfigured$.next(true);
         this._ready$.next(true);
       });
@@ -323,7 +345,7 @@ export class WalletService {
   sendTx(tx: TransactionConfig): void {
     this.isProcessing = true;
     this.ready$.pipe(
-      flatMap(() => this._walletContext.send(tx)),
+      mergeMap(() => this._walletContext.send(tx)),
     ).subscribe((receipt: TransactionReceipt) => {
       this.receipt = receipt;
       this.getBalance();
@@ -349,11 +371,10 @@ export class WalletService {
   openAccount(privateKey: string = null): Observable<string> {
     this.isProcessing = true;
     return this.ready$.pipe(
-      flatMap(() => this._walletContext.logIn(privateKey)),
+      mergeMap(() => this._walletContext.logIn(privateKey)),
       tap((accountAddress: string) => {
         this.accountAddress = accountAddress;
-        this.accountAddress$.next(accountAddress);
-        this.logged$.next(true);
+        this._logged$.next(true);
         this.isProcessing = false;
         this.getBalance();
       }, (err) => {
@@ -365,7 +386,8 @@ export class WalletService {
   closeAccount(): void {
     this.accountBalance = null;
     this.accountAddress = null;
-    this.logged$.next(false);
+    this._logged$.next(false);
+    this._walletContext.logOut();
     this._router.navigate(['wallet']);
   }
 

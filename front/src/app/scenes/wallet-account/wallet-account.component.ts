@@ -31,12 +31,11 @@ export class WalletAccountComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._metaService.setTitle(META_TITLES.WALLET.title);
-    this.walletService.accountAddress$.pipe(
-      filter<string>(v => !!v),
+    this._subsArr$.push(this.walletService.logged$.pipe(
       flatMap(() => this._commonService.getAddress(this.walletService.accountAddress)),
     ).subscribe((addr: Address) => {
       this.accountAddr = addr;
-    });
+    }));
   }
 
   ngOnDestroy(): void {
