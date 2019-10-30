@@ -2,12 +2,12 @@ package backend
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
 	"time"
-	"encoding/hex"
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
@@ -210,20 +210,24 @@ func (self *Backend) GetContract(contractAddress string) (*models.Contract, erro
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
 	normalizedAddress := common.HexToAddress(contractAddress).Hex()
-	contract, err := self.mongo.getContract(normalizedAddress)		
-	if err != nil || contract==nil {
-		contractDataArray, err := self.CodeAt(context.Background(), normalizedAddress)
-		if err != nil {
-			return nil, err
-		}
-		contractData := string(contractDataArray[:])
-		if contractData == "" {
-			return nil, fmt.Errorf("invalid contract: %s", contractAddress)
-		}
-		byteCode := hex.EncodeToString(contractDataArray)
-		self.ImportContract(normalizedAddress, byteCode)
-		contract, err = self.mongo.getContract(normalizedAddress)
+	contract, err := self.mongo.getContract(normalizedAddress)
+	if contract != nil || err != nil {
+		return contract, err
 	}
+	contractDataArray, err := self.CodeAt(context.Background(), normalizedAddress)
+	if err != nil {
+		return nil, err
+	}
+	contractData := string(contractDataArray[:])
+	if contractData == "" {
+		return nil, fmt.Errorf("invalid contract: %s", contractAddress)
+	}
+	byteCode := hex.EncodeToString(contractDataArray)
+	err = self.ImportContract(normalizedAddress, byteCode)
+	if err != nil {
+		return nil, err
+	}
+	contract, err = self.mongo.getContract(normalizedAddress)
 	return contract, err
 
 }
