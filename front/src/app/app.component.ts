@@ -10,6 +10,6 @@ import { Subscription } from 'rxjs';
 })
 @AutoUnsubscribe('_subsArr$')
 export class AppComponent {
-  constructor(private _layoutService: LayoutService) {
+  constructor(public layoutService: LayoutService) {
   }
 }
