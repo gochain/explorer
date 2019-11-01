@@ -26,7 +26,6 @@ import (
 
 func main() {
 	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
 	logger, err := cfg.Build()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)

@@ -6,14 +6,13 @@ require (
 	github.com/OneOfOne/xxhash v1.2.5 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190712234253-ed1100a1c015 // indirect
-	github.com/blendle/zapdriver v1.1.6
+	github.com/blendle/zapdriver v1.2.1
 	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
-	github.com/go-chi/chi v4.0.1+incompatible
+	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
 	github.com/go-ini/ini v1.46.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
@@ -34,7 +33,6 @@ require (
 	github.com/onsi/ginkgo v1.10.0 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
@@ -45,11 +43,9 @@ require (
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/urfave/cli v1.21.0
 	go.opencensus.io v0.22.1 // indirect
-	go.uber.org/atomic v1.4.0 // indirect
-	go.uber.org/multierr v1.1.0 // indirect
-	go.uber.org/zap v1.10.0
+	go.uber.org/multierr v1.2.0 // indirect
+	go.uber.org/zap v1.11.0
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7 // indirect
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3 // indirect
 	gopkg.in/ini.v1 v1.46.0 // indirect

@@ -52,9 +52,8 @@ func parseGetParam(r *http.Request, w http.ResponseWriter, params Params) bool {
 
 func main() {
 	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
 	var err error
-	logger, err = cfg.Build()
+	logger, err = zapdriver.NewProduction()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
 		os.Exit(1)
