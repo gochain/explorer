@@ -52,9 +52,8 @@ func parseGetParam(r *http.Request, w http.ResponseWriter, params Params) bool {
 
 func main() {
 	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
 	var err error
-	logger, err = cfg.Build()
+	logger, err = zapdriver.NewProduction()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
 		os.Exit(1)
@@ -744,31 +743,38 @@ func getContractsList(w http.ResponseWriter, r *http.Request) {
 var _ middleware.LogFormatter = &zapLogFormatter{}
 
 type zapLogFormatter struct {
-	*zap.Logger
+	lgr *zap.Logger
 }
 
+// NewLogEntry gathers information from the request, logs 'Request started'
+// and returns a log entry which stores the info to log again later with
+// the additional response info.
 func (z *zapLogFormatter) NewLogEntry(r *http.Request) middleware.LogEntry {
-	lgr := z.With(zapdriver.HTTP(NewHTTP(r, nil)))
+	h := NewHTTP(r, nil)
+	lgr := z.lgr
 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
 		lgr = lgr.With(zap.String("requestID", reqID))
 	}
-	lgr.Info("Request started")
-	return &zapLogEntry{lgr}
+	lgr.Info("Request started", zapdriver.HTTP(h))
+	return &zapLogEntry{lgr: lgr, http: h}
 }
 
 var _ middleware.LogEntry = &zapLogEntry{}
 
 type zapLogEntry struct {
-	*zap.Logger
+	lgr  *zap.Logger
+	http *zapdriver.HTTPPayload
 }
 
 func (z *zapLogEntry) Write(status, bytes int, elapsed time.Duration) {
-	z.Info("Request complete", zap.Int("status", status),
-		zap.Int("responseSize", bytes), zap.Duration("elapsed", elapsed))
+	z.http.Status = status
+	z.http.ResponseSize = strconv.Itoa(bytes)
+	z.http.Latency = fmt.Sprintf("%.9fs", elapsed.Seconds())
+	z.lgr.Info("Request complete", zapdriver.HTTP(z.http))
 }
 
 func (z *zapLogEntry) Panic(v interface{}, stack []byte) {
-	z.Logger = z.With(zap.String("stack", string(stack)), zap.String("panic", fmt.Sprintf("%+v", v)))
+	z.lgr = z.lgr.With(zap.String("stack", string(stack)), zap.String("panic", fmt.Sprintf("%+v", v)))
 }
 
 // NewHTTP returns a new HTTPPayload struct, based on the passed
