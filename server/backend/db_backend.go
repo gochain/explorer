@@ -174,6 +174,34 @@ func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (
 
 }
 
+func (self *MongoBackend) deleteBlockByNumber(bnum int64) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
+}
+
+func (self *MongoBackend) deleteBlockByHash(hash string) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"BlockHash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_hash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
+}
+
 func (self *MongoBackend) UpdateActiveAddress(address string) error {
 	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
 	return err

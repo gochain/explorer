@@ -686,7 +686,7 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 	bnum, err := strconv.ParseInt(param, 10, 0)
 	var block *models.Block
 	if err != nil {
-		block, err = backendInstance.GetBlockByHash(param)
+		block, err = backendInstance.GetBlockByHash(r.Context(), param)
 	} else {
 		block, err = backendInstance.GetBlockByNumber(r.Context(), bnum)
 	}
@@ -703,7 +703,7 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 
 func checkBlockExist(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
-	block, err := backendInstance.GetBlockByHash(hash)
+	block, err := backendInstance.GetBlockByHash(r.Context(), hash)
 	if err != nil {
 		logger.Error("Failed to get block", zap.String("hash", hash), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
