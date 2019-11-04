@@ -145,15 +145,6 @@ func main() {
 	logger.Info("Stopping")
 }
 
-func appendIfMissing(slice []string, i string) []string {
-	for _, ele := range slice {
-		if ele == i {
-			return slice
-		}
-	}
-	return append(slice, i)
-}
-
 func listener(ctx context.Context, importer *backend.Backend) {
 	var prevHeader int64
 	t := time.NewTicker(time.Second * 1)
@@ -504,8 +495,8 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 				// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
 				lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
-				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
+				tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.To.String())
+				tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.From.String())
 				// }
 			}
 			for index, tokenHolderAddress := range tokenHoldersList {

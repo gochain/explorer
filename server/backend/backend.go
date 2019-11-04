@@ -487,3 +487,7 @@ func (self *Backend) DeleteBlockByHash(hash string) error {
 func (self *Backend) DeleteBlockByNumber(bnum int64) error {
 	return self.mongo.deleteBlockByNumber(bnum)
 }
+
+func (self *Backend) DeleteContract(contractAddress string) error {
+	return self.mongo.deleteContract(contractAddress)
+}

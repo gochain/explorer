@@ -377,6 +377,25 @@ func (self *MongoBackend) importContract(contractAddress string, byteCode string
 	return nil
 }
 
+func (self *MongoBackend) deleteContract(contractAddress string) error {
+	//delete internal transactions
+	_, err := self.mongo.C("InternalTransactions").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove internal transactions: %v", err)
+	}
+	// deleting all token holders
+	_, err = self.mongo.C("TokensHolders").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove token holders: %v", err)
+	}
+	// deleting contract
+	_, err = self.mongo.C("Contracts").RemoveAll(bson.M{"address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove contract: %v", err)
+	}
+	return nil
+}
+
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) (*models.Block, error) {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)

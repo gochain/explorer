@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
-	"log"
+	"math/big"
 	"os"
 	"os/signal"
 	"strconv"
@@ -12,20 +13,24 @@ import (
 	"github.com/blendle/zapdriver"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
+	"github.com/gochain-io/explorer/server/tokens"
+	"github.com/gochain-io/explorer/server/utils"
+	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/web3"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 )
 
 var (
-	verbose bool
+	logger *zap.Logger
 )
 
 const (
-	pkVarName      = "WEB3_PRIVATE_KEY"
-	addrVarName    = "WEB3_ADDRESS"
-	networkVarName = "WEB3_NETWORK"
-	rpcURLVarName  = "WEB3_RPC_URL"
+	pkVarName       = "WEB3_PRIVATE_KEY"
+	addrVarName     = "WEB3_ADDRESS"
+	networkVarName  = "WEB3_NETWORK"
+	rpcURLVarName   = "WEB3_RPC_URL"
+	blockRangeLimit = 10000
 )
 
 func main() {
@@ -58,11 +63,6 @@ func main() {
 			Destination: &rpcUrl,
 			EnvVar:      rpcURLVarName,
 			Hidden:      false},
-		cli.BoolFlag{
-			Name:        "verbose",
-			Usage:       "Enable verbose logging",
-			Destination: &verbose,
-			Hidden:      false},
 		cli.StringFlag{
 			Name:        "mongo-url, m",
 			Value:       "127.0.0.1:27017",
@@ -81,8 +81,9 @@ func main() {
 	var network web3.Network
 	var backendInstance *backend.Backend
 	app.Before = func(*cli.Context) error {
-		cfg := zapdriver.NewProductionConfig()
-		logger, err := cfg.Build()
+		var err error
+		cfg := zapdriver.NewDevelopmentConfig()
+		logger, err = cfg.Build()
 		if err != nil {
 			fatalExit(err)
 		}
@@ -133,13 +134,13 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal("Fatal error", zap.Error(err))
+		fatalExit(err)
 	}
-	log.Println("Stopping")
+	logger.Info("Done")
 }
 
 func fatalExit(err error) {
-	fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+	logger.Error("ERROR:", zap.Error(err))
 	os.Exit(1)
 }
 
@@ -169,13 +170,8 @@ func getNetwork(name, rpcURL string, testnet bool) web3.Network {
 		if !ok {
 			fatalExit(fmt.Errorf("Unrecognized network %q", name))
 		}
-		if verbose {
-			log.Printf("Network: %v", name)
-		}
 	}
-	if verbose {
-		log.Println("Network Info:", network)
-	}
+	logger.Info("Network", zap.String("network", name))
 	return network
 }
 
@@ -184,20 +180,20 @@ func ReloadBlock(ctx context.Context, backendInstance *backend.Backend, blockID 
 	bnum, err := strconv.ParseInt(blockID, 10, 0)
 	var block *models.Block
 	if err != nil {
-		fmt.Printf("Deleting block %s\n", blockID)
+		logger.Info("Deleting block ", zap.String("number", blockID))
 		err = backendInstance.DeleteBlockByHash(blockID)
 		if err != nil {
 			fatalExit(err)
 		}
-		fmt.Printf("Reimporting block %s\n", blockID)
+		logger.Info("Reimporting block ", zap.String("number", blockID))
 		block, err = backendInstance.GetBlockByHash(ctx, blockID)
 	} else {
-		fmt.Printf("Deleting block %d\n", bnum)
+		logger.Info("Deleting block ", zap.String("number", blockID))
 		err = backendInstance.DeleteBlockByNumber(bnum)
 		if err != nil {
 			fatalExit(err)
 		}
-		fmt.Printf("Reimporting block %d\n", bnum)
+		logger.Info("Reimporting block ", zap.String("number", blockID))
 		block, err = backendInstance.GetBlockByNumber(ctx, bnum)
 	}
 	if err != nil {
@@ -205,16 +201,19 @@ func ReloadBlock(ctx context.Context, backendInstance *backend.Backend, blockID 
 	} else if block == nil {
 		fatalExit(fmt.Errorf("Block not found"))
 	}
-	log.Printf("Block:%v", block)
+	logger.Info("Block reimported", zap.String("number", blockID))
 }
 
 //ReloadTransaction removes a transaction, cleans DB and reimport TX
 func ReloadTransaction(ctx context.Context, backendInstance *backend.Backend, txHash string) {
 	tx, err := backendInstance.GetTransactionByHash(ctx, txHash)
 	if err != nil || tx == nil {
+		//it's impossible to reload transaction that has not been imported since Goclient doesn't show a block number in a transaction object (but should)
+		//https://github.com/gochain/gochain/blob/83b0633553802c066e5073f969ac740c7c6cb3bb/core/types/transaction.go#L47-L73
+		//but API has it - https://github.com/ethereum/wiki/wiki/JavaScript-API#web3ethgettransaction (BlockNumber)
 		fatalExit(fmt.Errorf("Failed to get transaction:%s, %v", txHash, err))
 	}
-	fmt.Printf("Deleting block %d\n", tx.BlockNumber)
+	logger.Info("Deleting block ", zap.Int64("number", tx.BlockNumber))
 	err = backendInstance.DeleteBlockByNumber(tx.BlockNumber)
 	if err != nil {
 		fatalExit(err)
@@ -226,6 +225,81 @@ func ReloadTransaction(ctx context.Context, backendInstance *backend.Backend, tx
 }
 
 //ReloadContract removes contract from db, delete all tokens and transactions and reimports everything
-func ReloadContract(context.Context, *backend.Backend, string) {
-
+func ReloadContract(ctx context.Context, backendInstance *backend.Backend, address string) {
+	if !common.IsHexAddress(address) {
+		fatalExit(fmt.Errorf("invalid hex address: %s", address))
+	}
+	addr := common.HexToAddress(address)
+	normalizedAddress := addr.Hex()
+	err := backendInstance.DeleteContract(normalizedAddress)
+	if err != nil {
+		fatalExit(fmt.Errorf("failed to delete contract %v", err))
+	}
+	balance, err := backendInstance.Balance(ctx, addr)
+	if err != nil {
+		fatalExit(fmt.Errorf("failed to get balance"))
+	}
+	currentBlock, err := backendInstance.GetLatestBlockNumber(ctx)
+	if err != nil {
+		logger.Error("Update Addresses: Failed to get latest block number", zap.Error(err))
+	}
+	contractDataArray, err := backendInstance.CodeAt(ctx, normalizedAddress)
+	contractData := string(contractDataArray[:])
+	var tokenDetails = &tokens.TokenDetails{TotalSupply: big.NewInt(0)}
+	contract := false
+	if contractData != "" {
+		contract = true
+		byteCode := hex.EncodeToString(contractDataArray)
+		if err := backendInstance.ImportContract(normalizedAddress, byteCode); err != nil {
+			fatalExit(fmt.Errorf("failed to import contract: %v", err))
+		}
+		contractFromDB, err := backendInstance.GetAddressByHash(ctx, normalizedAddress)
+		if err != nil {
+			fatalExit(fmt.Errorf("failed to get contract from DB: %v", err))
+		}
+		fromBlock, err := backendInstance.GetContractBlock(normalizedAddress)
+		tokenDetails, err = backendInstance.GetTokenDetails(normalizedAddress, byteCode)
+		if err != nil {
+			fatalExit(fmt.Errorf("failed to get token details: %v", err))
+		}
+		contractFromDB.TokenName = tokenDetails.Name
+		contractFromDB.TokenSymbol = tokenDetails.Symbol
+		tokenTransfers, err := backendInstance.GetTransferEvents(ctx, tokenDetails, fromBlock, blockRangeLimit)
+		if err != nil {
+			fatalExit(fmt.Errorf("failed to get internal txs: %v", err))
+		}
+		var tokenHoldersList []string
+		for _, itx := range tokenTransfers {
+			logger.Debug("Internal Transaction", zap.Stringer("from", itx.From),
+				zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
+			if _, err := backendInstance.ImportTransferEvent(ctx, normalizedAddress, itx); err != nil {
+				fatalExit(fmt.Errorf("failed to import internal tx: %v", err))
+			}
+			logger.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
+				zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
+			tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.To.String())
+			tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.From.String())
+		}
+		for index, tokenHolderAddress := range tokenHoldersList {
+			if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
+				continue
+			}
+			logger.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
+				zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
+			tokenHolder, err := backendInstance.GetTokenBalance(normalizedAddress, tokenHolderAddress)
+			if err != nil {
+				logger.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))
+				fatalExit(fmt.Errorf("failed to get balance"))
+			}
+			if _, err := backendInstance.ImportTokenHolder(normalizedAddress, tokenHolderAddress, tokenHolder, contractFromDB); err != nil {
+				fatalExit(fmt.Errorf("failed to import token holder: %v", err))
+			}
+		}
+	}
+	// lgr.Info("Update Addresses: updated address", zap.Stringer("balance", balance))
+	_, err = backendInstance.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
+	if err != nil {
+		fatalExit(fmt.Errorf("failed to import address %v", err))
+	}
+	logger.Info("Address successfully updated", zap.String("address", normalizedAddress))
 }
