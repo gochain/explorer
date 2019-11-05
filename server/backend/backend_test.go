@@ -164,7 +164,7 @@ func TestBlockByHash(t *testing.T) {
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
 
-	blockFromDbByHash, err := testBackend.GetBlockByHash(block.Header().Hash().Hex())
+	blockFromDbByHash, err := testBackend.GetBlockByHash(context.Background(), block.Header().Hash().Hex())
 	if err != nil {
 		t.Fatal(err)
 	}

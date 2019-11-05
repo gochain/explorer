@@ -296,7 +296,7 @@ func ReloadContract(ctx context.Context, backendInstance *backend.Backend, addre
 			}
 		}
 	}
-	// lgr.Info("Update Addresses: updated address", zap.Stringer("balance", balance))
+	logger.Info("Update Addresses: updated address", zap.String("Address", normalizedAddress), zap.Stringer("balance", balance))
 	_, err = backendInstance.ImportAddress(normalizedAddress, balance, tokenDetails, contract, currentBlock)
 	if err != nil {
 		fatalExit(fmt.Errorf("failed to import address %v", err))
