@@ -302,6 +302,9 @@ func (rpc *TokenClient) GetTransferEvents(ctx context.Context, tokenDetails *Tok
 		latestBlockNumber = num.Int64()
 	}
 	contractBlock -= numOfBlocksPerRequest
+	if contractBlock < 0 {
+		contractBlock = 0
+	}
 	numOfCycles := int((latestBlockNumber - contractBlock) / numOfBlocksPerRequest)
 	var transferEvents []*TransferEvent
 	for i := 0; i <= numOfCycles; i++ {
