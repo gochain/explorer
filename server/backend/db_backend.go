@@ -35,7 +35,8 @@ type MongoBackend struct {
 // New create new rpc client with given url
 func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
-		Addrs: []string{host},
+		Addrs:   []string{host},
+		Timeout: 10 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mongo: %v", err)
