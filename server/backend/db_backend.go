@@ -36,7 +36,7 @@ type MongoBackend struct {
 func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
 		Addrs:   []string{host},
-		Timeout: 10 * time.Second,
+		Timeout: 120 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mongo: %v", err)
