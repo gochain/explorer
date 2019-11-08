@@ -485,7 +485,7 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 		lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", tokenTransfersFromDB),
 			zap.Int("rpc", len(tokenTransfers)))
 		if len(tokenTransfers) != tokenTransfersFromDB {
-			var tokenHoldersList []string
+			tokenHoldersList := make(map[string]struct{})
 			for _, itx := range tokenTransfers {
 				lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
@@ -495,16 +495,16 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 				// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
 				lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-				tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.To.String())
-				tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.From.String())
+				tokenHoldersList[itx.To.String()] = struct{}{}
+				tokenHoldersList[itx.From.String()] = struct{}{}
 				// }
 			}
-			for index, tokenHolderAddress := range tokenHoldersList {
+			for tokenHolderAddress := range tokenHoldersList {
 				if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
 					continue
 				}
 				lgr.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
-					zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
+					zap.Int("total", len(tokenHoldersList)))
 				tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
 				if err != nil {
 					lgr.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))

@@ -14,7 +14,6 @@ import (
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
-	"github.com/gochain-io/explorer/server/utils"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/web3"
 	"github.com/urfave/cli"
@@ -274,7 +273,7 @@ func ReloadContract(ctx context.Context, backendInstance *backend.Backend, addre
 		if err != nil {
 			fatalExit(fmt.Errorf("failed to get internal txs: %v", err))
 		}
-		var tokenHoldersList []string
+		tokenHoldersList := make(map[string]struct{})
 		for _, itx := range tokenTransfers {
 			logger.Debug("Internal Transaction", zap.Stringer("from", itx.From),
 				zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
@@ -283,15 +282,15 @@ func ReloadContract(ctx context.Context, backendInstance *backend.Backend, addre
 			}
 			logger.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
 				zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-			tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.To.String())
-			tokenHoldersList = utils.AppendIfMissing(tokenHoldersList, itx.From.String())
+			tokenHoldersList[itx.To.String()] = struct{}{}
+			tokenHoldersList[itx.From.String()] = struct{}{}
 		}
-		for index, tokenHolderAddress := range tokenHoldersList {
+		for tokenHolderAddress := range tokenHoldersList {
 			if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
 				continue
 			}
 			logger.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
-				zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
+				zap.Int("total", len(tokenHoldersList)))
 			tokenHolder, err := backendInstance.GetTokenBalance(normalizedAddress, tokenHolderAddress)
 			if err != nil {
 				logger.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))
