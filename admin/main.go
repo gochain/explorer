@@ -244,6 +244,9 @@ func ReloadContract(ctx context.Context, backendInstance *backend.Backend, addre
 		logger.Error("Update Addresses: Failed to get latest block number", zap.Error(err))
 	}
 	contractDataArray, err := backendInstance.CodeAt(ctx, normalizedAddress)
+	if err != nil {
+		fatalExit(fmt.Errorf("failed to get code %v", err))
+	}
 	contractData := string(contractDataArray[:])
 	var tokenDetails = &tokens.TokenDetails{TotalSupply: big.NewInt(0)}
 	contract := false
@@ -258,6 +261,9 @@ func ReloadContract(ctx context.Context, backendInstance *backend.Backend, addre
 			fatalExit(fmt.Errorf("failed to get contract from DB: %v", err))
 		}
 		fromBlock, err := backendInstance.GetContractBlock(normalizedAddress)
+		if err != nil {
+			fatalExit(fmt.Errorf("failed to get contract block: %v", err))
+		}
 		tokenDetails, err = backendInstance.GetTokenDetails(normalizedAddress, byteCode)
 		if err != nil {
 			fatalExit(fmt.Errorf("failed to get token details: %v", err))
