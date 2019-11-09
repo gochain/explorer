@@ -265,10 +265,21 @@ func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) (*model
 	return fillExtra(block), nil
 }
 
-func (self *Backend) GetBlockByHash(hash string) (*models.Block, error) {
+func (self *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Block, error) {
 	b, err := self.mongo.getBlockByHash(hash)
 	if err != nil {
 		return nil, err
+	}
+	if b == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.String("block", hash))
+		blockEth, err := self.goClient.BlockByHash(ctx, common.HexToHash(hash))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
+		}
+		b, err = self.ImportBlock(ctx, blockEth)
+		if err != nil {
+			return nil, fmt.Errorf("failed to import block: %v", err)
+		}
 	}
 	return fillExtra(b), nil
 }
@@ -469,4 +480,14 @@ func fillExtraLight(block *models.LightBlock) *models.LightBlock {
 	extra := []byte(block.ExtraData)
 	block.Extra.Vanity = string(clique.ExtraVanity(extra))
 	return block
+}
+func (self *Backend) DeleteBlockByHash(hash string) error {
+	return self.mongo.deleteBlockByHash(hash)
+}
+func (self *Backend) DeleteBlockByNumber(bnum int64) error {
+	return self.mongo.deleteBlockByNumber(bnum)
+}
+
+func (self *Backend) DeleteContract(contractAddress string) error {
+	return self.mongo.deleteContract(contractAddress)
 }

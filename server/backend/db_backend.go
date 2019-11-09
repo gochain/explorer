@@ -35,7 +35,8 @@ type MongoBackend struct {
 // New create new rpc client with given url
 func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
-		Addrs: []string{host},
+		Addrs:   []string{host},
+		Timeout: 120 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mongo: %v", err)
@@ -172,6 +173,34 @@ func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (
 	}
 	return b, nil
 
+}
+
+func (self *MongoBackend) deleteBlockByNumber(bnum int64) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
+}
+
+func (self *MongoBackend) deleteBlockByHash(hash string) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"BlockHash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_hash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
 }
 
 func (self *MongoBackend) UpdateActiveAddress(address string) error {
@@ -345,6 +374,25 @@ func (self *MongoBackend) importContract(contractAddress string, byteCode string
 	_, err := self.mongo.C("Contracts").Upsert(bson.M{"address": contractAddress}, bson.M{"$set": bson.M{"address": contractAddress, "byte_code": byteCode, "created_at": time.Now()}})
 	if err != nil {
 		return fmt.Errorf("failed to upsert contract: %v", err)
+	}
+	return nil
+}
+
+func (self *MongoBackend) deleteContract(contractAddress string) error {
+	//delete internal transactions
+	_, err := self.mongo.C("InternalTransactions").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove internal transactions: %v", err)
+	}
+	// deleting all token holders
+	_, err = self.mongo.C("TokensHolders").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove token holders: %v", err)
+	}
+	// deleting contract
+	_, err = self.mongo.C("Contracts").RemoveAll(bson.M{"address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove contract: %v", err)
 	}
 	return nil
 }
