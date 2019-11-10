@@ -141,6 +141,8 @@ func (self *MongoBackend) createIndexes() error {
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true}},
 		{c: "Stats", index: mgo.Index{Key: []string{"-updated_at"}, Background: true, Sparse: true}},
 		{c: "Contracts", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "ExpandedTransactions", index: mgo.Index{Key: []string{"address", "tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "ExpandedTransactions", index: mgo.Index{Key: []string{"created_at"}, Background: true, Sparse: true}},
 	} {
 		if err := self.mongo.C(cIdx.c).EnsureIndex(cIdx.index); err != nil {
 			return fmt.Errorf("failed to create index %d for collection %q: %v", i, cIdx.c, err)
