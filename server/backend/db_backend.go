@@ -210,6 +210,12 @@ func (self *MongoBackend) UpdateActiveAddress(address string) error {
 	return err
 }
 
+func (self *MongoBackend) insertTransactionsByAddress(ctx context.Context, address, txHash string, createdAt time.Time) error {
+	_, err := self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": address, "tx_hash": txHash},
+		bson.M{"address": address, "tx_hash": txHash, "created_at": createdAt})
+	return err
+}
+
 func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) error {
 	lgr := self.Lgr.With(zap.Stringer("tx", tx.Hash()))
 	lgr.Debug("Importing tx")
@@ -238,6 +244,15 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 
 	if _, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
 		return fmt.Errorf("failed to upsert tx: %v", err)
+	}
+
+	err = self.insertTransactionsByAddress(ctx, transaction.From, transaction.TxHash, transaction.CreatedAt)
+	if err != nil {
+		return err
+	}
+	err = self.insertTransactionsByAddress(ctx, transaction.To, transaction.TxHash, transaction.CreatedAt)
+	if err != nil {
+		return err
 	}
 
 	if err := self.UpdateActiveAddress(toAddress); err != nil {
