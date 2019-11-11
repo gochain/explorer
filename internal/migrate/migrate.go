@@ -1,5 +1,5 @@
 //from https://raw.githubusercontent.com/appleboy/mgo-migrate/master/migrate.go had to replace imports
-package utils
+package migrate
 
 import (
 	"context"

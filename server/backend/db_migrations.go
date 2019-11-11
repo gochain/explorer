@@ -3,8 +3,9 @@ package backend
 import (
 	"context"
 
+	"github.com/gochain-io/explorer/internal/migrate"
 	"github.com/gochain-io/explorer/server/models"
-	migrate "github.com/gochain-io/explorer/server/utils"
+
 	"go.uber.org/zap"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
