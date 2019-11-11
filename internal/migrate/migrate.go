@@ -1,4 +1,4 @@
-//from https://raw.githubusercontent.com/appleboy/mgo-migrate/master/migrate.go had to replace imports
+//from https://github.com/appleboy/mgo-migrate/blob/cf3175c07b73af41ad5686843b3acf19cbc880b7/migrate.go had to replace imports
 package migrate
 
 import (
