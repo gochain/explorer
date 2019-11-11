@@ -19,6 +19,7 @@ func (self *MongoBackend) Migrate(ctx context.Context, lgr *zap.Logger) error {
 			var tx *models.Transaction
 			find := d.C("Transactions").Find(bson.M{})
 			txs := find.Iter()
+			defer txs.Close()
 			for txs.Next(&tx) {
 				if ctx.Err() != nil {
 					return ctx.Err()
