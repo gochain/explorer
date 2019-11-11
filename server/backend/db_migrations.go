@@ -14,7 +14,7 @@ import (
 func (self *MongoBackend) Migrate(ctx context.Context, lgr *zap.Logger) error {
 	m := migrate.New(ctx, self.mongo, lgr, migrate.DefaultOptions, []*migrate.Migration{{
 		ID:      1,
-		Comment: "Creating ExpandedTransactions collection",
+		Comment: "Creating TransactionsByAddress collection",
 		Migrate: func(ctx context.Context, d *mgo.Database, lgr *zap.Logger) error {
 			counter := 0
 			var tx *models.Transaction
@@ -29,12 +29,12 @@ func (self *MongoBackend) Migrate(ctx context.Context, lgr *zap.Logger) error {
 				if (counter % 1000) == 0 {
 					lgr.Info("Processed:", zap.Int("records:", counter))
 				}
-				_, err := self.mongo.C("ExpandedTransactions").Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
+				_, err := self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
 					bson.M{"address": tx.From, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
 				if err != nil {
 					return err
 				}
-				_, err = self.mongo.C("ExpandedTransactions").Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
+				_, err = self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
 					bson.M{"address": tx.To, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
 				if err != nil {
 					return err
