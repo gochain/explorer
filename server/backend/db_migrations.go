@@ -38,7 +38,7 @@ func (self *MongoBackend) Migrate(ctx context.Context, lgr *zap.Logger) error {
 					return err
 				}
 			}
-			return nil
+			return txs.Err()
 		},
 		Rollback: func(ctx context.Context, s *mgo.Database, lgr *zap.Logger) error {
 			return nil
