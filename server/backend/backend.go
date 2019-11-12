@@ -493,5 +493,5 @@ func (self *Backend) DeleteContract(contractAddress string) error {
 }
 
 func (self *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) error {
-	return self.mongo.Migrate(ctx, lgr)
+	return self.mongo.migrate(ctx, lgr)
 }

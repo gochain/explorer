@@ -19,14 +19,6 @@ type RollbackFunc func(context.Context, *mgo.Database, *zap.Logger) error
 // InitSchemaFunc is the func signature for initializing the schema.
 type InitSchemaFunc func(*mgo.Database) error
 
-// Options define options for all migrations.
-type Options struct {
-	// TableName is the migration table.
-	TableName string
-	// IDColumnName is the name of column where the migration id will be stored.
-	IDColumnName string
-}
-
 // Migration represents a database migration (a modification to be made on the database).
 type Migration struct {
 	// ID is the migration identifier. Usually a timestamp like "201601021504".
@@ -41,22 +33,16 @@ type Migration struct {
 
 // Migrate represents a collection of all migrations of a database schema.
 type Migrate struct {
-	database   *mgo.Database
-	collection *mgo.Collection
-	options    *Options
-	migrations []*Migration
-	initSchema InitSchemaFunc
-	ctx        context.Context
-	lgr        *zap.Logger
+	database            *mgo.Database
+	collection          *mgo.Collection
+	migrationCollection string
+	migrations          []*Migration
+	initSchema          InitSchemaFunc
+	ctx                 context.Context
+	lgr                 *zap.Logger
 }
 
 var (
-	// DefaultOptions can be used if you don't want to think about options.
-	DefaultOptions = &Options{
-		TableName:    "Migrations",
-		IDColumnName: "id",
-	}
-
 	// ErrRollbackImpossible is returned when trying to rollback a migration
 	// that has no rollback function.
 	ErrRollbackImpossible = errors.New("It's impossible to rollback this migration")
@@ -73,15 +59,15 @@ var (
 )
 
 // New returns a new Gormigrate.
-func New(ctx context.Context, db *mgo.Database, lgr *zap.Logger, options *Options, migrations []*Migration) *Migrate {
-	collection := db.C(options.TableName)
+func New(ctx context.Context, db *mgo.Database, lgr *zap.Logger, migrationCollection string, migrations []*Migration) *Migrate {
+	collection := db.C(migrationCollection)
 	return &Migrate{
-		database:   db,
-		collection: collection,
-		options:    options,
-		migrations: migrations,
-		ctx:        ctx,
-		lgr:        lgr,
+		database:            db,
+		collection:          collection,
+		migrationCollection: migrationCollection,
+		migrations:          migrations,
+		ctx:                 ctx,
+		lgr:                 lgr,
 	}
 }
 
@@ -94,17 +80,19 @@ func (m *Migrate) InitSchema(initSchema InitSchemaFunc) {
 }
 
 // Migrate executes all migrations that did not run yet.
-func (m *Migrate) Migrate() error {
+func (m *Migrate) Migrate() (int, error) {
+	var version = 0
 	if m.initSchema != nil && m.isFirstRun() {
-		return m.runInitSchema()
+		return version, m.runInitSchema()
 	}
 
 	for _, migration := range m.migrations {
 		if err := m.runMigration(migration); err != nil {
-			return err
+			return version, err
 		}
+		version = migration.ID
 	}
-	return nil
+	return version, nil
 }
 
 // RollbackLast undo the last migration
@@ -142,7 +130,7 @@ func (m *Migrate) RollbackMigration(mig *Migration) error {
 	}
 
 	return m.collection.Remove(bson.M{
-		m.options.IDColumnName: mig.ID,
+		"ID": mig.ID,
 	})
 }
 
@@ -178,7 +166,7 @@ func (m *Migrate) runMigration(migration *Migration) error {
 
 func (m *Migrate) migrationDidRun(mig *Migration) bool {
 	count, _ := m.collection.Find(bson.M{
-		m.options.IDColumnName: mig.ID,
+		"ID": mig.ID,
 	}).Count()
 	return count > 0
 }
@@ -190,6 +178,6 @@ func (m *Migrate) isFirstRun() bool {
 
 func (m *Migrate) insertMigration(id int, comment string) error {
 	return m.collection.Insert(bson.M{
-		m.options.IDColumnName: id, "comment": comment,
+		"ID": id, "comment": comment,
 	})
 }
