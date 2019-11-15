@@ -883,5 +883,5 @@ func (self *MongoBackend) useTransactionsByAddress() bool {
 		self.Lgr.Error("Cannot get database version", zap.Error(err))
 		return false
 	}
-	return v > 0
+	return v >= migrationTransactionsByAddress.ID
 }

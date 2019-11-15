@@ -28,41 +28,43 @@ func (self *MongoBackend) getDatabaseVersion() (int, error) {
 	return self.databaseVersion, nil
 }
 
-func (self *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (err error) {
-	m := migrate.New(ctx, self.mongo, lgr, migrationCollection, []*migrate.Migration{{
-		ID:      1,
-		Comment: "Creating TransactionsByAddress collection",
-		Migrate: func(ctx context.Context, d *mgo.Database, lgr *zap.Logger) error {
-			counter := 0
-			var tx *models.Transaction
-			find := d.C("Transactions").Find(bson.M{})
-			txs := find.Iter()
-			defer txs.Close()
-			for txs.Next(&tx) {
-				if ctx.Err() != nil {
-					return ctx.Err()
-				}
-				counter++
-				if (counter % 1000) == 0 {
-					lgr.Info("Processed:", zap.Int("records:", counter))
-				}
-				_, err := self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
-					bson.M{"address": tx.From, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
-				if err != nil {
-					return err
-				}
-				_, err = self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
-					bson.M{"address": tx.To, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
-				if err != nil {
-					return err
-				}
+var migrationTransactionsByAddress = migrate.Migration{
+	ID:      1,
+	Comment: "Creating TransactionsByAddress collection",
+	Migrate: func(ctx context.Context, d *mgo.Database, lgr *zap.Logger) error {
+		counter := 0
+		var tx *models.Transaction
+		find := d.C("Transactions").Find(bson.M{})
+		txs := find.Iter()
+		defer txs.Close()
+		for txs.Next(&tx) {
+			if ctx.Err() != nil {
+				return ctx.Err()
 			}
-			return txs.Err()
-		},
-		Rollback: func(ctx context.Context, s *mgo.Database, lgr *zap.Logger) error {
-			return nil
-		},
-	}})
+			counter++
+			if (counter % 1000) == 0 {
+				lgr.Info("Processed:", zap.Int("records:", counter))
+			}
+			_, err := d.C("TransactionsByAddress").Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
+				bson.M{"address": tx.From, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
+			if err != nil {
+				return err
+			}
+			_, err = d.C("TransactionsByAddress").Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
+				bson.M{"address": tx.To, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
+			if err != nil {
+				return err
+			}
+		}
+		return txs.Err()
+	},
+	Rollback: func(ctx context.Context, s *mgo.Database, lgr *zap.Logger) error {
+		return nil
+	},
+}
+
+func (self *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (err error) {
+	m := migrate.New(ctx, self.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
 	self.databaseVersion, err = m.Migrate()
 	return err
 }
