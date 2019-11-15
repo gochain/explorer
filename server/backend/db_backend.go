@@ -251,7 +251,7 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 	if err != nil {
 		return err
 	}
-	err = self.insertTransactionsByAddress(ctx, transaction.To, transaction.TxHash, transaction.CreatedAt)
+	err = self.insertTransactionsByAddress(ctx, toAddress, transaction.TxHash, transaction.CreatedAt)
 	if err != nil {
 		return err
 	}
