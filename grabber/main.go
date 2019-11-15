@@ -148,7 +148,7 @@ func main() {
 func migrator(ctx context.Context, importer *backend.Backend, lgr *zap.Logger) {
 	err := importer.MigrateDB(ctx, lgr)
 	if err != nil {
-		importer.Lgr.Fatal("Migration failed", zap.Error(err))
+		lgr.Error("Migration failed", zap.Error(err))
 		return
 	}
 	lgr.Info("Migrations successfully complete")
