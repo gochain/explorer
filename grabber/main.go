@@ -146,12 +146,12 @@ func main() {
 	logger.Info("Stopping")
 }
 func migrator(ctx context.Context, importer *backend.Backend, lgr *zap.Logger) {
-	err := importer.MigrateDB(ctx, lgr)
+	version, err := importer.MigrateDB(ctx, lgr)
 	if err != nil {
 		lgr.Error("Migration failed", zap.Error(err))
 		return
 	}
-	lgr.Info("Migrations successfully complete")
+	lgr.Info("Migrations successfully complete", zap.Int("version", version))
 }
 
 func listener(ctx context.Context, importer *backend.Backend) {

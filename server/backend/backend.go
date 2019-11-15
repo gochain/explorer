@@ -492,6 +492,6 @@ func (self *Backend) DeleteContract(contractAddress string) error {
 	return self.mongo.deleteContract(contractAddress)
 }
 
-func (self *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) error {
+func (self *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) (int, error) {
 	return self.mongo.migrate(ctx, lgr)
 }

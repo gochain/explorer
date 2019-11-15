@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -30,6 +31,7 @@ type MongoBackend struct {
 	mongoSession    *mgo.Session
 	goClient        *goclient.Client
 	Lgr             *zap.Logger
+	mutex           sync.RWMutex
 	databaseVersion int
 }
 

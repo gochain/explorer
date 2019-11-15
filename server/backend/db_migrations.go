@@ -24,7 +24,9 @@ func (self *MongoBackend) getDatabaseVersion() (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	self.mutex.Lock()
 	self.databaseVersion = result.ID
+	self.mutex.Unlock()
 	return self.databaseVersion, nil
 }
 
@@ -63,8 +65,7 @@ var migrationTransactionsByAddress = migrate.Migration{
 	},
 }
 
-func (self *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (err error) {
+func (self *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (int, error) {
 	m := migrate.New(ctx, self.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
-	self.databaseVersion, err = m.Migrate()
-	return err
+	return m.Migrate()
 }
