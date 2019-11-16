@@ -585,7 +585,7 @@ func (self *MongoBackend) getTransactionList(
 ) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
 	if self.useTransactionsByAddress() {
-		var transactionsList []*models.TransactionsByAddress
+		var transactionsList []*models.TransactionsByAddressAggregated
 		findQuery := bson.M{
 			"address": address,
 			"created_at": bson.M{
@@ -593,22 +593,30 @@ func (self *MongoBackend) getTransactionList(
 				"$lte": filter.ToTime,
 			},
 		}
-		err := self.mongo.C("TransactionsByAddress").
-			Find(findQuery).
-			Sort("-created_at").
-			Skip(filter.Skip).
-			Limit(filter.Limit).
+		query := []bson.M{
+			{"$match": findQuery},
+			{"$lookup": bson.M{
+				"from":         "Transactions",
+				"localField":   "tx_hash",
+				"foreignField": "tx_hash",
+				"as":           "tx",
+			}},
+			{"$unwind": bson.M{
+				"path": "$tx",
+			}},
+			{"$sort": bson.M{"created_at": -1}},
+			{"$skip": filter.Skip},
+			{"$limit": filter.Limit},
+		}
+		err := self.mongo.
+			C("TransactionsByAddress").
+			Pipe(query).
 			All(&transactionsList)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tx list from TransactionsByAddress: %v", err)
 		}
 		for _, tx := range transactionsList {
-			var t *models.Transaction
-			err := self.mongo.C("Transactions").Find(bson.M{"tx_hash": tx.TxHash}).One(&t)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get transaction list: %v", err)
-			}
-			transactions = append(transactions, t)
+			transactions = append(transactions, &tx.Transaction)
 		}
 	} else {
 		findQuery := bson.M{
