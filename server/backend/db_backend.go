@@ -26,13 +26,13 @@ import (
 var wei = big.NewInt(1000000000000000000)
 
 type MongoBackend struct {
-	host            string
-	mongo           *mgo.Database
-	mongoSession    *mgo.Session
-	goClient        *goclient.Client
-	Lgr             *zap.Logger
-	mutex           sync.RWMutex
-	databaseVersion int
+	host                 string
+	mongo                *mgo.Database
+	mongoSession         *mgo.Session
+	goClient             *goclient.Client
+	Lgr                  *zap.Logger
+	databaseVersionMutex sync.RWMutex
+	databaseVersion      int
 }
 
 // New create new rpc client with given url
@@ -49,7 +49,6 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 	importer.mongoSession = session
 	importer.mongo = session.DB(dbName)
 	importer.goClient = client
-	importer.databaseVersion = 0
 	importer.createIndexes()
 
 	return importer, nil

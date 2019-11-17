@@ -14,8 +14,11 @@ import (
 var migrationCollection = "Migrations"
 
 func (self *MongoBackend) getDatabaseVersion() (int, error) {
-	if self.databaseVersion != 0 {
-		return self.databaseVersion, nil
+	self.databaseVersionMutex.Lock()
+	version := self.databaseVersion
+	self.databaseVersionMutex.Unlock()
+	if version != 0 {
+		return version, nil
 	}
 	var result struct {
 		ID int `bson:"ID"`
@@ -24,9 +27,9 @@ func (self *MongoBackend) getDatabaseVersion() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	self.mutex.Lock()
+	self.databaseVersionMutex.Lock()
 	self.databaseVersion = result.ID
-	self.mutex.Unlock()
+	self.databaseVersionMutex.Unlock()
 	return result.ID, nil
 }
 
