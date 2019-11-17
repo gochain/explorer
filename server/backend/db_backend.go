@@ -49,6 +49,7 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 	importer.mongoSession = session
 	importer.mongo = session.DB(dbName)
 	importer.goClient = client
+	importer.databaseVersion = 0
 	importer.createIndexes()
 
 	return importer, nil
@@ -578,13 +579,9 @@ func (self *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transact
 	return tx, nil
 }
 
-func (self *MongoBackend) getTransactionList(
-	address string,
-	filter *models.TxsFilter,
-) ([]*models.Transaction, error) {
+func (self *MongoBackend) getTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
 	if self.useTransactionsByAddress() {
-		var transactionsList []*models.TransactionsByAddressAggregated
 		findQuery := bson.M{
 			"address": address,
 			"created_at": bson.M{
@@ -603,6 +600,9 @@ func (self *MongoBackend) getTransactionList(
 			{"$unwind": bson.M{
 				"path": "$tx",
 			}},
+			{"$replaceRoot": bson.M{
+				"newRoot": "$tx",
+			}},
 			{"$sort": bson.M{"created_at": -1}},
 			{"$skip": filter.Skip},
 			{"$limit": filter.Limit},
@@ -610,12 +610,9 @@ func (self *MongoBackend) getTransactionList(
 		err := self.mongo.
 			C("TransactionsByAddress").
 			Pipe(query).
-			All(&transactionsList)
+			All(&transactions)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tx list from TransactionsByAddress: %v", err)
-		}
-		for _, tx := range transactionsList {
-			transactions = append(transactions, &tx.Transaction)
 		}
 	} else {
 		findQuery := bson.M{
