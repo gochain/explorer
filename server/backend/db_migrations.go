@@ -27,7 +27,7 @@ func (self *MongoBackend) getDatabaseVersion() (int, error) {
 	self.mutex.Lock()
 	self.databaseVersion = result.ID
 	self.mutex.Unlock()
-	return self.databaseVersion, nil
+	return result.ID, nil
 }
 
 var migrationTransactionsByAddress = migrate.Migration{
