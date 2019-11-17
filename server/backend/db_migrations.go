@@ -14,9 +14,9 @@ import (
 var migrationCollection = "Migrations"
 
 func (self *MongoBackend) getDatabaseVersion() (int, error) {
-	self.databaseVersionMutex.Lock()
+	self.databaseVersionMutex.RLock()
 	version := self.databaseVersion
-	self.databaseVersionMutex.Unlock()
+	self.databaseVersionMutex.RUnlock()
 	if version != 0 {
 		return version, nil
 	}
