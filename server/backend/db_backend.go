@@ -49,7 +49,6 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 	importer.mongoSession = session
 	importer.mongo = session.DB(dbName)
 	importer.goClient = client
-	importer.databaseVersion = 0
 	importer.createIndexes()
 
 	return importer, nil
