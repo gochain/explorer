@@ -61,7 +61,6 @@ type InternalTxFilter struct {
 type TxsFilter struct {
 	PaginationFilter
 	TimeFilter
-	InputDataEmpty *bool `schema:"input_data_empty,omitempty"`
 }
 
 func (f *TxsFilter) Sanitize() {

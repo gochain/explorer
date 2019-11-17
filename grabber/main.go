@@ -131,6 +131,7 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
+		go migrator(ctx, importer, logger)
 		go listener(ctx, importer)
 		go updateStats(ctx, importer)
 		go backfill(ctx, importer, startFrom, checkTxCount)
@@ -143,6 +144,14 @@ func main() {
 		logger.Fatal("Fatal error", zap.Error(err))
 	}
 	logger.Info("Stopping")
+}
+func migrator(ctx context.Context, importer *backend.Backend, lgr *zap.Logger) {
+	version, err := importer.MigrateDB(ctx, lgr)
+	if err != nil {
+		lgr.Error("Migration failed", zap.Error(err))
+		return
+	}
+	lgr.Info("Migrations successfully complete", zap.Int("version", version))
 }
 
 func listener(ctx context.Context, importer *backend.Backend) {

@@ -96,7 +96,7 @@ func TestTransactions(t *testing.T) {
 	block := createImportBlock(t, testBackend)
 	filter1 := &models.PaginationFilter{
 		Skip:  0,
-		Limit: 100,
+		Limit: 4,
 	}
 	transactionsFromDb, err := testBackend.GetBlockTransactionsByNumber(block.Header().Number.Int64(), filter1)
 	if err != nil {
@@ -126,19 +126,18 @@ func TestTransactions(t *testing.T) {
 	filter2 := &models.TxsFilter{
 		PaginationFilter: models.PaginationFilter{
 			Skip:  0,
-			Limit: 100,
+			Limit: 3,
 		},
 		TimeFilter: models.TimeFilter{
 			FromTime: time.Unix(0, 0),
 			ToTime:   time.Now(),
 		},
-		InputDataEmpty: nil,
 	}
 	transactionsFromAddress, err := testBackend.GetTransactionList(transactionFromDB.From, filter2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(transactionsFromAddress) != 4 {
+	if len(transactionsFromAddress) != 3 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsFromAddress), 4)
 	}
 
@@ -146,7 +145,7 @@ func TestTransactions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(transactionsToAddress) != 4 {
+	if len(transactionsToAddress) != 3 {
 		t.Errorf("Wrong number of the transactions for address, got: %d, want: %d.", len(transactionsToAddress), 4)
 	}
 	filter2.Skip = 2
