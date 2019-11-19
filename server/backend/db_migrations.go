@@ -37,27 +37,43 @@ var migrationTransactionsByAddress = migrate.Migration{
 	ID:      1,
 	Comment: "Creating TransactionsByAddress collection",
 	Migrate: func(ctx context.Context, d *mgo.Database, lgr *zap.Logger) error {
-		counter := 0
 		var tx *models.Transaction
 		find := d.C("Transactions").Find(bson.M{})
 		txs := find.Iter()
 		defer txs.Close()
+
+		const batchUpsertSize = 1000
+		bulk := d.C("TransactionsByAddress").Bulk()
+		bulk.Unordered()
+
+		var txsCnt, bulkCnt int
 		for txs.Next(&tx) {
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			counter++
-			if (counter % 1000) == 0 {
-				lgr.Info("Processed:", zap.Int("records:", counter))
+			txsCnt++
+			if (txsCnt % 1000) == 0 {
+				lgr.Info("Processed:", zap.Int("records:", txsCnt))
 			}
-			_, err := d.C("TransactionsByAddress").Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
+			bulkCnt++
+			bulk.Upsert(bson.M{"address": tx.From, "tx_hash": tx.TxHash},
 				bson.M{"address": tx.From, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
-			if err != nil {
-				return err
+			if tx.To != tx.From {
+				bulkCnt++
+				bulk.Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
+					bson.M{"address": tx.To, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
 			}
-			_, err = d.C("TransactionsByAddress").Upsert(bson.M{"address": tx.To, "tx_hash": tx.TxHash},
-				bson.M{"address": tx.To, "tx_hash": tx.TxHash, "created_at": tx.CreatedAt})
-			if err != nil {
+			if bulkCnt > batchUpsertSize {
+				bulkCnt = 0
+				// Execute batch of upserts.
+				if _, err := bulk.Run(); err != nil {
+					return err
+				}
+			}
+		}
+		if bulkCnt > 0 {
+			// Flush remaining upserts.
+			if _, err := bulk.Run(); err != nil {
 				return err
 			}
 		}
