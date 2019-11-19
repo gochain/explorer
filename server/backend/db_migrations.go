@@ -42,7 +42,7 @@ var migrationTransactionsByAddress = migrate.Migration{
 		txs := find.Iter()
 		defer txs.Close()
 
-		const batchUpsertSize = 500
+		const batchUpsertSize = 1000
 		bulk := d.C("TransactionsByAddress").Bulk()
 		bulk.Unordered()
 
@@ -69,6 +69,9 @@ var migrationTransactionsByAddress = migrate.Migration{
 				if _, err := bulk.Run(); err != nil {
 					return err
 				}
+				bulk = d.C("TransactionsByAddress").Bulk()
+				bulk.Unordered()
+				
 			}
 		}
 		if bulkCnt > 0 {
