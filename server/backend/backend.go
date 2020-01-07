@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -470,7 +471,7 @@ func fillExtra(block *models.Block) *models.Block {
 	}
 	extra := []byte(block.ExtraData)
 	block.Extra.Auth = (block.NonceBool != nil && *block.NonceBool) //workaround for get old block by hash
-	block.Extra.Vanity = utils.CleanUpText(string(clique.ExtraVanity(extra)))
+	block.Extra.Vanity = strings.TrimRight(string(clique.ExtraVanity(extra)), "\u0000")
 	block.Extra.HasVote = clique.ExtraHasVote(extra)
 	block.Extra.Candidate = clique.ExtraCandidate(extra).String()
 	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
@@ -478,7 +479,7 @@ func fillExtra(block *models.Block) *models.Block {
 }
 func fillExtraLight(block *models.LightBlock) *models.LightBlock {
 	extra := []byte(block.ExtraData)
-	block.Extra.Vanity = utils.CleanUpText(string(clique.ExtraVanity(extra)))
+	block.Extra.Vanity = strings.TrimRight(string(clique.ExtraVanity(extra)), "\u0000")
 	return block
 }
 func (self *Backend) DeleteBlockByHash(hash string) error {
