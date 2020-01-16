@@ -1,4 +1,4 @@
-.PHONY: docker test-backend server grabber backend frontend build generate
+.PHONY: docker test-backend admin server grabber backend frontend build generate
 
 docker:
 	docker build -t gochain/explorer .
@@ -12,7 +12,10 @@ server:
 grabber:
 	cd grabber && go build -v
 
-backend: server grabber
+admin:
+	cd admin && go build -v
+
+backend: server grabber admin
 
 frontend:	
 	cd front && npm i

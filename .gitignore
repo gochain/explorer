@@ -50,3 +50,4 @@ server/server
 server/vendor/*
 grabber/vendor/*
 data/*
+admin/admin

@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -25,17 +26,20 @@ import (
 var wei = big.NewInt(1000000000000000000)
 
 type MongoBackend struct {
-	host         string
-	mongo        *mgo.Database
-	mongoSession *mgo.Session
-	goClient     *goclient.Client
-	Lgr          *zap.Logger
+	host                 string
+	mongo                *mgo.Database
+	mongoSession         *mgo.Session
+	goClient             *goclient.Client
+	Lgr                  *zap.Logger
+	databaseVersionMutex sync.RWMutex
+	databaseVersion      int
 }
 
 // New create new rpc client with given url
 func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
-		Addrs: []string{host},
+		Addrs:   []string{host},
+		Timeout: 120 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mongo: %v", err)
@@ -78,7 +82,6 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
 		InputData:       txInputData,
-		InputDataEmpty:  txInputData == "",
 	}, nil
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
@@ -140,6 +143,8 @@ func (self *MongoBackend) createIndexes() error {
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"block_number"}, Background: true, Sparse: true}},
 		{c: "Stats", index: mgo.Index{Key: []string{"-updated_at"}, Background: true, Sparse: true}},
 		{c: "Contracts", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "TransactionsByAddress", index: mgo.Index{Key: []string{"address", "tx_hash"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
+		{c: "TransactionsByAddress", index: mgo.Index{Key: []string{"address", "created_at"}, Background: true, Sparse: true}},
 	} {
 		if err := self.mongo.C(cIdx.c).EnsureIndex(cIdx.index); err != nil {
 			return fmt.Errorf("failed to create index %d for collection %q: %v", i, cIdx.c, err)
@@ -174,8 +179,42 @@ func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (
 
 }
 
+func (self *MongoBackend) deleteBlockByNumber(bnum int64) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_number": bnum})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
+}
+
+func (self *MongoBackend) deleteBlockByHash(hash string) error {
+	//delete block
+	_, err := self.mongo.C("Blocks").RemoveAll(bson.M{"BlockHash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove block: %v", err)
+	}
+	// deleting all txs belong to this block if any exist
+	_, err = self.mongo.C("Transactions").RemoveAll(bson.M{"block_hash": hash})
+	if err != nil {
+		return fmt.Errorf("failed to remove old txs: %v", err)
+	}
+	return nil
+}
+
 func (self *MongoBackend) UpdateActiveAddress(address string) error {
 	_, err := self.mongo.C("ActiveAddress").Upsert(bson.M{"address": address}, &models.ActiveAddress{Address: address, UpdatedAt: time.Now()})
+	return err
+}
+
+func (self *MongoBackend) insertTransactionsByAddress(ctx context.Context, address, txHash string, createdAt time.Time) error {
+	_, err := self.mongo.C("TransactionsByAddress").Upsert(bson.M{"address": address, "tx_hash": txHash},
+		bson.M{"address": address, "tx_hash": txHash, "created_at": createdAt})
 	return err
 }
 
@@ -207,6 +246,17 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 
 	if _, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
 		return fmt.Errorf("failed to upsert tx: %v", err)
+	}
+
+	err = self.insertTransactionsByAddress(ctx, transaction.From, transaction.TxHash, transaction.CreatedAt)
+	if err != nil {
+		return err
+	}
+	if transaction.From != toAddress { //skip if from == to
+		err = self.insertTransactionsByAddress(ctx, toAddress, transaction.TxHash, transaction.CreatedAt)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := self.UpdateActiveAddress(toAddress); err != nil {
@@ -349,6 +399,25 @@ func (self *MongoBackend) importContract(contractAddress string, byteCode string
 	return nil
 }
 
+func (self *MongoBackend) deleteContract(contractAddress string) error {
+	//delete internal transactions
+	_, err := self.mongo.C("InternalTransactions").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove internal transactions: %v", err)
+	}
+	// deleting all token holders
+	_, err = self.mongo.C("TokensHolders").RemoveAll(bson.M{"contract_address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove token holders: %v", err)
+	}
+	// deleting contract
+	_, err = self.mongo.C("Contracts").RemoveAll(bson.M{"address": contractAddress})
+	if err != nil {
+		return fmt.Errorf("failed to remove contract: %v", err)
+	}
+	return nil
+}
+
 func (self *MongoBackend) getBlockByNumber(blockNumber int64) (*models.Block, error) {
 	var c models.Block
 	err := self.mongo.C("Blocks").Find(bson.M{"number": blockNumber}).Select(bson.M{"transactions": 0}).One(&c)
@@ -435,9 +504,17 @@ func (self *MongoBackend) getAddressByHash(address string) (*models.Address, err
 		return nil, fmt.Errorf("failed to get address: %v", err)
 	}
 	//lazy calculation for number of transactions
-	transactionCounter, err := self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{{"from": address}, {"to": address}}}).Count()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get txs: %v", err)
+	var transactionCounter = 0
+	if self.useTransactionsByAddress() {
+		transactionCounter, err = self.mongo.C("TransactionsByAddress").Find(bson.M{"address": address}).Count()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get txs from TransactionsByAddress: %v", err)
+		}
+	} else {
+		transactionCounter, err = self.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{{"from": address}, {"to": address}}}).Count()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get txs from Transactions: %v", err)
+		}
 	}
 	c.NumberOfTransactions = transactionCounter
 	return &c, nil
@@ -501,32 +578,61 @@ func (self *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transact
 	return tx, nil
 }
 
-func (self *MongoBackend) getTransactionList(
-	address string,
-	filter *models.TxsFilter,
-) ([]*models.Transaction, error) {
+func (self *MongoBackend) getTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
 	var transactions []*models.Transaction
-	findQuery := bson.M{
-		"$or": []bson.M{
-			{"from": address},
-			{"to": address},
-		},
-		"created_at": bson.M{
-			"$gte": filter.FromTime,
-			"$lte": filter.ToTime,
-		},
-	}
-	if filter.InputDataEmpty != nil {
-		findQuery["input_data_empty"] = *filter.InputDataEmpty
-	}
-	err := self.mongo.C("Transactions").
-		Find(findQuery).
-		Sort("-created_at").
-		Skip(filter.Skip).
-		Limit(filter.Limit).
-		All(&transactions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tx list: %v", err)
+	if self.useTransactionsByAddress() {
+		findQuery := bson.M{
+			"address": address,
+			"created_at": bson.M{
+				"$gte": filter.FromTime,
+				"$lte": filter.ToTime,
+			},
+		}
+		query := []bson.M{
+			{"$match": findQuery},
+			{"$lookup": bson.M{
+				"from":         "Transactions",
+				"localField":   "tx_hash",
+				"foreignField": "tx_hash",
+				"as":           "tx",
+			}},
+			{"$unwind": bson.M{
+				"path": "$tx",
+			}},
+			{"$replaceRoot": bson.M{
+				"newRoot": "$tx",
+			}},
+			{"$sort": bson.M{"created_at": -1}},
+			{"$skip": filter.Skip},
+			{"$limit": filter.Limit},
+		}
+		err := self.mongo.
+			C("TransactionsByAddress").
+			Pipe(query).
+			All(&transactions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get tx list from TransactionsByAddress: %v", err)
+		}
+	} else {
+		findQuery := bson.M{
+			"$or": []bson.M{
+				{"from": address},
+				{"to": address},
+			},
+			"created_at": bson.M{
+				"$gte": filter.FromTime,
+				"$lte": filter.ToTime,
+			},
+		}
+		err := self.mongo.C("Transactions").
+			Find(findQuery).
+			Sort("-created_at").
+			Skip(filter.Skip).
+			Limit(filter.Limit).
+			All(&transactions)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get tx list from Transactions: %v", err)
+		}
 	}
 	return transactions, nil
 }
@@ -775,4 +881,12 @@ func (self *MongoBackend) cleanUp() {
 		}
 		self.Lgr.Info("Cleaned collection", zap.String("collection", collectionName))
 	}
+}
+func (self *MongoBackend) useTransactionsByAddress() bool {
+	v, err := self.getDatabaseVersion()
+	if err != nil {
+		self.Lgr.Error("Cannot get database version", zap.Error(err))
+		return false
+	}
+	return v >= migrationTransactionsByAddress.ID
 }

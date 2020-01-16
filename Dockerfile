@@ -9,7 +9,7 @@ ADD go.sum $D
 RUN go mod download
 ADD . $D
 # build
-RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/
+RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/ && cp $D/admin/admin /tmp/gochain/
 
 FROM node:10-alpine as frontend_builder
 WORKDIR /explorer

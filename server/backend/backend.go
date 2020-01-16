@@ -2,10 +2,12 @@ package backend
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gochain-io/explorer/server/models"
@@ -208,7 +210,27 @@ func (self *Backend) GetContract(contractAddress string) (*models.Contract, erro
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getContract(common.HexToAddress(contractAddress).Hex())
+	normalizedAddress := common.HexToAddress(contractAddress).Hex()
+	contract, err := self.mongo.getContract(normalizedAddress)
+	if contract != nil || err != nil {
+		return contract, err
+	}
+	contractDataArray, err := self.CodeAt(context.Background(), normalizedAddress)
+	if err != nil {
+		return nil, err
+	}
+	contractData := string(contractDataArray[:])
+	if contractData == "" {
+		return nil, fmt.Errorf("invalid contract: %s", contractAddress)
+	}
+	byteCode := hex.EncodeToString(contractDataArray)
+	err = self.ImportContract(normalizedAddress, byteCode)
+	if err != nil {
+		return nil, err
+	}
+	contract, err = self.mongo.getContract(normalizedAddress)
+	return contract, err
+
 }
 func (self *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
 	var lightBlocks []*models.LightBlock
@@ -244,10 +266,21 @@ func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) (*model
 	return fillExtra(block), nil
 }
 
-func (self *Backend) GetBlockByHash(hash string) (*models.Block, error) {
+func (self *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Block, error) {
 	b, err := self.mongo.getBlockByHash(hash)
 	if err != nil {
 		return nil, err
+	}
+	if b == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.String("block", hash))
+		blockEth, err := self.goClient.BlockByHash(ctx, common.HexToHash(hash))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
+		}
+		b, err = self.ImportBlock(ctx, blockEth)
+		if err != nil {
+			return nil, fmt.Errorf("failed to import block: %v", err)
+		}
 	}
 	return fillExtra(b), nil
 }
@@ -438,7 +471,7 @@ func fillExtra(block *models.Block) *models.Block {
 	}
 	extra := []byte(block.ExtraData)
 	block.Extra.Auth = (block.NonceBool != nil && *block.NonceBool) //workaround for get old block by hash
-	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	block.Extra.Vanity = strings.TrimRight(string(clique.ExtraVanity(extra)), "\u0000")
 	block.Extra.HasVote = clique.ExtraHasVote(extra)
 	block.Extra.Candidate = clique.ExtraCandidate(extra).String()
 	block.Extra.IsVoterElection = clique.ExtraIsVoterElection(extra)
@@ -446,6 +479,20 @@ func fillExtra(block *models.Block) *models.Block {
 }
 func fillExtraLight(block *models.LightBlock) *models.LightBlock {
 	extra := []byte(block.ExtraData)
-	block.Extra.Vanity = string(clique.ExtraVanity(extra))
+	block.Extra.Vanity = strings.TrimRight(string(clique.ExtraVanity(extra)), "\u0000")
 	return block
+}
+func (self *Backend) DeleteBlockByHash(hash string) error {
+	return self.mongo.deleteBlockByHash(hash)
+}
+func (self *Backend) DeleteBlockByNumber(bnum int64) error {
+	return self.mongo.deleteBlockByNumber(bnum)
+}
+
+func (self *Backend) DeleteContract(contractAddress string) error {
+	return self.mongo.deleteContract(contractAddress)
+}
+
+func (self *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) (int, error) {
+	return self.mongo.migrate(ctx, lgr)
 }

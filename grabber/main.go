@@ -26,7 +26,6 @@ import (
 
 func main() {
 	cfg := zapdriver.NewProductionConfig()
-	cfg.EncoderConfig.TimeKey = "timestamp"
 	logger, err := cfg.Build()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create logger: %v\n", err)
@@ -132,6 +131,7 @@ func main() {
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
+		go migrator(ctx, importer, logger)
 		go listener(ctx, importer)
 		go updateStats(ctx, importer)
 		go backfill(ctx, importer, startFrom, checkTxCount)
@@ -145,14 +145,13 @@ func main() {
 	}
 	logger.Info("Stopping")
 }
-
-func appendIfMissing(slice []string, i string) []string {
-	for _, ele := range slice {
-		if ele == i {
-			return slice
-		}
+func migrator(ctx context.Context, importer *backend.Backend, lgr *zap.Logger) {
+	version, err := importer.MigrateDB(ctx, lgr)
+	if err != nil {
+		lgr.Error("Migration failed", zap.Error(err))
+		return
 	}
-	return append(slice, i)
+	lgr.Info("Migrations successfully complete", zap.Int("version", version))
 }
 
 func listener(ctx context.Context, importer *backend.Backend) {
@@ -495,7 +494,7 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 		lgr.Info("Comparing internal tx count from DB against RPC", zap.Int("db", tokenTransfersFromDB),
 			zap.Int("rpc", len(tokenTransfers)))
 		if len(tokenTransfers) != tokenTransfersFromDB {
-			var tokenHoldersList []string
+			tokenHoldersList := make(map[string]struct{})
 			for _, itx := range tokenTransfers {
 				lgr.Debug("Internal Transaction", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
@@ -505,16 +504,16 @@ func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBl
 				// if itx.BlockNumber > lastBlockUpdatedAt.Int64() {
 				lgr.Debug("Updating following token holder addresses", zap.Stringer("from", itx.From),
 					zap.Stringer("to", itx.To), zap.Stringer("value", itx.Value))
-				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.To.String())
-				tokenHoldersList = appendIfMissing(tokenHoldersList, itx.From.String())
+				tokenHoldersList[itx.To.String()] = struct{}{}
+				tokenHoldersList[itx.From.String()] = struct{}{}
 				// }
 			}
-			for index, tokenHolderAddress := range tokenHoldersList {
+			for tokenHolderAddress := range tokenHoldersList {
 				if tokenHolderAddress == "0x0000000000000000000000000000000000000000" {
 					continue
 				}
 				lgr.Info("Importing token holder", zap.String("holder", tokenHolderAddress),
-					zap.Int("index", index), zap.Int("total", len(tokenHoldersList)))
+					zap.Int("total", len(tokenHoldersList)))
 				tokenHolder, err := importer.GetTokenBalance(normalizedAddress, tokenHolderAddress)
 				if err != nil {
 					lgr.Error("Failed to get token balance", zap.Error(err), zap.String("holder", tokenHolderAddress))

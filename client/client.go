@@ -222,11 +222,6 @@ func (tx *TxParams) Limit(l int) *TxParams {
 	return tx
 }
 
-func (tx *TxParams) InputDataEmpty(b bool) *TxParams {
-	tx.sl.vals.Add("input_data_empty", strconv.FormatBool(b))
-	return tx
-}
-
 func (tx *TxParams) FromTime(from time.Time) *TxParams {
 	tx.sl.vals.Add("from_time", from.Format(time.RFC3339))
 	return tx

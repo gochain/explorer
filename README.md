@@ -249,7 +249,6 @@ GET /api/address/{address_hash}/transactions
 - address_hash
 - limit - amount of items in the response
 - skip - number of items to skip
-- input_data_empty - true/false
 - from_time/to_time - filter for the transaction list (by created_at time)
 
 **Response:**
