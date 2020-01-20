@@ -2,7 +2,8 @@
   <div class="card">
     <div class="card-body">
       <div class="card-title"><img src="../../../assets/icons/user.svg" alt="Account"> ACCOUNT</div>
-      <p>Address: {{walletService.accountAddress}}</p>
+      <p>Address: <a class="text-monospace ws-p"
+                     routerLink="/addr/{{walletService.accountAddress}}">{{walletService.accountAddress}}</a></p>
       <p>Balance (GO): <span class="text-monospace">{{walletService.accountBalance | number}}</span></p>
       <p>
         <button
@@ -18,16 +19,6 @@
   <div class="card mt-4 mb-5">
     <div class="card-body">
       <app-tabs name="account_tab" [disabled]="walletService.isProcessing">
-        <tab name="owned_tokens" title="Owned Tokens">
-          <tab-content>
-            <app-owned-tokens [addrHash]="walletService.accountAddress" [showPagination]="false"></app-owned-tokens>
-          </tab-content>
-        </tab>
-        <tab name="transactions" title="Transactions">
-          <tab-content>
-            <app-addr-transactions *ngIf="accountAddr" [addr]="accountAddr"></app-addr-transactions>
-          </tab-content>
-        </tab>
         <tab name="send_go" title="Send GO">
           <tab-content [hidden]="walletService.isProcessing">
             <app-sender></app-sender>
@@ -36,11 +27,6 @@
         <tab name="deploy_contract" title="Deploy Contract">
           <tab-content [hidden]="walletService.isProcessing">
             <app-deployer></app-deployer>
-          </tab-content>
-        </tab>
-        <tab name="use_contract" title="Use Contract">
-          <tab-content [hidden]="walletService.isProcessing">
-            <app-interactor></app-interactor>
           </tab-content>
         </tab>
       </app-tabs>
@@ -62,16 +48,19 @@
               <div class="row">
                 <div class="col-md-2">Transaction Hash:</div>
                 <div class="col-md-10">
-                  <a routerLink="/tx/{{walletService.receipt.transactionHash}}" target="_blank">{{walletService.receipt.transactionHash}}</a>
+                  <a routerLink="/tx/{{walletService.receipt.transactionHash}}"
+                     target="_blank">{{walletService.receipt.transactionHash}}</a>
                 </div>
                 <div class="col-md-2">Block Hash:</div>
                 <div class="col-md-10">
-                  <a routerLink="/block/{{walletService.receipt.blockHash}}" target="_blank">{{walletService.receipt.blockHash}}</a>
+                  <a routerLink="/block/{{walletService.receipt.blockHash}}"
+                     target="_blank">{{walletService.receipt.blockHash}}</a>
                 </div>
                 <ng-container *ngIf="walletService.receipt.contractAddress">
                   <div class="col-md-2">Contract Address:</div>
                   <div class="col-md-10">
-                    <a routerLink="/address/{{ walletService.receipt.contractAddress}}" target="_blank">{{ walletService.receipt.contractAddress }}</a>
+                    <a routerLink="/address/{{ walletService.receipt.contractAddress}}"
+                       target="_blank">{{ walletService.receipt.contractAddress }}</a>
                   </div>
                 </ng-container>
                 <div class="col-md-2">Gas Used:</div>
