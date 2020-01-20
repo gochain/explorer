@@ -46,6 +46,7 @@ type ContractInfo struct {
 type Solidity struct {
 	Path, Version string
 	Optimization  bool
+	EVMVersion    string
 }
 
 // --combined-output format
@@ -71,37 +72,40 @@ func (s *Solidity) makeArgs() ([]string, error) {
 	if s.Optimization {
 		args = append(args, "--optimize")
 	}
+	if s.EVMVersion != "" {
+		args = append(args, "--evm-version", s.EVMVersion)
+	}
 	return args, nil
 }
 
 // CompileSolidityString builds and returns all the contracts contained within a source string.
-func CompileSolidityString(ctx context.Context, compilerVersion, source string, optimization bool) (map[string]*Contract, error) {
+func CompileSolidityString(ctx context.Context, compilerVersion, source string, optimization bool, evmVersion string) (map[string]*Contract, error) {
 	if len(source) == 0 {
 		return nil, errors.New("solc: empty source string")
 	}
-	s := &Solidity{Path: "docker", Version: compilerVersion, Optimization: optimization}
+	s := &Solidity{Path: "docker", Version: compilerVersion, Optimization: optimization, EVMVersion: evmVersion}
 	args, err := s.makeArgs()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to make solc command args: %v", err)
 	}
-	args = append(args, "--")
-	cmd := exec.CommandContext(ctx, s.Path, append(args, "-")...)
-	cmd.Stdin = strings.NewReader(source)
-	return s.run(cmd, source)
+	argsStr := strings.Join(args, " ")
+	output, err := s.run(ctx, source, args)
+	if err != nil {
+		return nil, fmt.Errorf("failed to run solc via docker: '%s': %v", argsStr, err)
+	}
+	return ParseCombinedJSON(output, source, s.Version, s.Version, argsStr)
 }
 
-func (s *Solidity) run(cmd *exec.Cmd, source string) (map[string]*Contract, error) {
+func (s *Solidity) run(ctx context.Context, source string, args []string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, s.Path, append(args, "--", "-")...)
+	cmd.Stdin = strings.NewReader(source)
 	var stderr, stdout bytes.Buffer
 	cmd.Stderr = &stderr
 	cmd.Stdout = &stdout
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("solc: %v\n%s", err, stderr.Bytes())
+		return nil, fmt.Errorf("%v\n%s", err, stderr.Bytes())
 	}
-	args, err := s.makeArgs()
-	if err != nil {
-		return nil, err
-	}
-	return ParseCombinedJSON(stdout.Bytes(), source, s.Version, s.Version, strings.Join(args, " "))
+	return stdout.Bytes(), nil
 }
 
 func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion string, compilerVersion string, compilerOptions string) (map[string]*Contract, error) {
@@ -145,4 +149,24 @@ func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion strin
 		}
 	}
 	return contracts, nil
+}
+
+var solcMetadataRegex = regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
+
+// SolcBinEqual returns true if a and b are equivalent, disregarding leading 0x and metadata.
+func SolcBinEqual(a, b string) bool {
+	a = strings.TrimPrefix(a, "0x")
+	b = strings.TrimPrefix(b, "0x")
+	// Remove metadata hash.
+	a = solcMetadataRegex.ReplaceAllString(a, "")
+	b = solcMetadataRegex.ReplaceAllString(b, "")
+	if a == b {
+		return true
+	}
+	// For 0.4.* compiler version the last 69 symbols could be ignored.
+	if l := len(a); l != len(b) || l <= 69 {
+		return false
+	}
+	i := len(a) - 69
+	return a[:i] == b[:i]
 }

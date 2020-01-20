@@ -30,6 +30,7 @@ export class ContractComponent implements OnInit {
     address: ['', [Validators.required, Validators.minLength(42), Validators.maxLength(42)]],
     contract_name: ['', Validators.required],
     compiler_version: ['', Validators.required],
+    evm_version: [''],
     optimization: [true, Validators.required],
     source_code: ['', Validators.required],
     /*recaptcha_token: null,*/
