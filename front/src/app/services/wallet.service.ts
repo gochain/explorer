@@ -152,7 +152,6 @@ export class WalletService {
   constructor(
     private _toastrService: ToastrService,
     private _commonService: CommonService,
-    private _router: Router,
   ) {
     this._commonService.rpcProvider$.subscribe((rpcProvider: string) => {
       this.initProvider(rpcProvider);
@@ -391,7 +390,6 @@ export class WalletService {
     this.accountAddress = null;
     this._logged$.next(false);
     this._walletContext.logOut();
-    this._router.navigate(['wallet']);
   }
 
   getBalance() {

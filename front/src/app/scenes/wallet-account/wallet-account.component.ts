@@ -1,5 +1,8 @@
 /*CORE*/
 import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {Subscription} from 'rxjs';
+import {flatMap} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
@@ -9,8 +12,6 @@ import {Address} from '../../models/address.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
 import {AutoUnsubscribe} from '../../decorators/auto-unsubscribe';
-import {Subscription} from 'rxjs';
-import {filter, flatMap} from 'rxjs/operators';
 
 @Component({
   selector: 'app-wallet-account',
@@ -26,6 +27,7 @@ export class WalletAccountComponent implements OnInit, OnDestroy {
     public walletService: WalletService,
     private _metaService: MetaService,
     private _commonService: CommonService,
+    private _router: Router,
   ) {
   }
 
@@ -38,7 +40,14 @@ export class WalletAccountComponent implements OnInit, OnDestroy {
     }));
   }
 
+  closeWallet(): void {
+    // wallet service close account will be called in ngOnDestroy
+    this._router.navigate(['wallet']);
+  }
+
+
   ngOnDestroy(): void {
     this.walletService.resetProcessing();
+    this.walletService.closeAccount();
   }
 }
