@@ -29,6 +29,11 @@
             <app-deployer></app-deployer>
           </tab-content>
         </tab>
+        <tab name="use_contract" title="Use Contract">
+          <tab-content [hidden]="walletService.isProcessing">
+            <app-interactor></app-interactor>
+          </tab-content>
+        </tab>
       </app-tabs>
       <ng-container *ngIf="walletService.isProcessing">
         <div *ngIf="!walletService.receipt; else result;" class="processing">
