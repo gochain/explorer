@@ -45,13 +45,15 @@ export class InteractorComponent implements OnInit {
   contractBadges: Badge[] = [];
   abiTemplates = [ErcName.Go20, ErcName.Go721, ErcName.Go165, ErcName.Upgradeable, ErcName.AllFunctions];
 
-  contract: Web3Contract;
+  web3Contract: Web3Contract;
   abiFunctions: AbiItem[];
   selectedFunction: AbiItem;
   functionResult: { output: any[][], error: string };
   addr: Address;
 
   hasData = false;
+
+  addressContract: Contract;
 
   @Input('contractData')
   set address([addr, contract]: [Address, Contract]) {
@@ -174,7 +176,7 @@ export class InteractorComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: AbiItem, params: string[] = []): void {
-    this.walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
+    this.walletService.call(this.web3Contract.options.address, func, params).subscribe((decoded: object) => {
       if (!decoded) {
         this.functionResult = {error: 'Result is empty', output: null};
         return;
@@ -202,6 +204,7 @@ export class InteractorComponent implements OnInit {
   private handleContractData(address: Address, contract: Contract) {
     this.addr = address;
     this.contractBadges = makeContractBadges(address, contract);
+    this.addressContract = contract;
     if (contract.abi && contract.abi.length) {
       this.form.patchValue({
         contractABI: JSON.stringify(contract.abi, null, 2),
@@ -252,10 +255,10 @@ export class InteractorComponent implements OnInit {
   }
 
   formTx(params: string[]): TransactionConfig {
-    const m = this.contract.methods[this.selectedFunction.name](...params);
+    const m = this.web3Contract.methods[this.selectedFunction.name](...params);
 
     const tx: TransactionConfig = {
-      to: this.contract.options.address,
+      to: this.web3Contract.options.address,
       data: m.encodeABI(),
       from: this.walletService.accountAddress,
     };
@@ -282,7 +285,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this.contract = null;
+    this.web3Contract = null;
     let abiItem: AbiItem[];
 
     try {
@@ -336,7 +339,7 @@ export class InteractorComponent implements OnInit {
   private _initContract(addrHash: string, abiItems: AbiItem[]) {
     this.walletService.initContract(addrHash, abiItems).subscribe(
       (contract) => {
-        this.contract = contract;
+        this.web3Contract = contract;
         this.abiFunctions = getAbiMethods(abiItems);
       }, (err) => {
         this._toastrService.danger('Can\'t initiate contract, check entered data');
