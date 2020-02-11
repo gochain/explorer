@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/gochain-io/explorer/server/utils"
 	"time"
+
+	"github.com/gochain-io/explorer/server/utils"
 )
 
 type Contract struct {
@@ -11,6 +12,7 @@ type Contract struct {
 	Valid           bool            `json:"valid" bson:"valid,omitempty"`
 	ContractName    string          `json:"contract_name" bson:"contract_name,omitempty"`
 	CompilerVersion string          `json:"compiler_version" bson:"compiler_version,omitempty"`
+	EVMVersion      string          `json:"evm_version" bson:"evm_version,omitempty"`
 	Optimization    bool            `json:"optimization" bson:"optimization,omitempty"`
 	SourceCode      string          `json:"source_code" bson:"source_code,omitempty"`
 	CreatedAt       time.Time       `json:"created_at" bson:"created_at"`

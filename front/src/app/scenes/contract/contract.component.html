@@ -47,6 +47,21 @@
             <option *ngFor="let compiler of compilers">{{compiler}}</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="evm">EVM</label>
+          <select
+              class="form-control"
+              id="evm"
+              formControlName="evm_version">
+            <option value="" selected>Default</option>
+            <option value="homestead">Homestead</option>
+            <option value="tangerineWhistle">Tangerine Whistle</option>
+            <option value="spuriousDragon">Spurious Dragon</option>
+            <option value="byzantium">Byzantium</option>
+            <option value="constantinople">Constantinople</option>
+            <option value="petersburg">Petersburg</option>
+          </select>
+        </div>
         <div class="form-group form-check">
           <input
               type="checkbox"

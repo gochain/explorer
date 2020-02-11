@@ -6,6 +6,7 @@ export class Contract {
   valid: boolean;
   contract_name: string;
   compiler_version: string;
+  evm_version: string;
   optimization: boolean;
   source_code: string;
   abi: AbiItem[];

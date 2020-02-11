@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"regexp"
 	"strings"
 	"time"
 
@@ -295,39 +294,28 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		return nil, err
 	}
 	if contract == nil {
-		err := errors.New("contract with given address not found")
-		return nil, err
+		return nil, errors.New("contract with given address not found")
 	}
 	if contract.Valid == true {
-		err := errors.New("contract with given address is already verified")
-		return nil, err
+		return nil, errors.New("contract with given address is already verified")
 	}
-	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode, contractData.Optimization)
+	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode, contractData.Optimization, contractData.EVMVersion)
 	if err != nil {
 		self.Lgr.Error("error while compilation", zap.Error(err))
-		err := errors.New("error occurred while compiling source code")
-		return nil, err
+		return nil, errors.New("error occurred while compiling source code")
 	}
 	// compiler gives map with keys starting with <stdin>:
 	key := "<stdin>:" + contractData.ContractName
 	if _, ok := compileData[key]; !ok {
-		err := errors.New("invalid contract name")
-		return nil, err
+		return nil, errors.New("invalid contract name")
 	}
 	if compileData[key].RuntimeCode == "" {
-		err := errors.New("contract binary is empty")
-		return nil, err
+		return nil, errors.New("contract binary is empty")
 	}
-	// removing '0x' from start
-	sourceBin := compileData[key].RuntimeCode[2:]
-	// removing metadata hash from binary
-	reg := regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
-	sourceBin = reg.ReplaceAllString(sourceBin, ``)
-	contractBin := reg.ReplaceAllString(contract.Bytecode, ``)
-	//for 0.4.* compiler version the last 69 symbols could be ignored
-	if (sourceBin == contractBin) || (len(sourceBin) == len(contractBin) && len(sourceBin) > 69 && sourceBin[0:len(sourceBin)-69] == contractBin[0:len(contractBin)-69]) {
+	if SolcBinEqual(compileData[key].RuntimeCode, contract.Bytecode) {
 		contract.Valid = true
 		contract.Optimization = contractData.Optimization
+		contract.EVMVersion = contractData.EVMVersion
 		contract.ContractName = contractData.ContractName
 		contract.SourceCode = compileData[key].Info.Source
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
@@ -337,12 +325,8 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 			return nil, err
 		}
 		return contract, nil
-	} else {
-		err := errors.New("the compiled result does not match the input creation bytecode located at " + contractData.Address)
-		self.Lgr.Info("Compilation result doesn't match", zap.String("sourceBin", sourceBin[0:len(sourceBin)-69]))
-		self.Lgr.Info("Compilation result doesn't match", zap.String("contractBin", contractBin[0:len(contractBin)-69]))
-		return nil, err
 	}
+	return nil, fmt.Errorf("the compiled result does not match the input creation bytecode located at %s", contractData.Address)
 }
 
 //METHODS USED IN GRABBER
