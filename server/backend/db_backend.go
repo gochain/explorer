@@ -590,6 +590,9 @@ func (self *MongoBackend) getTransactionList(address string, filter *models.TxsF
 		}
 		query := []bson.M{
 			{"$match": findQuery},
+			{"$sort": bson.M{"created_at": -1}},
+			{"$skip": filter.Skip},
+			{"$limit": filter.Limit},
 			{"$lookup": bson.M{
 				"from":         "Transactions",
 				"localField":   "tx_hash",
@@ -602,9 +605,6 @@ func (self *MongoBackend) getTransactionList(address string, filter *models.TxsF
 			{"$replaceRoot": bson.M{
 				"newRoot": "$tx",
 			}},
-			{"$sort": bson.M{"created_at": -1}},
-			{"$skip": filter.Skip},
-			{"$limit": filter.Limit},
 		}
 		err := self.mongo.
 			C("TransactionsByAddress").
