@@ -302,7 +302,7 @@ func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber 
 			return nil
 		}
 		lgr.Info("Redownloading corrupted or missing ancestor")
-		block, err := importer.BlockByNumber(ctx, blockNumber)
+		block, err := importer.BlockByNumber(ctx, blockNumber-1)
 		if err != nil {
 			lgr.Error("Failed to get ancestor", zap.Error(err))
 			if err := utils.SleepCtx(ctx, 5*time.Second); err != nil {
