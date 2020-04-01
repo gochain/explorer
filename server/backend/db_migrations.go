@@ -71,7 +71,7 @@ var migrationTransactionsByAddress = migrate.Migration{
 				}
 				bulk = d.C("TransactionsByAddress").Bulk()
 				bulk.Unordered()
-				
+
 			}
 		}
 		if bulkCnt > 0 {

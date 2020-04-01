@@ -386,7 +386,10 @@ func TestInternalTransactions(t *testing.T) {
 		Skip:  0,
 		Limit: 100,
 	}
-	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, filter)
+	itxFilter := &models.InternalTxFilter{
+		InternalAddress: "",
+	}
+	internalTokenTransfers, err := testBackend.GetInternalTokenTransfers(addrHash, itxFilter)
 	if err != nil {
 		t.Fatal(err)
 	}
