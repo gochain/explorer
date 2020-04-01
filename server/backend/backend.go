@@ -191,7 +191,7 @@ func (self *Backend) GetOwnedTokensList(ownerAddress string, filter *models.Pagi
 }
 
 // GetInternalTokenTransfers gets token transfer events emitted by an ERC20 or ERC721 contract.
-func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
+func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}

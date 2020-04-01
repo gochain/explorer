@@ -55,7 +55,8 @@ type ContractsFilter struct {
 
 type InternalTxFilter struct {
 	PaginationFilter
-	TokenTransactions bool `schema:"token_transactions,omitempty"`
+	TokenTransactions bool   `schema:"token_transactions,omitempty"`
+	InternalAddress   string `schema:"internal_address,omitempty"`
 }
 
 type TxsFilter struct {

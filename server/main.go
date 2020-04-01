@@ -524,7 +524,7 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, &filter.PaginationFilter)
+		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, filter)
 		if err != nil {
 			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
 			errorResponse(w, http.StatusInternalServerError, err)

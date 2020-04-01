@@ -665,11 +665,15 @@ func (self *MongoBackend) getOwnedTokensList(ownerAddress string, filter *models
 }
 
 // getInternalTokenTransfers gets token transfer events emitted by this contract.
-func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
+func (self *MongoBackend) getInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	var internalTransactionsList []*models.TokenTransfer
+	query := bson.M{"contract_address": contractAddress}
+	if filter.InternalAddress != "" {
+		query = bson.M{"contract_address": contractAddress, "$or": []bson.M{{"from_address": filter.InternalAddress}, {"to_address": filter.InternalAddress}}}
+	}
 	err := self.mongo.C("InternalTransactions").
-		Find(bson.M{"contract_address": contractAddress}).
-		Sort("-block_number").Skip(filter.Skip).Limit(filter.Limit).All(&internalTransactionsList)
+		Find(query).
+		Sort("-block_number").Skip(filter.PaginationFilter.Skip).Limit(filter.PaginationFilter.Limit).All(&internalTransactionsList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get internal txs list: %v", err)
 	}
