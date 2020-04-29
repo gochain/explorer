@@ -39,7 +39,7 @@ type MongoBackend struct {
 func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
 		Addrs:   []string{host},
-		Timeout: 120 * time.Second,
+		Timeout: 240 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial mongo: %v", err)
@@ -589,8 +589,8 @@ func (self *MongoBackend) getTransactionList(address string, filter *models.TxsF
 			},
 		}
 		query := []bson.M{
-			{"$match": findQuery},
 			{"$sort": bson.M{"created_at": -1}},
+			{"$match": findQuery},
 			{"$skip": filter.Skip},
 			{"$limit": filter.Limit},
 			{"$lookup": bson.M{
