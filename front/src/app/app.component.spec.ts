@@ -34,10 +34,4 @@ describe('AppComponent', () => {
   it('should create the app', async(() => {
     expect(comp).toBeTruthy();
   }));
-  /**
-   * DEFAULT VALUES
-   */
-  it(`should have as isPageLoading 'false'`, async(() => {
-    expect(comp.isPageLoading).toEqual(false);
-  }));
 });

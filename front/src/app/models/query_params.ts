@@ -1,7 +1,7 @@
 import {BehaviorSubject, Subject} from 'rxjs';
 import {removeEmpty} from '../utils/functions';
 
-interface IParams {
+export interface IParams {
   limit: number;
   skip: number;
 }

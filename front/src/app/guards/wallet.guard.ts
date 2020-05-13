@@ -1,6 +1,8 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
 import {CanActivate, Router} from '@angular/router';
+import {Observable} from 'rxjs';
+import {filter, mergeMap, tap} from 'rxjs/operators';
 /*SERVICES*/
 import {WalletService} from '../services/wallet.service';
 
@@ -14,11 +16,13 @@ export class WalletGuard implements CanActivate {
   ) {
   }
 
-  canActivate(): boolean {
-    if (!this._walletService.account) {
-      this._router.navigate(['wallet']);
-      return false;
-    }
-    return true;
+  canActivate(): Observable<boolean> {
+    return this._walletService.logged$.pipe(
+      tap((logged: boolean) => {
+        if (!logged) {
+          this._router.navigate(['wallet']);
+        }
+      }),
+    );
   }
 }

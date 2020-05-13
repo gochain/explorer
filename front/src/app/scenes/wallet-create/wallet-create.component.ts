@@ -31,7 +31,7 @@ export class WalletCreateComponent implements OnInit {
     private _toastrService: ToastrService,
     private _clipboardService: ClipboardService,
   ) {
-    this._clipboardService.configure({ cleanUpAfterCopy: true });
+    this._clipboardService.configure({cleanUpAfterCopy: true});
   }
 
   ngOnInit(): void {
@@ -42,10 +42,8 @@ export class WalletCreateComponent implements OnInit {
   }
 
   useWallet(): void {
-    this._walletService.openAccount(this.account.privateKey).subscribe((ok: boolean) => {
-      if (ok) {
-        this._router.navigate(['/wallet/account']);
-      }
+    this._walletService.openAccount(this.account.privateKey).subscribe(() => {
+      this._router.navigate(['/wallet/account']);
     });
   }
 

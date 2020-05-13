@@ -45,13 +45,15 @@ export class InteractorComponent implements OnInit {
   contractBadges: Badge[] = [];
   abiTemplates = [ErcName.Go20, ErcName.Go721, ErcName.Go165, ErcName.Upgradeable, ErcName.AllFunctions];
 
-  contract: Web3Contract;
+  web3Contract: Web3Contract;
   abiFunctions: AbiItem[];
   selectedFunction: AbiItem;
-  functionResult: {output:any[][], error: string};
+  functionResult: { output: any[][], error: string };
   addr: Address;
 
   hasData = false;
+
+  addressContract: Contract;
 
   @Input('contractData')
   set address([addr, contract]: [Address, Contract]) {
@@ -73,8 +75,8 @@ export class InteractorComponent implements OnInit {
   }
 
   constructor(
+    public walletService: WalletService,
     private _fb: FormBuilder,
-    private _walletService: WalletService,
     private _toastrService: ToastrService,
     private _commonService: CommonService,
     private _activatedRoute: ActivatedRoute,
@@ -101,7 +103,7 @@ export class InteractorComponent implements OnInit {
     this._subsArr$.push(this.form.get('contractAddress').valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
-    ).subscribe(val => {
+    ).subscribe((val: string) => {
       this.updateContract();
       this.getContractData(val);
     }));
@@ -117,7 +119,7 @@ export class InteractorComponent implements OnInit {
     this._subsArr$.push((this.form.get('functionParameters') as FormArray).valueChanges.pipe(
       debounceTime(1200),
       distinctUntilChanged(),
-    ).subscribe((values) => {
+    ).subscribe((values: string[]) => {
       this.estimateFunctionGas(values);
     }));
     this._subsArr$.push(this.form.get('erc').valueChanges.subscribe(value => {
@@ -174,14 +176,14 @@ export class InteractorComponent implements OnInit {
    * @param params
    */
   callABIFunction(func: AbiItem, params: string[] = []): void {
-    this._walletService.call(this.contract.options.address, func, params).subscribe((decoded: object) => {
+    this.walletService.call(this.web3Contract.options.address, func, params).subscribe((decoded: object) => {
       if (!decoded) {
-        this.functionResult = {error:'Result is empty', output:null};
+        this.functionResult = {error: 'Result is empty', output: null};
         return;
       }
-      this.functionResult = {output:getDecodedData(decoded, func, this.addr), error: null};
+      this.functionResult = {output: getDecodedData(decoded, func, this.addr), error: null};
     }, err => {
-      this.functionResult = {error:err, output:null};
+      this.functionResult = {error: err, output: null};
     });
   }
 
@@ -202,6 +204,7 @@ export class InteractorComponent implements OnInit {
   private handleContractData(address: Address, contract: Contract) {
     this.addr = address;
     this.contractBadges = makeContractBadges(address, contract);
+    this.addressContract = contract;
     if (contract.abi && contract.abi.length) {
       this.form.patchValue({
         contractABI: JSON.stringify(contract.abi, null, 2),
@@ -241,7 +244,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this._walletService.estimateGas(tx).pipe(
+    this.walletService.estimateGas(tx).pipe(
       // filter((gasLimit: number) => !this.isProcessing),
     ).subscribe((gasLimit: number) => {
       this.form.get('gasLimit').patchValue(gasLimit);
@@ -252,12 +255,12 @@ export class InteractorComponent implements OnInit {
   }
 
   formTx(params: string[]): TransactionConfig {
-    const m = this.contract.methods[this.selectedFunction.name](...params);
+    const m = this.web3Contract.methods[this.selectedFunction.name](...params);
 
     const tx: TransactionConfig = {
-      to: this.contract.options.address,
+      to: this.web3Contract.options.address,
       data: m.encodeABI(),
-      from: this._walletService.account.address,
+      from: this.walletService.accountAddress,
     };
 
     if (this.selectedFunction.payable) {
@@ -282,7 +285,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this.contract = null;
+    this.web3Contract = null;
     let abiItem: AbiItem[];
 
     try {
@@ -292,17 +295,7 @@ export class InteractorComponent implements OnInit {
       return;
     }
 
-    this.initContract(addrHash, abiItem);
-  }
-
-  private initContract(addrHash: string, abiItems: AbiItem[]) {
-    this._walletService.w3Call.subscribe((web3: Web3) => {
-      this.contract = new web3.eth.Contract(abiItems, addrHash);
-      this.abiFunctions = getAbiMethods(abiItems);
-    }, err => {
-      this._toastrService.danger('Can\'t initiate contract, check entered data');
-      console.error(`Failed to initiate contract (${addrHash}): ${err}`)
-    });
+    this._initContract(addrHash, abiItem);
   }
 
   useContract(): void {
@@ -329,7 +322,7 @@ export class InteractorComponent implements OnInit {
     }
 
     tx.gas = this.form.get('gasLimit').value;
-    this._walletService.sendTx(tx);
+    this.walletService.sendTx(tx);
   }
 
   onAbiTemplateSelect(ercName: ErcName) {
@@ -341,5 +334,17 @@ export class InteractorComponent implements OnInit {
         emitEvent: true,
       });
     });
+  }
+
+  private _initContract(addrHash: string, abiItems: AbiItem[]) {
+    this.walletService.initContract(addrHash, abiItems).subscribe(
+      (contract) => {
+        this.web3Contract = contract;
+        this.abiFunctions = getAbiMethods(abiItems);
+      }, (err) => {
+        this._toastrService.danger('Can\'t initiate contract, check entered data');
+        console.error(`Failed to initiate contract (${addrHash}): ${err}`);
+      }
+    );
   }
 }

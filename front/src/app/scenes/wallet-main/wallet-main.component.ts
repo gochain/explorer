@@ -10,6 +10,8 @@ import {WalletService} from '../../services/wallet.service';
 import {PasswordField} from '../../models/password-field.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
+import {LayoutService} from '../../services/layout.service';
+import {filter, flatMap} from 'rxjs/operators';
 
 @Component({
   selector: 'app-wallet-main',
@@ -42,19 +44,42 @@ export class WalletMainComponent implements OnInit {
     private _fb: FormBuilder,
     private _toastrService: ToastrService,
     private _router: Router,
+    private _layoutService: LayoutService,
   ) {
   }
 
   ngOnInit() {
+    /*this._layoutService.onLoading();*/
     this._metaService.setTitle(META_TITLES.WALLET.title);
+    /*this.walletService.metamaskConfigured$.pipe(
+      filter((v: boolean) => {
+        if (!v) {
+          this._layoutService.offLoading();
+        }
+        return v;
+      }),
+      flatMap(() => this.walletService.openAccount()),
+    ).subscribe(() => {
+      this._layoutService.offLoading();
+      this._router.navigate(['/wallet/account']);
+    }, (err) => {
+      this._toastrService.danger(err);
+      this._layoutService.offLoading();
+    });*/
   }
 
-  onPrivateKeySubmit() {
-    const privateKey: string = this.privateKeyForm.get('privateKey').value;
-    this.walletService.openAccount(privateKey).subscribe((ok: boolean) => {
-      if (ok) {
-        this._router.navigate(['/wallet/account']);
+  onSubmit(metamask: boolean = false) {
+    let privateKey: string = null;
+    if (!metamask) {
+      privateKey = this.privateKeyForm.get('privateKey').value;
+      if (!privateKey) {
+        this._toastrService.danger('Please enter private key');
+        return;
       }
-    });
+    }
+    this.walletService.openAccount(privateKey).subscribe(
+      () => this._router.navigate(['/wallet/account']),
+      (err) => this._toastrService.danger(err),
+    );
   }
 }

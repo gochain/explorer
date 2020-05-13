@@ -17,11 +17,11 @@ import {Stats} from '../models/stats.model';
 import {Contract} from '../models/contract.model';
 import {SignerData, SignerStat} from '../models/signer-stats';
 import {SignerNode} from '../models/signer-node';
+import {AbiItem} from 'web3-utils';
 /*UTILS*/
 import {ContractAbi, ContractEventsAbi, ContractAbiByID, AbiItemIDed} from '../utils/types';
 import {FunctionName} from '../utils/enums';
 import {objIsEmpty} from '../utils/functions';
-import {AbiItem} from 'web3-utils';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -36,7 +36,7 @@ export class CommonService implements Resolve<string> {
       });
     }
     return this._rpcProvider$.pipe(
-      filter(v => !!v),
+      filter<string>(v => !!v),
       take(1),
     );
   }
@@ -47,7 +47,7 @@ export class CommonService implements Resolve<string> {
       this.initAbi();
     }
     return this._abi$.pipe(
-      filter(v => v !== null),
+      filter<any>(v => v !== null),
       take(1),
     );
   }
@@ -58,7 +58,7 @@ export class CommonService implements Resolve<string> {
       this.initAbi();
     }
     return this._abiByID$.pipe(
-      filter(v => v !== null),
+      filter<any>(v => v !== null),
       take(1),
     );
   }
@@ -72,7 +72,7 @@ export class CommonService implements Resolve<string> {
       });
     }
     return this._eventsAbi$.pipe(
-      filter(v => v !== null),
+      filter<any>(v => v !== null),
       take(1),
     );
   }

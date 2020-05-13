@@ -3,17 +3,16 @@ import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, ParamMap} from '@angular/router';
 import {forkJoin, interval, Observable, of, Subscription} from 'rxjs';
 import {catchError, map, mergeMap, startWith, tap} from 'rxjs/operators';
-import {fromPromise} from 'rxjs/internal-compatibility';
 /*SERVICES*/
 import {CommonService} from '../../services/common.service';
 import {LayoutService} from '../../services/layout.service';
 import {WalletService} from '../../services/wallet.service';
 import {MetaService} from '../../services/meta.service';
 /*MODELS*/
-import {ProcessedLog, ProcessedABIItem, Transaction, TxLog, ProcessedABIData} from '../../models/transaction.model';
+import {ProcessedABIData, ProcessedABIItem, ProcessedLog, Transaction, TxLog} from '../../models/transaction.model';
 import {ContractAbiByID, ContractEventsAbi} from '../../utils/types';
 import Web3 from 'web3';
-import {AbiItem, AbiInput} from 'web3-utils';
+import {AbiInput, AbiItem} from 'web3-utils';
 import {Address} from '../../models/address.model';
 import {Contract} from '../../models/contract.model';
 /*UTILS*/
@@ -38,11 +37,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
 
   recentBlockNumber$: Observable<number> = interval(5000).pipe(
     startWith(0),
-    mergeMap(() => {
-      return this._walletService.w3Call.pipe(mergeMap((web3: Web3) => {
-        return fromPromise<number>(web3.eth.getBlockNumber());
-      }));
-    }),
+    mergeMap(() => this._walletService.getBlockNumber()),
   );
 
   private _subsArr$: Subscription[] = [];
@@ -87,7 +82,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
           this._commonService.abiByID$,
           tx.to ? this._commonService.getAddress(tx.to) : of(null),
           tx.to ? this._commonService.getContract(tx.to) : of(null),
-          this._walletService.w3Call,
+          this._walletService.w3$,
         ]).pipe(
           map((res) => this.processTransactionInputTo(res)),
         );
@@ -107,7 +102,7 @@ export class TransactionComponent implements OnInit, OnDestroy {
     if (!!tx.parsedLogs.length) {
       forkJoin([
         this._commonService.eventsAbi$,
-        this._walletService.w3Call,
+        this._walletService.w3$,
       ]).pipe(
         mergeMap((res) => this.processTransactionLogs(res))
       ).subscribe(logs => {

@@ -1,14 +1,15 @@
 /*CORE*/
 import {Injectable} from '@angular/core';
 import {Router} from '@angular/router';
-import {BehaviorSubject, forkJoin, Observable, of} from 'rxjs';
-import {concatMap, filter, map, take, finalize, catchError, mergeMap} from 'rxjs/operators';
+import {BehaviorSubject, forkJoin, Observable, of, throwError} from 'rxjs';
+import {concatMap, filter, map, mergeMap, take, tap} from 'rxjs/operators';
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
 import {SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
 import {Account} from 'web3-eth-accounts';
-import {AbiItem, fromWei, toWei, isAddress} from 'web3-utils';
+import {Contract as Web3Contract} from 'web3-eth-contract';
+import {AbiItem, fromWei, isAddress, toWei} from 'web3-utils';
 /*SERVICES*/
 import {ToastrService} from '../modules/toastr/toastr.service';
 import {CommonService} from './common.service';
@@ -17,77 +18,184 @@ import {Transaction} from '../models/transaction.model';
 /*UTILS*/
 import {objIsEmpty} from '../utils/functions';
 
+interface IWallet {
+  w3: Web3;
+
+  send(tx: TransactionConfig): Observable<TransactionReceipt>;
+
+  call(tx: TransactionConfig): Observable<string>;
+
+  logIn(privateKey: string): Observable<string>;
+
+  logOut(): void;
+}
+
+abstract class Wallet {
+  w3: Web3;
+
+  constructor(w3: Web3) {
+    this.w3 = w3;
+  }
+
+  call(tx: TransactionConfig): Observable<string> {
+    return fromPromise(this.w3.eth.call(tx));
+  }
+
+  logOut(): void {
+
+  }
+}
+
+class MetamaskStrategy extends Wallet implements IWallet {
+
+  send(tx: TransactionConfig): Observable<TransactionReceipt> {
+    return fromPromise(this.w3.eth.sendTransaction(tx));
+  }
+
+  logIn(): Observable<string> {
+    return fromPromise((window as any).ethereum.enable()).pipe(
+      map((accounts: string[]) => {
+        return accounts[0];
+      }),
+    );
+  }
+}
+
+class PrivateKeyStrategy extends Wallet implements IWallet {
+  private account: Account;
+
+  send(tx: TransactionConfig): Observable<TransactionReceipt> {
+    return fromPromise(this.w3.eth.accounts.signTransaction(tx, this.account.privateKey)).pipe(
+      mergeMap((signedTx: SignedTransaction) => fromPromise(this.w3.eth.sendSignedTransaction(signedTx.rawTransaction))),
+    );
+  }
+
+  logIn(privateKey: string): Observable<string> {
+    if (privateKey.length === 64 && privateKey.indexOf('0x') !== 0) {
+      privateKey = '0x' + privateKey;
+    }
+    if (privateKey.length === 66) {
+      let account: Account;
+      try {
+        account = this.w3.eth.accounts.privateKeyToAccount(privateKey);
+      } catch (e) {
+        return throwError(e);
+      }
+      this.account = account;
+      return of(this.account.address);
+    }
+    return throwError('Given private key is not valid');
+  }
+
+  logOut(): void {
+    this.account = null;
+  }
+}
+
 @Injectable()
 export class WalletService {
   isProcessing = false;
 
   // ACCOUNT INFO
-  account: Account;
+  accountAddress: string;
   accountBalance: string;
 
   receipt: TransactionReceipt;
 
-  private _web3Callable$: BehaviorSubject<Web3> = new BehaviorSubject(null);
-  private _web3Payable$: BehaviorSubject<Web3> = new BehaviorSubject(null);
+  private _metamaskIntalled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  get w3Call(): Observable<Web3> {
-    return this._web3Callable$.pipe(
-        filter(v => !!v),
-        take(1),
+  get metamaskIntalled$(): Observable<boolean> {
+    return this.ready$.pipe(
+      mergeMap(() => this._metamaskIntalled$),
+      filter(v => v !== null),
     );
   }
 
-  get w3Pay(): Observable<Web3> {
-    return this._web3Payable$.pipe(
-        filter(v => !!v),
-        take(1),
+  get metamaskConfigured$(): Observable<boolean> {
+    return this.ready$.pipe(
+      mergeMap(() => this._metamaskConfigured$),
+      filter(v => v !== null),
+    );
+  }
+
+  private _metamaskConfigured$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(null);
+
+  private _logged$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  get logged$(): Observable<boolean> {
+    return this.ready$.pipe(
+      mergeMap(() => this._logged$),
+    );
+  }
+
+// used for paid
+  private _walletContext: IWallet;
+
+  // used for interaction with chain, only free methods
+  private _w3: Web3;
+  private _metamaskw3: Web3;
+
+  get w3$(): Observable<Web3> {
+    return this.ready$.pipe(
+      map(() => this._w3),
+    );
+  }
+
+  private _ready$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  get ready$(): Observable<boolean> {
+    return this._ready$.pipe(
+      filter<boolean>(v => !!v),
+      take(1),
     );
   }
 
   constructor(
     private _toastrService: ToastrService,
     private _commonService: CommonService,
-    private _router: Router,
   ) {
-    this._commonService.rpcProvider$
-      .pipe(
-        filter(value => !!value),
-      )
-      .subscribe((rpcProvider: string) => {
-        const metaMaskProvider = new Web3(Web3.givenProvider, null, {transactionConfirmationBlocks: 1,});
-        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, {transactionConfirmationBlocks: 1,});
-        this._web3Callable$.next(web3Provider);
-        if (!metaMaskProvider.currentProvider) {
-          this._web3Payable$.error('Metamask is not enabled');
-          return;
-        }
-        web3Provider.eth.net.getId((err, web3NetID) => {
-          if (err) {
-            this._toastrService.danger('Metamask is enabled but can\'t get network id');
-            this._web3Payable$.error(`Failed to get network id: ${err}`);
-            return;
-          }
-          metaMaskProvider.eth.net.getId((err, metamask3NetID) => {
-            if (err) {
-              this._toastrService.danger('Metamask is enabled but can\'t get network id from Metamask');
-              this._web3Payable$.error(`Failed to Metamask network id: ${err}`);
-              return;
-            }
-            if (web3NetID !== metamask3NetID) {
-              this._toastrService.danger('Metamask is enabled but networks are different');
-              this._web3Payable$.error(`Metamask network ID (${metamask3NetID}) doesn't match expected (${web3NetID})`);
-              return;
-            }
-            this._web3Payable$.next(web3Provider);
-          });
-        });
-      });
+    this._commonService.rpcProvider$.subscribe((rpcProvider: string) => {
+      this.initProvider(rpcProvider);
+    });
   }
 
-  sendSignedTx(signed: SignedTransaction): Observable<TransactionReceipt> {
-    return this.w3Call.pipe(concatMap((web3: Web3) => {
-      return fromPromise(web3.eth.sendSignedTransaction(signed.rawTransaction));
-    }))
+  initProvider(rpcProvider: string): void {
+    const metaMaskProvider = new Web3(Web3.givenProvider, null, {transactionConfirmationBlocks: 1});
+    const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, {transactionConfirmationBlocks: 1});
+    this._w3 = web3Provider;
+    if (!metaMaskProvider.currentProvider) {
+      this._metamaskConfigured$.next(false);
+      this._ready$.next(true);
+      return;
+    }
+    web3Provider.eth.net.getId((web3err, web3NetID) => {
+      if (web3err) {
+        this._toastrService.danger('Metamask is enabled but can\'t get Gochain network id');
+        this._metamaskIntalled$.next(true);
+        this._metamaskConfigured$.next(false);
+        this._ready$.next(true);
+        return;
+      }
+      metaMaskProvider.eth.net.getId((metamaskErr, metamask3NetID) => {
+        if (metamaskErr) {
+          this._toastrService.danger('Metamask is enabled but can\'t get network id from Metamask');
+          this._metamaskIntalled$.next(true);
+          this._metamaskConfigured$.next(false);
+          this._ready$.next(true);
+          return;
+        }
+        if (web3NetID !== metamask3NetID) {
+          this._toastrService.warning('Metamask is enabled but networks are different');
+          this._metamaskIntalled$.next(true);
+          this._metamaskConfigured$.next(false);
+          this._ready$.next(true);
+          return;
+        }
+        this._metamaskw3 = metaMaskProvider;
+        this._metamaskIntalled$.next(true);
+        this._metamaskConfigured$.next(true);
+        this._ready$.next(true);
+      });
+    });
   }
 
   /**
@@ -96,21 +204,22 @@ export class WalletService {
    * @param abi
    * @param params
    */
-  call(addr: string, abi: AbiItem, params: any[]): Observable<object> | null {
-    let web3;
-    return (abi.constant ? this.w3Call : this.w3Pay).pipe(
-      mergeMap((_web3: Web3) => {
-        web3 = _web3;
-        const encoded: string = web3.eth.abi.encodeFunctionCall(abi, params);
-        return fromPromise(web3.eth.call({
+  call(addr: string, abi: AbiItem, params: any[]): Observable<any> {
+    return this.ready$.pipe(
+      mergeMap(() => {
+        const encoded: string = this._w3.eth.abi.encodeFunctionCall(abi, params);
+        const tx: TransactionConfig = {
+          from: this.accountAddress,
           to: addr,
           data: encoded,
-        }))
-      }),map((res: string) => {
-        if (!res || res==='0x' || res==='0X') {
+        };
+        return abi.constant ? this._w3.eth.call(tx) : this._walletContext.call(tx);
+      }),
+      map((res: string) => {
+        if (!res || res === '0x' || res === '0X') {
           return null;
         }
-        const decoded: object = web3.eth.abi.decodeParameters(abi.outputs, res);
+        const decoded: object = this._w3.eth.abi.decodeParameters(abi.outputs, res);
         if (objIsEmpty(decoded)) {
           return null;
         }
@@ -124,11 +233,12 @@ export class WalletService {
    * @param txHash
    */
   getTxData(txHash: string): Observable<Transaction> {
-    return this.w3Call.pipe(concatMap((web3: Web3) => {
-      return forkJoin<Web3Tx, TransactionReceipt>([
-        fromPromise<Web3Tx>(web3.eth.getTransaction(txHash)),
-        fromPromise<TransactionReceipt>(web3.eth.getTransactionReceipt(txHash)),
-      ]).pipe(
+    return this.ready$.pipe(
+      concatMap(() => {
+        return forkJoin<Web3Tx, TransactionReceipt>([
+          fromPromise<Web3Tx>(this._w3.eth.getTransaction(txHash)),
+          fromPromise<TransactionReceipt>(this._w3.eth.getTransactionReceipt(txHash)),
+        ]).pipe(
           map((res: [Web3Tx, TransactionReceipt]) => {
             if (!res[0]) {
               return null;
@@ -148,22 +258,24 @@ export class WalletService {
               finalTx.block_number = tx.blockNumber;
               finalTx.gas_fee = '' + (+tx.gasPrice * txReceipt.gasUsed);
               finalTx.contract_address =
-                  (txReceipt.contractAddress && txReceipt.contractAddress !== '0x0000000000000000000000000000000000000000')
-                      ? txReceipt.contractAddress
-                      : null;
+                (txReceipt.contractAddress && txReceipt.contractAddress !== '0x0000000000000000000000000000000000000000')
+                  ? txReceipt.contractAddress
+                  : null;
               finalTx.status = txReceipt.status;
               finalTx.created_at = new Date();
             }
             return finalTx;
           }),
-      );
-    }));
+        );
+      }));
   }
 
   estimateGas(tx: TransactionConfig): Observable<number> {
-    return this.w3Call.pipe(concatMap((web3: Web3) => {
-      return fromPromise(web3.eth.estimateGas(tx));
-    }));
+    return this.ready$.pipe(
+      concatMap(() => {
+        return fromPromise(this._w3.eth.estimateGas(tx));
+      }),
+    );
   }
 
   // WALLET METHODS
@@ -176,11 +288,12 @@ export class WalletService {
    */
   sendGo(to: string, value: string, gas: string): void {
     if (this.isProcessing) {
+      this._toastrService.warning('another process in action');
       return;
     }
 
     if (to.length !== 42 || !isAddress(to)) {
-      this._toastrService.danger('ERROR: Invalid TO address.');
+      this._toastrService.danger('Invalid TO address.');
       return;
     }
 
@@ -192,6 +305,7 @@ export class WalletService {
     }
 
     const tx: TransactionConfig = {
+      from: this.accountAddress,
       to,
       value,
       gas
@@ -215,6 +329,7 @@ export class WalletService {
     }
 
     const tx: TransactionConfig = {
+      from: this.accountAddress,
       data: byteCode,
       gas
     };
@@ -228,24 +343,14 @@ export class WalletService {
    */
   sendTx(tx: TransactionConfig): void {
     this.isProcessing = true;
-    this.w3Call.subscribe((web3: Web3) => {
-      const p: Promise<number> = web3.eth.getTransactionCount(this.account.address);
-      fromPromise(p).pipe(
-          concatMap(nonce => {
-            tx.nonce = nonce;
-            const p2: Promise<SignedTransaction> = web3.eth.accounts.signTransaction(tx, this.account.privateKey);
-            return fromPromise(p2);
-          }),
-          concatMap((signed: SignedTransaction) => {
-            return this.sendSignedTx(signed);
-          })
-      ).subscribe((receipt: TransactionReceipt) => {
-        this.receipt = receipt;
-        this.getBalance();
-      }, err => {
-        this._toastrService.danger(err);
-        this.resetProcessing();
-      });
+    this.ready$.pipe(
+      mergeMap(() => this._walletContext.send(tx)),
+    ).subscribe((receipt: TransactionReceipt) => {
+      this.receipt = receipt;
+      this.getBalance();
+    }, (err) => {
+      this._toastrService.danger(err);
+      this.resetProcessing();
     });
   }
 
@@ -257,45 +362,57 @@ export class WalletService {
   // ACCOUNT METHODS
 
   createAccount(): Observable<Account> {
-    return this.w3Call.pipe(map((web3: Web3) => {
-      return web3.eth.accounts.create();
-    }));
+    return this.ready$.pipe(
+      map(() => this._w3.eth.accounts.create()),
+    );
   }
 
-  openAccount(privateKey: string): Observable<boolean> {
+  openAccount(privateKey: string = null): Observable<string> {
     this.isProcessing = true;
-    if (privateKey.length === 64 && privateKey.indexOf('0x') !== 0) {
-      privateKey = '0x' + privateKey;
-    }
-    if (privateKey.length === 66) {
-      return this.w3Call.pipe(map((web3: Web3) => {
-        this.account = web3.eth.accounts.privateKeyToAccount(privateKey);
+    return this.ready$.pipe(
+      mergeMap(() => {
+        this._walletContext = privateKey === null ? new MetamaskStrategy(this._metamaskw3) : new PrivateKeyStrategy(this._w3);
+        return this._walletContext.logIn(privateKey);
+      }),
+      tap((accountAddress: string) => {
+        this.accountAddress = accountAddress;
+        this._logged$.next(true);
+        this.isProcessing = false;
         this.getBalance();
-        return true;
-      }), catchError(err => {
-        this._toastrService.danger(err);
-        return of(false);
-      }), finalize(()=> this.isProcessing = false ));
-    }
-    this.isProcessing = false;
-    this._toastrService.danger('Given private key is not valid');
-    return of(false);
+      }, (err) => {
+        this.isProcessing = false;
+      }),
+    );
   }
 
   closeAccount(): void {
-    this.account = null;
     this.accountBalance = null;
-    this._router.navigate(['wallet']);
+    this.accountAddress = null;
+    this._logged$.next(false);
+    this._walletContext.logOut();
   }
 
   getBalance() {
-    this.w3Call.pipe(concatMap((web3: Web3) => {
-      return fromPromise(web3.eth.getBalance(this.account.address));
-    })).subscribe((balance: string) => {
-    this._toastrService.info('Updated balance.');
-        this.accountBalance = fromWei(balance, 'ether').toString();
-      }, err => {
-          this._toastrService.danger(err);
+    this.ready$.pipe(
+      concatMap(() => fromPromise(this._w3.eth.getBalance(this.accountAddress))),
+    ).subscribe((balance: string) => {
+      this._toastrService.info('Updated balance.');
+      this.accountBalance = fromWei(balance, 'ether').toString();
+    }, err => {
+      this._toastrService.danger(err);
     });
+  }
+
+
+  initContract(addrHash: string, abiItems: AbiItem[]): Observable<Web3Contract> {
+    return this.ready$.pipe(
+      map(() => new this._w3.eth.Contract(abiItems, addrHash))
+    );
+  }
+
+  getBlockNumber(): Observable<number> {
+    return this.ready$.pipe(
+      mergeMap(() => this._w3.eth.getBlockNumber()),
+    );
   }
 }

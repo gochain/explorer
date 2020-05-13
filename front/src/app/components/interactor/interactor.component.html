@@ -26,7 +26,7 @@
           rows="5"
           required
       ></textarea>
-      <div class="mt-1">
+      <div class="mt-1" *ngIf="!addressContract?.valid">
         or select template:
         <select formControlName="erc">
           <option *ngFor="let value of abiTemplates" [value]="value">{{value}}</option>
@@ -34,7 +34,7 @@
       </div>
     </div>
   </div>
-  <ng-container *ngIf="contract != null">
+  <ng-container *ngIf="web3Contract != null">
     <div class="form-group row">
       <label for="contract-function" class="col-md-2">Choose Contract Function:</label>
       <div class="col-md-10">
@@ -53,7 +53,7 @@
               </option>
             </ng-container>
           </optgroup>
-          <optgroup label="Paid (wallet required)" [disabled]="!_walletService.account">
+          <optgroup label="Paid (wallet required)" [disabled]="!(walletService.logged$ | async)">
             <ng-container *ngFor="let abiItem of abiFunctions; let i = index;">
               <option
                   *ngIf="abiItem.payable || !abiItem.constant"

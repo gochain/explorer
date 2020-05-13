@@ -9,20 +9,7 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./app.component.scss']
 })
 @AutoUnsubscribe('_subsArr$')
-export class AppComponent implements OnInit {
-  isPageLoading = false;
-
-  private _subsArr$: Subscription[] = [];
-
-  constructor(private _layoutService: LayoutService, private _cdr: ChangeDetectorRef) {
-  }
-
-  ngOnInit() {
-    this._subsArr$.push(
-      this._layoutService.isPageLoading.subscribe((state: boolean) => {
-        this.isPageLoading = state;
-        this._cdr.detectChanges();
-      })
-    );
+export class AppComponent {
+  constructor(public layoutService: LayoutService) {
   }
 }

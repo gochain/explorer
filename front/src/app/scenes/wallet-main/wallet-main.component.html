@@ -1,20 +1,23 @@
 <div class="container">
-  <div class="card f-h">
-    <div class="card-body">
-      <div class="row justify-content-center h-100 mt-5">
-        <div class="col-md-6">
-          <h4 class="text-center text-primary text-uppercase">
-            Please enter your private key to proceed
-          </h4>
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">
+            <img src="../../../assets/icons/user.svg" alt="Account">
+            Wallet
+          </div>
           <form
               class="mt-4"
               [formGroup]="privateKeyForm"
-              (submit)="onPrivateKeySubmit()"
+              (submit)="onSubmit()"
           >
+            <label for="private-key">Please enter your private key to proceed</label>
             <div class="input-group">
               <input
                   [type]="passwordField.type"
                   class="form-control"
+                  id="private-key"
                   placeholder="Private Key"
                   formControlName="privateKey"
                   autofocus
@@ -35,40 +38,60 @@
                 </button>
               </div>
             </div>
-            <button
-                type="submit"
-                class="btn btn-primary btn-block mt-4"
-                [disabled]="walletService.isProcessing"
-            >
-              <ng-container *ngIf="walletService.isProcessing; else open">
-                OPENING <img src="../../../assets/icons/loader.svg" alt="Opening">
-              </ng-container>
-              <ng-template #open>
-                OPEN WALLET
-              </ng-template>
-            </button>
-          </form>
-          <div class="row mt-4">
-            <div class="col-12">
+            <div class="row mt-4">
+              <div class="col-md-6">
+                <button
+                    type="submit"
+                    class="btn btn-primary btn-block"
+                    [disabled]="walletService.isProcessing"
+                >
+                  <ng-container *ngIf="walletService.isProcessing; else open">
+                    OPENING <img src="../../../assets/icons/loader.svg" alt="Opening">
+                  </ng-container>
+                  <ng-template #open>
+                    OPEN WALLET
+                  </ng-template>
+                </button>
+              </div>
+              <div class="col-md-6">
+                <button
+                    routerLink="create"
+                    type="button"
+                    class="btn btn-outline-primary btn-block"
+                    [disabled]="walletService.isProcessing"
+                >
+                  Create Account
+                </button>
+              </div>
+            </div>
+            <div class="mt-4">
               <button
-                  routerLink="create"
+                  (click)="onSubmit(true)"
                   type="button"
                   class="btn btn-outline-primary btn-block"
-                  [disabled]="walletService.isProcessing"
+                  [disabled]="walletService.isProcessing || !(walletService.metamaskConfigured$ | async)"
               >
-                Create Account
+                Open with Metamask
               </button>
             </div>
-            <!--<div class="col-6">
-              <button
-                  routerLink="use"
-                  type="button"
-                  class="btn btn-light btn-block"
-                  [disabled]="walletService.isProcessing"
-              >
-                Use Contract
-              </button>
-            </div>-->
+          </form>
+          <div class="metamask my-5" *ngIf="!(walletService.metamaskConfigured$ | async)">
+            <div class="callout callout-info">
+              <ng-container *ngIf="walletService.metamaskIntalled$ | async; else metamaskNotInstalled">
+                <div class="text-danger">
+                  It seems that you have metamask installed but GoChain is not configured, please use the following
+                  <a target="_blank" href="https://gofs-help.gochain.io/metamask">guide</a> to configure it.
+                </div>
+              </ng-container>
+              <ng-template #metamaskNotInstalled>
+                To use wallet without private key, please install or enable
+                <a target="_blank" href="https://metamask.io/">MetaMask</a>
+                and
+                <a target="_blank" href="https://gofs-help.gochain.io/metamask">
+                  configure it to work with Gochain
+                </a>
+              </ng-template>
+            </div>
           </div>
         </div>
       </div>
