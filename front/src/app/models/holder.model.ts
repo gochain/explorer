@@ -1,8 +1,16 @@
+import { Decimal } from 'decimal.js/decimal';
+
 export class Holder {
   contract_address: string;
   token_holder_address: string;
-  balance: number;
-  balance_int: number;
+  balance: string;
   token_name: string;
   token_symbol: string;
+  token_decimals: number;
+
+  public balanceDec(): Decimal {
+    var b = new Decimal(this.balance);
+    var mby = new Decimal(1).toExponential(this.token_decimals);
+    return b.div(mby);
+  }
 }

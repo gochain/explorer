@@ -29,6 +29,7 @@
     "@swimlane/ngx-charts": "^12.1.0",
     "bignumber.js": "^9.0.0",
     "cids": "^0.7.1",
+    "decimal.js": "^10.2.0",
     "ng-angular8-datatable": "^0.9.11",
     "ngx-clipboard": "^12.3.0",
     "rxjs": "^6.5.4",

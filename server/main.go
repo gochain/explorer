@@ -15,13 +15,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gochain-io/explorer/server/backend"
-	"github.com/gochain-io/explorer/server/models"
-
 	"github.com/blendle/zapdriver"
+	"github.com/dgraph-io/ristretto"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	"github.com/gochain-io/explorer/server/backend"
+	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gorilla/schema"
 	qrcode "github.com/skip2/go-qrcode"
@@ -64,6 +64,16 @@ func main() {
 			logger.Error("Fatal panic", zap.String("panic", fmt.Sprintf("%+v", r)))
 		}
 	}()
+
+	// init memory cache
+	cache, err := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e6,     // number of keys to track frequency of (1M).
+		MaxCost:     1 << 30, // maximum cost of cache (1GB).
+		BufferItems: 64,      // number of keys per Get buffer.
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	var mongoUrl string
 	var dbName string
@@ -165,7 +175,7 @@ func main() {
 			}
 		}
 
-		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger)
+		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger, cache)
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
@@ -484,6 +494,7 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 }
 
 func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	var err error
 	contractAddress := chi.URLParam(r, "address")
 	if !common.IsHexAddress(contractAddress) {
@@ -495,7 +506,7 @@ func getOwnedTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tokens := &models.OwnedTokenList{}
-	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(contractAddress, filter)
+	tokens.OwnedTokens, err = backendInstance.GetOwnedTokensList(ctx, contractAddress, filter)
 	if err != nil {
 		logger.Error("Failed to get owned tokens", zap.String("address", contractAddress), zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)

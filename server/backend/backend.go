@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
 	"github.com/gochain-io/explorer/server/utils"
@@ -32,9 +33,11 @@ type Backend struct {
 	lockedAccounts  []string
 	signers         map[common.Address]models.Signer
 	Lgr             *zap.Logger
+	Cache           *ristretto.Cache
 }
 
-func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer, lgr *zap.Logger) (*Backend, error) {
+func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer,
+	lgr *zap.Logger, cache *ristretto.Cache) (*Backend, error) {
 	rpcClient, err := rpc.Dial(rpcUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial rpc %q: %v", rpcUrl, err)
@@ -141,6 +144,11 @@ func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models
 	if !common.IsHexAddress(hash) {
 		return nil, errors.New("wrong address format")
 	}
+	// check cache first
+	a, found := self.Cache.Get(hash)
+	if found {
+		return a.(*models.Address), nil
+	}
 	addr := common.HexToAddress(hash)
 	addressHash := addr.Hex()
 	address, err := self.mongo.getAddressByHash(addressHash)
@@ -159,6 +167,8 @@ func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models
 	}
 	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
+	// todo: only store a subset of this data in the cache, just the metadata like token name, decimals, etc. Things that won't change.
+	self.Cache.Set(hash, address, 5)
 	return address, nil
 
 }
@@ -183,11 +193,23 @@ func (self *Backend) GetTokenHoldersList(contractAddress string, filter *models.
 	}
 	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), filter)
 }
-func (self *Backend) GetOwnedTokensList(ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
+func (self *Backend) GetOwnedTokensList(ctx context.Context, ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	if !common.IsHexAddress(ownerAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", ownerAddress)
 	}
-	return self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
+	held, err := self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
+	if err != nil {
+		return nil, err
+	}
+	// loop through and add decimals
+	for _, h := range held {
+		addrInfo, err := self.GetAddressByHash(ctx, h.ContractAddress)
+		if err != nil {
+			return nil, fmt.Errorf("error finding decimals for %v: %v", h.ContractAddress, err)
+		}
+		h.TokenDecimals = addrInfo.Decimals
+	}
+	return held, nil
 }
 
 // GetInternalTokenTransfers gets token transfer events emitted by an ERC20 or ERC721 contract.
