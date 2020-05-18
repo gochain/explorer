@@ -65,16 +65,6 @@ func main() {
 		}
 	}()
 
-	// init memory cache
-	cache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1e6,     // number of keys to track frequency of (1M).
-		MaxCost:     1 << 30, // maximum cost of cache (1GB).
-		BufferItems: 64,      // number of keys per Get buffer.
-	})
-	if err != nil {
-		panic(err)
-	}
-
 	var mongoUrl string
 	var dbName string
 	var signersFile string
@@ -173,6 +163,16 @@ func main() {
 			if err != nil {
 				return err
 			}
+		}
+
+		// init memory cache
+		cache, err := ristretto.NewCache(&ristretto.Config{
+			NumCounters: 1e6,    // number of keys to track frequency of.
+			MaxCost:     100000, // maximum cost of cache.
+			BufferItems: 64,     // number of keys per Get buffer.
+		})
+		if err != nil {
+			panic(err)
 		}
 
 		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger, cache)

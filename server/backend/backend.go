@@ -59,6 +59,18 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 	importer.lockedAccounts = lockedAccounts
 	importer.signers = signers
 	importer.Lgr = lgr
+
+	if cache == nil {
+		// should this be a no-op cache if it's not passed in?
+		cache, err = ristretto.NewCache(&ristretto.Config{
+			NumCounters: 1e6,   // number of keys to track frequency of (1M).
+			MaxCost:     10000, // maximum cost of cache (1GB).
+			BufferItems: 64,    // number of keys per Get buffer.
+		})
+		if err != nil {
+			panic(err)
+		}
+	}
 	return importer, nil
 }
 
