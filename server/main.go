@@ -777,7 +777,7 @@ type zapLogEntry struct {
 	http *zapdriver.HTTPPayload
 }
 
-func (z *zapLogEntry) Write(status, bytes int, elapsed time.Duration) {
+func (z *zapLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	z.http.Status = status
 	z.http.ResponseSize = strconv.Itoa(bytes)
 	z.http.Latency = fmt.Sprintf("%.9fs", elapsed.Seconds())
