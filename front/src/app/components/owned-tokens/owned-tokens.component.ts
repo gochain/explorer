@@ -49,7 +49,7 @@ export class OwnedTokensComponent implements OnInit {
 
   getTokenData() {
     this._commonService.getAddressTokens(this._addrHash, this.tokensQueryParams.params).subscribe((data: any) => {
-      this.tokens = data.owned_tokens.map(x => Object.assign(new Holder(), x)) || [];
+      this.tokens = data.owned_tokens ? data.owned_tokens.map(x => Object.assign(new Holder(), x)) : [];
     });
   }
 }
