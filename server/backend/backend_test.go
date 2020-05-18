@@ -19,7 +19,7 @@ import (
 
 func getBackend(t *testing.T) *Backend {
 	t.Helper()
-	b, err := NewBackend(context.Background(), "127.0.0.1:27017", "https://rpc.gochain.io", "testdb", nil, nil, zaptest.NewLogger(t))
+	b, err := NewBackend(context.Background(), "127.0.0.1:27017", "https://rpc.gochain.io", "testdb", nil, nil, zaptest.NewLogger(t), nil)
 	if err != nil {
 		t.Fatalf("failed to create backend: %v", err)
 	}
