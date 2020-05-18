@@ -7,7 +7,7 @@
             Balance:
           </div>
           <div class="data-list-desc">
-            {{token.balanceDec()}} {{token.token_symbol}}
+            {{token.balanceDec}} {{token.token_symbol}}
           </div>
         </div>
         <div class="data-list-row">
@@ -42,7 +42,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let token of tokens">
-          <td class="text-nowrap">{{token.balanceDec()}} {{token.token_symbol}}</td>
+          <td class="text-nowrap">{{token.balanceDec}} {{token.token_symbol}}</td>
           <td class="text-nowrap">{{token.balance}}</td>
           <td class="text-truncate">{{token.token_name}}</td>
           <td class="text-truncate text-monospace">
