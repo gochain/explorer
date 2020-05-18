@@ -1,27 +1,27 @@
 /*CORE*/
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, forkJoin, Observable} from 'rxjs';
-import {filter, flatMap, map, take, tap} from 'rxjs/operators';
-import {Resolve} from '@angular/router';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
+import { filter, flatMap, map, take, tap } from 'rxjs/operators';
+import { Resolve } from '@angular/router';
 /*SERVICES*/
-import {ApiService} from './api.service';
+import { ApiService } from './api.service';
 /*MODELS*/
-import {BlockList} from '../models/block_list.model';
-import {Block} from '../models/block.model';
-import {Transaction} from '../models/transaction.model';
-import {Address} from '../models/address.model';
-import {RichList} from '../models/rich_list.model';
-import {Holder} from '../models/holder.model';
-import {InternalTransaction} from '../models/internal-transaction.model';
-import {Stats} from '../models/stats.model';
-import {Contract} from '../models/contract.model';
-import {SignerData, SignerStat} from '../models/signer-stats';
-import {SignerNode} from '../models/signer-node';
+import { BlockList } from '../models/block_list.model';
+import { Block } from '../models/block.model';
+import { Transaction } from '../models/transaction.model';
+import { Address } from '../models/address.model';
+import { RichList } from '../models/rich_list.model';
+import { Holder } from '../models/holder.model';
+import { InternalTransaction } from '../models/internal-transaction.model';
+import { Stats } from '../models/stats.model';
+import { Contract } from '../models/contract.model';
+import { SignerData, SignerStat } from '../models/signer-stats';
+import { SignerNode } from '../models/signer-node';
 /*UTILS*/
-import {ContractAbi, ContractEventsAbi, ContractAbiByID, AbiItemIDed} from '../utils/types';
-import {FunctionName} from '../utils/enums';
-import {objIsEmpty} from '../utils/functions';
-import {AbiItem} from 'web3-utils';
+import { ContractAbi, ContractEventsAbi, ContractAbiByID, AbiItemIDed } from '../utils/types';
+import { FunctionName } from '../utils/enums';
+import { objIsEmpty } from '../utils/functions';
+import { AbiItem } from 'web3-utils';
 
 @Injectable()
 export class CommonService implements Resolve<string> {
@@ -177,7 +177,7 @@ export class CommonService implements Resolve<string> {
     return this._apiService.get('/address/' + addrHash + '/holders', data);
   }
 
-  getAddressTokens(addrHash: string, data?: any): Observable<any> {
+  getAddressTokens(addrHash: string, data?: any): Observable<Holder> {
     return this._apiService.get(`/address/${addrHash}/owned_tokens`, data);
   }
 
