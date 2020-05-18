@@ -47,7 +47,7 @@ export class TokenHoldersComponent implements OnInit {
 
   getHolderData() {
     this._commonService.getAddressHolders(this._addr.address, this.holderQueryParams.params).subscribe((data: any) => {
-      this.token_holders = data.token_holders || [];
+      this.token_holders = data.token_holders.map(x => Object.assign(new Holder(), x)) || [];
     });
   }
 }
