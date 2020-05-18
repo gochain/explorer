@@ -9,8 +9,8 @@ export class Holder {
   token_decimals: number;
 
   public balanceDec(): Decimal {
-    var b = new Decimal(this.balance);
-    var mby = new Decimal(1).toExponential(this.token_decimals);
+    var b = new Decimal(this.balance);    
+    var mby = new Decimal(10).toPower(this.token_decimals);    
     return b.div(mby);
   }
 }
