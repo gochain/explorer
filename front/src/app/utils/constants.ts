@@ -33,18 +33,6 @@ export const MENU_ITEMS: MenuItem[] = [
     link: ROUTES.HOME,
   },
   {
-    title: 'Rich List',
-    link: ROUTES.RICHLIST,
-  },
-  /*{
-    title: 'Verify Contract',
-    link: '/verify',
-  },*/
-  {
-    title: 'Contracts',
-    link: ROUTES.CONTRACTS,
-  },
-  {
     title: 'Wallet',
     link: ROUTES.WALLET,
   },
@@ -52,15 +40,6 @@ export const MENU_ITEMS: MenuItem[] = [
     title: 'Signers',
     link: ROUTES.SIGNERS,
   },
-  /*{
-    title: 'Network Stats',
-    link: 'https://stats.gochain.io',
-    external: true
-  },*/
-  /*{
-    title: 'Settings',
-    link: '/settings',
-  },*/
 ];
 
 export const DEFAULT_GAS_LIMIT = 21000;
