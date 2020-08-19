@@ -243,6 +243,18 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 		}
 		toAddress = transaction.ContractAddress
 	}
+	toAddr, _ := self.getAddressByHash(toAddress)
+	if toAddr == nil || toAddr.Contract { //if address hasn't imported yet or address is a contract we download receipt logs
+		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
+		if err != nil {
+			return fmt.Errorf("failed to get tx receipt: %v", err)
+		}
+		for _, l := range receipt.Logs {
+			if err := self.UpdateActiveAddress(l.Address.String()); err != nil {
+				return fmt.Errorf("failed to update active address: %s", err)
+			}
+		}
+	}
 
 	if _, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
 		return fmt.Errorf("failed to upsert tx: %v", err)
@@ -568,6 +580,11 @@ func (self *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transact
 		jsonValue, err := json.Marshal(receipt.Logs)
 		if err != nil {
 			lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
+		}
+		for _, l := range receipt.Logs {
+			if err := self.UpdateActiveAddress(l.Address.String()); err != nil {
+				return nil, fmt.Errorf("failed to update active address: %s", err)
+			}
 		}
 		tx.Logs = string(jsonValue)
 		_, err = self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
