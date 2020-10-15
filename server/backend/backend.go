@@ -150,8 +150,8 @@ func (self *Backend) GetSignersList() map[common.Address]models.Signer {
 
 func (self *Backend) GetRichlist(filter *models.PaginationFilter) ([]*models.Address, error) {
 	return self.mongo.getRichlist(filter, self.lockedAccounts)
-
 }
+
 func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Address, error) {
 	if !common.IsHexAddress(hash) {
 		return nil, errors.New("wrong address format")
@@ -265,6 +265,7 @@ func (self *Backend) GetContract(contractAddress string) (*models.Contract, erro
 	return contract, err
 
 }
+
 func (self *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
 	var lightBlocks []*models.LightBlock
 	blocks, err := self.mongo.getLatestsBlocks(filter)
@@ -276,6 +277,19 @@ func (self *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*model
 	}
 	return lightBlocks, nil
 }
+
+func (self *Backend) GetLatestVoteBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
+	var lightBlocks []*models.LightBlock
+	blocks, err := self.mongo.getLatestVoteBlocks(filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest vote blocks: %v", err)
+	}
+	for _, block := range blocks {
+		lightBlocks = append(lightBlocks, fillExtraLight(block))
+	}
+	return lightBlocks, nil
+}
+
 func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, filter *models.PaginationFilter) ([]*models.Transaction, error) {
 	return self.mongo.getBlockTransactionsByNumber(blockNumber, filter)
 }

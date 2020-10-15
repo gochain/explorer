@@ -485,6 +485,22 @@ func (self *MongoBackend) getLatestsBlocks(filter *models.PaginationFilter) ([]*
 	return blocks, nil
 }
 
+func (self *MongoBackend) getLatestVoteBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
+	var blocks []*models.LightBlock
+	err := self.mongo.C("Blocks").
+		// first 32 bytes are vanity, after is vote
+		Find(bson.M{"$binarySize: extra_data": bson.M{"$gt": 32}}).
+		Sort("-number").
+		Select(bson.M{"number": 1, "created_at": 1, "miner": 1, "tx_count": 1, "extra_data": 1}).
+		Skip(filter.Skip).
+		Limit(filter.Limit).
+		All(&blocks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest vote blocks: %v", err)
+	}
+	return blocks, nil
+}
+
 func (self *MongoBackend) getActiveAddresses(fromDate time.Time) ([]*models.ActiveAddress, error) {
 	var addresses []*models.ActiveAddress
 	err := self.mongo.C("ActiveAddress").Find(bson.M{"updated_at": bson.M{"$gte": fromDate}}).Select(bson.M{"address": 1}).Sort("-updated_at").All(&addresses)

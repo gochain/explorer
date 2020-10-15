@@ -224,6 +224,7 @@ func main() {
 
 				r.Route("/blocks", func(r chi.Router) {
 					r.Get("/", getListBlocks)
+					r.Get("/votes", getListVoteBlocks)
 					r.Get("/{num}", getBlock)
 					r.Head("/{hash}", checkBlockExist)
 					r.Get("/{num}/transactions", getBlockTransactions)
@@ -665,6 +666,27 @@ func getListBlocks(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, bl)
 }
+
+func getListVoteBlocks(w http.ResponseWriter, r *http.Request) {
+	var err error
+	filter := new(models.PaginationFilter)
+	if !parseGetParam(r, w, filter) {
+		return
+	}
+	bl := &models.LightBlockList{}
+	bl.Blocks, err = backendInstance.GetLatestVoteBlocks(filter)
+	if err != nil {
+		logger.Error(
+			"Failed to get latest vote blocks",
+			zap.Int("skip", filter.Skip),
+			zap.Int("limit", filter.Limit), zap.Error(err),
+		)
+		errorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, bl)
+}
+
 func getBlockTransactions(w http.ResponseWriter, r *http.Request) {
 	numS := chi.URLParam(r, "num")
 	bnum, err := strconv.ParseInt(numS, 10, 0)
