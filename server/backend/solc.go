@@ -151,15 +151,28 @@ func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion strin
 	return contracts, nil
 }
 
-var solcMetadataRegex = regexp.MustCompile(`056fea165627a7a72305820.*0029$`)
+var (
+	// a2 65 'bzzr' <1 byte version> 58 20 <32 bytes swarm hash> 00 29
+	solcMetadata29Suffix = regexp.MustCompile(`a165627a7a72.{2}5820.{64}0029$`)
+	// a2 65 'bzzr' <1 byte version> 58 20 <32 bytes swarm hash> 64 'solc' 43 <3 bytes version> 00 32
+	solcMetadata32Suffix = regexp.MustCompile(`a265627a7a72.{2}5820.{64}64736f6c6343.{6}0032$`)
+	// a2 64 'ipfs' 58 22 <34 bytes ipfs hash> 64 'solc' 43 <3 bytes version> 00 33
+	solcMetadata33Suffix = regexp.MustCompile(`a264697066735822.{68}64736f6c6343.{6}0033$`)
+)
 
 // SolcBinEqual returns true if a and b are equivalent, disregarding leading 0x and metadata.
 func SolcBinEqual(a, b string) bool {
+	if a == b {
+		return true
+	}
 	a = strings.TrimPrefix(a, "0x")
 	b = strings.TrimPrefix(b, "0x")
+	if a == b {
+		return true
+	}
 	// Remove metadata hash.
-	a = solcMetadataRegex.ReplaceAllString(a, "")
-	b = solcMetadataRegex.ReplaceAllString(b, "")
+	a = trimMetadataSuffix(a)
+	b = trimMetadataSuffix(b)
 	if a == b {
 		return true
 	}
@@ -169,4 +182,17 @@ func SolcBinEqual(a, b string) bool {
 	}
 	i := len(a) - 69
 	return a[:i] == b[:i]
+}
+
+func trimMetadataSuffix(s string) string {
+	for _, r := range []*regexp.Regexp{
+		solcMetadata29Suffix,
+		solcMetadata32Suffix,
+		solcMetadata33Suffix,
+	} {
+		if loc := r.FindStringIndex(s); loc != nil {
+			return s[:loc[0]]
+		}
+	}
+	return s
 }
