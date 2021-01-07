@@ -77,7 +77,6 @@ func main() {
 			Destination: &dbName,
 		},
 	}
-	var network web3.Network
 	var backendInstance *backend.Backend
 	app.Before = func(*cli.Context) error {
 		var err error
@@ -92,7 +91,7 @@ func main() {
 				fatalExit(fmt.Errorf("%+v", rerr))
 			}
 		}()
-		network = getNetwork(netName, rpcUrl, testnet)
+		network := getNetwork(netName, rpcUrl, testnet)
 		backendInstance, err = backend.NewBackend(ctx, mongoUrl, network.URL, dbName, nil, nil, logger, nil)
 		if err != nil {
 			fatalExit(err)

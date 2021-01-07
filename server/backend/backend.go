@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync/atomic"
 	"time"
+
+	"github.com/gochain/gochain/v3/params"
 
 	"github.com/dgraph-io/ristretto"
 	"github.com/gochain-io/explorer/server/models"
@@ -15,8 +18,8 @@ import (
 	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/gochain/gochain/v3/common"
-	"github.com/gochain/gochain/v3/common/hexutil"
 	"github.com/gochain/gochain/v3/consensus/clique"
+	"github.com/gochain/gochain/v3/core"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
 	"github.com/gochain/gochain/v3/rpc"
@@ -34,6 +37,10 @@ type Backend struct {
 	signers         map[common.Address]models.Signer
 	Lgr             *zap.Logger
 	Cache           *ristretto.Cache
+	chainID         *big.Int
+	config          *params.ChainConfig
+	alloc           atomic.Value // Lazy-loaded with first TotalSupply call.
+	totalFeesBurned atomic.Value // Latest known. Eventually consistent. //TODO update from worker
 }
 
 func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer,
@@ -71,6 +78,17 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 			panic(err)
 		}
 	}
+	importer.chainID, err = importer.goClient.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chain ID: %v", err)
+	}
+	switch importer.chainID.Uint64() {
+	case params.MainnetChainID:
+		importer.config = params.MainnetChainConfig
+	case params.TestnetChainID:
+		importer.config = params.TestChainConfig
+	}
+	//TODO if config != nil && config.Darvaza != nil, go importer.darvazaWorker()
 	return importer, nil
 }
 
@@ -102,40 +120,56 @@ func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error)
 }
 
 func (self *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
-	var value *big.Int
-	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		var result hexutil.Big
-		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply", "latest")
-		if err != nil {
-			return err
-		}
-		value = result.ToInt()
-		return nil
-	})
-	return value, err
-}
-func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
-	var value *big.Int
-	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		var result hexutil.Big
-		err = self.goRPC.CallContext(ctx, &result, "eth_totalSupply", "latest")
-		if err != nil {
-			return err
-		}
-		total := result.ToInt()
-		locked := new(big.Int)
-		for _, l := range self.lockedAccounts {
-			bal, err := self.Balance(ctx, common.HexToAddress(l))
+	alloc := self.alloc.Load().(*big.Int)
+	if alloc == nil {
+		if err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+			var result *core.GenesisAlloc
+			err = self.goRPC.CallContext(ctx, &result, "eth_genesisAlloc")
 			if err != nil {
 				return err
 			}
-			locked = locked.Add(locked, bal)
+			self.alloc.Store(result.Total())
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		value = new(big.Int).Sub(total, locked)
-		return nil
-	})
-	return value, err
+	}
+	n, err := self.GetLatestBlockNumber(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rewards := new(big.Int).Mul(clique.BlockReward, big.NewInt(n))
+	total := new(big.Int).Add(alloc, rewards)
+	if self.isDarvazaFork(n) {
+		totalFeesBurned := self.totalFeesBurned.Load().(*big.Int)
+		if totalFeesBurned != nil {
+			total = total.Sub(total, totalFeesBurned)
+		}
+	}
+	return total, err
 }
+
+func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
+	total, err := self.TotalSupply(ctx)
+	if err != nil {
+		return nil, err
+	}
+	locked := new(big.Int)
+	for _, l := range self.lockedAccounts {
+		bal, err := self.Balance(ctx, common.HexToAddress(l))
+		if err != nil {
+			return nil, err
+		}
+		locked = locked.Add(locked, bal)
+	}
+	return new(big.Int).Sub(total, locked), err
+}
+
+func (self *Backend) isDarvazaFork(n int64) bool {
+	return false
+	// TODO return self.config != nil && self.config.IsDarvaza(n)
+}
+
 func (self *Backend) GetStats() (*models.Stats, error) {
 	return self.mongo.getStats()
 }
@@ -394,28 +428,22 @@ func (self *Backend) CountTokenTransfers(address string) (int, error) {
 }
 
 func (self *Backend) ImportBlock(ctx context.Context, block *types.Block) (*models.Block, error) {
-	return self.mongo.importBlock(ctx, block)
+	return self.mongo.importBlock(ctx, block, self.isDarvazaFork(block.Number().Int64()))
 }
 
 // NeedReloadParent returns true if the parent block is missing or does not match the hash from this block number.
 func (self *Backend) NeedReloadParent(blockNumber int64) (bool, error) {
 	return self.mongo.needReloadParent(blockNumber)
 }
-func (self *Backend) TransactionsConsistent(blockNumber int64) (bool, error) {
-	return self.mongo.transactionsConsistent(blockNumber)
+
+func (self *Backend) InternalTxsConsistent(blockNumber int64) (*models.Block, bool, error) {
+	return self.mongo.internalTxsConsistent(blockNumber)
 }
 
 //return false if a number of transactions in DB is different from a number of transactions in the blockchain
-func (self *Backend) TransactionCountConsistent(ctx context.Context, blockNumber int64) (bool, error) {
-	lgr := self.Lgr.With(zap.Int64("number", blockNumber))
+func (self *Backend) ExternalTxsConsistent(ctx context.Context, block *models.Block) (bool, error) {
+	lgr := self.Lgr.With(zap.String("hash", block.BlockHash))
 	lgr.Debug("Checking transaction count for the block")
-	block, err := self.GetBlockByNumber(ctx, blockNumber)
-	if err != nil {
-		return false, err
-	}
-	if block == nil {
-		return false, errors.New("block not found")
-	}
 	txCount, err := self.goClient.TransactionCount(ctx, common.HexToHash(block.BlockHash))
 	if err != nil {
 		return false, fmt.Errorf("failed to get rpc transaction count: %v", err)
