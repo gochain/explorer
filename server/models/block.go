@@ -22,6 +22,9 @@ type Block struct {
 	// Transactions    []string  `json:"transactions" bson:"transactions"`
 
 	Extra ExtraDataStruct `json:"extra" bson:"-"`
+
+	GasFees         string `json:"gas_fees" bson:"gas_fees"`                   // Sum of this block's tx fees.
+	TotalFeesBurned string `json:"total_fees_burned" bson:"total_fees_burned"` // Cumulative sum over chain including this block.
 }
 
 type LightBlock struct {

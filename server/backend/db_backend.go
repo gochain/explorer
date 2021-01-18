@@ -57,10 +57,10 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 func (self *MongoBackend) PingDB() error {
 	return self.mongoSession.Ping()
 }
-func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, error) {
+func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, *big.Int, error) {
 	from, err := self.goClient.TransactionSender(ctx, tx, block.Header().Hash(), 0)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tx sender: %v", err)
+		return nil, nil, fmt.Errorf("failed to get tx sender: %v", err)
 	}
 	gas := tx.Gas()
 	to := ""
@@ -69,6 +69,7 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 	}
 	self.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
 	txInputData := hex.EncodeToString(tx.Data()[:])
+	fee := new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas)))
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
 		From:            from.Hex(),
@@ -77,12 +78,12 @@ func (self *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bl
 		ReceiptReceived: false,
 		GasLimit:        tx.Gas(),
 		BlockNumber:     block.Number().Int64(),
-		GasFee:          new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas))).String(),
+		GasFee:          fee.String(),
 		Nonce:           tx.Nonce(),
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
 		InputData:       txInputData,
-	}, nil
+	}, fee, nil
 }
 func (self *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	var transactions []string
@@ -153,7 +154,7 @@ func (self *MongoBackend) createIndexes() error {
 	return nil
 }
 
-func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (*models.Block, error) {
+func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block, isDarvaza bool) (*models.Block, error) {
 	lgr := self.Lgr.With(zap.Int64("number", block.Header().Number.Int64()),
 		zap.Stringer("hash", block.Hash()), zap.Stringer("parentHash", block.ParentHash()))
 	lgr.Debug("Importing block")
@@ -167,11 +168,36 @@ func (self *MongoBackend) importBlock(ctx context.Context, block *types.Block) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove old txs: %v", err)
 	}
+	gasFee := big.NewInt(0)
 	for _, tx := range block.Transactions() {
-		if err := self.importTx(ctx, tx, block); err != nil {
+		if fee, err := self.importTx(ctx, tx, block); err != nil {
 			return nil, fmt.Errorf("failed to import tx: %v", err)
+		} else {
+			gasFee = gasFee.Add(gasFee, fee)
 		}
 	}
+	b.GasFees = gasFee.String()
+	update := bson.M{"gas_fees": b.GasFees}
+	if isDarvaza {
+		parent, err := self.getBlockByHash(b.ParentHash)
+		if err != nil {
+			return nil, err
+		}
+		if parent != nil && parent.TotalFeesBurned != "" {
+			totalFeesBurned, ok := new(big.Int).SetString(parent.TotalFeesBurned, 10)
+			if !ok {
+				lgr.Error("Failed to parse block.TotalFeesBurned as big.Int", zap.String("block", b.ParentHash),
+					zap.String("value", parent.TotalFeesBurned))
+			} else {
+				b.TotalFeesBurned = totalFeesBurned.Add(totalFeesBurned, gasFee).String()
+				update["total_fees_burned"] = b.TotalFeesBurned
+			}
+		}
+	}
+	if err := self.mongo.C("Blocks").Update(bson.M{"number": b.Number}, bson.M{"$set": update}); err != nil {
+		return nil, fmt.Errorf("failed to upsert block gas fee fields: %v", err)
+	}
+
 	if err := self.UpdateActiveAddress(block.Coinbase().Hex()); err != nil {
 		return nil, fmt.Errorf("failed to update active signer address: %s", err)
 	}
@@ -218,12 +244,12 @@ func (self *MongoBackend) insertTransactionsByAddress(ctx context.Context, addre
 	return err
 }
 
-func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) error {
+func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*big.Int, error) {
 	lgr := self.Lgr.With(zap.Stringer("tx", tx.Hash()))
 	lgr.Debug("Importing tx")
-	transaction, err := self.parseTx(ctx, tx, block)
+	transaction, fee, err := self.parseTx(ctx, tx, block)
 	if err != nil {
-		return fmt.Errorf("failed to parse tx: %v", err)
+		return nil, fmt.Errorf("failed to parse tx: %v", err)
 	}
 
 	toAddress := transaction.To
@@ -231,7 +257,7 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 		lgr.Debug("Importing contract creation")
 		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
 		if err != nil {
-			return fmt.Errorf("failed to get tx receipt: %v", err)
+			return nil, fmt.Errorf("failed to get tx receipt: %v", err)
 		}
 		contractAddress := receipt.ContractAddress.String()
 		if contractAddress != "0x0000000000000000000000000000000000000000" {
@@ -247,37 +273,37 @@ func (self *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, b
 	if toAddr == nil || toAddr.Contract { //if address hasn't imported yet or address is a contract we download receipt logs
 		receipt, err := self.goClient.TransactionReceipt(ctx, tx.Hash())
 		if err != nil {
-			return fmt.Errorf("failed to get tx receipt: %v", err)
+			return nil, fmt.Errorf("failed to get tx receipt: %v", err)
 		}
 		for _, l := range receipt.Logs {
 			if err := self.UpdateActiveAddress(l.Address.String()); err != nil {
-				return fmt.Errorf("failed to update active address: %s", err)
+				return nil, fmt.Errorf("failed to update active address: %s", err)
 			}
 		}
 	}
 
 	if _, err := self.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
-		return fmt.Errorf("failed to upsert tx: %v", err)
+		return nil, fmt.Errorf("failed to upsert tx: %v", err)
 	}
 
 	err = self.insertTransactionsByAddress(ctx, transaction.From, transaction.TxHash, transaction.CreatedAt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if transaction.From != toAddress { //skip if from == to
 		err = self.insertTransactionsByAddress(ctx, toAddress, transaction.TxHash, transaction.CreatedAt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if err := self.UpdateActiveAddress(toAddress); err != nil {
-		return fmt.Errorf("failed to update active to address: %s", err)
+		return nil, fmt.Errorf("failed to update active to address: %s", err)
 	}
 	if err := self.UpdateActiveAddress(transaction.From); err != nil {
-		return fmt.Errorf("failed to update active from address: %s", err)
+		return nil, fmt.Errorf("failed to update active from address: %s", err)
 	}
-	return nil
+	return fee, nil
 }
 
 // needReloadParent returns true if the parent block is missing or does not match the hash from this block number.
@@ -303,22 +329,22 @@ func (self *MongoBackend) needReloadParent(blockNumber int64) (bool, error) {
 
 }
 
-// transactionsConsistent returns true if the block count matches the number of transactions with that block number.
-func (self *MongoBackend) transactionsConsistent(blockNumber int64) (bool, error) {
+// internalTxsConsistent returns true if the block count matches the number of transactions with that block number.
+func (self *MongoBackend) internalTxsConsistent(blockNumber int64) (*models.Block, bool, error) {
 	block, err := self.getBlockByNumber(blockNumber)
 	if err != nil {
-		return false, fmt.Errorf("failed to get block: %v", err)
+		return nil, false, fmt.Errorf("failed to get block: %v", err)
 	}
 	if block == nil {
-		return false, errors.New("block not found")
+		return nil, false, errors.New("block not found")
 	}
 	txCount, err := self.mongo.C("Transactions").Find(bson.M{"block_number": blockNumber}).Count()
 	if err != nil {
-		return false, fmt.Errorf("failed to count txs in db: %v", err)
+		return nil, false, fmt.Errorf("failed to count txs in db: %v", err)
 	}
 	self.Lgr.Debug("Checking tx count", zap.Int64("blockNumber", blockNumber),
 		zap.Int("block.count", block.TxCount), zap.Int("db.count", txCount))
-	return txCount == block.TxCount, nil
+	return block, txCount == block.TxCount, nil
 }
 
 func (self *MongoBackend) importAddress(address string, balance *big.Int, token *tokens.TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {

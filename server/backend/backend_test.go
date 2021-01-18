@@ -426,7 +426,7 @@ func TestTransactionsConsistent(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-	if ok, err := testBackend.TransactionsConsistent(block.Header().Number.Int64()); err != nil {
+	if _, ok, err := testBackend.InternalTxsConsistent(block.Header().Number.Int64()); err != nil {
 		t.Fatalf("Failed to check block: %v", err)
 	} else if !ok {
 		t.Error("Number of transactions is not consistent")

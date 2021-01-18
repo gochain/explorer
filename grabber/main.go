@@ -39,7 +39,7 @@ func main() {
 	}()
 
 	var rpcUrl string
-	var checkTxCount bool
+	var checkExternal bool
 	var mongoUrl string
 	var dbName string
 	var startFrom int64
@@ -64,8 +64,8 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:        "tx-count, tx",
-			Usage:       "check a transactions count for every block(a heavy operation)",
-			Destination: &checkTxCount,
+			Usage:       "verify transaction count against RPC for every block(a heavy operation)",
+			Destination: &checkExternal,
 		},
 		cli.StringFlag{
 			Name:        "mongo-dbname, db",
@@ -134,7 +134,7 @@ func main() {
 		go migrator(ctx, importer, logger)
 		go listener(ctx, importer)
 		go updateStats(ctx, importer)
-		go backfill(ctx, importer, startFrom, checkTxCount)
+		go backfill(ctx, importer, startFrom, checkExternal)
 		go updateAddresses(ctx, 3*time.Minute, false, blockRangeLimit, workersCount, importer) // update only addresses
 		updateAddresses(ctx, 5*time.Second, true, blockRangeLimit, workersCount, importer)     // update contracts
 		return nil
@@ -197,7 +197,7 @@ func listener(ctx context.Context, importer *backend.Backend) {
 
 // backfill continuously loops over all blocks in reverse order, verifying that all
 // data is loaded and consistent, and reloading as necessary.
-func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) {
+func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64, checkExternal bool) {
 	var hash common.Hash // Expected hash.
 	for {
 		if blockNumber < 0 {
@@ -264,7 +264,7 @@ func backfill(ctx context.Context, importer *backend.Backend, blockNumber int64,
 			// Note parent as next expected hash.
 			hash = rpcBlock.ParentHash()
 		} else {
-			newParent, err := ensureTxsConsistent(ctx, importer, blockNumber, checkTxCount)
+			newParent, err := ensureTxsConsistent(ctx, importer, blockNumber, checkExternal)
 			if err != nil {
 				logger.Error("Backfill: Failed to check tx consistency", zap.Error(err))
 				if utils.SleepCtx(ctx, 5*time.Second) != nil {
@@ -328,15 +328,16 @@ func checkAncestors(ctx context.Context, importer *backend.Backend, blockNumber 
 }
 
 // ensureTxsConsistent checks if the block tx count matches the number of txs in the db, and reimports the block if not.
-// If a block is reimported, then the parent hash is returned.
-func ensureTxsConsistent(ctx context.Context, importer *backend.Backend, blockNumber int64, checkTxCount bool) (common.Hash, error) {
-	if ok, err := importer.TransactionsConsistent(blockNumber); err != nil {
+// If a block is reimported and the parent changed, then the parent hash is returned.
+func ensureTxsConsistent(ctx context.Context, importer *backend.Backend, blockNumber int64, checkExternal bool) (common.Hash, error) {
+	block, ok, err := importer.InternalTxsConsistent(blockNumber)
+	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to check tx consistentcy: %v", err)
 	} else if ok {
-		if !checkTxCount {
+		if !checkExternal {
 			return common.Hash{}, nil
 		}
-		if ok, err := importer.TransactionCountConsistent(ctx, blockNumber); err != nil {
+		if ok, err := importer.ExternalTxsConsistent(ctx, block); err != nil {
 			return common.Hash{}, fmt.Errorf("failed to check tx count: %v", err)
 		} else if ok {
 			return common.Hash{}, nil
@@ -345,17 +346,20 @@ func ensureTxsConsistent(ctx context.Context, importer *backend.Backend, blockNu
 
 	importer.Lgr.Warn("Reimporting block due to inconsistent tx count", zap.Int64("block", blockNumber))
 
-	block, err := importer.BlockByNumber(ctx, blockNumber)
+	rpcBlock, err := importer.BlockByNumber(ctx, blockNumber)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to get block: %v", err)
 	}
-	if block == nil {
+	if rpcBlock == nil {
 		return common.Hash{}, errors.New("block not found")
 	}
-	if _, err := importer.ImportBlock(ctx, block); err != nil {
+	var newParent common.Hash
+	if updated, err := importer.ImportBlock(ctx, rpcBlock); err != nil {
 		return common.Hash{}, err
+	} else if updated.ParentHash != block.BlockHash {
+		newParent = common.HexToHash(updated.ParentHash)
 	}
-	return block.ParentHash(), nil
+	return newParent, nil
 }
 
 func updateAddresses(ctx context.Context, sleep time.Duration, updateContracts bool, blockRangeLimit uint64, workersCount uint, importer *backend.Backend) {
