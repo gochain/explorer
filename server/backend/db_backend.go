@@ -57,19 +57,17 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 func (mb *MongoBackend) PingDB() error {
 	return mb.mongoSession.Ping()
 }
-func (mb *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, *big.Int, error) {
+func (mb *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, error) {
 	from, err := mb.goClient.TransactionSender(ctx, tx, block.Header().Hash(), 0)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get tx sender: %v", err)
+		return nil, fmt.Errorf("failed to get tx sender: %v", err)
 	}
-	gas := tx.Gas()
 	to := ""
 	if tx.To() != nil {
 		to = tx.To().Hex()
 	}
 	mb.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
 	txInputData := hex.EncodeToString(tx.Data()[:])
-	fee := new(big.Int).Mul(tx.GasPrice(), big.NewInt(int64(gas)))
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
 		From:            from.Hex(),
@@ -78,12 +76,11 @@ func (mb *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bloc
 		ReceiptReceived: false,
 		GasLimit:        tx.Gas(),
 		BlockNumber:     block.Number().Int64(),
-		GasFee:          fee.String(),
 		Nonce:           tx.Nonce(),
 		BlockHash:       block.Hash().Hex(),
 		CreatedAt:       time.Unix(block.Time().Int64(), 0),
 		InputData:       txInputData,
-	}, fee, nil
+	}, nil
 }
 func (mb *MongoBackend) parseBlock(block *types.Block) *models.Block {
 	var transactions []string
@@ -170,10 +167,12 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 	}
 	gasFee := big.NewInt(0)
 	for _, tx := range block.Transactions() {
-		if fee, err := mb.importTx(ctx, tx, block); err != nil {
+		if imported, err := mb.importTx(ctx, tx, block); err != nil {
 			return nil, fmt.Errorf("failed to import tx: %v", err)
+		} else if txFee, ok := new(big.Int).SetString(imported.GasFee, 10); !ok {
+			return nil, fmt.Errorf("failed to parse gas fee: %s", imported.GasFee)
 		} else {
-			gasFee = gasFee.Add(gasFee, fee)
+			gasFee = gasFee.Add(gasFee, txFee)
 		}
 	}
 	b.GasFees = gasFee.String()
@@ -255,37 +254,25 @@ func (mb *MongoBackend) insertTransactionsByAddress(ctx context.Context, address
 	return err
 }
 
-func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*big.Int, error) {
+func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, error) {
 	lgr := mb.Lgr.With(zap.Stringer("tx", tx.Hash()))
 	lgr.Debug("Importing tx")
-	transaction, fee, err := mb.parseTx(ctx, tx, block)
+	transaction, err := mb.parseTx(ctx, tx, block)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse tx: %v", err)
+	}
+	var receipt *types.Receipt
+	transaction, receipt, err = mb.ensureReceipt(ctx, transaction)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tx receipt: %v", err)
 	}
 
 	toAddress := transaction.To
 	if transaction.To == "" {
-		lgr.Debug("Importing contract creation")
-		receipt, err := mb.goClient.TransactionReceipt(ctx, tx.Hash())
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tx receipt: %v", err)
-		}
-		contractAddress := receipt.ContractAddress.String()
-		if contractAddress != "0x0000000000000000000000000000000000000000" {
-			transaction.ContractAddress = contractAddress
-		}
-		transaction.Status = false
-		if receipt.Status == 1 {
-			transaction.Status = true
-		}
 		toAddress = transaction.ContractAddress
 	}
 	toAddr, _ := mb.getAddressByHash(toAddress)
 	if toAddr == nil || toAddr.Contract { //if address hasn't imported yet or address is a contract we download receipt logs
-		receipt, err := mb.goClient.TransactionReceipt(ctx, tx.Hash())
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tx receipt: %v", err)
-		}
 		for _, l := range receipt.Logs {
 			if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
 				return nil, fmt.Errorf("failed to update active address: %s", err)
@@ -314,7 +301,7 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 	if err := mb.UpdateActiveAddress(transaction.From); err != nil {
 		return nil, fmt.Errorf("failed to update active from address: %s", err)
 	}
-	return fee, nil
+	return transaction, nil
 }
 
 // needReloadParent returns true if the parent block is missing or does not match the hash from this block number.
@@ -598,7 +585,7 @@ func (mb *MongoBackend) getAddressByHash(address string) (*models.Address, error
 }
 
 func (mb *MongoBackend) getTxByAddressAndNonce(ctx context.Context, address string, nonce int64) (*models.Transaction, error) {
-	var tx models.Transaction
+	var tx = new(models.Transaction)
 	err := mb.mongo.C("Transactions").Find(bson.M{"from": address, "nonce": nonce}).One(&tx)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -606,11 +593,15 @@ func (mb *MongoBackend) getTxByAddressAndNonce(ctx context.Context, address stri
 		}
 		return nil, fmt.Errorf("failed to get tx: %v", err)
 	}
-	return mb.ensureReceipt(ctx, &tx)
+	if tx.ReceiptReceived {
+		return tx, nil
+	}
+	tx, _, err = mb.ensureReceipt(ctx, tx)
+	return tx, err
 }
 
 func (mb *MongoBackend) getTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
-	var tx models.Transaction
+	var tx = new(models.Transaction)
 	err := mb.mongo.C("Transactions").Find(bson.M{"tx_hash": hash}).One(&tx)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -618,14 +609,15 @@ func (mb *MongoBackend) getTransactionByHash(ctx context.Context, hash string) (
 		}
 		return nil, fmt.Errorf("failed to get tx: %v", err)
 	}
-	return mb.ensureReceipt(ctx, &tx)
-}
-
-// ensureReceipt does lazy loads receipt info if necessary.
-func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transaction) (*models.Transaction, error) {
 	if tx.ReceiptReceived {
 		return tx, nil
 	}
+	tx, _, err = mb.ensureReceipt(ctx, tx)
+	return tx, err
+}
+
+// ensureReceipt does lazy loads receipt info if necessary.
+func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transaction) (*models.Transaction, *types.Receipt, error) {
 	lgr := mb.Lgr.With(zap.String("tx", tx.TxHash))
 	receipt, err := mb.goClient.TransactionReceipt(ctx, common.HexToHash(tx.TxHash))
 	if err != nil {
@@ -648,16 +640,16 @@ func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transactio
 		}
 		for _, l := range receipt.Logs {
 			if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
-				return nil, fmt.Errorf("failed to update active address: %s", err)
+				return nil, nil, fmt.Errorf("failed to update active address: %s", err)
 			}
 		}
 		tx.Logs = string(jsonValue)
 		_, err = mb.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to upsert tx: %v", err)
+			return nil, nil, fmt.Errorf("failed to upsert tx: %v", err)
 		}
 	}
-	return tx, nil
+	return tx, receipt, nil
 }
 
 func (mb *MongoBackend) getTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
