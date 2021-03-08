@@ -7,7 +7,7 @@ require (
 	github.com/dgraph-io/ristretto v0.0.2
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
-	github.com/gochain/gochain/v3 v3.3.5
+	github.com/gochain/gochain/v3 v3.4.2
 	github.com/gochain/web3 v0.2.28
 	github.com/gorilla/schema v1.1.0
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9

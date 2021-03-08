@@ -13,23 +13,23 @@ import (
 
 var migrationCollection = "Migrations"
 
-func (self *MongoBackend) getDatabaseVersion() (int, error) {
-	self.databaseVersionMutex.RLock()
-	version := self.databaseVersion
-	self.databaseVersionMutex.RUnlock()
+func (mb *MongoBackend) getDatabaseVersion() (int, error) {
+	mb.databaseVersionMutex.RLock()
+	version := mb.databaseVersion
+	mb.databaseVersionMutex.RUnlock()
 	if version != 0 {
 		return version, nil
 	}
 	var result struct {
 		ID int `bson:"ID"`
 	}
-	err := self.mongo.C(migrationCollection).Find(nil).Sort("-ID").One(&result)
+	err := mb.mongo.C(migrationCollection).Find(nil).Sort("-ID").One(&result)
 	if err != nil {
 		return 0, err
 	}
-	self.databaseVersionMutex.Lock()
-	self.databaseVersion = result.ID
-	self.databaseVersionMutex.Unlock()
+	mb.databaseVersionMutex.Lock()
+	mb.databaseVersion = result.ID
+	mb.databaseVersionMutex.Unlock()
 	return result.ID, nil
 }
 
@@ -87,7 +87,7 @@ var migrationTransactionsByAddress = migrate.Migration{
 	},
 }
 
-func (self *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (int, error) {
-	m := migrate.New(ctx, self.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
+func (mb *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (int, error) {
+	m := migrate.New(ctx, mb.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
 	return m.Migrate()
 }

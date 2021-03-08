@@ -24,8 +24,13 @@
           <dt>Gas Used</dt>
           <dd>{{block.gas_used | bigNumber}}</dd>
           <ng-container *ngIf="block.gas_fees">
-            <dt>Gas Fees</dt>
-            <dd>{{block.gas_fees | weiToGO | bigNumber}}</dd>
+            <dt>Gas Fees<ng-container *ngIf="block.total_fees_burned"> <img src="../../../assets/icons/blocks.svg"></ng-container></dt>
+            <dd>
+              {{block.gas_fees | weiToGO | bigNumber}}
+              <ng-container *ngIf="block.total_fees_burned" popover-title="block.total_fees_burned | weiToGO | bigNumber">
+                (burned)
+              </ng-container>
+            </dd>
           </ng-container>
           <dt>Transactions Count</dt>
           <dd>{{block.tx_count}}</dd>
