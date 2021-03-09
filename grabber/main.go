@@ -275,10 +275,11 @@ func backfill(ctx context.Context, b *backend.Backend, blockNumber int64, checkE
 					return
 				}
 				continue
-			} else if updated.TotalFeesBurned != "" {
-				go fillTotalFees(ctx, b, updated)
+			} else if updated != nil {
+				if total := updated.TotalFeesBurned; total != "" && total != dbBlock.TotalFeesBurned {
+					go fillTotalFees(ctx, b, updated)
+				}
 			}
-
 			if !common.EmptyHash(newParent) {
 				hash = newParent
 			}

@@ -1,6 +1,6 @@
 module github.com/gochain-io/explorer
 
-go 1.14
+go 1.16
 
 require (
 	github.com/blendle/zapdriver v1.2.1

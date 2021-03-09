@@ -2,7 +2,7 @@ version: "3"
 services:
   web:
     container_name: web
-    image: gcr.io/gochain-core/explorer:latest
+    image: gochain/explorer:latest
     restart: "always"
     command: "server -d /explorer/ -m mongodb:27017"
     links:
@@ -16,7 +16,7 @@ services:
       - mongodb    
   grabber:
     container_name: grabber
-    image: gcr.io/gochain-core/explorer:latest
+    image: gochain/explorer:latest
     restart: "always"
     command: "grabber -m mongodb:27017"
     links:
