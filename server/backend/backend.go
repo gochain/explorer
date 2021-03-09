@@ -10,18 +10,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gochain/gochain/v3/params"
-
-	"github.com/dgraph-io/ristretto"
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
 	"github.com/gochain-io/explorer/server/utils"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/consensus/clique"
 	"github.com/gochain/gochain/v3/core"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v3/params"
 	"github.com/gochain/gochain/v3/rpc"
 	"go.uber.org/zap"
 )
@@ -38,9 +37,9 @@ type Backend struct {
 	Lgr             *zap.Logger
 	Cache           *ristretto.Cache
 	chainID         *big.Int
-	config          *params.ChainConfig
+	Config          *params.ChainConfig
 	alloc           atomic.Value // Lazy-loaded with first TotalSupply call.
-	totalFeesBurned atomic.Value // Latest known. Eventually consistent. //TODO update from worker
+	totalBurned     atomic.Value // *TotalBurned // Latest known. Eventually consistent.
 }
 
 func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer,
@@ -54,18 +53,18 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mongo client: %v", err)
 	}
-	importer := new(Backend)
-	importer.goRPC = rpcClient
-	importer.goClient = client
-	importer.mongo = mongoBackend
-	importer.tokenClient, err = tokens.NewERC20Balance(ctx, client, lgr)
+	b := new(Backend)
+	b.goRPC = rpcClient
+	b.goClient = client
+	b.mongo = mongoBackend
+	b.tokenClient, err = tokens.NewERC20Balance(ctx, client, lgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create erc20 balance client: %v", err)
 	}
-	importer.dockerhubAPI = new(DockerHubAPI)
-	importer.lockedAccounts = lockedAccounts
-	importer.signers = signers
-	importer.Lgr = lgr
+	b.dockerhubAPI = new(DockerHubAPI)
+	b.lockedAccounts = lockedAccounts
+	b.signers = signers
+	b.Lgr = lgr
 
 	if cache == nil {
 		// should this be a no-op cache if it's not passed in?
@@ -78,85 +77,104 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 			panic(err)
 		}
 	}
-	importer.chainID, err = importer.goClient.ChainID(ctx)
+	b.chainID, err = b.goClient.ChainID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chain ID: %v", err)
 	}
-	switch importer.chainID.Uint64() {
+	switch b.chainID.Uint64() {
 	case params.MainnetChainID:
-		importer.config = params.MainnetChainConfig
+		b.Config = params.MainnetChainConfig
 	case params.TestnetChainID:
-		importer.config = params.TestChainConfig
+		b.Config = params.TestChainConfig
 	}
-	//TODO if config != nil && config.Darvaza != nil, go importer.darvazaWorker()
-	return importer, nil
+	return b, nil
 }
 
 //METHODS USED IN API
-func (self *Backend) PingDB() error {
-	return self.mongo.PingDB()
+func (b *Backend) PingDB() error {
+	return b.mongo.PingDB()
 }
 
 // Balance returns the latest balance for the address.
-func (self *Backend) Balance(ctx context.Context, address common.Address) (*big.Int, error) {
+func (b *Backend) Balance(ctx context.Context, address common.Address) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.goClient.BalanceAt(ctx, address, nil /* latest */)
+		value, err = b.goClient.BalanceAt(ctx, address, nil /* latest */)
 		return err
 	})
 	return value, err
 }
 
-func (self *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
+func (b *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)
 	}
 	var value []byte
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.goClient.CodeAt(ctx, common.HexToAddress(address), nil)
+		value, err = b.goClient.CodeAt(ctx, common.HexToAddress(address), nil)
 		return err
 	})
 	return value, err
 }
 
-func (self *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
-	alloc := self.alloc.Load().(*big.Int)
+func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
+	alloc := b.alloc.Load().(*big.Int)
 	if alloc == nil {
 		if err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 			var result *core.GenesisAlloc
-			err = self.goRPC.CallContext(ctx, &result, "eth_genesisAlloc")
+			err = b.goRPC.CallContext(ctx, &result, "eth_genesisAlloc")
 			if err != nil {
 				return err
 			}
-			self.alloc.Store(result.Total())
+			b.alloc.Store(result.Total())
 			return nil
 		}); err != nil {
 			return nil, err
 		}
 	}
-	n, err := self.GetLatestBlockNumber(ctx)
+	n, err := b.GetLatestBlockNumber(ctx)
 	if err != nil {
 		return nil, err
 	}
-	rewards := new(big.Int).Mul(clique.BlockReward, big.NewInt(n))
+	rewards := new(big.Int).Mul(clique.BlockReward, n)
 	total := new(big.Int).Add(alloc, rewards)
-	if self.isDarvazaFork(n) {
-		totalFeesBurned := self.totalFeesBurned.Load().(*big.Int)
-		if totalFeesBurned != nil {
+	if b.isDarvazaFork(n) {
+		if totalFeesBurned, err := b.totalFeesBurned(ctx, n.Int64()); err != nil {
+			return nil, err
+		} else if totalFeesBurned != nil {
 			total = total.Sub(total, totalFeesBurned)
 		}
 	}
-	return total, err
+	return total, nil
 }
 
-func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
-	total, err := self.TotalSupply(ctx)
+// totalFeesBurned may return a cached value.
+func (b *Backend) totalFeesBurned(ctx context.Context, n int64) (*big.Int, error) {
+	v := b.totalBurned.Load()
+	if v != nil {
+		if tb := v.(*TotalBurned); tb != nil {
+			if n == tb.Number || time.Since(tb.CachedAt) < 5*time.Second {
+				return tb.TotalFeesBurned, nil
+			}
+		}
+	}
+
+	tb, err := b.mongo.getLatestTotalFeesBurned()
+	if err != nil {
+		return nil, err
+	}
+	b.totalBurned.Store(tb)
+	return tb.TotalFeesBurned, nil
+}
+
+func (b *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
+	total, err := b.TotalSupply(ctx)
 	if err != nil {
 		return nil, err
 	}
 	locked := new(big.Int)
-	for _, l := range self.lockedAccounts {
-		bal, err := self.Balance(ctx, common.HexToAddress(l))
+	for _, l := range b.lockedAccounts {
+		bal, err := b.Balance(ctx, common.HexToAddress(l))
 		if err != nil {
 			return nil, err
 		}
@@ -165,91 +183,90 @@ func (self *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 	return new(big.Int).Sub(total, locked), err
 }
 
-func (self *Backend) isDarvazaFork(n int64) bool {
-	return false
-	// TODO return self.config != nil && self.config.IsDarvaza(n)
+func (b *Backend) isDarvazaFork(n *big.Int) bool {
+	return b.Config != nil && b.Config.IsDarvaza(n)
 }
 
-func (self *Backend) GetStats() (*models.Stats, error) {
-	return self.mongo.getStats()
+func (b *Backend) GetStats() (*models.Stats, error) {
+	return b.mongo.getStats()
 }
 
-func (self *Backend) GetSignersStats() ([]models.SignersStats, error) {
-	return self.mongo.getSignersStats()
+func (b *Backend) GetSignersStats() ([]models.SignersStats, error) {
+	return b.mongo.getSignersStats()
 }
 
-func (self *Backend) GetSignersList() map[common.Address]models.Signer {
-	return self.signers
+func (b *Backend) GetSignersList() map[common.Address]models.Signer {
+	return b.signers
 }
 
-func (self *Backend) GetRichlist(filter *models.PaginationFilter) ([]*models.Address, error) {
-	return self.mongo.getRichlist(filter, self.lockedAccounts)
+func (b *Backend) GetRichlist(filter *models.PaginationFilter) ([]*models.Address, error) {
+	return b.mongo.getRichlist(filter, b.lockedAccounts)
 
 }
-func (self *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Address, error) {
+func (b *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Address, error) {
 	if !common.IsHexAddress(hash) {
 		return nil, errors.New("wrong address format")
 	}
 	// check cache first
-	a, found := self.Cache.Get(hash)
+	a, found := b.Cache.Get(hash)
 	if found {
 		return a.(*models.Address), nil
 	}
 	addr := common.HexToAddress(hash)
 	addressHash := addr.Hex()
-	address, err := self.mongo.getAddressByHash(addressHash)
+	address, err := b.mongo.getAddressByHash(addressHash)
 	if err != nil {
 		return nil, err
 	}
-	balance, err := self.Balance(ctx, addr)
+	balance, err := b.Balance(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
 	if address == nil { //edge case if the balance for the address found but we haven't imported the address yet
 		address = &models.Address{Address: addressHash, UpdatedAt: time.Now()}
-		if err := self.mongo.UpdateActiveAddress(addressHash); err != nil {
+		if err := b.mongo.UpdateActiveAddress(addressHash); err != nil {
 			return nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
 	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	// todo: only store a subset of this data in the cache, just the metadata like token name, decimals, etc. Things that won't change.
-	self.Cache.Set(hash, address, 5)
+	b.Cache.Set(hash, address, 5)
 	return address, nil
 
 }
-func (self *Backend) GetContracts(filter *models.ContractsFilter) ([]*models.Address, error) {
-	return self.mongo.getContracts(filter)
+func (b *Backend) GetContracts(filter *models.ContractsFilter) ([]*models.Address, error) {
+	return b.mongo.getContracts(filter)
 }
-func (self *Backend) GetTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
-	return self.mongo.getTransactionByHash(ctx, hash)
+func (b *Backend) GetTransactionByHash(ctx context.Context, hash string) (*models.Transaction, error) {
+	return b.mongo.getTransactionByHash(ctx, hash)
 }
-func (self *Backend) GetTxByAddressAndNonce(ctx context.Context, addr string, nonce int64) (*models.Transaction, error) {
-	return self.mongo.getTxByAddressAndNonce(ctx, addr, nonce)
+func (b *Backend) GetTxByAddressAndNonce(ctx context.Context, addr string, nonce int64) (*models.Transaction, error) {
+	return b.mongo.getTxByAddressAndNonce(ctx, addr, nonce)
 }
-func (self *Backend) GetTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
+func (b *Backend) GetTransactionList(address string, filter *models.TxsFilter) ([]*models.Transaction, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)
 	}
-	return self.mongo.getTransactionList(common.HexToAddress(address).Hex(), filter)
+	return b.mongo.getTransactionList(common.HexToAddress(address).Hex(), filter)
 }
-func (self *Backend) GetTokenHoldersList(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
+func (b *Backend) GetTokenHoldersList(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), filter)
+	return b.mongo.getTokenHoldersList(common.HexToAddress(contractAddress).Hex(), filter)
 }
-func (self *Backend) GetOwnedTokensList(ctx context.Context, ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
+func (b *Backend) GetOwnedTokensList(ctx context.Context, ownerAddress string, filter *models.PaginationFilter) ([]*models.TokenHolder, error) {
 	if !common.IsHexAddress(ownerAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", ownerAddress)
 	}
-	held, err := self.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
+	held, err := b.mongo.getOwnedTokensList(common.HexToAddress(ownerAddress).Hex(), filter)
 	if err != nil {
 		return nil, err
 	}
 	// loop through and add decimals
 	for _, h := range held {
-		addrInfo, err := self.GetAddressByHash(ctx, h.ContractAddress)
+		addrInfo, err := b.GetAddressByHash(ctx, h.ContractAddress)
 		if err != nil {
 			return nil, fmt.Errorf("error finding decimals for %v: %v", h.ContractAddress, err)
 		}
@@ -259,30 +276,30 @@ func (self *Backend) GetOwnedTokensList(ctx context.Context, ownerAddress string
 }
 
 // GetInternalTokenTransfers gets token transfer events emitted by an ERC20 or ERC721 contract.
-func (self *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
+func (b *Backend) GetInternalTokenTransfers(contractAddress string, filter *models.InternalTxFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getInternalTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
+	return b.mongo.getInternalTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
 }
 
 // GetHeldTokenTransfers gets token transfer events to or from this contract, emitted by any ERC20 or ERC721 contract.
-func (self *Backend) GetHeldTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
+func (b *Backend) GetHeldTokenTransfers(contractAddress string, filter *models.PaginationFilter) ([]*models.TokenTransfer, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
-	return self.mongo.getHeldTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
+	return b.mongo.getHeldTokenTransfers(common.HexToAddress(contractAddress).Hex(), filter)
 }
-func (self *Backend) GetContract(contractAddress string) (*models.Contract, error) {
+func (b *Backend) GetContract(contractAddress string) (*models.Contract, error) {
 	if !common.IsHexAddress(contractAddress) {
 		return nil, fmt.Errorf("invalid hex address: %s", contractAddress)
 	}
 	normalizedAddress := common.HexToAddress(contractAddress).Hex()
-	contract, err := self.mongo.getContract(normalizedAddress)
+	contract, err := b.mongo.getContract(normalizedAddress)
 	if contract != nil || err != nil {
 		return contract, err
 	}
-	contractDataArray, err := self.CodeAt(context.Background(), normalizedAddress)
+	contractDataArray, err := b.CodeAt(context.Background(), normalizedAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -291,17 +308,17 @@ func (self *Backend) GetContract(contractAddress string) (*models.Contract, erro
 		return nil, fmt.Errorf("invalid contract: %s", contractAddress)
 	}
 	byteCode := hex.EncodeToString(contractDataArray)
-	err = self.ImportContract(normalizedAddress, byteCode)
+	err = b.ImportContract(normalizedAddress, byteCode)
 	if err != nil {
 		return nil, err
 	}
-	contract, err = self.mongo.getContract(normalizedAddress)
+	contract, err = b.mongo.getContract(normalizedAddress)
 	return contract, err
 
 }
-func (self *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
+func (b *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*models.LightBlock, error) {
 	var lightBlocks []*models.LightBlock
-	blocks, err := self.mongo.getLatestsBlocks(filter)
+	blocks, err := b.mongo.getLatestsBlocks(filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest blocks: %v", err)
 	}
@@ -310,22 +327,22 @@ func (self *Backend) GetLatestsBlocks(filter *models.PaginationFilter) ([]*model
 	}
 	return lightBlocks, nil
 }
-func (self *Backend) GetBlockTransactionsByNumber(blockNumber int64, filter *models.PaginationFilter) ([]*models.Transaction, error) {
-	return self.mongo.getBlockTransactionsByNumber(blockNumber, filter)
+func (b *Backend) GetBlockTransactionsByNumber(blockNumber int64, filter *models.PaginationFilter) ([]*models.Transaction, error) {
+	return b.mongo.getBlockTransactionsByNumber(blockNumber, filter)
 }
 
-func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) (*models.Block, error) {
-	block, err := self.mongo.getBlockByNumber(number)
+func (b *Backend) GetBlockByNumber(ctx context.Context, number int64) (*models.Block, error) {
+	block, err := b.mongo.getBlockByNumber(number)
 	if err != nil {
 		return nil, err
 	}
 	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("block", number))
-		blockEth, err := self.goClient.BlockByNumber(ctx, big.NewInt(number))
+		b.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("block", number))
+		blockEth, err := b.goClient.BlockByNumber(ctx, big.NewInt(number))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
 		}
-		block, err = self.ImportBlock(ctx, blockEth)
+		block, err = b.ImportBlock(ctx, blockEth)
 		if err != nil {
 			return nil, fmt.Errorf("failed to import block: %v", err)
 		}
@@ -333,31 +350,31 @@ func (self *Backend) GetBlockByNumber(ctx context.Context, number int64) (*model
 	return fillExtra(block), nil
 }
 
-func (self *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Block, error) {
-	b, err := self.mongo.getBlockByHash(hash)
+func (b *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Block, error) {
+	block, err := b.mongo.getBlockByHash(hash)
 	if err != nil {
 		return nil, err
 	}
-	if b == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		self.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.String("block", hash))
-		blockEth, err := self.goClient.BlockByHash(ctx, common.HexToHash(hash))
+	if block == nil { //redownload block if it has no NonceBool filled, sort of lazy load
+		b.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.String("block", hash))
+		blockEth, err := b.goClient.BlockByHash(ctx, common.HexToHash(hash))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
 		}
-		b, err = self.ImportBlock(ctx, blockEth)
+		block, err = b.ImportBlock(ctx, blockEth)
 		if err != nil {
 			return nil, fmt.Errorf("failed to import block: %v", err)
 		}
 	}
-	return fillExtra(b), nil
+	return fillExtra(block), nil
 }
 
-func (self *Backend) GetCompilerVersion() ([]string, error) {
-	return self.dockerhubAPI.GetSolcImageTags()
+func (b *Backend) GetCompilerVersion() ([]string, error) {
+	return b.dockerhubAPI.GetSolcImageTags()
 }
 
-func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Contract) (*models.Contract, error) {
-	contract, err := self.GetContract(contractData.Address)
+func (b *Backend) VerifyContract(ctx context.Context, contractData *models.Contract) (*models.Contract, error) {
+	contract, err := b.GetContract(contractData.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +386,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 	}
 	compileData, err := CompileSolidityString(ctx, contractData.CompilerVersion, contractData.SourceCode, contractData.Optimization, contractData.EVMVersion)
 	if err != nil {
-		self.Lgr.Error("error while compilation", zap.Error(err))
+		b.Lgr.Error("error while compilation", zap.Error(err))
 		return nil, errors.New("error occurred while compiling source code")
 	}
 	// compiler gives map with keys starting with <stdin>:
@@ -389,7 +406,7 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 		contract.CompilerVersion = compileData[key].Info.CompilerVersion
 		contract.Abi = compileData[key].Info.AbiDefinition
 		contract.UpdatedAt = time.Now()
-		if err := self.mongo.updateContract(contract); err != nil {
+		if err := b.mongo.updateContract(contract); err != nil {
 			return nil, err
 		}
 		return contract, nil
@@ -399,24 +416,24 @@ func (self *Backend) VerifyContract(ctx context.Context, contractData *models.Co
 
 //METHODS USED IN GRABBER
 
-func (self *Backend) UpdateStats() (*models.Stats, error) {
-	return self.mongo.updateStats()
+func (b *Backend) UpdateStats() (*models.Stats, error) {
+	return b.mongo.updateStats()
 }
 
-func (self *Backend) GetTokenBalance(contract, wallet string) (*tokens.TokenHolderDetails, error) {
-	return self.tokenClient.GetTokenHolderDetails(contract, wallet)
+func (b *Backend) GetTokenBalance(contract, wallet string) (*tokens.TokenHolderDetails, error) {
+	return b.tokenClient.GetTokenHolderDetails(contract, wallet)
 }
 
-func (self *Backend) GetTokenDetails(contractAddress string, byteCode string) (*tokens.TokenDetails, error) {
-	return self.tokenClient.GetTokenDetails(contractAddress, byteCode)
+func (b *Backend) GetTokenDetails(contractAddress string, byteCode string) (*tokens.TokenDetails, error) {
+	return b.tokenClient.GetTokenDetails(contractAddress, byteCode)
 }
 
-func (self *Backend) GetTransferEvents(ctx context.Context, tokenDetails *tokens.TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*tokens.TransferEvent, error) {
-	return self.tokenClient.GetTransferEvents(ctx, tokenDetails, contractBlock, blockRangeLimit)
+func (b *Backend) GetTransferEvents(ctx context.Context, tokenDetails *tokens.TokenDetails, contractBlock int64, blockRangeLimit uint64) ([]*tokens.TransferEvent, error) {
+	return b.tokenClient.GetTransferEvents(ctx, tokenDetails, contractBlock, blockRangeLimit)
 }
 
-func (self *Backend) CountTokenTransfers(address string) (int, error) {
-	addr, err := self.mongo.getAddressByHash(address)
+func (b *Backend) CountTokenTransfers(address string) (int, error) {
+	addr, err := b.mongo.getAddressByHash(address)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get address: %v", err)
 	}
@@ -427,24 +444,24 @@ func (self *Backend) CountTokenTransfers(address string) (int, error) {
 
 }
 
-func (self *Backend) ImportBlock(ctx context.Context, block *types.Block) (*models.Block, error) {
-	return self.mongo.importBlock(ctx, block, self.isDarvazaFork(block.Number().Int64()))
+func (b *Backend) ImportBlock(ctx context.Context, block *types.Block) (*models.Block, error) {
+	return b.mongo.importBlock(ctx, block, b.isDarvazaFork)
 }
 
 // NeedReloadParent returns true if the parent block is missing or does not match the hash from this block number.
-func (self *Backend) NeedReloadParent(blockNumber int64) (bool, error) {
-	return self.mongo.needReloadParent(blockNumber)
+func (b *Backend) NeedReloadParent(blockNumber int64) (bool, error) {
+	return b.mongo.needReloadParent(blockNumber)
 }
 
-func (self *Backend) InternalTxsConsistent(blockNumber int64) (*models.Block, bool, error) {
-	return self.mongo.internalTxsConsistent(blockNumber)
+func (b *Backend) InternalTxsConsistent(blockNumber int64) (*models.Block, bool, error) {
+	return b.mongo.internalTxsConsistent(blockNumber)
 }
 
 //return false if a number of transactions in DB is different from a number of transactions in the blockchain
-func (self *Backend) ExternalTxsConsistent(ctx context.Context, block *models.Block) (bool, error) {
-	lgr := self.Lgr.With(zap.String("hash", block.BlockHash))
+func (b *Backend) ExternalTxsConsistent(ctx context.Context, block *models.Block) (bool, error) {
+	lgr := b.Lgr.With(zap.String("hash", block.BlockHash))
 	lgr.Debug("Checking transaction count for the block")
-	txCount, err := self.goClient.TransactionCount(ctx, common.HexToHash(block.BlockHash))
+	txCount, err := b.goClient.TransactionCount(ctx, common.HexToHash(block.BlockHash))
 	if err != nil {
 		return false, fmt.Errorf("failed to get rpc transaction count: %v", err)
 	}
@@ -452,14 +469,14 @@ func (self *Backend) ExternalTxsConsistent(ctx context.Context, block *models.Bl
 	return txCount == uint(block.TxCount), nil
 }
 
-func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) ([]*models.ActiveAddress, error) {
-	addrs, err := self.mongo.getActiveAddresses(fromDate)
+func (b *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) ([]*models.ActiveAddress, error) {
+	addrs, err := b.mongo.getActiveAddresses(fromDate)
 	if err != nil {
 		return nil, err
 	}
 	var selectedAddresses []*models.ActiveAddress
 	for _, address := range addrs {
-		isContract, err := self.mongo.isContract(address.Address)
+		isContract, err := b.mongo.isContract(address.Address)
 		if err != nil {
 			return nil, fmt.Errorf("active address %s: %v", address.Address, err)
 		}
@@ -469,46 +486,51 @@ func (self *Backend) GetActiveAdresses(fromDate time.Time, onlyContracts bool) (
 	}
 	return selectedAddresses, nil
 }
-func (self *Backend) ImportAddress(address string, balance *big.Int, token *tokens.TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
-	return self.mongo.importAddress(address, balance, token, contract, updatedAtBlock)
+func (b *Backend) ImportAddress(address string, balance *big.Int, token *tokens.TokenDetails, contract bool, updatedAtBlock int64) (*models.Address, error) {
+	return b.mongo.importAddress(address, balance, token, contract, updatedAtBlock)
 }
-func (self *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *tokens.TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
-	return self.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token, address)
+func (b *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, token *tokens.TokenHolderDetails, address *models.Address) (*models.TokenHolder, error) {
+	return b.mongo.importTokenHolder(contractAddress, tokenHolderAddress, token, address)
 }
-func (self *Backend) ImportTransferEvent(ctx context.Context, contractAddress string, transferEvent *tokens.TransferEvent) (*models.TokenTransfer, error) {
+func (b *Backend) ImportTransferEvent(ctx context.Context, contractAddress string, transferEvent *tokens.TransferEvent) (*models.TokenTransfer, error) {
 	createdAt := time.Now()
-	block, err := self.GetBlockByNumber(ctx, transferEvent.BlockNumber)
+	block, err := b.GetBlockByNumber(ctx, transferEvent.BlockNumber)
 	if err != nil {
 		return nil, err
 	}
 	if block != nil {
 		createdAt = block.CreatedAt
 	}
-	return self.mongo.importTransferEvent(contractAddress, transferEvent, createdAt)
+	return b.mongo.importTransferEvent(contractAddress, transferEvent, createdAt)
 }
-func (self *Backend) ImportContract(contractAddress string, byteCode string) error {
-	return self.mongo.importContract(contractAddress, byteCode)
-}
-
-func (self *Backend) GetContractBlock(contractAddress string) (int64, error) {
-	return self.mongo.getContractBlock(contractAddress)
+func (b *Backend) ImportContract(contractAddress string, byteCode string) error {
+	return b.mongo.importContract(contractAddress, byteCode)
 }
 
-func (self *Backend) BlockByNumber(ctx context.Context, blockNumber int64) (*types.Block, error) {
+func (b *Backend) GetContractBlock(contractAddress string) (int64, error) {
+	return b.mongo.getContractBlock(contractAddress)
+}
+
+func (b *Backend) BlockByNumber(ctx context.Context, blockNumber int64) (*types.Block, error) {
 	var value *types.Block
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.goClient.BlockByNumber(ctx, big.NewInt(blockNumber))
+		value, err = b.goClient.BlockByNumber(ctx, big.NewInt(blockNumber))
 		return err
 	})
 	return value, err
 }
-func (self *Backend) GetLatestBlockNumber(ctx context.Context) (int64, error) {
+
+func (b *Backend) GetLatestBlockNumber(ctx context.Context) (*big.Int, error) {
 	var value *big.Int
 	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
-		value, err = self.goClient.LatestBlockNumber(ctx)
+		value, err = b.goClient.LatestBlockNumber(ctx)
 		return err
 	})
-	return value.Int64(), err
+	return value, err
+}
+
+func (b *Backend) UpdateTotalFees(hash string, totalFees string) error {
+	return b.mongo.updateTotalFees(hash, totalFees)
 }
 
 func fillExtra(block *models.Block) *models.Block {
@@ -528,17 +550,17 @@ func fillExtraLight(block *models.LightBlock) *models.LightBlock {
 	block.Extra.Vanity = strings.TrimRight(string(clique.ExtraVanity(extra)), "\u0000")
 	return block
 }
-func (self *Backend) DeleteBlockByHash(hash string) error {
-	return self.mongo.deleteBlockByHash(hash)
+func (b *Backend) DeleteBlockByHash(hash string) error {
+	return b.mongo.deleteBlockByHash(hash)
 }
-func (self *Backend) DeleteBlockByNumber(bnum int64) error {
-	return self.mongo.deleteBlockByNumber(bnum)
-}
-
-func (self *Backend) DeleteContract(contractAddress string) error {
-	return self.mongo.deleteContract(contractAddress)
+func (b *Backend) DeleteBlockByNumber(bnum int64) error {
+	return b.mongo.deleteBlockByNumber(bnum)
 }
 
-func (self *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) (int, error) {
-	return self.mongo.migrate(ctx, lgr)
+func (b *Backend) DeleteContract(contractAddress string) error {
+	return b.mongo.deleteContract(contractAddress)
+}
+
+func (b *Backend) MigrateDB(ctx context.Context, lgr *zap.Logger) (int, error) {
+	return b.mongo.migrate(ctx, lgr)
 }
