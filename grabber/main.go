@@ -235,6 +235,9 @@ func backfill(ctx context.Context, b *backend.Backend, blockNumber int64, checkE
 			// Mismatch with expected hash from parent of previous block.
 			backfill = true
 			logger = logger.With(zap.String("reason", "hash"))
+		} else if dbBlock.GasFees == "" {
+			backfill = true
+			logger = logger.With(zap.String("reason", "missing gas fees"))
 		} else {
 			// Note parent as next expected hash.
 			hash = common.HexToHash(dbBlock.ParentHash)

@@ -118,7 +118,10 @@ func (b *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
 }
 
 func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
-	alloc := b.alloc.Load().(*big.Int)
+	var alloc *big.Int
+	if l := b.alloc.Load(); l != nil {
+		alloc = l.(*big.Int)
+	}
 	if alloc == nil {
 		if err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
 			var result *core.GenesisAlloc
