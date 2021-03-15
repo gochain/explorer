@@ -14,7 +14,6 @@ import (
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
-
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
@@ -170,7 +169,7 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 		if imported, err := mb.importTx(ctx, tx, block); err != nil {
 			return nil, fmt.Errorf("failed to import tx: %v", err)
 		} else if txFee, ok := new(big.Int).SetString(imported.GasFee, 10); !ok {
-			return nil, fmt.Errorf("failed to parse gas fee: %s", imported.GasFee)
+			return nil, fmt.Errorf("failed to parse tx gas fee: %s", imported.GasFee)
 		} else {
 			gasFee = gasFee.Add(gasFee, txFee)
 		}
@@ -622,33 +621,36 @@ func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transactio
 	receipt, err := mb.goClient.TransactionReceipt(ctx, common.HexToHash(tx.TxHash))
 	if err != nil {
 		lgr.Warn("Failed to get transaction receipt", zap.Error(err))
-	} else {
-		gasPrice, ok := new(big.Int).SetString(tx.GasPrice, 0)
-		if !ok {
-			lgr.Error("Failed to parse gas price", zap.String("gasPrice", tx.GasPrice))
-		}
-		tx.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
-		tx.ContractAddress = receipt.ContractAddress.String()
-		tx.Status = false
-		if receipt.Status == 1 {
-			tx.Status = true
-		}
-		tx.ReceiptReceived = true
-		jsonValue, err := json.Marshal(receipt.Logs)
-		if err != nil {
-			lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
-		}
-		for _, l := range receipt.Logs {
-			if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
-				return nil, nil, fmt.Errorf("failed to update active address: %s", err)
-			}
-		}
-		tx.Logs = string(jsonValue)
-		_, err = mb.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to upsert tx: %v", err)
+		return nil, nil, fmt.Errorf("failed to get tx receipt: %v", err)
+	}
+	gasPrice, ok := new(big.Int).SetString(tx.GasPrice, 0)
+	if !ok {
+		lgr.Error("Failed to parse gas price", zap.String("gasPrice", tx.GasPrice))
+		return nil, nil, fmt.Errorf("failed to parse tx gas price: %s", tx.GasPrice)
+	}
+	tx.GasFee = new(big.Int).Mul(gasPrice, big.NewInt(int64(receipt.GasUsed))).String()
+	tx.ContractAddress = receipt.ContractAddress.String()
+	tx.Status = false
+	if receipt.Status == 1 {
+		tx.Status = true
+	}
+	tx.ReceiptReceived = true
+	jsonValue, err := json.Marshal(receipt.Logs)
+	if err != nil {
+		lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
+		return nil, nil, fmt.Errorf("failed to marshal JSON recept logs: %v", err)
+	}
+	for _, l := range receipt.Logs {
+		if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
+			return nil, nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
+	tx.Logs = string(jsonValue)
+	_, err = mb.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to upsert tx: %v", err)
+	}
+
 	return tx, receipt, nil
 }
 
