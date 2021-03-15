@@ -70,7 +70,7 @@ func fillTotalFees(ctx context.Context, b *backend.Backend, parent *models.Block
 		}
 		gasFees, ok := new(big.Int).SetString(bl.GasFees, 10)
 		if !ok {
-			b.Lgr.Error("Fees: Failed to parse gas fee", zap.Int64("number", bl.Number), zap.String("total", bl.GasFees))
+			b.Lgr.Error("Fees: Failed to parse block total gas fees", zap.Int64("number", bl.Number), zap.String("total", bl.GasFees))
 			return
 		}
 		bl.TotalFeesBurned = new(big.Int).Add(parentTotal, gasFees).String()
