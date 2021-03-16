@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,6 +25,8 @@ import (
 	"github.com/gochain/gochain/v3/rpc"
 	"go.uber.org/zap"
 )
+
+const rpcClientTimeout = time.Minute
 
 type Backend struct {
 	mongo           *MongoBackend
@@ -44,7 +47,7 @@ type Backend struct {
 
 func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAccounts []string, signers map[common.Address]models.Signer,
 	lgr *zap.Logger, cache *ristretto.Cache) (*Backend, error) {
-	rpcClient, err := rpc.Dial(rpcUrl)
+	rpcClient, err := rpc.DialHTTPWithClient(rpcUrl, &http.Client{Timeout: rpcClientTimeout})
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial rpc %q: %v", rpcUrl, err)
 	}
@@ -353,8 +356,15 @@ func (b *Backend) GetBlockByNumber(ctx context.Context, number int64) (*models.B
 	if err != nil {
 		return nil, err
 	}
-	if block == nil || block.NonceBool == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		b.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.Int64("block", number))
+	reload := false
+	if block == nil {
+		reload = true
+		b.Lgr.Info("Block not found in DB, importing", zap.Int64("block", number))
+	} else if block.NonceBool == nil {
+		reload = true
+		b.Lgr.Info("Block not up to date, reimporting", zap.Int64("block", number))
+	}
+	if reload {
 		blockEth, err := b.goClient.BlockByNumber(ctx, big.NewInt(number))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
@@ -372,8 +382,15 @@ func (b *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Bloc
 	if err != nil {
 		return nil, err
 	}
-	if block == nil { //redownload block if it has no NonceBool filled, sort of lazy load
-		b.Lgr.Info("Cannot get block from db or block is not up to date, importing it", zap.String("block", hash))
+	reload := false
+	if block == nil {
+		reload = true
+		b.Lgr.Info("Block not found in DB, importing", zap.String("block", hash))
+	} else if block.NonceBool == nil {
+		reload = true
+		b.Lgr.Info("Block not up to date, reimporting", zap.String("block", hash))
+	}
+	if reload {
 		blockEth, err := b.goClient.BlockByHash(ctx, common.HexToHash(hash))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
