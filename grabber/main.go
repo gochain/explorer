@@ -220,7 +220,7 @@ func backfill(ctx context.Context, b *backend.Backend, blockNumber int64, checkE
 			logger.Info("Backfill: Progress")
 		}
 		var backfill bool
-		dbBlock, err := b.GetBlockByNumber(ctx, blockNumber)
+		dbBlock, err := b.GetBlockByNumber(ctx, blockNumber, true)
 		if err != nil {
 			logger.Error("Backfill: Failed to get block", zap.Error(err))
 			if utils.SleepCtx(ctx, 5*time.Second) != nil {

@@ -73,7 +73,7 @@ func TestImportBlockTransaction(t *testing.T) {
 	testBackend := getBackend(t)
 	defer testBackend.mongo.cleanUp()
 	block := createImportBlock(t, testBackend)
-	blockFromDb, err := testBackend.GetBlockByNumber(context.Background(), block.Header().Number.Int64())
+	blockFromDb, err := testBackend.GetBlockByNumber(context.Background(), block.Header().Number.Int64(), false)
 	if err != nil {
 		t.Fatalf("failed to get block: %v", err)
 	}
