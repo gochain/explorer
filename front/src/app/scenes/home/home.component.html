@@ -3,37 +3,23 @@
     <div class="col-lg-6 col-xs-12">
       <div class="card h-100">
         <div class="card-body">
-          <div class="card-title"><img src="../../../assets/icons/comparison.svg"> BLOCKCHAIN COMPARISON</div>
-          <table class="table table-sm table-bordered">
-            <thead>
-            <tr>
-              <th scope="col">Network</th>
-              <th scope="col">Speed</th>
-              <th scope="col">Capacity</th>
-              <th scope="col">Fees</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td>GoChain</td>
-              <td>5 sec</td>
-              <td>1300 tps</td>
-              <td>$0.000002</td>
-            </tr>
-            <tr>
-              <td>Bitcoin</td>
-              <td>10-60 min</td>
-              <td>6 tps</td>
-              <td>$0.07-$3.50</td>
-            </tr>
-            <tr>
-              <td>Ethereum</td>
-              <td>1-14 min</td>
-              <td>13 tps</td>
-              <td>$0.01-$0.50</td>
-            </tr>
-            </tbody>
-          </table>
+          <div class="card-title"><img src="../../../assets/icons/comparison.svg"> SUPPLY STATS</div>
+          <dl>
+            <dt>Total</dt>
+            <dd>
+              {{supplyStats.total | weiToGO | bigNumber}} GO
+              <ng-container *ngIf="supplyStats.fees_burned > 0">
+                ({{supplyStats.fees_burned | weiToGo | bigNumber}} fees burned)
+              </ng-container>
+            </dd>
+            <dt>Circulating</dt>
+            <dd>
+              {{supplyStats.circulating | weiToGO | bigNumber}} GO
+              <ng-container *ngIf="supplyStats.locked > 0">
+                ({{supplyStats.locked | weiToGo | bigNumber}} locked)
+              </ng-container>
+            </dd>
+          </dl>
         </div>
       </div>
     </div>

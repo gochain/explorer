@@ -135,7 +135,8 @@ func (b *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
 	return value, err
 }
 
-func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
+// TotalSupply returns the total supply and the fees burned (already subtracted from total).
+func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, *big.Int, error) {
 	var alloc *big.Int
 	if l := b.alloc.Load(); l != nil {
 		alloc = l.(*big.Int)
@@ -150,23 +151,24 @@ func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
 			b.alloc.Store(result.Total())
 			return nil
 		}); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	n, err := b.GetLatestBlockNumber(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	rewards := new(big.Int).Mul(clique.BlockReward, n)
 	total := new(big.Int).Add(alloc, rewards)
+	totalFeesBurned := big.NewInt(0)
 	if b.isDarvazaFork(n) {
-		if totalFeesBurned, err := b.totalFeesBurned(ctx, n.Int64()); err != nil {
-			return nil, err
+		if totalFeesBurned, err = b.totalFeesBurned(ctx, n.Int64()); err != nil {
+			return nil, nil, err
 		} else if totalFeesBurned != nil {
 			total = total.Sub(total, totalFeesBurned)
 		}
 	}
-	return total, nil
+	return total, totalFeesBurned, nil
 }
 
 // totalFeesBurned may return a cached value.
@@ -189,7 +191,15 @@ func (b *Backend) totalFeesBurned(ctx context.Context, n int64) (*big.Int, error
 }
 
 func (b *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
-	total, err := b.TotalSupply(ctx)
+	supplyStats, err := b.SupplyStats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return supplyStats.Circulating, nil
+}
+
+func (b *Backend) SupplyStats(ctx context.Context) (*models.SupplyStats, error) {
+	total, feesBurned, err := b.TotalSupply(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +211,10 @@ func (b *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 		}
 		locked = locked.Add(locked, bal)
 	}
-	return new(big.Int).Sub(total, locked), err
+	return &models.SupplyStats{
+		Total: total, FeesBurned: feesBurned, Locked: locked,
+		Circulating: new(big.Int).Sub(total, locked),
+	}, err
 }
 
 func (b *Backend) isDarvazaFork(n *big.Int) bool {

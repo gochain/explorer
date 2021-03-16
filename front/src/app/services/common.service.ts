@@ -14,6 +14,7 @@ import { RichList } from '../models/rich_list.model';
 import { Holder } from '../models/holder.model';
 import { InternalTransaction } from '../models/internal-transaction.model';
 import { Stats } from '../models/stats.model';
+import { SupplyStats } from '../models/supply.model';
 import { Contract } from '../models/contract.model';
 import { SignerData, SignerStat } from '../models/signer-stats';
 import { SignerNode } from '../models/signer-node';
@@ -201,6 +202,10 @@ export class CommonService implements Resolve<string> {
 
   getStats(): Observable<Stats> {
     return this._apiService.get('/stats');
+  }
+
+  getSupplyStats(): Observable<SupplyStats> {
+    return this._apiService.get('/supply');
   }
 
   getSignerStats(): Observable<SignerStat[]> {
