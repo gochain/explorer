@@ -105,6 +105,15 @@ func (b *Backend) Balance(ctx context.Context, address common.Address) (*big.Int
 	return value, err
 }
 
+func (b *Backend) Nonce(ctx context.Context, address common.Address) (uint64, error) {
+	var value uint64
+	err := utils.Retry(ctx, 5, 2*time.Second, func() (err error) {
+		value, err = b.goClient.PendingNonceAt(ctx, address)
+		return err
+	})
+	return value, err
+}
+
 func (b *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
 	if !common.IsHexAddress(address) {
 		return nil, fmt.Errorf("invalid hex address: %s", address)
@@ -231,6 +240,11 @@ func (b *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Ad
 			return nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
+	nonce, err := b.Nonce(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+	address.NumberOfTransactions = int(nonce)
 	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	// todo: only store a subset of this data in the cache, just the metadata like token name, decimals, etc. Things that won't change.

@@ -566,20 +566,6 @@ func (mb *MongoBackend) getAddressByHash(address string) (*models.Address, error
 		}
 		return nil, fmt.Errorf("failed to get address: %v", err)
 	}
-	//lazy calculation for number of transactions
-	var transactionCounter = 0
-	if mb.useTransactionsByAddress() {
-		transactionCounter, err = mb.mongo.C("TransactionsByAddress").Find(bson.M{"address": address}).Count()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get txs from TransactionsByAddress: %v", err)
-		}
-	} else {
-		transactionCounter, err = mb.mongo.C("Transactions").Find(bson.M{"$or": []bson.M{{"from": address}, {"to": address}}}).Count()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get txs from Transactions: %v", err)
-		}
-	}
-	c.NumberOfTransactions = transactionCounter
 	return &c, nil
 }
 
