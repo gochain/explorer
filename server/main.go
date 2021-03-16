@@ -699,7 +699,7 @@ func getBlock(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		block, err = backendInstance.GetBlockByHash(r.Context(), param)
 	} else {
-		block, err = backendInstance.GetBlockByNumber(r.Context(), bnum)
+		block, err = backendInstance.GetBlockByNumber(r.Context(), bnum, false)
 	}
 	if err != nil {
 		logger.Error("Failed to get block", zap.String("num", param), zap.Error(err))

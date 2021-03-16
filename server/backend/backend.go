@@ -351,27 +351,29 @@ func (b *Backend) GetBlockTransactionsByNumber(blockNumber int64, filter *models
 	return b.mongo.getBlockTransactionsByNumber(blockNumber, filter)
 }
 
-func (b *Backend) GetBlockByNumber(ctx context.Context, number int64) (*models.Block, error) {
+func (b *Backend) GetBlockByNumber(ctx context.Context, number int64, asIs bool) (*models.Block, error) {
 	block, err := b.mongo.getBlockByNumber(number)
 	if err != nil {
 		return nil, err
 	}
 	reload := false
-	if block == nil {
-		reload = true
-		b.Lgr.Info("Block not found in DB, importing", zap.Int64("block", number))
-	} else if block.NonceBool == nil {
-		reload = true
-		b.Lgr.Info("Block not up to date, reimporting", zap.Int64("block", number))
-	}
-	if reload {
-		blockEth, err := b.goClient.BlockByNumber(ctx, big.NewInt(number))
-		if err != nil {
-			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
+	if !asIs {
+		if block == nil {
+			reload = true
+			b.Lgr.Info("Block not found in DB, importing", zap.Int64("block", number))
+		} else if block.NonceBool == nil {
+			reload = true
+			b.Lgr.Info("Block not up to date, reimporting", zap.Int64("block", number))
 		}
-		block, err = b.ImportBlock(ctx, blockEth)
-		if err != nil {
-			return nil, fmt.Errorf("failed to import block: %v", err)
+		if reload {
+			blockEth, err := b.goClient.BlockByNumber(ctx, big.NewInt(number))
+			if err != nil {
+				return nil, fmt.Errorf("failed to get block from rpc: %v", err)
+			}
+			block, err = b.ImportBlock(ctx, blockEth)
+			if err != nil {
+				return nil, fmt.Errorf("failed to import block: %v", err)
+			}
 		}
 	}
 	return fillExtra(block), nil
@@ -528,7 +530,7 @@ func (b *Backend) ImportTokenHolder(contractAddress, tokenHolderAddress string, 
 }
 func (b *Backend) ImportTransferEvent(ctx context.Context, contractAddress string, transferEvent *tokens.TransferEvent) (*models.TokenTransfer, error) {
 	createdAt := time.Now()
-	block, err := b.GetBlockByNumber(ctx, transferEvent.BlockNumber)
+	block, err := b.GetBlockByNumber(ctx, transferEvent.BlockNumber, false)
 	if err != nil {
 		return nil, err
 	}

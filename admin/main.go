@@ -192,7 +192,7 @@ func ReloadBlock(ctx context.Context, backendInstance *backend.Backend, blockID 
 			fatalExit(err)
 		}
 		logger.Info("Reimporting block ", zap.String("number", blockID))
-		block, err = backendInstance.GetBlockByNumber(ctx, bnum)
+		block, err = backendInstance.GetBlockByNumber(ctx, bnum, false)
 	}
 	if err != nil {
 		fatalExit(fmt.Errorf("Failed to get block:%s, %v", blockID, err))
@@ -216,7 +216,7 @@ func ReloadTransaction(ctx context.Context, backendInstance *backend.Backend, tx
 	if err != nil {
 		fatalExit(err)
 	}
-	_, err = backendInstance.GetBlockByNumber(ctx, tx.BlockNumber)
+	_, err = backendInstance.GetBlockByNumber(ctx, tx.BlockNumber, false)
 	if err != nil {
 		fatalExit(fmt.Errorf("Failed to get block:%d, %v", tx.BlockNumber, err))
 	}

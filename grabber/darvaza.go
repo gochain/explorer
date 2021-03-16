@@ -23,7 +23,7 @@ func fillTotalFees(ctx context.Context, b *backend.Backend, parent *models.Block
 			b.Lgr.Info("Fees: Filled total fees up to latest")
 			return
 		}
-		bl, err := b.GetBlockByNumber(ctx, parent.Number+1)
+		bl, err := b.GetBlockByNumber(ctx, parent.Number+1, false)
 		if err != nil {
 			b.Lgr.Warn("Fees: Failed to get block", zap.Int64("number", parent.Number+1))
 			if utils.SleepCtx(ctx, 5*time.Second) != nil {
