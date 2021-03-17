@@ -201,7 +201,7 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 		return nil, fmt.Errorf("failed to upsert block gas fee fields: %v", err)
 	}
 
-	if err := mb.UpdateActiveAddress(block.Coinbase().Hex()); err != nil {
+	if err := mb.UpdateActiveAddress(b.Miner); err != nil {
 		return nil, fmt.Errorf("failed to update active signer address: %s", err)
 	}
 	return b, nil
@@ -277,10 +277,6 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 				return nil, fmt.Errorf("failed to update active address: %s", err)
 			}
 		}
-	}
-
-	if _, err := mb.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.Hash().String()}, transaction); err != nil {
-		return nil, fmt.Errorf("failed to upsert tx: %v", err)
 	}
 
 	err = mb.insertTransactionsByAddress(ctx, transaction.From, transaction.TxHash, transaction.CreatedAt)
