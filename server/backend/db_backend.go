@@ -65,7 +65,6 @@ func (mb *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bloc
 	if tx.To() != nil {
 		to = tx.To().Hex()
 	}
-	mb.Lgr.Debug("Parsing tx", zap.Stringer("tx", tx.Hash()))
 	txInputData := hex.EncodeToString(tx.Data()[:])
 	return &models.Transaction{TxHash: tx.Hash().Hex(),
 		To:              to,
@@ -260,6 +259,7 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse tx: %v", err)
 	}
+	lgr.Debug("Parsed tx")
 	var receipt *types.Receipt
 	transaction, receipt, err = mb.ensureReceipt(ctx, transaction)
 	if err != nil {
@@ -270,24 +270,31 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 	if transaction.To == "" {
 		toAddress = transaction.ContractAddress
 	}
-	toAddr, _ := mb.getAddressByHash(toAddress)
+	toAddr, err := mb.getAddressByHash(toAddress)
+	if err != nil {
+		return nil, err
+	}
+	lgr.Debug("Got to address", zap.String("address", toAddress))
 	if toAddr == nil || toAddr.Contract { //if address hasn't imported yet or address is a contract we download receipt logs
 		for _, l := range receipt.Logs {
 			if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
 				return nil, fmt.Errorf("failed to update active address: %s", err)
 			}
 		}
+		lgr.Debug("Updated log addresses")
 	}
 
 	err = mb.insertTransactionsByAddress(ctx, transaction.From, transaction.TxHash, transaction.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
+	lgr.Debug("Inserted tx by from address")
 	if transaction.From != toAddress { //skip if from == to
 		err = mb.insertTransactionsByAddress(ctx, toAddress, transaction.TxHash, transaction.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
+		lgr.Debug("Inserted tx by to address")
 	}
 
 	if err := mb.UpdateActiveAddress(toAddress); err != nil {
@@ -296,6 +303,8 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 	if err := mb.UpdateActiveAddress(transaction.From); err != nil {
 		return nil, fmt.Errorf("failed to update active from address: %s", err)
 	}
+	lgr.Debug("Updated active from/to addresses")
+	lgr.Debug("Imported tx")
 	return transaction, nil
 }
 
@@ -605,6 +614,7 @@ func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transactio
 		lgr.Warn("Failed to get transaction receipt", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to get tx receipt: %v", err)
 	}
+	lgr.Debug("Got receipt")
 	gasPrice, ok := new(big.Int).SetString(tx.GasPrice, 0)
 	if !ok {
 		lgr.Error("Failed to parse gas price", zap.String("gasPrice", tx.GasPrice))
@@ -622,16 +632,19 @@ func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transactio
 		lgr.Error("Failed to marshal JSON receipt logs", zap.Error(err))
 		return nil, nil, fmt.Errorf("failed to marshal JSON recept logs: %v", err)
 	}
+	lgr.Debug("Parsed receipt")
 	for _, l := range receipt.Logs {
 		if err := mb.UpdateActiveAddress(l.Address.String()); err != nil {
 			return nil, nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
+	lgr.Debug("Updated log addresses")
 	tx.Logs = string(jsonValue)
 	_, err = mb.mongo.C("Transactions").Upsert(bson.M{"tx_hash": tx.TxHash}, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to upsert tx: %v", err)
 	}
+	lgr.Debug("Upserted tx")
 
 	return tx, receipt, nil
 }
