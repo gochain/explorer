@@ -17,6 +17,7 @@ import (
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v3/rpc"
 	"go.uber.org/zap"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -28,6 +29,7 @@ type MongoBackend struct {
 	host                 string
 	mongo                *mgo.Database
 	mongoSession         *mgo.Session
+	rpcClient            *rpc.Client
 	goClient             *goclient.Client
 	Lgr                  *zap.Logger
 	databaseVersionMutex sync.RWMutex
@@ -35,7 +37,7 @@ type MongoBackend struct {
 }
 
 // New create new rpc client with given url
-func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
+func NewMongoClient(rpcClient *rpc.Client, goClient *goclient.Client, host, dbName string, lgr *zap.Logger) (*MongoBackend, error) {
 	session, err := mgo.DialWithInfo(&mgo.DialInfo{
 		Addrs:   []string{host},
 		Timeout: 240 * time.Second,
@@ -47,7 +49,8 @@ func NewMongoClient(client *goclient.Client, host, dbName string, lgr *zap.Logge
 	mb.Lgr = lgr
 	mb.mongoSession = session
 	mb.mongo = session.DB(dbName)
-	mb.goClient = client
+	mb.rpcClient = rpcClient
+	mb.goClient = goClient
 	mb.createIndexes()
 
 	return mb, nil
@@ -163,9 +166,22 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 	if err != nil {
 		return nil, fmt.Errorf("failed to remove old txs: %v", err)
 	}
+
+	txs := block.Transactions()
+	batch := make([]rpc.BatchElem, len(txs))
+	for i, tx := range txs {
+		batch[i] = rpc.BatchElem{
+			Method: "eth_getTransactionReceipt",
+			Args:   []interface{}{tx.Hash()},
+			Result: new(types.Receipt),
+		}
+	}
+	if err := mb.rpcClient.BatchCallContext(ctx, batch); err != nil {
+		return nil, fmt.Errorf("failed to get tx receipts: %v", err)
+	}
 	gasFee := big.NewInt(0)
-	for _, tx := range block.Transactions() {
-		if imported, err := mb.importTx(ctx, tx, block); err != nil {
+	for i, tx := range txs {
+		if imported, err := mb.importTx(ctx, tx, batch[i], block); err != nil {
 			return nil, fmt.Errorf("failed to import tx: %v", err)
 		} else if txFee, ok := new(big.Int).SetString(imported.GasFee, 10); !ok {
 			return nil, fmt.Errorf("failed to parse tx gas fee: %s", imported.GasFee)
@@ -252,7 +268,7 @@ func (mb *MongoBackend) insertTransactionsByAddress(ctx context.Context, address
 	return err
 }
 
-func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, block *types.Block) (*models.Transaction, error) {
+func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, receiptElem rpc.BatchElem, block *types.Block) (*models.Transaction, error) {
 	lgr := mb.Lgr.With(zap.Stringer("tx", tx.Hash()))
 	lgr.Debug("Importing tx")
 	transaction, err := mb.parseTx(ctx, tx, block)
@@ -260,8 +276,11 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, blo
 		return nil, fmt.Errorf("failed to parse tx: %v", err)
 	}
 	lgr.Debug("Parsed tx")
-	var receipt *types.Receipt
-	transaction, receipt, err = mb.ensureReceipt(ctx, transaction)
+
+	if receiptElem.Error != nil {
+		return nil, fmt.Errorf("faild to get receipt: %v", err)
+	}
+	transaction, receipt, err := mb.ensureReceipt(ctx, transaction, receiptElem.Result.(*types.Receipt))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tx receipt: %v", err)
 	}
@@ -586,7 +605,7 @@ func (mb *MongoBackend) getTxByAddressAndNonce(ctx context.Context, address stri
 	if tx.ReceiptReceived {
 		return tx, nil
 	}
-	tx, _, err = mb.ensureReceipt(ctx, tx)
+	tx, _, err = mb.ensureReceipt(ctx, tx, nil)
 	return tx, err
 }
 
@@ -602,19 +621,22 @@ func (mb *MongoBackend) getTransactionByHash(ctx context.Context, hash string) (
 	if tx.ReceiptReceived {
 		return tx, nil
 	}
-	tx, _, err = mb.ensureReceipt(ctx, tx)
+	tx, _, err = mb.ensureReceipt(ctx, tx, nil)
 	return tx, err
 }
 
 // ensureReceipt does lazy loads receipt info if necessary.
-func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transaction) (*models.Transaction, *types.Receipt, error) {
+func (mb *MongoBackend) ensureReceipt(ctx context.Context, tx *models.Transaction, receipt *types.Receipt) (*models.Transaction, *types.Receipt, error) {
 	lgr := mb.Lgr.With(zap.String("tx", tx.TxHash))
-	receipt, err := mb.goClient.TransactionReceipt(ctx, common.HexToHash(tx.TxHash))
-	if err != nil {
-		lgr.Warn("Failed to get transaction receipt", zap.Error(err))
-		return nil, nil, fmt.Errorf("failed to get tx receipt: %v", err)
+	if receipt == nil {
+		var err error
+		receipt, err = mb.goClient.TransactionReceipt(ctx, common.HexToHash(tx.TxHash))
+		if err != nil {
+			lgr.Warn("Failed to get transaction receipt", zap.Error(err))
+			return nil, nil, fmt.Errorf("failed to get tx receipt: %v", err)
+		}
+		lgr.Debug("Got receipt")
 	}
-	lgr.Debug("Got receipt")
 	gasPrice, ok := new(big.Int).SetString(tx.GasPrice, 0)
 	if !ok {
 		lgr.Error("Failed to parse gas price", zap.String("gasPrice", tx.GasPrice))

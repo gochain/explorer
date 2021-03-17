@@ -52,7 +52,7 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 		return nil, fmt.Errorf("failed to dial rpc %q: %v", rpcUrl, err)
 	}
 	client := goclient.NewClient(rpcClient)
-	mongoBackend, err := NewMongoClient(client, mongoUrl, dbName, lgr)
+	mongoBackend, err := NewMongoClient(rpcClient, client, mongoUrl, dbName, lgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mongo client: %v", err)
 	}
