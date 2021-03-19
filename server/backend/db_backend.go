@@ -168,25 +168,27 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 	}
 
 	txs := block.Transactions()
-	batch := make([]rpc.BatchElem, len(txs))
-	for i, tx := range txs {
-		batch[i] = rpc.BatchElem{
-			Method: "eth_getTransactionReceipt",
-			Args:   []interface{}{tx.Hash()},
-			Result: new(types.Receipt),
-		}
-	}
-	if err := mb.rpcClient.BatchCallContext(ctx, batch); err != nil {
-		return nil, fmt.Errorf("failed to get tx receipts: %v", err)
-	}
 	gasFee := big.NewInt(0)
-	for i, tx := range txs {
-		if imported, err := mb.importTx(ctx, tx, batch[i], block); err != nil {
-			return nil, fmt.Errorf("failed to import tx: %v", err)
-		} else if txFee, ok := new(big.Int).SetString(imported.GasFee, 10); !ok {
-			return nil, fmt.Errorf("failed to parse tx gas fee: %s", imported.GasFee)
-		} else {
-			gasFee = gasFee.Add(gasFee, txFee)
+	if len(txs) > 0 {
+		batch := make([]rpc.BatchElem, len(txs))
+		for i, tx := range txs {
+			batch[i] = rpc.BatchElem{
+				Method: "eth_getTransactionReceipt",
+				Args:   []interface{}{tx.Hash()},
+				Result: new(types.Receipt),
+			}
+		}
+		if err := mb.rpcClient.BatchCallContext(ctx, batch); err != nil {
+			return nil, fmt.Errorf("failed to get tx receipts: %v", err)
+		}
+		for i, tx := range txs {
+			if imported, err := mb.importTx(ctx, tx, batch[i], block); err != nil {
+				return nil, fmt.Errorf("failed to import tx: %v", err)
+			} else if txFee, ok := new(big.Int).SetString(imported.GasFee, 10); !ok {
+				return nil, fmt.Errorf("failed to parse tx gas fee: %s", imported.GasFee)
+			} else {
+				gasFee = gasFee.Add(gasFee, txFee)
+			}
 		}
 	}
 	b.GasFees = gasFee.String()
