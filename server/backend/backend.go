@@ -84,11 +84,17 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chain ID: %v", err)
 	}
-	switch b.chainID.Uint64() {
+	chainID := b.chainID.Uint64()
+	switch chainID {
 	case params.MainnetChainID:
 		b.Config = params.MainnetChainConfig
 	case params.TestnetChainID:
 		b.Config = params.TestChainConfig
+	}
+	if b.Config == nil {
+		b.Lgr.Info("Backend configured", zap.Uint64("chainID", chainID))
+	} else {
+		b.Lgr.Info("Backend configured", zap.String("config", b.Config.String()))
 	}
 	return b, nil
 }

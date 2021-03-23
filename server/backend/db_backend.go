@@ -84,10 +84,6 @@ func (mb *MongoBackend) parseTx(ctx context.Context, tx *types.Transaction, bloc
 	}, nil
 }
 func (mb *MongoBackend) parseBlock(block *types.Block) *models.Block {
-	var transactions []string
-	for _, tx := range block.Transactions() {
-		transactions = append(transactions, tx.Hash().Hex())
-	}
 	nonceBool := false
 	if block.Nonce() == 0xffffffffffffffff {
 		nonceBool = true
@@ -106,7 +102,6 @@ func (mb *MongoBackend) parseBlock(block *types.Block) *models.Block {
 		// TotalDifficulty: block.DeprecatedTd().Int64(), # deprecated https://github.com/ethereum/go-ethereum/blob/master/core/types/block.go#L154
 		Sha3Uncles: block.UncleHash().Hex(),
 		ExtraData:  string(block.Extra()[:]),
-		// Transactions: transactions,
 	}
 }
 
@@ -194,8 +189,9 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 	b.GasFees = gasFee.String()
 	update := bson.M{"gas_fees": b.GasFees}
 	if n := block.Number(); isDarvaza(n) {
-		if n.Sign() == 1 && !isDarvaza(new(big.Int).Sub(n, big.NewInt(1))) {
-			b.TotalFeesBurned = gasFee.String()
+		if n.Sign() == 0 || !isDarvaza(new(big.Int).Sub(n, big.NewInt(1))) {
+			// First darvaza block
+			b.TotalFeesBurned = b.GasFees
 			update["total_fees_burned"] = b.TotalFeesBurned
 		} else {
 			parent, err := mb.getBlockByHash(b.ParentHash)
