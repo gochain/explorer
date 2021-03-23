@@ -10,7 +10,7 @@
               <dd>
                 {{supplyStats.total | weiToGO | bigNumber}} GO
                 <ng-container *ngIf="supplyStats.fees_burned > 0">
-                  ({{supplyStats.fees_burned | weiToGO | bigNumber}} fees burned)
+                  ({{supplyStats.fees_burned | weiToGO | bigNumber}} fees burned <img src="../../../assets/icons/fire.svg">)
                 </ng-container>
               </dd>
               <dt>Circulating</dt>
