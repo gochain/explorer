@@ -89,7 +89,7 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 	case params.MainnetChainID:
 		b.Config = params.MainnetChainConfig
 	case params.TestnetChainID:
-		b.Config = params.TestChainConfig
+		b.Config = params.TestnetChainConfig
 	}
 	if b.Config == nil {
 		b.Lgr.Info("Backend configured", zap.Uint64("chainID", chainID))
