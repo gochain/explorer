@@ -2,6 +2,7 @@ import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {BigNumberPipe} from '../../pipes/big-number.pipe';
 import {WeiToGOPipe} from '../../pipes/wei-to-go.pipe';
+import {WeiToWholeGOPipe} from '../../pipes/wei-to-whole-go.pipe';
 import {Hex2Str} from '../../pipes/hex-to-str.pipe';
 import {ToGweiPipe} from '../../pipes/to-gwei.pipe';
 import {TrimExtra} from '../../pipes/trim-extra-data.pipe';
@@ -11,6 +12,7 @@ import {AbiMethodPipe} from '../../pipes/abi-method.pipe';
   declarations: [
     BigNumberPipe,
     WeiToGOPipe,
+    WeiToWholeGOPipe,
     TrimExtra,
     ToGweiPipe,
     Hex2Str,
@@ -22,6 +24,7 @@ import {AbiMethodPipe} from '../../pipes/abi-method.pipe';
   exports: [
     BigNumberPipe,
     WeiToGOPipe,
+    WeiToWholeGOPipe,
     Hex2Str,
     ToGweiPipe,
     TrimExtra,
