@@ -3,44 +3,33 @@
     <div class="col-lg-6 col-xs-12">
       <div class="card h-100">
         <div class="card-body">
-          <div class="card-title"><img src="../../../assets/icons/comparison.svg"> BLOCKCHAIN COMPARISON</div>
-          <table class="table table-sm table-bordered">
-            <thead>
-            <tr>
-              <th scope="col">Network</th>
-              <th scope="col">Speed</th>
-              <th scope="col">Capacity</th>
-              <th scope="col">Fees</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td>GoChain</td>
-              <td>5 sec</td>
-              <td>1300 tps</td>
-              <td>$0.000002</td>
-            </tr>
-            <tr>
-              <td>Bitcoin</td>
-              <td>10-60 min</td>
-              <td>6 tps</td>
-              <td>$0.07-$3.50</td>
-            </tr>
-            <tr>
-              <td>Ethereum</td>
-              <td>1-14 min</td>
-              <td>13 tps</td>
-              <td>$0.01-$0.50</td>
-            </tr>
-            </tbody>
-          </table>
+          <div class="card-title"><img src="../../../assets/icons/comparison.svg"> SUPPLY STATS</div>
+          <dl>
+            <ng-container *ngIf="supplyStats$ | async as supplyStats">
+              <dt>Total</dt>
+              <dd>
+                {{supplyStats.total | weiToGO | bigNumber}} GO
+                <ng-container *ngIf="supplyStats.fees_burned > 0">
+                  ({{supplyStats.fees_burned | weiToGO | bigNumber}} fees burned <img src="../../../assets/icons/fire.svg">)
+                </ng-container>
+              </dd>
+              <dt>Circulating</dt>
+              <dd>
+                {{supplyStats.circulating | weiToGO | bigNumber}} GO
+                <ng-container *ngIf="supplyStats.locked > 0">
+                  ({{supplyStats.locked | weiToGO | bigNumber}} locked)
+                </ng-container>
+              </dd>
+            </ng-container>
+          </dl>
         </div>
       </div>
     </div>
     <div class="col-lg-6 col-xs-12 mt-4 mt-lg-0">
       <div class="card h-100">
         <div class="card-body">
-          <div class="card-title"><img src="../../../assets/icons/tx.svg"> TRANSACTIONS <!--(Updated every 5 minutes)-->
+          <div class="card-title"><img src="../../../assets/icons/tx.svg"> TRANSACTIONS
+            <!--(Updated every 5 minutes)-->
           </div>
           <ng-container *ngIf="stats$ | async as stats">
             <ng-container *appViewportSize="['small']">
@@ -162,25 +151,25 @@
         <ng-container *appViewportSize="['medium', 'large']">
           <table class="table table-striped">
             <thead>
-            <tr>
-              <th class="w-10">Block</th>
-              <th class="w-10">TXs</th>
-              <th class="w-40">Signer</th>
-              <th class="w-15">Extra data</th>
-              <th class="w-25">Created</th>
-            </tr>
+              <tr>
+                <th class="w-10">Block</th>
+                <th class="w-10">TXs</th>
+                <th class="w-40">Signer</th>
+                <th class="w-15">Extra data</th>
+                <th class="w-25">Created</th>
+              </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let block of recentBlocks?.blocks">
-              <td class="text-monospace"><a routerLink="/block/{{block.number}}">{{block.number}}</a></td>
-              <td>{{block.tx_count}}</td>
-              <td class="text-monospace text-truncate"><a class="ws-p"
-                                                          routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
-              <td class="text-truncate">{{block.extra.vanity}}</td>
-              <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                ({{block.created_at | timeAgo}})
-              </td>
-            </tr>
+              <tr *ngFor="let block of recentBlocks?.blocks">
+                <td class="text-monospace"><a routerLink="/block/{{block.number}}">{{block.number}}</a></td>
+                <td>{{block.tx_count}}</td>
+                <td class="text-monospace text-truncate"><a class="ws-p"
+                    routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
+                <td class="text-truncate">{{block.extra.vanity}}</td>
+                <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
+                  ({{block.created_at | timeAgo}})
+                </td>
+              </tr>
             </tbody>
           </table>
         </ng-container>

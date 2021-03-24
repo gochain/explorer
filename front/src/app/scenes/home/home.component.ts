@@ -9,7 +9,7 @@ import {MetaService} from '../../services/meta.service';
 /*MODELS*/
 import {BlockList} from '../../models/block_list.model';
 import {Stats} from '../../models/stats.model';
-import {ISliderOptions} from '../../modules/slider/slider.component';
+import {SupplyStats} from '../../models/supply.model';
 import {META_TITLES} from '../../utils/constants';
 
 @Component({
@@ -17,10 +17,16 @@ import {META_TITLES} from '../../utils/constants';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
+
 export class HomeComponent implements OnInit, OnDestroy {
   stats$: Observable<Stats> = interval(300000).pipe(
     startWith(0),
     mergeMap(() => this._commonService.getStats())
+  );
+
+  supplyStats$: Observable<SupplyStats> = interval(5000).pipe(
+      startWith(0),
+      mergeMap(()=> this._commonService.getSupplyStats())
   );
 
   recentBlocks$: Observable<BlockList> = interval(5000).pipe(

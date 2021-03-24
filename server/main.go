@@ -215,6 +215,7 @@ func main() {
 				r.Get("/compiler", getCompilerVersion)
 				r.Get("/rpc_provider", getRpcProvider)
 				r.Get("/stats", getCurrentStats)
+				r.Get("/supply", getSupplyStats)
 				r.Get("/richlist", getRichlist)
 
 				r.Route("/signers", func(r chi.Router) {
@@ -267,7 +268,7 @@ func main() {
 }
 
 func getTotalSupply(w http.ResponseWriter, r *http.Request) {
-	totalSupply, err := backendInstance.TotalSupply(r.Context())
+	totalSupply, _, err := backendInstance.TotalSupply(r.Context())
 	if err == nil {
 		total := new(big.Rat).SetFrac(totalSupply, wei) // return in GO instead of wei
 		w.Write([]byte(total.FloatString(18)))
@@ -286,8 +287,18 @@ func getCirculating(w http.ResponseWriter, r *http.Request) {
 		logger.Error("Failed to get circulating supply", zap.Error(err))
 		writeJSON(w, http.StatusInternalServerError, err)
 	}
-
 }
+
+func getSupplyStats(w http.ResponseWriter, r *http.Request) {
+	supplyStats, err := backendInstance.SupplyStats(r.Context())
+	if err != nil {
+		logger.Error("Failed to get supply stats", zap.Error(err))
+		writeJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, supplyStats)
+}
+
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	fileSystemPath := wwwRoot + r.URL.Path
@@ -333,7 +344,7 @@ func getRichlist(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
-	totalSupply, err := backendInstance.TotalSupply(r.Context())
+	totalSupply, _, err := backendInstance.TotalSupply(r.Context())
 	if err != nil {
 		logger.Error("Failed to get total supply", zap.Error(err))
 		errorResponse(w, http.StatusInternalServerError, err)
