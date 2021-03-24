@@ -8,14 +8,14 @@
             <ng-container *ngIf="supplyStats$ | async as supplyStats">
               <dt>Total</dt>
               <dd>
-                {{supplyStats.total | weiToGO | bigNumber}} GO
+                {{supplyStats.total | weiToGO | bigNumber}}
                 <ng-container *ngIf="supplyStats.fees_burned > 0">
                   ({{supplyStats.fees_burned | weiToGO | bigNumber}} fees burned <img src="../../../assets/icons/fire.svg">)
                 </ng-container>
               </dd>
               <dt>Circulating</dt>
               <dd>
-                {{supplyStats.circulating | weiToGO | bigNumber}} GO
+                {{supplyStats.circulating | weiToGO | bigNumber}}
                 <ng-container *ngIf="supplyStats.locked > 0">
                   ({{supplyStats.locked | weiToGO | bigNumber}} locked)
                 </ng-container>
