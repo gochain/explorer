@@ -147,7 +147,8 @@ func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, error) {
 			if err != nil {
 				return err
 			}
-			b.alloc.Store(result.Total())
+			alloc = result.Total()
+			b.alloc.Store(alloc)
 			return nil
 		}); err != nil {
 			return nil, err
