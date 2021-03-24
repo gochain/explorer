@@ -122,6 +122,7 @@ func (mb *MongoBackend) createIndexes() error {
 		{c: "Blocks", index: mgo.Index{Key: []string{"miner"}, Background: true, Sparse: true}},
 		{c: "Blocks", index: mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true}},
 		{c: "Blocks", index: mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"total_fees_burned", "-created_at"}, Background: true, Sparse: true}},
 		{c: "ActiveAddress", index: mgo.Index{Key: []string{"updated_at"}, Background: true, Sparse: true}},
 		{c: "ActiveAddress", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
 		{c: "Address", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
