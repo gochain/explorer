@@ -24,17 +24,37 @@ export class HomeComponent implements OnInit, OnDestroy {
     mergeMap(() => this._commonService.getStats())
   );
 
+  private _supplyStatsInProgress = false;
+
   supplyStats$: Observable<SupplyStats> = interval(5000).pipe(
       startWith(0),
-      mergeMap(()=> this._commonService.getSupplyStats())
+      mergeMap(() => {
+        if (this._supplyStatsInProgress) return; // don't stack
+        try {
+          this._supplyStatsInProgress = true;
+          return this._commonService.getSupplyStats();
+        } finally {
+          this._supplyStatsInProgress = false;
+        }
+      })
   );
+
+  private _recentBlocksInProgress = false;
 
   recentBlocks$: Observable<BlockList> = interval(5000).pipe(
     startWith(0),
     tap(() => {
       this._layoutService.offLoading();
     }),
-    mergeMap(() => this._commonService.getRecentBlocks()),
+    mergeMap(() => {
+      if (this._recentBlocksInProgress) return; // don't stack
+      try {
+        this._recentBlocksInProgress = true;
+        return this._commonService.getRecentBlocks();
+      } finally {
+        this._recentBlocksInProgress = false;
+      }
+    }),
   );
 
   constructor(
