@@ -1,7 +1,7 @@
 {
   "name": "GoChainExplorer",
   "private": true,
-  "version": "0.4.192",
+  "version": "0.4.193",
   "description": "A lightweight GoChain block explorer",
   "repository": "https://github.com/gochain-io/explorer",
   "scripts": {
