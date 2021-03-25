@@ -1,3 +1,5 @@
+// +build client
+
 package client_test
 
 import (
