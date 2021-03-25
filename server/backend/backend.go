@@ -187,6 +187,9 @@ func (b *Backend) totalFeesBurned(ctx context.Context, n int64) (*big.Int, error
 	if err != nil {
 		return nil, err
 	}
+	if tb == nil {
+		return nil, nil
+	}
 	b.totalBurned.Store(tb)
 	return tb.TotalFeesBurned, nil
 }
