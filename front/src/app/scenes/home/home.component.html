@@ -10,15 +10,12 @@
               <dd>
                 <span class="text-monospace">{{supplyStats.total | weiToWholeGO | bigNumber}}</span> GO
                 <ng-container *ngIf="supplyStats.fees_burned > 0">
-                  <br/><span class="text-monospace">({{supplyStats.fees_burned | weiToWholeGO | bigNumber}}</span> fees burned <img src="../../../assets/icons/fire.svg">)
+                  <br/><span class="text-monospace">{{supplyStats.fees_burned | weiToWholeGO | bigNumber}}</span> GO burned <img src="../../../assets/icons/fire.svg">
                 </ng-container>
               </dd>
               <dt>Circulating</dt>
               <dd>
                 <span class="text-monospace">{{supplyStats.circulating | weiToWholeGO | bigNumber}}</span> GO
-                <ng-container *ngIf="supplyStats.locked > 0">
-                  <br/><span class="text-monospace">({{supplyStats.locked | weiToWholeGO | bigNumber}}</span> locked)
-                </ng-container>
               </dd>
             </ng-container>
           </dl>
