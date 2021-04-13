@@ -132,6 +132,7 @@ func (mb *MongoBackend) createIndexes() error {
 		{c: "TokenHolders", index: mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true}},
 		{c: "TokenHolders", index: mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"contract_address", "from_address", "to_address"}, Background: true, Sparse: true}},
+		{c: "InternalTransactions", index: mgo.Index{Key: []string{"contract_address", "value"}, Background: true, Sparse: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"from_address", "block_number"}, Background: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"to_address", "block_number"}, Background: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"transaction_hash"}, Background: true, Sparse: true}},
@@ -762,6 +763,8 @@ func (mb *MongoBackend) getInternalTokenTransfers(contractAddress string, filter
 	query := bson.M{"contract_address": contractAddress}
 	if filter.InternalAddress != "" {
 		query = bson.M{"contract_address": contractAddress, "$or": []bson.M{{"from_address": filter.InternalAddress}, {"to_address": filter.InternalAddress}}}
+	} else if filter.TokenID != "" {
+		query = bson.M{"contract_address": contractAddress, "value": filter.TokenID}
 	}
 	err := mb.mongo.C("InternalTransactions").
 		Find(query).
