@@ -546,6 +546,10 @@ func getInternalTransactions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
+		if filter.InternalAddress != "" && filter.TokenID != "" {
+			errorResponse(w, http.StatusBadRequest, fmt.Errorf("only one of internal_address and token_id may be used"))
+			return
+		}
 		tokenTransfers.Transfers, err = backendInstance.GetInternalTokenTransfers(contractAddress, filter)
 		if err != nil {
 			logger.Error("Failed to get contract's internal token transfers", zap.String("address", contractAddress), zap.Error(err))
