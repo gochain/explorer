@@ -32,7 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         if (this._supplyStatsInProgress) return; // don't stack
         try {
           this._supplyStatsInProgress = true;
-          return await this._commonService.getSupplyStats();
+          return await this._commonService.getSupplyStats().toPromise();
         } finally {
           this._supplyStatsInProgress = false;
         }
@@ -50,7 +50,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       if (this._recentBlocksInProgress) return; // don't stack
       try {
         this._recentBlocksInProgress = true;
-        return await this._commonService.getRecentBlocks();
+        return await this._commonService.getRecentBlocks().toPromise();
       } finally {
         this._recentBlocksInProgress = false;
       }
