@@ -498,7 +498,7 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, filter)
 	if err != nil {
 		logger.Error("Failed to get token holders", zap.String("address", contractAddress), zap.Error(err))
-		errorResponse(w, http.StatusInternalServerError, err)
+		errorResponse(w, http.StatusInternalServerError, errors.New("Failed to get token holders"))
 		return
 	}
 	writeJSON(w, http.StatusOK, tokenHolders)
