@@ -348,7 +348,7 @@ func (b *Backend) GetContract(contractAddress string) (*models.Contract, error) 
 	}
 	contractData := string(contractDataArray[:])
 	if contractData == "" {
-		return nil, fmt.Errorf("invalid contract: %s", contractAddress)
+		return nil, nil
 	}
 	byteCode := hex.EncodeToString(contractDataArray)
 	err = b.ImportContract(normalizedAddress, byteCode)

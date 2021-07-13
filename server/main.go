@@ -572,6 +572,10 @@ func getContract(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
+	if contract == nil {
+		writeJSON(w, http.StatusNotFound, nil)
+		return
+	}
 	writeJSON(w, http.StatusOK, contract)
 }
 
