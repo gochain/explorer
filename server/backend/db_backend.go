@@ -131,6 +131,8 @@ func (mb *MongoBackend) createIndexes() error {
 		{c: "TokenHolders", index: mgo.Index{Key: []string{"contract_address", "token_holder_address"}, Background: true, Sparse: true}},
 		{c: "TokenHolders", index: mgo.Index{Key: []string{"token_holder_address"}, Background: true, Sparse: true}},
 		{c: "TokenHolders", index: mgo.Index{Key: []string{"balance_int"}, Background: true, Sparse: true}},
+		{c: "TokenHolders", index: mgo.Index{Key: []string{"contract_address", "-balance_int"}, Background: true, Sparse: true}},
+		{c: "TokenHolders", index: mgo.Index{Key: []string{"token_holder_address", "-balance_int"}, Background: true, Sparse: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"contract_address", "from_address", "to_address"}, Background: true, Sparse: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"contract_address", "value"}, Background: true, Sparse: true}},
 		{c: "InternalTransactions", index: mgo.Index{Key: []string{"from_address", "block_number"}, Background: true}},
