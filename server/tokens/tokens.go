@@ -354,7 +354,7 @@ func unpackERC20TransferEvent(event types.Log) (*TransferEvent, error) {
 		return nil, fmt.Errorf("to topic longer than address: %s", string(from))
 	}
 	var transferEvent TransferEvent
-	err := ABIs.ERC20.Unpack(&transferEvent, "Transfer", event.Data)
+	err := ABIs.ERC20.UnpackIntoInterface(&transferEvent, "Transfer", event.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack log data: %v", err)
 	}

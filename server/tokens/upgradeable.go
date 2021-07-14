@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/gochain/gochain/v3"
+	gochain "github.com/gochain/gochain/v3"
 	"github.com/gochain/gochain/v3/accounts/abi"
 	"github.com/gochain/gochain/v3/accounts/abi/bind"
 	"github.com/gochain/gochain/v3/common"
@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = gochain.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -29,22 +28,6 @@ var (
 
 // UpgradeableABI is the input ABI used to generate the binding from.
 const UpgradeableABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"paused\",\"outputs\":[{\"name\":\"val\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"target\",\"outputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"target\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"Resumed\",\"type\":\"event\"}]"
-
-// UpgradeableBin is the compiled bytecode used for deploying new contracts.
-const UpgradeableBin = `0x`
-
-// DeployUpgradeable deploys a new GoChain contract, binding an instance of Upgradeable to it.
-func DeployUpgradeable(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Upgradeable, error) {
-	parsed, err := abi.JSON(strings.NewReader(UpgradeableABI))
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(UpgradeableBin), backend)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-	return address, tx, &Upgradeable{UpgradeableCaller: UpgradeableCaller{contract: contract}, UpgradeableTransactor: UpgradeableTransactor{contract: contract}, UpgradeableFilterer: UpgradeableFilterer{contract: contract}}, nil
-}
 
 // Upgradeable is an auto generated Go binding around an GoChain contract.
 type Upgradeable struct {
@@ -154,7 +137,7 @@ func bindUpgradeable(address common.Address, caller bind.ContractCaller, transac
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Upgradeable *UpgradeableRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Upgradeable *UpgradeableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Upgradeable.Contract.UpgradeableCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -173,7 +156,7 @@ func (_Upgradeable *UpgradeableRaw) Transact(opts *bind.TransactOpts, method str
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Upgradeable *UpgradeableCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Upgradeable *UpgradeableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Upgradeable.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -190,78 +173,93 @@ func (_Upgradeable *UpgradeableTransactorRaw) Transact(opts *bind.TransactOpts, 
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address addr)
+// Solidity: function owner() view returns(address addr)
 func (_Upgradeable *UpgradeableCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Upgradeable.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _Upgradeable.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address addr)
+// Solidity: function owner() view returns(address addr)
 func (_Upgradeable *UpgradeableSession) Owner() (common.Address, error) {
 	return _Upgradeable.Contract.Owner(&_Upgradeable.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address addr)
+// Solidity: function owner() view returns(address addr)
 func (_Upgradeable *UpgradeableCallerSession) Owner() (common.Address, error) {
 	return _Upgradeable.Contract.Owner(&_Upgradeable.CallOpts)
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool val)
+// Solidity: function paused() view returns(bool val)
 func (_Upgradeable *UpgradeableCaller) Paused(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Upgradeable.contract.Call(opts, out, "paused")
-	return *ret0, err
+	var out []interface{}
+	err := _Upgradeable.contract.Call(opts, &out, "paused")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool val)
+// Solidity: function paused() view returns(bool val)
 func (_Upgradeable *UpgradeableSession) Paused() (bool, error) {
 	return _Upgradeable.Contract.Paused(&_Upgradeable.CallOpts)
 }
 
 // Paused is a free data retrieval call binding the contract method 0x5c975abb.
 //
-// Solidity: function paused() constant returns(bool val)
+// Solidity: function paused() view returns(bool val)
 func (_Upgradeable *UpgradeableCallerSession) Paused() (bool, error) {
 	return _Upgradeable.Contract.Paused(&_Upgradeable.CallOpts)
 }
 
 // Target is a free data retrieval call binding the contract method 0xd4b83992.
 //
-// Solidity: function target() constant returns(address addr)
+// Solidity: function target() view returns(address addr)
 func (_Upgradeable *UpgradeableCaller) Target(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Upgradeable.contract.Call(opts, out, "target")
-	return *ret0, err
+	var out []interface{}
+	err := _Upgradeable.contract.Call(opts, &out, "target")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Target is a free data retrieval call binding the contract method 0xd4b83992.
 //
-// Solidity: function target() constant returns(address addr)
+// Solidity: function target() view returns(address addr)
 func (_Upgradeable *UpgradeableSession) Target() (common.Address, error) {
 	return _Upgradeable.Contract.Target(&_Upgradeable.CallOpts)
 }
 
 // Target is a free data retrieval call binding the contract method 0xd4b83992.
 //
-// Solidity: function target() constant returns(address addr)
+// Solidity: function target() view returns(address addr)
 func (_Upgradeable *UpgradeableCallerSession) Target() (common.Address, error) {
 	return _Upgradeable.Contract.Target(&_Upgradeable.CallOpts)
 }
@@ -387,6 +385,18 @@ func (_Upgradeable *UpgradeableFilterer) WatchPaused(opts *bind.WatchOpts, sink 
 	}), nil
 }
 
+// ParsePaused is a log parse operation binding the contract event 0x9e87fac88ff661f02d44f95383c817fece4bce600a3dab7a54406878b965e752.
+//
+// Solidity: event Paused()
+func (_Upgradeable *UpgradeableFilterer) ParsePaused(log types.Log) (*UpgradeablePaused, error) {
+	event := new(UpgradeablePaused)
+	if err := _Upgradeable.contract.UnpackLog(event, "Paused", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // UpgradeableResumedIterator is returned from FilterResumed and is used to iterate over the raw logs and unpacked data for Resumed events raised by the Upgradeable contract.
 type UpgradeableResumedIterator struct {
 	Event *UpgradeableResumed // Event containing the contract specifics and raw log
@@ -506,6 +516,18 @@ func (_Upgradeable *UpgradeableFilterer) WatchResumed(opts *bind.WatchOpts, sink
 			}
 		}
 	}), nil
+}
+
+// ParseResumed is a log parse operation binding the contract event 0x62451d457bc659158be6e6247f56ec1df424a5c7597f71c20c2bc44e0965c8f9.
+//
+// Solidity: event Resumed()
+func (_Upgradeable *UpgradeableFilterer) ParseResumed(log types.Log) (*UpgradeableResumed, error) {
+	event := new(UpgradeableResumed)
+	if err := _Upgradeable.contract.UnpackLog(event, "Resumed", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
 
 // UpgradeableUpgradedIterator is returned from FilterUpgraded and is used to iterate over the raw logs and unpacked data for Upgraded events raised by the Upgradeable contract.
@@ -638,4 +660,16 @@ func (_Upgradeable *UpgradeableFilterer) WatchUpgraded(opts *bind.WatchOpts, sin
 			}
 		}
 	}), nil
+}
+
+// ParseUpgraded is a log parse operation binding the contract event 0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b.
+//
+// Solidity: event Upgraded(address indexed target)
+func (_Upgradeable *UpgradeableFilterer) ParseUpgraded(log types.Log) (*UpgradeableUpgraded, error) {
+	event := new(UpgradeableUpgraded)
+	if err := _Upgradeable.contract.UnpackLog(event, "Upgraded", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }
