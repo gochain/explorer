@@ -254,10 +254,17 @@ func main() {
 		go func() {
 			select {
 			case <-ctx.Done():
-				server.Close()
+				if err := server.Close(); err != nil {
+					logger.Warn("Error closing server", zap.Error(err))
+				}
 			}
 		}()
-		return server.ListenAndServe()
+		switch err := server.ListenAndServe(); err {
+		case nil, http.ErrServerClosed:
+			return nil
+		default:
+			return err
+		}
 
 	}
 	err = app.Run(os.Args)
