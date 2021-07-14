@@ -259,6 +259,9 @@ func backfill(ctx context.Context, b *backend.Backend, blockNumber int64, checkE
 				continue
 			}
 			if bl, err := b.ImportBlock(ctx, rpcBlock); err != nil {
+				if ctx.Err() != nil {
+					return
+				}
 				logger.Error("Backfill: Failed to import block", zap.Error(err))
 				if utils.SleepCtx(ctx, 5*time.Second) != nil {
 					return
