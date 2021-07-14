@@ -177,8 +177,15 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 				Result: new(types.Receipt),
 			}
 		}
-		if err := mb.rpcClient.BatchCallContext(ctx, batch); err != nil {
-			return nil, fmt.Errorf("failed to get tx receipts: %v", err)
+		const batchLimit = 100
+		for i := 0; i < len(batch); i += batchLimit {
+			end := i + batchLimit
+			if end > len(batch) {
+				end = len(batch)
+			}
+			if err := mb.rpcClient.BatchCallContext(ctx, batch[i:end]); err != nil {
+				return nil, fmt.Errorf("failed to get tx receipts: %v", err)
+			}
 		}
 		for i, tx := range txs {
 			if imported, err := mb.importTx(ctx, tx, batch[i], block); err != nil {
