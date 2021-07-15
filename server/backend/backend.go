@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gochain/gochain/v3"
+
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
 	"github.com/gochain-io/explorer/server/utils"
@@ -418,6 +420,9 @@ func (b *Backend) GetBlockByHash(ctx context.Context, hash string) (*models.Bloc
 	if reload {
 		blockEth, err := b.goClient.BlockByHash(ctx, common.HexToHash(hash))
 		if err != nil {
+			if err == gochain.NotFound {
+				return nil, nil
+			}
 			return nil, fmt.Errorf("failed to get block from rpc: %v", err)
 		}
 		block, err = b.ImportBlock(ctx, blockEth)

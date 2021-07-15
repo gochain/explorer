@@ -14,6 +14,7 @@ import (
 
 	"github.com/gochain/gochain/v3"
 	"github.com/gochain/gochain/v3/accounts/abi"
+	"github.com/gochain/gochain/v3/accounts/abi/bind"
 	"github.com/gochain/gochain/v3/common"
 	"github.com/gochain/gochain/v3/core/types"
 	"github.com/gochain/gochain/v3/goclient"
@@ -216,7 +217,11 @@ func (tb *TokenDetails) queryERC20Details(conn *goclient.Client, lgr *zap.Logger
 	if _, ok := tb.Functions[utils.Decimals]; ok {
 		decimals, err := token.Decimals(nil)
 		if err != nil {
-			lgr.Error("Failed to get decimals from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to get decimals from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to get decimals from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 		} else {
 			tb.Decimals = int64(decimals)
 		}
@@ -224,7 +229,11 @@ func (tb *TokenDetails) queryERC20Details(conn *goclient.Client, lgr *zap.Logger
 	if _, ok := tb.Functions[utils.TotalSupply]; ok {
 		totalSupply, err := token.TotalSupply(nil)
 		if err != nil {
-			lgr.Error("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.TotalSupply = big.NewInt(0)
 		} else {
 			tb.TotalSupply = totalSupply
@@ -233,19 +242,37 @@ func (tb *TokenDetails) queryERC20Details(conn *goclient.Client, lgr *zap.Logger
 	if _, ok := tb.Functions[utils.Symbol]; ok {
 		tb.Symbol, err = token.Symbol(nil)
 		if err != nil {
-			lgr.Error("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.Symbol = "MISSING"
 		}
 	}
 	if _, ok := tb.Functions[utils.Name]; ok {
 		tb.Name, err = token.Name(nil)
 		if err != nil {
-			lgr.Error("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Error("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.Name = "MISSING"
 		}
 	}
 
 	return nil
+}
+
+func contractErr(err error) (noCode, emptyResp bool) {
+	noCode = err == bind.ErrNoCode
+	if noCode {
+		return
+	}
+	emptyResp = strings.Contains(err.Error(),
+		"abi: attempting to unmarshall an empty string while arguments are expected")
+	return
 }
 
 func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logger) error {
@@ -257,7 +284,11 @@ func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logge
 	if _, ok := tb.Functions[utils.TotalSupply]; ok {
 		totalSupply, err := token.TotalSupply(nil)
 		if err != nil {
-			lgr.Error("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to get total supply", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.TotalSupply = big.NewInt(0)
 		} else {
 			tb.TotalSupply = totalSupply
@@ -266,14 +297,22 @@ func (tb *TokenDetails) queryERC721Details(conn *goclient.Client, lgr *zap.Logge
 	if _, ok := tb.Functions[utils.Symbol]; ok {
 		tb.Symbol, err = token.Symbol(nil)
 		if err != nil {
-			lgr.Error("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to get symbol from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.Symbol = "MISSING"
 		}
 	}
 	if _, ok := tb.Functions[utils.Name]; ok {
 		tb.Name, err = token.Name(nil)
 		if err != nil {
-			lgr.Error("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			if noCode, emptyResp := contractErr(err); noCode || emptyResp {
+				lgr.Warn("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			} else {
+				lgr.Error("Failed to retrieve token name from contract", zap.Error(err), zap.Stringer("address", tb.Contract))
+			}
 			tb.Name = "MISSING"
 		}
 	}

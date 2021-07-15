@@ -166,6 +166,8 @@ func TestBlockByHash(t *testing.T) {
 	blockFromDbByHash, err := testBackend.GetBlockByHash(context.Background(), block.Header().Hash().Hex())
 	if err != nil {
 		t.Fatal(err)
+	} else if blockFromDbByHash == nil {
+		t.Fatal("missing")
 	}
 
 	if block.Header().Number.Int64() != blockFromDbByHash.Number {
