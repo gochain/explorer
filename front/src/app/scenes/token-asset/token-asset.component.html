@@ -2,12 +2,12 @@
   <div class="card">
     <div class="card-body">
       <div class="card-title">
-        <img src="../../../assets/icons/token.svg" alt="Token"> Token
+        <img src="../../../assets/icons/token.svg" alt="Token"> NFT Details
       </div>
       <div class="row">
         <div class="col-lg-10 col-md-9">
           <dl>
-            <dt>Token address</dt>
+            <dt>Contract address</dt>
             <dd><a routerLink="/token/{{contractAddr}}">{{contractAddr}}</a></dd>
             <ng-container *ngIf="metadata.ownerAddr">
               <dt>Owner address</dt>
