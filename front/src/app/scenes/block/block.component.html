@@ -105,15 +105,17 @@
             <table class="table">
               <thead>
               <tr>
+                <th class="w-4">Status</th>
                 <th class="w-20">Transaction hash</th>
                 <th class="w-20">Processed at</th>
                 <th class="w-20">From</th>
                 <th class="w-20">To</th>
-                <th class="w-20">Value (GO)</th>
+                <th class="w-16">Value (GO)</th>
               </tr>
               </thead>
               <tbody>
               <tr *ngFor="let tx of transactions">
+                <td class="text-monospace text-truncate"><span [ngClass]="tx.status? 'badge badge-success' : 'badge badge-danger'"><small>{{tx.status ? 'Success' : 'Failed'}}</small></span></td>
                 <td class="text-monospace text-truncate">
                   <a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a></td>
                 <td class="text-nowrap">

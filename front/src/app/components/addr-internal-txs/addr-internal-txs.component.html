@@ -55,15 +55,17 @@
       <thead>
       <tr>
         <!--<th class="uk-text-nowrap uk-table-shrink">Block</th>-->
+        <th class="w-4">Status</th>
         <th class="w-20">Transaction hash</th>
         <th class="w-20 text-nowrap">Processed at</th>
         <th class="w-20">From</th>
         <th class="w-20">To</th>
-        <th class="w-20 text-nowrap">Value ({{addr.token_symbol}})</th>
+        <th class="w-16 text-nowrap">Value ({{addr.token_symbol}})</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let tx of internal_transactions">
+        <td class="text-monospace text-truncate"><span [ngClass]="tx.status? 'badge badge-success' : 'badge badge-danger'"><small>{{tx.status ? 'Success' : 'Failed'}}</small></span></td>
         <td class="text-truncate text-monospace"><a class="ws-p"
                                                     routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
         </td>
