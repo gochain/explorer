@@ -11,10 +11,6 @@ Clone the repo
 
 Download [Nodejs and npm](https://docs.npmjs.com/getting-started/installing-node "Nodejs install") if you don't have them
 
-Install dependencies:
-
-`npm install`
-
 Install mongodb:
 
 MacOS: 
@@ -26,8 +22,17 @@ mongod --config /usr/local/etc/mongod.conf
 
 Ubuntu: `sudo apt-get install -y mongodb-org`
 
+## Build
+
+To run a local environment, you'll need to build the internal toolsets `grabber` and `server` whose binary files you will run as below.
+
+To create these binaries and install dependencies, use the Makefile and view it for internals and other options:
+
+`make build`
+
 ## Running 
 
+1) seed local Mongo database with `grabber` (./grabber/grabber)
 ```sh
 > grabber help
 NAME:
@@ -52,6 +57,7 @@ GLOBAL OPTIONS:
    --version, -v                     print the version
 ```
 
+2) run `server` (./server/server) (point to the same database name that you selected for seeding)
 ```sh
 > server help
 NAME:
@@ -76,6 +82,14 @@ GLOBAL OPTIONS:
    --help, -h                        show help
    --version, -v                     print the version
 ```
+
+3) launch the web application
+
+`cd frontend && npm start`
+
+
+_At this point a local version of the application should be available on localhost port 4200. Optionally utilize Docker as below._
+
 
 ## Docker
 
