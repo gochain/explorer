@@ -501,6 +501,11 @@ func getTokenHolders(w http.ResponseWriter, r *http.Request) {
 	if !parseGetParam(r, w, filter) {
 		return
 	}
+	skipLimit := 100
+	if filter.Skip > skipLimit {
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("skip cannot be higher than %d for this endpoint", skipLimit))
+		return
+	}
 	tokenHolders := &models.TokenHolderList{}
 	tokenHolders.Holders, err = backendInstance.GetTokenHoldersList(contractAddress, filter)
 	if err != nil {
