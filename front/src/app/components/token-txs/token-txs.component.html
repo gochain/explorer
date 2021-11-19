@@ -64,7 +64,7 @@
       </thead>
       <tbody>
       <tr *ngFor="let tx of token_transactions">
-        <td class="text-monospace text-truncate badge badge-success"><span><small>Success</small></span></td>
+        <td class="text-monospace text-truncate"><span class="badge badge-success"><small>Success</small></span></td>
         <td class="text-truncate text-monospace">
           <a class="ws-p" routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
         </td>
