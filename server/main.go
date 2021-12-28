@@ -248,6 +248,12 @@ func main() {
 				})
 
 				r.Get("/contracts", getContractsList)
+
+				//EIP-3091 compatibility - https://eips.ethereum.org/EIPS/eip-3091
+				r.Get("/block/{num}", getBlock)
+				r.Get("/tx/{hash}", getTransaction)
+				r.Get("/token/{address}/", getTokenHolders)
+
 			})
 		})
 		server := &http.Server{Addr: ":8080", Handler: r}
