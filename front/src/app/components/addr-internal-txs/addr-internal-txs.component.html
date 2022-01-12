@@ -65,7 +65,6 @@
       </thead>
       <tbody>
       <tr *ngFor="let tx of internal_transactions">
-        <td class="text-monospace text-truncate"><span [ngClass]="tx.status? 'badge badge-success' : 'badge badge-danger'"><small>{{tx.status ? 'Success' : 'Failed'}}</small></span></td>
         <td class="text-truncate text-monospace"><a class="ws-p"
                                                     routerLink="/tx/{{tx.transaction_hash}}">{{tx.transaction_hash}}</a>
         </td>
