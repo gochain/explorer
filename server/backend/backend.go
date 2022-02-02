@@ -269,17 +269,11 @@ func (b *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Ad
 			return nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
-	nonce, err := b.Nonce(ctx, addr)
+	transactionCounter, err := b.mongo.mongo.C("TransactionsByAddress").Find(bson.M{"address": address}).Count()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get txs from TransactionsByAddress: %v", err)
 	}
-	transactionCounter := int(nonce)
-	if transactionCounter <= 1 { //nonce is equal to 1 for the first transaction
-		transactionCounter, err = b.mongo.mongo.C("TransactionsByAddress").Find(bson.M{"address": address}).Count()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get txs from TransactionsByAddress: %v", err)
-		}
-	}
+
 	address.NumberOfTransactions = transactionCounter
 	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
