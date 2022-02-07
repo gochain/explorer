@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gochain/gochain/v3"
+	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gochain-io/explorer/server/models"
 	"github.com/gochain-io/explorer/server/tokens"
@@ -268,11 +269,12 @@ func (b *Backend) GetAddressByHash(ctx context.Context, hash string) (*models.Ad
 			return nil, fmt.Errorf("failed to update active address: %s", err)
 		}
 	}
-	nonce, err := b.Nonce(ctx, addr)
+	transactionCounter, err := b.mongo.mongo.C("TransactionsByAddress").Find(bson.M{"address": address}).Count()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get txs from TransactionsByAddress: %v", err)
 	}
-	address.NumberOfTransactions = int(nonce)
+
+	address.NumberOfTransactions = transactionCounter
 	address.BalanceWei = balance.String() //to make sure that we are showing most recent balance even if db is outdated
 	address.BalanceString = new(big.Rat).SetFrac(balance, wei).FloatString(18)
 	// todo: only store a subset of this data in the cache, just the metadata like token name, decimals, etc. Things that won't change.
