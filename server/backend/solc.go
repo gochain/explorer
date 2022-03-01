@@ -11,10 +11,13 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/gochain-io/explorer/server/utils"
 )
 
 var versionRegexp = regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
+
+const solcVersionChange = "0.8.0"
 
 // Contract contains information about a compiled contract, alongside its code and runtime code.
 type Contract struct {
@@ -50,11 +53,23 @@ type Solidity struct {
 }
 
 // --combined-output format
-type solcOutput struct {
+type solcOutputOld struct {
 	Contracts map[string]struct {
 		BinRuntime                                  string `json:"bin-runtime"`
 		SrcMapRuntime                               string `json:"srcmap-runtime"`
-		Bin, SrcMap, Abi, Devdoc, Userdoc, Metadata string
+		Abi, Devdoc, Userdoc, Bin, SrcMap, Metadata string
+	}
+	Version string
+}
+
+type solcOutputNew struct {
+	Contracts map[string]struct {
+		BinRuntime            string          `json:"bin-runtime"`
+		SrcMapRuntime         string          `json:"srcmap-runtime"`
+		Abi                   []utils.AbiItem `json:"abi"`
+		Devdoc                interface{}     `json:"devdoc"`
+		Userdoc               interface{}     `json:"userdoc"`
+		Bin, SrcMap, Metadata string
 	}
 	Version string
 }
@@ -109,46 +124,73 @@ func (s *Solidity) run(ctx context.Context, source string, args []string) ([]byt
 }
 
 func ParseCombinedJSON(combinedJSON []byte, source string, languageVersion string, compilerVersion string, compilerOptions string) (map[string]*Contract, error) {
-	var output solcOutput
-	if err := json.Unmarshal(combinedJSON, &output); err != nil {
-		return nil, err
-	}
+	if semver.New(compilerVersion).LessThan(*semver.New(solcVersionChange)) {
+		var output solcOutputOld
+		if err := json.Unmarshal(combinedJSON, &output); err != nil {
+			return nil, err
+		}
+		contracts := make(map[string]*Contract)
+		for name, info := range output.Contracts {
+			// Parse the individual compilation results.
+			var abi []utils.AbiItem
+			if err := json.Unmarshal([]byte(info.Abi), &abi); err != nil {
+				return nil, fmt.Errorf("solc: error reading abi definition (%v)", err)
+			}
+			var userdoc interface{}
+			if err := json.Unmarshal([]byte(info.Userdoc), &userdoc); err != nil {
+				return nil, fmt.Errorf("solc: error reading user doc: %v", err)
+			}
+			var devdoc interface{}
+			if err := json.Unmarshal([]byte(info.Devdoc), &devdoc); err != nil {
+				return nil, fmt.Errorf("solc: error reading dev doc: %v", err)
+			}
+			contracts[name] = &Contract{
+				Code:        "0x" + info.Bin,
+				RuntimeCode: "0x" + info.BinRuntime,
+				Info: ContractInfo{
+					Source:          source,
+					Language:        "Solidity",
+					LanguageVersion: languageVersion,
+					CompilerVersion: compilerVersion,
+					CompilerOptions: compilerOptions,
+					SrcMap:          info.SrcMap,
+					SrcMapRuntime:   info.SrcMapRuntime,
+					AbiDefinition:   abi,
+					UserDoc:         userdoc,
+					DeveloperDoc:    devdoc,
+					Metadata:        info.Metadata,
+				},
+			}
+		}
+		return contracts, nil
+	} else {
+		var output solcOutputNew
+		if err := json.Unmarshal(combinedJSON, &output); err != nil {
+			return nil, err
+		}
+		contracts := make(map[string]*Contract)
+		for name, info := range output.Contracts {
+			contracts[name] = &Contract{
+				Code:        "0x" + info.Bin,
+				RuntimeCode: "0x" + info.BinRuntime,
+				Info: ContractInfo{
+					Source:          source,
+					Language:        "Solidity",
+					LanguageVersion: languageVersion,
+					CompilerVersion: compilerVersion,
+					CompilerOptions: compilerOptions,
+					SrcMap:          info.SrcMap,
+					SrcMapRuntime:   info.SrcMapRuntime,
+					AbiDefinition:   info.Abi,
+					UserDoc:         info.Userdoc,
+					DeveloperDoc:    info.Devdoc,
+					Metadata:        info.Metadata,
+				},
+			}
+		}
 
-	// Compilation succeeded, assemble and return the contracts.
-	contracts := make(map[string]*Contract)
-	for name, info := range output.Contracts {
-		// Parse the individual compilation results.
-		var abi []utils.AbiItem
-		if err := json.Unmarshal([]byte(info.Abi), &abi); err != nil {
-			return nil, fmt.Errorf("solc: error reading abi definition (%v)", err)
-		}
-		var userdoc interface{}
-		if err := json.Unmarshal([]byte(info.Userdoc), &userdoc); err != nil {
-			return nil, fmt.Errorf("solc: error reading user doc: %v", err)
-		}
-		var devdoc interface{}
-		if err := json.Unmarshal([]byte(info.Devdoc), &devdoc); err != nil {
-			return nil, fmt.Errorf("solc: error reading dev doc: %v", err)
-		}
-		contracts[name] = &Contract{
-			Code:        "0x" + info.Bin,
-			RuntimeCode: "0x" + info.BinRuntime,
-			Info: ContractInfo{
-				Source:          source,
-				Language:        "Solidity",
-				LanguageVersion: languageVersion,
-				CompilerVersion: compilerVersion,
-				CompilerOptions: compilerOptions,
-				SrcMap:          info.SrcMap,
-				SrcMapRuntime:   info.SrcMapRuntime,
-				AbiDefinition:   abi,
-				UserDoc:         userdoc,
-				DeveloperDoc:    devdoc,
-				Metadata:        info.Metadata,
-			},
-		}
+		return contracts, nil
 	}
-	return contracts, nil
 }
 
 var (

@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/blendle/zapdriver v1.2.1
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
+	github.com/coreos/go-semver v0.2.0
 	github.com/dgraph-io/ristretto v0.0.2
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-chi/cors v1.0.0
