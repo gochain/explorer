@@ -797,7 +797,7 @@ func (z *zapLogFormatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
 		lgr = lgr.With(zap.String("requestID", reqID))
 	}
-	lgr.Info("Request started", zapdriver.HTTP(h))
+	lgr.Debug("Request started", zapdriver.HTTP(h))
 	return &zapLogEntry{lgr: lgr, http: h}
 }
 

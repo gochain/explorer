@@ -172,7 +172,7 @@ func listener(ctx context.Context, b *backend.Backend) {
 			lgr := b.Lgr.With(zap.Int64("block", latest))
 			lgr.Debug("Listener: Getting block")
 			if prevHeader != latest {
-				lgr.Info("Listener: Getting block")
+				lgr.Debug("Listener: Getting block", zap.Int64("block", latest))
 				block, err := b.BlockByNumber(ctx, latest)
 				if err != nil {
 					lgr.Error("Listener: Failed to get block", zap.Error(err))
@@ -217,7 +217,7 @@ func backfill(ctx context.Context, b *backend.Backend, blockNumber int64, checkE
 
 		logger := b.Lgr.With(zap.Int64("block", blockNumber))
 		if (blockNumber % 1000) == 0 {
-			logger.Info("Backfill: Progress")
+			logger.Debug("Backfill: Progress", zapcore.Field{Key: "block", Type: zapcore.Int64Type, Integer: blockNumber})
 		}
 		var backfill bool
 		dbBlock, err := b.GetBlockByNumber(ctx, blockNumber, true)
@@ -455,10 +455,10 @@ loop:
 		}
 	}
 	if len(errs) > 0 {
-		lgr.Error("Update Addresses: worker done", zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
+		lgr.Error("Update Addresses: worker failed", zap.Int("updated", updated), zap.Int("failed", len(errs)), zap.Errors("errors", errs))
 		return
 	}
-	lgr.Info("Update Addresses: worker done", zap.Int("updated", updated))
+	lgr.Debug("Update Addresses: worker done", zap.Int("updated", updated))
 }
 
 func updateAddress(ctx context.Context, address *models.ActiveAddress, currentBlock int64, blockRangeLimit uint64, b *backend.Backend) error {
