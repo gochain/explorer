@@ -127,7 +127,7 @@ func main() {
 			// Ensure canonical form, since queries are case-sensitive.
 			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-		b, err := backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, nil, logger, nil)
+		b, err := backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, nil, nil, logger, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
