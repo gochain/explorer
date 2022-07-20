@@ -92,7 +92,7 @@ func main() {
 			}
 		}()
 		network := getNetwork(netName, rpcUrl, testnet)
-		backendInstance, err = backend.NewBackend(ctx, mongoUrl, network.URL, dbName, nil, nil, logger, nil)
+		backendInstance, err = backend.NewBackend(ctx, mongoUrl, network.URL, dbName, nil, nil, nil, logger, nil)
 		if err != nil {
 			fatalExit(err)
 		}
