@@ -144,14 +144,26 @@ func main() {
 			cfg.Level.SetLevel(lvl)
 		}
 		lockedAccounts := c.StringSlice("locked-accounts")
+		initialAllocation := new(big.Int)
 		for i, l := range lockedAccounts {
 			if !common.IsHexAddress(l) {
-				return fmt.Errorf("invalid hex address: %s", l)
+				// Local accounts with total supply provided
+				s := strings.Split(l, ":")
+				if len(s) != 2 {
+					return fmt.Errorf("locked accounts wrong format: %s", l)
+				}
+				if !common.IsHexAddress(s[0]) {
+					return fmt.Errorf("invalid hex address: %s", s[0])
+				}
+				lockedAccounts[i] = s[0]
+				v := new(big.Int)
+				v.SetString(s[1], 16)
+				initialAllocation = initialAllocation.Add(initialAllocation, v)
+			} else {
+				// Ensure canonical form, since queries are case-sensitive.
+				lockedAccounts[i] = common.HexToAddress(l).Hex()
 			}
-			// Ensure canonical form, since queries are case-sensitive.
-			lockedAccounts[i] = common.HexToAddress(l).Hex()
 		}
-
 		var signers = make(map[common.Address]models.Signer)
 
 		if signersFile != "" {
@@ -175,7 +187,7 @@ func main() {
 			panic(err)
 		}
 
-		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, logger, cache)
+		backendInstance, err = backend.NewBackend(ctx, mongoUrl, rpcUrl, dbName, lockedAccounts, signers, initialAllocation, logger, cache)
 		if err != nil {
 			return fmt.Errorf("failed to create backend: %v", err)
 		}
