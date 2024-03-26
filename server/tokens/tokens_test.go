@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gochain/gochain/v3/common"
-	"github.com/gochain/gochain/v3/core/types"
+	"github.com/gochain/gochain/v4/common"
+	"github.com/gochain/gochain/v4/core/types"
 )
 
 func Test_unpackERC20TransferEvent(t *testing.T) {

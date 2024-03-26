@@ -4,3 +4,4 @@ vendor
 /dist
 /tmp
 Dockerfile
+/secrets

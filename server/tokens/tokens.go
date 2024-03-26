@@ -12,12 +12,12 @@ import (
 
 	"github.com/gochain-io/explorer/server/utils"
 
-	"github.com/gochain/gochain/v3"
-	"github.com/gochain/gochain/v3/accounts/abi"
-	"github.com/gochain/gochain/v3/accounts/abi/bind"
-	"github.com/gochain/gochain/v3/common"
-	"github.com/gochain/gochain/v3/core/types"
-	"github.com/gochain/gochain/v3/goclient"
+	"github.com/gochain/gochain/v4"
+	"github.com/gochain/gochain/v4/accounts/abi"
+	"github.com/gochain/gochain/v4/accounts/abi/bind"
+	"github.com/gochain/gochain/v4/common"
+	"github.com/gochain/gochain/v4/core/types"
+	"github.com/gochain/gochain/v4/goclient"
 	"go.uber.org/zap"
 )
 

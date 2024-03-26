@@ -18,7 +18,7 @@ import (
 	"github.com/gochain-io/explorer/server/utils"
 
 	"github.com/blendle/zapdriver"
-	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v4/common"
 	"github.com/urfave/cli"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

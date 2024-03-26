@@ -22,7 +22,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/gochain-io/explorer/server/backend"
 	"github.com/gochain-io/explorer/server/models"
-	"github.com/gochain/gochain/v3/common"
+	"github.com/gochain/gochain/v4/common"
 	"github.com/gorilla/schema"
 	qrcode "github.com/skip2/go-qrcode"
 	"github.com/urfave/cli"
@@ -195,7 +195,7 @@ func main() {
 		// A good base middleware stack
 		r.Use(middleware.RequestID)
 		r.Use(middleware.RealIP)
-		r.Use(middleware.RequestLogger(&zapLogFormatter{logger}))
+		// r.Use(middleware.RequestLogger(&zapLogFormatter{logger}))
 		r.Use(middleware.Recoverer)
 		cors2 := cors.New(cors.Options{
 			// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
@@ -794,42 +794,42 @@ func getContractsList(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, addresses)
 }
 
-var _ middleware.LogFormatter = &zapLogFormatter{}
+// var _ middleware.LogFormatter = &zapLogFormatter{}
 
-type zapLogFormatter struct {
-	lgr *zap.Logger
-}
+// type zapLogFormatter struct {
+// 	lgr *zap.Logger
+// }
 
 // NewLogEntry gathers information from the request, logs 'Request started'
 // and returns a log entry which stores the info to log again later with
 // the additional response info.
-func (z *zapLogFormatter) NewLogEntry(r *http.Request) middleware.LogEntry {
-	h := NewHTTP(r, nil)
-	lgr := z.lgr
-	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
-		lgr = lgr.With(zap.String("requestID", reqID))
-	}
-	lgr.Debug("Request started", zapdriver.HTTP(h))
-	return &zapLogEntry{lgr: lgr, http: h}
-}
+// func (z *zapLogFormatter) NewLogEntry(r *http.Request) middleware.LogEntry {
+// 	h := NewHTTP(r, nil)
+// 	lgr := z.lgr
+// 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
+// 		lgr = lgr.With(zap.String("requestID", reqID))
+// 	}
+// 	lgr.Debug("Request started", zapdriver.HTTP(h))
+// 	return &zapLogEntry{lgr: lgr, http: h}
+// }
 
-var _ middleware.LogEntry = &zapLogEntry{}
+// var _ middleware.LogEntry = &zapLogEntry{}
 
-type zapLogEntry struct {
-	lgr  *zap.Logger
-	http *zapdriver.HTTPPayload
-}
+// type zapLogEntry struct {
+// 	lgr  *zap.Logger
+// 	http *zapdriver.HTTPPayload
+// }
 
-func (z *zapLogEntry) Write(status, bytes int, elapsed time.Duration) {
-	z.http.Status = status
-	z.http.ResponseSize = strconv.Itoa(bytes)
-	z.http.Latency = fmt.Sprintf("%.9fs", elapsed.Seconds())
-	z.lgr.Info("Request complete", zapdriver.HTTP(z.http))
-}
+// func (z *zapLogEntry) Write(status, bytes int, elapsed time.Duration) {
+// 	z.http.Status = status
+// 	z.http.ResponseSize = strconv.Itoa(bytes)
+// 	z.http.Latency = fmt.Sprintf("%.9fs", elapsed.Seconds())
+// 	z.lgr.Info("Request complete", zapdriver.HTTP(z.http))
+// }
 
-func (z *zapLogEntry) Panic(v interface{}, stack []byte) {
-	z.lgr = z.lgr.With(zap.String("stack", string(stack)), zap.String("panic", fmt.Sprintf("%+v", v)))
-}
+// func (z *zapLogEntry) Panic(v interface{}, stack []byte) {
+// 	z.lgr = z.lgr.With(zap.String("stack", string(stack)), zap.String("panic", fmt.Sprintf("%+v", v)))
+// }
 
 // NewHTTP returns a new HTTPPayload struct, based on the passed
 // in http.Request and http.Response objects. They are not modified

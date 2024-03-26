@@ -1,5 +1,5 @@
 # Build GoChain in a stock Go builder container
-FROM golang:1.16-alpine3.13 as backend_builder
+FROM golang:1-alpine as backend_builder
 RUN apk --no-cache add build-base git mercurial gcc linux-headers g++ make
 ENV D=/explorer
 WORKDIR $D

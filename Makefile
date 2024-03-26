@@ -7,13 +7,13 @@ test-backend:
 	go test ./...
 
 server:
-	cd server && go build -v
+	cd server && go build
 
 grabber:
-	cd grabber && go build -v
+	cd grabber && go build
 
 admin:
-	cd admin && go build -v
+	cd admin && go build
 
 backend: server grabber admin
 
