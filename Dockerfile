@@ -15,7 +15,7 @@ FROM node:10-alpine as frontend_builder
 WORKDIR /explorer
 RUN apk add --no-cache make git gcc g++ python
 ADD . /explorer
-RUN npm install -g @angular/cli
+RUN npm install -g @angular/cli@15.2.4
 RUN make frontend
 
 FROM alpine:latest
