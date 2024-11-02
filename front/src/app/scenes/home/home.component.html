@@ -123,7 +123,7 @@
                   Created
                 </div>
                 <div class="data-list-desc">
-                  {{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{block.created_at | timeAgo}})
+                  {{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
                 </div>
               </div>
               <div class="data-list-row">
@@ -164,7 +164,7 @@
                     routerLink="/addr/{{block.miner}}">{{block.miner}}</a></td>
                 <td class="text-truncate">{{block.extra.vanity}}</td>
                 <td class="text-truncate">{{block.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
-                  ({{block.created_at | timeAgo}})
+                  
                 </td>
               </tr>
             </tbody>

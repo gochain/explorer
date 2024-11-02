@@ -152,7 +152,7 @@ export class InteractorComponent implements OnInit {
   onTokenValueChange(event, controlIndex: number): void {
     let value: string = (<HTMLInputElement>event.target).value;
     if (value) {
-      value = (new BigNumber(value)).multipliedBy('1e' + this.addr.decimals).toString();
+      value = (BigNumber(value)).multipliedBy('1e' + this.addr.decimals).toString();
       if (/e+/.test(value)) {
         const parts = value.split('e+');
         let first = parts[0].replace('.', '');

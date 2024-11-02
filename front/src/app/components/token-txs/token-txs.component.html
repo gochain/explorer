@@ -16,10 +16,10 @@
           </div>
           <div class="data-list-desc">
             <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-              {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+              {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} 
             </ng-container>
             <ng-template #updated_at>
-              {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+              {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} 
             </ng-template>
           </div>
         </div>
@@ -70,10 +70,10 @@
         </td>
         <td class="text-truncate">
           <ng-container *ngIf="tx.created_at != '0001-01-01T00:00:00Z';else updated_at">
-            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})
+            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} 
           </ng-container>
           <ng-template #updated_at>
-            {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.updated_at | timeAgo }})
+            {{tx.updated_at | date: 'yyyy/MM/dd HH:mm:ss'}} 
           </ng-template>
         </td>
         <ng-container *ngIf="addr.address === tx.to_address; else out">

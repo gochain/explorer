@@ -50,11 +50,11 @@ import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
-import {PieChartModule} from '@swimlane/ngx-charts';
+// import {PieChartModule} from '@swimlane/ngx-charts';
 import {DataTableModule} from 'ng-angular8-datatable';
 import {ClipboardModule} from 'ngx-clipboard';
 /*PIPES*/
-import {TimeAgoPipe} from 'time-ago-pipe';
+// import {TimeAgoPipe} from 'time-ago-pipe';
 /*UTILS*/
 import {APP_ROUTES} from './utils/routes';
 import {APP_BASE_HREF, CommonModule} from '@angular/common';
@@ -68,7 +68,7 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     AddressComponent,
     HomeComponent,
     PageNotFoundComponent,
-    TimeAgoPipe,
+    // TimeAgoPipe,
     RichlistComponent,
     HeaderComponent,
     SearchComponent,
@@ -112,7 +112,6 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
     BrowserAnimationsModule,
-    PieChartModule,
     ClipboardModule,
   ],
   providers: [

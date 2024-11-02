@@ -15,7 +15,7 @@
             Processed:
           </div>
           <div class="data-list-desc">
-            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+            {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}}
           </div>
         </div>
         <div class="data-list-row">
@@ -69,7 +69,7 @@
           <a class="ws-p" routerLink="/tx/{{tx.tx_hash}}">{{tx.tx_hash}}</a>
         </td>
         <td class="text-truncate">
-          {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo}})
+          {{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} 
         </td>
         <ng-container *ngIf="addr.address !== tx.from; else out">
           <td>

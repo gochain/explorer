@@ -33,7 +33,7 @@
           </ng-container>
           <ng-container *ngIf="tx.created_at">
             <dt>Processed at</dt>
-            <dd>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} ({{tx.created_at | timeAgo }})</dd>
+            <dd>{{tx.created_at | date: 'yyyy/MM/dd HH:mm:ss'}} </dd>
           </ng-container>
           <ng-container
               *ngIf="tx.contract_address && tx.contract_address !== '0x0000000000000000000000000000000000000000'">
