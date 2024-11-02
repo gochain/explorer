@@ -1,5 +1,5 @@
 {
-  "name": "GoChainExplorer",
+  "name": "gochain-explorer",
   "private": true,
   "version": "0.4.219",
   "description": "A lightweight GoChain block explorer",
