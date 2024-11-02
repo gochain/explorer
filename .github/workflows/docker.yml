@@ -12,31 +12,22 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
     steps:
     # - uses: actions/checkout@v4
-    # - name: Build the Docker image
-    #   run: ./release.sh
-    # - name: Login to GitHub Container Registry
-    #   uses: docker/login-action@v2
-    #   with:
-    #     registry: ghcr.io
-    #     username: ${{ github.actor }}
-    #     password: ${{ secrets.GITHUB_TOKEN }}
-    # below doesn't work due to issue here: https://github.com/gochain/gochain/issues/466#issuecomment-1496805833
-    # - name: Bump version
-    #   run: |
-    #     git config --global user.email "ci@gochain.io"
-    #     git config --global user.name "CI"
-    #     version_file="params/version.go"
-    #     # Bump version, patch by default - also checks if previous commit message contains `[bump X]`, and if so, bumps the appropriate semver number - https://github.com/treeder/dockers/tree/master/bump
-    #     docker run --rm -v $PWD:/app -w /app treeder/bump --filename $version_file "$(git log -1 --pretty=%B)"
-    #     version=$(grep -m1 -Eo "[0-9]+\.[0-9]+\.[0-9]+" $version_file)
-    #     echo "Version: $version"
-    #     git add -u
-    #     git commit -m "$image: $version release [skip ci]"
-    #     git tag -f -a "v$version" -m "version $version"
-    #     git push
-    #     git push origin v$version
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Build and push
       uses: docker/build-push-action@v4
       with:
