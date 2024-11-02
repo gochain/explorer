@@ -4,7 +4,7 @@ import {NgModule} from '@angular/core';
 import {RouterModule} from '@angular/router';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HttpClientModule} from '@angular/common/http';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
+// import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 /*COMPONENTS*/
 import {AppComponent} from './app.component';
 import {BlockComponent} from './scenes/block/block.component';
@@ -50,7 +50,7 @@ import {NgProgressModule} from '@ngx-progressbar/core';
 import {NgProgressHttpModule} from '@ngx-progressbar/http';
 import {ToastrModule} from './modules/toastr/toastr.module';
 import {ViewportSizeModule} from './modules/viewport-size/viewport-size.module';
-import {PieChartModule} from '@swimlane/ngx-charts';
+// import {PieChartModule} from '@swimlane/ngx-charts';
 import {DataTableModule} from 'ng-angular8-datatable';
 import {ClipboardModule} from 'ngx-clipboard';
 /*PIPES*/
@@ -111,8 +111,8 @@ import {VIEWPORT_SIZES} from './modules/viewport-size/contants';
     ToastrModule.forRoot(),
     RouterModule.forRoot(APP_ROUTES),
     BrowserModule,
-    BrowserAnimationsModule,
-    PieChartModule,
+    // BrowserAnimationsModulse,
+    // PieChartModule,
     ClipboardModule,
   ],
   providers: [

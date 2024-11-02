@@ -2,7 +2,7 @@
   "name": "gochain-explorer",
   "private": true,
   "version": "0.4.219",
-  "description": "A lightweight GoChain block explorer",
+  "description": "GoChain blockchain explorer",
   "repository": "https://github.com/gochain-io/explorer",
   "scripts": {
     "ng": "ng",
@@ -15,37 +15,29 @@
     "analyze": "ng build --prod --stats-json && webpack-bundle-analyzer dist/explorer/stats.json"
   },
   "dependencies": {
-    "@angular/animations": "^8.2.14",
     "@angular/common": "^8.2.14",
     "@angular/compiler": "^8.2.14",
     "@angular/core": "^8.2.14",
     "@angular/forms": "^8.2.14",
-    "@angular/http": "^7.2.15",
     "@angular/platform-browser": "^8.2.14",
     "@angular/platform-browser-dynamic": "^8.2.14",
     "@angular/router": "^8.2.14",
-    "@ngx-progressbar/core": "^5.3.2",
-    "@ngx-progressbar/http": "^5.3.2",
-    "@swimlane/ngx-charts": "^20.1.2",
     "bignumber.js": "^9.0.0",
     "cids": "^0.7.1",
     "decimal.js": "^10.2.0",
     "ng-angular8-datatable": "^0.9.11",
-    "ngx-clipboard": "^12.3.0",
+    "ngx-clipboard": "^12.2.0",
     "rxjs": "^6.5.4",
     "time-ago-pipe": "^1.3.2",
-    "web3": "^2.0.0-alpha.1",
-    "zone.js": "^0.10.2"
+    "web3": "^2.0.0-alpha.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^15.2.4",
-    "@angular/cli": "^15.1.4",
-    "@angular/compiler-cli": "^8.2.14",
-    "@angular/language-service": "^8.2.14",
+    "@angular/cli": "^8.2.4",
+    "@angular/compiler-cli": "^8.2.4",
+    "@angular/language-service": "^8.2.4",
     "@types/jasmine": "^3.5.0",
     "@types/jasminewd2": "^2.0.8",
     "@types/node": "^12.12.22",
-    "codelyzer": "^5.2.1",
     "jasmine-core": "^3.5.0",
     "jasmine-spec-reporter": "~4.2.1",
     "karma": "^6.3.16",
@@ -53,10 +45,8 @@
     "karma-coverage-istanbul-reporter": "^2.1.1",
     "karma-jasmine": "~2.0.1",
     "karma-jasmine-html-reporter": "^1.5.1",
-    "protractor": "^5.4.2",
-    "ts-node": "^8.5.4",
     "tslint": "^5.20.1",
-    "typescript": "~3.5.3",
+    "typescript": "^3.5.3",
     "webpack-bundle-analyzer": "^4.7.0"
   }
 }
