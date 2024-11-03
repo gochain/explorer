@@ -32,4 +32,4 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: ghcr.io/gochain/explorer:${{ github.sha }},ghcr.io/gochain/gochain:latest,ghcr.io/gochain/gochain:stable,ghcr.io/gochain/explorer:1
+        tags: ghcr.io/gochain/explorer:${{ github.sha }},ghcr.io/gochain/explorer:latest,ghcr.io/gochain/explorer:1
