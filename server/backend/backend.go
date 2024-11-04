@@ -103,7 +103,7 @@ func NewBackend(ctx context.Context, mongoUrl, rpcUrl, dbName string, lockedAcco
 	return b, nil
 }
 
-//METHODS USED IN API
+// METHODS USED IN API
 func (b *Backend) PingDB() error {
 	return b.mongo.PingDB()
 }
@@ -142,7 +142,7 @@ func (b *Backend) CodeAt(ctx context.Context, address string) ([]byte, error) {
 // TotalSupply returns the total supply and the fees burned (already subtracted from total).
 func (b *Backend) TotalSupply(ctx context.Context) (*big.Int, *big.Int, error) {
 	var alloc *big.Int
-	if l := b.alloc.Load(); l != nil {
+	if l := b.alloc.Load(); l != nil && l.(*big.Int).Cmp(big.NewInt(0)) > 0 {
 		alloc = l.(*big.Int)
 	}
 	if alloc == nil {
@@ -524,7 +524,7 @@ func (b *Backend) InternalTxsConsistent(blockNumber int64) (*models.Block, bool,
 	return b.mongo.internalTxsConsistent(blockNumber)
 }
 
-//return false if a number of transactions in DB is different from a number of transactions in the blockchain
+// return false if a number of transactions in DB is different from a number of transactions in the blockchain
 func (b *Backend) ExternalTxsConsistent(ctx context.Context, block *models.Block) (bool, error) {
 	lgr := b.Lgr.With(zap.String("hash", block.BlockHash))
 	lgr.Debug("Checking transaction count for the block")
