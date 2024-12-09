@@ -288,7 +288,7 @@ func (mb *MongoBackend) importTx(ctx context.Context, tx *types.Transaction, rec
 	lgr.Debug("Parsed tx")
 
 	if receiptElem.Error != nil {
-		return nil, fmt.Errorf("faild to get receipt: %v", err)
+		return nil, fmt.Errorf("failed to get receipt: %v", err)
 	}
 	transaction, receipt, err := mb.ensureReceipt(ctx, transaction, receiptElem.Result.(*types.Receipt))
 	if err != nil {
