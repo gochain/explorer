@@ -348,7 +348,7 @@ func checkAncestors(ctx context.Context, b *backend.Backend, blockNumber int64, 
 func ensureTxsConsistent(ctx context.Context, b *backend.Backend, blockNumber int64, checkExternal bool) (*models.Block, common.Hash, error) {
 	block, ok, err := b.InternalTxsConsistent(blockNumber)
 	if err != nil {
-		return nil, common.Hash{}, fmt.Errorf("failed to check tx consistentcy: %v", err)
+		return nil, common.Hash{}, fmt.Errorf("failed to check tx consistency: %v", err)
 	} else if ok {
 		if !checkExternal {
 			return nil, common.Hash{}, nil

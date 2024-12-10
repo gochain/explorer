@@ -153,7 +153,7 @@ var grabBlock = function (web3, blockHashOrNumber, listening) {
             desiredBlockHashOrNumber = blockHashOrNumber.end;
         }
         else {
-            console.log('Error: Aborted becasue found a interval in blocks ' +
+            console.log('Error: Aborted because found a interval in blocks ' +
                 'array that doesn\'t have both a start and end.');
         }
     }
