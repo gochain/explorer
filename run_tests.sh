@@ -12,7 +12,7 @@ cleanup_containers() {
 }
 set -e
 trap cleanup_containers SIGINT EXIT SIGHUP
-docker run --name test_mongo -d -p 27017:27017 mongo
+docker run --name test_mongo -d -p 27017:27017 mongo:latest
 varA=`docker ps --no-trunc -q | cut -c 1-12`
 # build
 docker build --target backend_builder -t gochain/explorer-back-build .

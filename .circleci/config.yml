@@ -2,14 +2,14 @@ version: 2
 jobs:
   build-test:
     docker:
-      - image: circleci/golang:1.16
+      - image: cimg/go:1.22
     steps:
       - setup_remote_docker
       - checkout
       - run: ./run_tests.sh
   release:
     docker:
-      - image: google/cloud-sdk      
+      - image: google/cloud-sdk:latest      
     steps:
       - setup_remote_docker
       - checkout

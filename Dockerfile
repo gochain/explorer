@@ -11,11 +11,11 @@ ADD . $D
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/ && cp $D/admin/admin /tmp/gochain/
 
-FROM node:10-alpine as frontend_builder
+FROM node:22-alpine as frontend_builder
 WORKDIR /explorer
-RUN apk add --no-cache make git gcc g++ python
+RUN apk add --no-cache make git gcc g++ python3
 ADD . /explorer
-RUN npm install -g @angular/cli@8.3.29
+RUN npm install -g @angular/cli@latest
 RUN make frontend
 
 FROM alpine:latest
