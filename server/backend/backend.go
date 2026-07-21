@@ -207,6 +207,9 @@ func (b *Backend) CirculatingSupply(ctx context.Context) (*big.Int, error) {
 }
 
 func (b *Backend) SupplyStats(ctx context.Context) (*models.SupplyStats, error) {
+	if val, found := b.Cache.Get("supply_stats"); found {
+		return val.(*models.SupplyStats), nil
+	}
 	total, feesBurned, err := b.TotalSupply(ctx)
 	if err != nil {
 		return nil, err
@@ -219,10 +222,12 @@ func (b *Backend) SupplyStats(ctx context.Context) (*models.SupplyStats, error) 
 		}
 		locked = locked.Add(locked, bal)
 	}
-	return &models.SupplyStats{
+	res := &models.SupplyStats{
 		Total: total, FeesBurned: feesBurned, Locked: locked,
 		Circulating: new(big.Int).Sub(total, locked),
-	}, err
+	}
+	b.Cache.SetWithTTL("supply_stats", res, 1, 10*time.Second)
+	return res, nil
 }
 
 func (b *Backend) isDarvazaFork(n *big.Int) bool {
