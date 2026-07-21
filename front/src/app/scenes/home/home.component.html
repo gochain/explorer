@@ -9,7 +9,7 @@
               <dt>Total</dt>
               <dd>
                 <span class="text-monospace">{{supplyStats.total | weiToWholeGO | bigNumber}}</span> GO
-                <ng-container *ngIf="supplyStats.fees_burned > 0">
+                <ng-container *ngIf="supplyStats.fees_burned && supplyStats.fees_burned !== '0'">
                   <br/><span class="text-monospace">{{supplyStats.fees_burned | weiToWholeGO | bigNumber}}</span> GO burned <img src="../../../assets/icons/fire.svg">
                 </ng-container>
               </dd>

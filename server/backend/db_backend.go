@@ -523,8 +523,8 @@ func (mb *MongoBackend) getLatestTotalFeesBurned() (*TotalBurned, error) {
 		TotalFeesBurned string `bson:"total_fees_burned"`
 	}{}
 	err := mb.mongo.C("Blocks").
-		Find(bson.M{"total_fees_burned": bson.M{"$gt": ""}, "created_at": bson.M{"$gte": time.Now().Add(time.Duration(-10) * time.Minute)}}). // not null or empty
-		Sort("-created_at").
+		Find(bson.M{"total_fees_burned": bson.M{"$gt": ""}}). // not null or empty
+		Sort("-number").
 		Select(bson.M{"number": 1, "total_fees_burned": 1}).One(&v)
 	if err != nil {
 		if err == mgo.ErrNotFound {
