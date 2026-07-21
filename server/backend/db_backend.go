@@ -524,6 +524,7 @@ func (mb *MongoBackend) getLatestTotalFeesBurned() (*TotalBurned, error) {
 	}{}
 	err := mb.mongo.C("Blocks").
 		Find(bson.M{"total_fees_burned": bson.M{"$gt": ""}}). // not null or empty
+		Hint("total_fees_burned", "-created_at").
 		Sort("-created_at").
 		Select(bson.M{"number": 1, "total_fees_burned": 1}).One(&v)
 	if err != nil {
