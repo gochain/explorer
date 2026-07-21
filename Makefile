@@ -23,7 +23,7 @@ frontend:
 	cd front && node patch.js
 	rm -rf front/dist/explorer
 	cd front && npm rebuild node-sass
-	cd front && ./node_modules/@angular/cli/bin/ng build --prod
+	cd front && NODE_OPTIONS=--openssl-legacy-provider ./node_modules/@angular/cli/bin/ng build --prod
 	cp -r front/dist .
 
 build: backend frontend

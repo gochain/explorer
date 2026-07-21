@@ -11,6 +11,7 @@ ADD . $D
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/ && cp $D/admin/admin /tmp/gochain/
 
 FROM node:26 as frontend_builder
+ENV NODE_OPTIONS=--openssl-legacy-provider
 WORKDIR /explorer
 RUN apt-get update && apt-get install -y make git gcc g++ python3 && rm -rf /var/lib/apt/lists/*
 ADD . /explorer
