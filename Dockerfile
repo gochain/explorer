@@ -1,6 +1,5 @@
 # Build GoChain in a stock Go builder container
-FROM golang:1-alpine as backend_builder
-RUN apk --no-cache add build-base git mercurial gcc linux-headers g++ make
+FROM golang:1 as backend_builder
 ENV D=/explorer
 WORKDIR $D
 # cache dependencies
@@ -11,16 +10,16 @@ ADD . $D
 # build
 RUN cd $D && make backend && mkdir -p /tmp/gochain && cp $D/server/server /tmp/gochain/ && cp $D/grabber/grabber /tmp/gochain/ && cp $D/admin/admin /tmp/gochain/
 
-FROM node:22-alpine as frontend_builder
+FROM node:26 as frontend_builder
 WORKDIR /explorer
-RUN apk add --no-cache make git gcc g++ python3
+RUN apt-get update && apt-get install -y make git gcc g++ python3 && rm -rf /var/lib/apt/lists/*
 ADD . /explorer
 RUN npm install -g @angular/cli@latest
 RUN make frontend
 
-FROM alpine:latest
+FROM ubuntu:latest
 WORKDIR /explorer
-RUN apk add --no-cache ca-certificates docker
+RUN apt-get update && apt-get install -y ca-certificates docker.io && rm -rf /var/lib/apt/lists/*
 COPY --from=backend_builder /tmp/gochain/* /usr/local/bin/
 COPY --from=frontend_builder /explorer/front/dist/* /explorer/
 

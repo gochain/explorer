@@ -463,7 +463,7 @@ func getAddressTxByNonce(w http.ResponseWriter, r *http.Request) {
 	nonceS := chi.URLParam(r, "nonce")
 	nonce, err := strconv.ParseInt(nonceS, 0, 64)
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonce, err))
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonceS, err))
 		return
 	}
 	tx, err := backendInstance.GetTxByAddressAndNonce(r.Context(), address, nonce)
@@ -487,7 +487,7 @@ func getAddressTxHashByNonce(w http.ResponseWriter, r *http.Request) {
 	nonceS := chi.URLParam(r, "nonce")
 	nonce, err := strconv.ParseInt(nonceS, 0, 64)
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonce, err))
+		errorResponse(w, http.StatusBadRequest, fmt.Errorf("invalid 'nonce' %q: %v", nonceS, err))
 		return
 	}
 	tx, err := backendInstance.GetTxByAddressAndNonce(r.Context(), address, nonce)

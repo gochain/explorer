@@ -25,9 +25,9 @@ sleep 5 # let's wait until server start
 docker run --name test_explorer_go_integration --network="container:$varA" gochain/explorer-back-build go test -tags=integration ./...
 # docker exec test_explorer npm test
 echo "Trying curl"
-docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/
-docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/api/blocks/10
-docker run --rm --network="container:$varA" byrnedo/alpine-curl -f http://localhost:8080/api/blocks/10/transactions
+docker run --rm --network="container:$varA" curlimages/curl -f http://localhost:8080/
+docker run --rm --network="container:$varA" curlimages/curl -f http://localhost:8080/api/blocks/10
+docker run --rm --network="container:$varA" curlimages/curl -f http://localhost:8080/api/blocks/10/transactions
 echo "Docker logs for grabber"
 docker logs test_explorer_grabber
 echo "Docker logs for server"
