@@ -6,8 +6,7 @@ import {concatMap, filter, map, take, finalize, catchError, mergeMap} from 'rxjs
 import {fromPromise} from 'rxjs/internal-compatibility';
 /*WEB3*/
 import Web3 from 'web3';
-import {SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
-import {Account} from 'web3-eth-accounts';
+import {Account, SignedTransaction, Transaction as Web3Tx, TransactionConfig, TransactionReceipt} from 'web3-core';
 import {AbiItem, fromWei, toWei, isAddress} from 'web3-utils';
 /*SERVICES*/
 import {ToastrService} from '../modules/toastr/toastr.service';
@@ -54,8 +53,10 @@ export class WalletService {
         filter(value => !!value),
       )
       .subscribe((rpcProvider: string) => {
-        const metaMaskProvider = new Web3(Web3.givenProvider, null, {transactionConfirmationBlocks: 1,});
-        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider), null, {transactionConfirmationBlocks: 1,});
+        const metaMaskProvider = new Web3(Web3.givenProvider);
+        const web3Provider = new Web3(new Web3.providers.HttpProvider(rpcProvider));
+        metaMaskProvider.eth.transactionConfirmationBlocks = 1;
+        web3Provider.eth.transactionConfirmationBlocks = 1;
         this._web3Callable$.next(web3Provider);
         if (!metaMaskProvider.currentProvider) {
           this._web3Payable$.error('Metamask is not enabled');

@@ -8,7 +8,7 @@ import {MetaService} from '../../services/meta.service';
 import {ToastrService} from '../../modules/toastr/toastr.service';
 import {ClipboardService} from 'ngx-clipboard';
 /*MODELS*/
-import {Account} from 'web3-eth-accounts';
+import {Account} from 'web3-core';
 import {PasswordField} from '../../models/password-field.model';
 /*UTILS*/
 import {META_TITLES} from '../../utils/constants';
