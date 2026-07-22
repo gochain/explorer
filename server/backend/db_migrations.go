@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/gochain-io/explorer/internal/migrate"
 	"github.com/gochain-io/explorer/server/models"
@@ -87,7 +88,90 @@ var migrationTransactionsByAddress = migrate.Migration{
 	},
 }
 
+var migrationTotalFeesBurned = migrate.Migration{
+	ID:      2,
+	Comment: "Backfilling total_fees_burned on Blocks collection",
+	Migrate: func(ctx context.Context, d *mgo.Database, lgr *zap.Logger) error {
+		var startBlock struct {
+			Number          int64  `bson:"number"`
+			TotalFeesBurned string `bson:"total_fees_burned"`
+		}
+		err := d.C("Blocks").
+			Find(bson.M{"total_fees_burned": bson.M{"$gt": ""}}).
+			Hint("-number", "total_fees_burned").
+			Sort("-number").
+			Select(bson.M{"number": 1, "total_fees_burned": 1}).One(&startBlock)
+
+		var startNum int64 = 0
+		accum := new(big.Int)
+		if err == nil && startBlock.TotalFeesBurned != "" {
+			startNum = startBlock.Number
+			accum.SetString(startBlock.TotalFeesBurned, 10)
+			lgr.Info("Starting fee burn backfill", zap.Int64("from_block", startNum), zap.String("start_burned", startBlock.TotalFeesBurned))
+		} else {
+			lgr.Info("No existing fee burn found, starting from block 0")
+		}
+
+		iter := d.C("Blocks").
+			Find(bson.M{"number": bson.M{"$gt": startNum}}).
+			Select(bson.M{"number": 1, "gas_fees": 1}).
+			Sort("number").
+			Iter()
+		defer iter.Close()
+
+		var b struct {
+			Number  int64  `bson:"number"`
+			GasFees string `bson:"gas_fees"`
+		}
+
+		const batchSize = 5000
+		bulk := d.C("Blocks").Bulk()
+		bulk.Unordered()
+		var count, batchCount int
+
+		for iter.Next(&b) {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if b.GasFees != "" && b.GasFees != "0" {
+				if fee, ok := new(big.Int).SetString(b.GasFees, 10); ok {
+					accum.Add(accum, fee)
+				}
+			}
+			bulk.Update(
+				bson.M{"number": b.Number},
+				bson.M{"$set": bson.M{"total_fees_burned": accum.String()}},
+			)
+			count++
+			batchCount++
+
+			if count%50000 == 0 {
+				lgr.Info("Backfilled total_fees_burned progress", zap.Int("blocks_processed", count), zap.Int64("current_block", b.Number), zap.String("total_burned", accum.String()))
+			}
+
+			if batchCount >= batchSize {
+				if _, err := bulk.Run(); err != nil {
+					return err
+				}
+				bulk = d.C("Blocks").Bulk()
+				bulk.Unordered()
+				batchCount = 0
+			}
+		}
+		if batchCount > 0 {
+			if _, err := bulk.Run(); err != nil {
+				return err
+			}
+		}
+		lgr.Info("Completed total_fees_burned backfill", zap.Int("total_blocks", count), zap.String("final_total_burned", accum.String()))
+		return iter.Err()
+	},
+	Rollback: func(ctx context.Context, s *mgo.Database, lgr *zap.Logger) error {
+		return nil
+	},
+}
+
 func (mb *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (int, error) {
-	m := migrate.New(ctx, mb.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
+	m := migrate.New(ctx, mb.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress, &migrationTotalFeesBurned})
 	return m.Migrate()
 }

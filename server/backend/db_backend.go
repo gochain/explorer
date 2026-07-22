@@ -211,17 +211,26 @@ func (mb *MongoBackend) importBlock(ctx context.Context, block *types.Block, isD
 			if err != nil {
 				return nil, err
 			}
+			var prevBurned *big.Int
 			if parent != nil && parent.TotalFeesBurned != "" {
-				totalFeesBurned, ok := new(big.Int).SetString(parent.TotalFeesBurned, 10)
-				if !ok {
-					lgr.Error("Failed to parse block.TotalFeesBurned as big.Int", zap.String("block", b.ParentHash),
-						zap.String("value", parent.TotalFeesBurned))
-				} else {
-					b.TotalFeesBurned = totalFeesBurned.Add(totalFeesBurned, gasFee).String()
-					update["total_fees_burned"] = b.TotalFeesBurned
+				if tb, ok := new(big.Int).SetString(parent.TotalFeesBurned, 10); ok {
+					prevBurned = tb
 				}
 			}
+			if prevBurned == nil {
+				if latest, _ := mb.getLatestTotalFeesBurned(); latest != nil && latest.TotalFeesBurned != nil {
+					prevBurned = latest.TotalFeesBurned
+				}
+			}
+			if prevBurned != nil {
+				b.TotalFeesBurned = new(big.Int).Add(prevBurned, gasFee).String()
+				update["total_fees_burned"] = b.TotalFeesBurned
+			}
 		}
+	}
+	if b.TotalFeesBurned == "" {
+		b.TotalFeesBurned = "0"
+		update["total_fees_burned"] = b.TotalFeesBurned
 	}
 	if err := mb.mongo.C("Blocks").Update(bson.M{"number": b.Number}, bson.M{"$set": update}); err != nil {
 		return nil, fmt.Errorf("failed to upsert block gas fee fields: %v", err)
