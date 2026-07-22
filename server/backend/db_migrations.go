@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/gochain-io/explorer/internal/migrate"
 	"github.com/gochain-io/explorer/server/models"
@@ -159,6 +160,7 @@ var migrationTotalFeesBurned = migrate.Migration{
 					bulk = d.C("Blocks").Bulk()
 					bulk.Unordered()
 					batchCount = 0
+					time.Sleep(10 * time.Millisecond)
 				}
 			}
 			if batchCount > 0 {
