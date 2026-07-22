@@ -122,6 +122,7 @@ func (mb *MongoBackend) createIndexes() error {
 		{c: "Blocks", index: mgo.Index{Key: []string{"miner"}, Background: true, Sparse: true}},
 		{c: "Blocks", index: mgo.Index{Key: []string{"created_at", "miner"}, Background: true, Sparse: true}},
 		{c: "Blocks", index: mgo.Index{Key: []string{"hash"}, Background: true, Sparse: true}},
+		{c: "Blocks", index: mgo.Index{Key: []string{"-number", "total_fees_burned"}, Background: true, Sparse: true}},
 		{c: "Blocks", index: mgo.Index{Key: []string{"total_fees_burned", "-created_at"}, Background: true, Sparse: true}},
 		{c: "ActiveAddress", index: mgo.Index{Key: []string{"updated_at"}, Background: true, Sparse: true}},
 		{c: "ActiveAddress", index: mgo.Index{Key: []string{"address"}, Unique: true, DropDups: true, Background: true, Sparse: true}},
@@ -524,7 +525,8 @@ func (mb *MongoBackend) getLatestTotalFeesBurned() (*TotalBurned, error) {
 	}{}
 	err := mb.mongo.C("Blocks").
 		Find(bson.M{"total_fees_burned": bson.M{"$gt": ""}}). // not null or empty
-		Sort("-total_fees_burned").
+		Hint("-number", "total_fees_burned").
+		Sort("-number").
 		Select(bson.M{"number": 1, "total_fees_burned": 1}).One(&v)
 	if err != nil {
 		if err == mgo.ErrNotFound {
