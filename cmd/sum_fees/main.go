@@ -29,6 +29,11 @@ func main() {
 			Usage:  "MongoDB database name",
 			EnvVar: "MONGO_DB",
 		},
+		cli.DurationFlag{
+			Name:  "since",
+			Value: 7 * 24 * time.Hour,
+			Usage: "Time duration to look back",
+		},
 	}
 
 	app.Action = func(c *cli.Context) error {
@@ -44,11 +49,13 @@ func main() {
 		db := session.DB(c.String("mongo-db"))
 
 		startTime := time.Now()
+		since := c.Duration("since")
+		cutoff := time.Now().Add(-since)
 
-		// Query blocks from Darvaza fork (block 17,900,000) onwards where gas_fees is not empty and not "0"
+		// Query blocks created after cutoff where gas_fees is not empty and not "0"
 		iter := db.C("Blocks").
-			Find(bson.M{"number": bson.M{"$gte": 17900000}, "gas_fees": bson.M{"$nin": []interface{}{"", "0"}}}).
-			Select(bson.M{"number": 1, "gas_fees": 1}).
+			Find(bson.M{"created_at": bson.M{"$gte": cutoff}, "gas_fees": bson.M{"$nin": []interface{}{"", "0"}}}).
+			Select(bson.M{"number": 1, "gas_fees": 1, "created_at": 1}).
 			Iter()
 		defer iter.Close()
 
