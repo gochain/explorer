@@ -179,6 +179,6 @@ var migrationTotalFeesBurned = migrate.Migration{
 }
 
 func (mb *MongoBackend) migrate(ctx context.Context, lgr *zap.Logger) (int, error) {
-	m := migrate.New(ctx, mb.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress, &migrationTotalFeesBurned})
+	m := migrate.New(ctx, mb.mongo, lgr, migrationCollection, []*migrate.Migration{&migrationTransactionsByAddress})
 	return m.Migrate()
 }
